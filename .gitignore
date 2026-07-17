@@ -1,0 +1,46 @@
+# Compiled LaTeX artifacts
+*.pdf
+*.log
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+
+# Generated PNG figures (captured from HTML)
+# (only if you don't want to commit them; remove this line to commit PNGs)
+# latex/figure/*.png
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Node.js
+node_modules/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor artifacts
+.vscode/
+*.swp
+*.swo
+*~
+
+# Private configuration (DO NOT COMMIT)
+# If you store your personal bibliografia.md with real notebook IDs
+# outside the skill folder, keep it out of version control.
+# The file in references/bibliografia.md should only contain the
+# empty template included in this repository.
