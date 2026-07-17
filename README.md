@@ -157,15 +157,19 @@ sections/
 
 | Script | Usage |
 |---|---|
-| `latex-validator.js` | Full 3-pass compilation via WSL (`pdflatex → biber → pdflatex → pdflatex`) + auto-captures HTML figures |
-| `legacy-manager.js` | Archives current week content to `legacy/` before restructuring |
-| `pdf_cutter_template.py` | Extracts page ranges from source PDFs into `bibliografia/recortes_por_semana/semana-XX/` |
+| `latex-linter.js` | Performs static analysis checking for sentence length (R1), forbidden AI tropes, invalid LaTeX syntax, placeholder presence, and signaling consistency (R2). |
+| `latex-validator.js` | Executes `latex-linter.js` first, then performs the full 3-pass LaTeX compilation sequence via WSL (`pdflatex → biber → pdflatex → pdflatex`) and captures HTML screenshots if applicable. |
+| `legacy-manager.js` | Archives current week content to a timestamped subfolder under `legacy/` (e.g. `legacy/archive_YYYY-MM-DD_HH-MM-SS`) to prevent collisions before restructuring. |
+| `pdf_cutter_template.py` | Extracts page ranges from source PDFs into `bibliografia/recortes_por_semana/semana-XX/`. |
 
 ```powershell
-# Compile a guide (full 3-pass sequence)
+# Run the style linter on a LaTeX guide
+node [SKILL_PATH]/scripts/latex-linter.js "01 MY_COURSE/semanas/semana-03/latex/guia-semana-03.tex"
+
+# Compile a guide (runs the linter first, then runs full 3-pass sequence)
 node [SKILL_PATH]/scripts/latex-validator.js "01 MY_COURSE/semanas/semana-03/latex/guia-semana-03.tex"
 
-# Archive before restructuring
+# Archive a week to a timestamped folder before restructuring
 node [SKILL_PATH]/scripts/legacy-manager.js "01 MY_COURSE/semanas/semana-03"
 
 # Cut bibliography excerpts (edit cuts[] array first)

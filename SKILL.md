@@ -1,6 +1,6 @@
 ---
 name: instructional-designer-skill
-description: "Evidence-based self-paced instructional design for higher education. Guides the model to create asynchronous courses, weekly guides in LaTeX, self-instructional modules, micro-content and aligned assessments (UDL 3.0, Backward Design, QM 7th Ed). Triggers: course, week, guide, module, self-instructional, pedagogical, instructional, unit, learning outcome, evidence, asynchronous, self-paced, rubric, assessment."
+description: "Use this skill when designing, writing, editing, or validating academic/pedagogical courses, weekly guides in LaTeX, self-instructional modules, rubrics, or assessments, especially following UDL 3.0, Backward Design, or Quality Matters (QM) standards."
 version: "10.3"
 author: Charlie Cárdenas Toledo
 license: MIT
@@ -28,12 +28,12 @@ Este archivo contiene el flujo de trabajo y las reglas editoriales. El detalle t
 
 | Si la tarea implica... | Leer |
 |---|---|
-| Crear/editar el preamble, la introducción, secciones de teoría, estudio de caso, bloques o tablas | `references/plantilla-latex.md` |
-| Diagramas TikZ, modelos ER (Chen), exportar figuras como PNG | `references/figuras-tikz.md` |
-| Mock-ups de interfaz (HCI): HTML Tailwind, captura con Puppeteer | `references/figuras-html.md` |
-| Redactar contenido con citas, resolver fuentes, NotebookLM, sección de referencias | `references/bibliografia.md` |
-| Compilar la guía, rutas WSL, scripts auxiliares (`latex-validator`, `legacy-manager`, `pdf_cutter`) | `references/compilacion-wsl.md` |
-| Verificación final antes de entregar (SIEMPRE al cerrar la tarea) | `references/checklist.md` |
+| Crear/editar el preamble, la introducción, secciones de teoría, estudio de caso, bloques o tablas | [references/plantilla-latex.md](references/plantilla-latex.md) |
+| Diagramas TikZ, modelos ER (Chen), exportar figuras como PNG | [references/figuras-tikz.md](references/figuras-tikz.md) |
+| Mock-ups de interfaz (HCI): HTML Tailwind, captura con Puppeteer | [references/figuras-html.md](references/figuras-html.md) |
+| Redactar contenido con citas, resolver fuentes, NotebookLM, sección de referencias | [references/bibliografia.md](references/bibliografia.md) |
+| Compilar la guía, rutas WSL, scripts auxiliares (`latex-validator`, `legacy-manager`, `pdf_cutter`) | [references/compilacion-wsl.md](references/compilacion-wsl.md) |
+| Verificación final antes de entregar (SIEMPRE al cerrar la tarea) | [references/checklist.md](references/checklist.md) |
 
 ---
 

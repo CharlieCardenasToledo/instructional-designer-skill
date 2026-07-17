@@ -31,7 +31,20 @@ function toWslPath(winPath) {
 
 const wslDir = toWslPath(dir);
 
-// Paso previo: capturar PNGs si la guía usa figuras HTML
+// Paso previo 1: ejecutar el linter de estilo LaTeX
+const linterScript = path.join(__dirname, 'latex-linter.js');
+console.log('Ejecutando análisis estático (linter) de la guía LaTeX...');
+try {
+    execSync(`node "${linterScript}" "${absPath}"`, {
+        stdio: 'inherit'
+    });
+    console.log('Análisis estático completado.');
+} catch (error) {
+    console.error('El análisis estático detectó errores críticos de política editorial. Compilación abortada.');
+    process.exit(1);
+}
+
+// Paso previo 2: capturar PNGs si la guía usa figuras HTML
 const screenshotScript = path.join(dir, 'figure', 'screenshot.mjs');
 if (fs.existsSync(screenshotScript)) {
     console.log('figure/screenshot.mjs detectado: capturando PNGs antes de compilar...');

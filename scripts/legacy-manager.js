@@ -21,9 +21,15 @@ if (!fs.existsSync(absolutePath)) {
     process.exit(1);
 }
 
-// Crear carpeta legacy si no existe
-if (!fs.existsSync(legacyPath)) {
-    fs.mkdirSync(legacyPath, { recursive: true });
+// Generar subcarpeta con marca de tiempo para evitar colisiones
+const now = new Date();
+const pad = (n) => String(n).padStart(2, '0');
+const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+const runLegacyPath = path.join(legacyPath, `archive_${timestamp}`);
+
+// Crear carpetas legacy y subcarpeta si no existen
+if (!fs.existsSync(runLegacyPath)) {
+    fs.mkdirSync(runLegacyPath, { recursive: true });
 }
 
 // Leer archivos en la carpeta de la semana
@@ -31,13 +37,13 @@ const files = fs.readdirSync(absolutePath);
 
 files.forEach(file => {
     const oldPath = path.join(absolutePath, file);
-    const newPath = path.join(legacyPath, file);
+    const newPath = path.join(runLegacyPath, file);
 
     // No mover la propia carpeta legacy ni archivos ocultos/configuración
     if (file !== 'legacy' && !file.startsWith('.')) {
-        console.log(`Moviendo ${file} a legacy...`);
+        console.log(`Moviendo ${file} a legacy/archive_${timestamp}...`);
         fs.renameSync(oldPath, newPath);
     }
 });
 
-console.log("Mantenimiento de legado completado con éxito.");
+console.log(`Mantenimiento de legado completado con éxito. Archivos guardados en: legacy/archive_${timestamp}`);
