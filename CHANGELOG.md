@@ -1,4 +1,12 @@
-# Changelog — instructional-designer-uide
+# Changelog — instructional-designer-skill
+
+## 10.3.1 — 2026-07-17
+
+- Agregado `package.json` con engines, scripts npm y metadatos del paquete.
+- Agregado `requirements.txt` con dependencia `pymupdf>=1.24.0`.
+- Agregadas issue templates de GitHub: bug report, feature request, institution config.
+- README: aclarado `[SKILL_PATH]` con rutas concretas por OS; agregado `pip install` previo al script Python.
+- CHANGELOG: corregido titulo (era `instructional-designer-uide`, debe ser `instructional-designer-skill`).
 
 ## 10.3 — 2026-06-16
 

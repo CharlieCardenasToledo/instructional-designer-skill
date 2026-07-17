@@ -162,6 +162,10 @@ sections/
 | `legacy-manager.js` | Archives current week content to a timestamped subfolder under `legacy/` (e.g. `legacy/archive_YYYY-MM-DD_HH-MM-SS`) to prevent collisions before restructuring. |
 | `pdf_cutter_template.py` | Extracts page ranges from source PDFs into `bibliografia/recortes_por_semana/semana-XX/`. |
 
+Replace `[SKILL_PATH]` with the path where you cloned the skill:
+- macOS/Linux: `~/.claude/skills/instructional-designer-skill`
+- Windows: `$env:USERPROFILE\.claude\skills\instructional-designer-skill`
+
 ```powershell
 # Run the style linter on a LaTeX guide
 node [SKILL_PATH]/scripts/latex-linter.js "01 MY_COURSE/semanas/semana-03/latex/guia-semana-03.tex"
@@ -173,6 +177,7 @@ node [SKILL_PATH]/scripts/latex-validator.js "01 MY_COURSE/semanas/semana-03/lat
 node [SKILL_PATH]/scripts/legacy-manager.js "01 MY_COURSE/semanas/semana-03"
 
 # Cut bibliography excerpts (edit cuts[] array first)
+pip install -r [SKILL_PATH]/requirements.txt   # first time only
 python [SKILL_PATH]/scripts/pdf_cutter_template.py
 ```
 
