@@ -1,24 +1,17 @@
 ---
 name: instructional-designer-skill
 description: "Evidence-based self-paced instructional design for higher education. Guides the model to create asynchronous courses, weekly guides in LaTeX, self-instructional modules, micro-content and aligned assessments (UDL 3.0, Backward Design, QM 7th Ed). Triggers: course, week, guide, module, self-instructional, pedagogical, instructional, unit, learning outcome, evidence, asynchronous, self-paced, rubric, assessment."
+version: "10.3"
+author: Charlie Cárdenas Toledo
 license: MIT
-metadata:
-  version: "10.3"
-  changelog: CHANGELOG.md
-  category: pedagogy-design
-  audience:
-    - instructional designers
-    - faculty
-    - academic coordinators
-institutional_context:
-  # ⚙️ CONFIGURE: Replace with your institution's details
-  institution: "YOUR_INSTITUTION_NAME"
-  campus: "YOUR_CAMPUS"
-  frameworks:
-    - UDL 3.0 (CAST, 2024)
-    - Backward Design
-    - Quality Matters 7th Ed
-    - WCAG 2.2
+tags:
+  - instructional-design
+  - latex
+  - education
+  - notebooklm
+  - udl
+  - backward-design
+  - quality-matters
 ---
 
 # SKILL: Evidence-Based Self-Paced Instructional Design
