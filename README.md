@@ -245,6 +245,15 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ---
 
+## Privacy Policy
+
+This plugin runs **entirely locally** on your computer. It does not collect, track, store, or transmit any personal data, telemetry, or codebase context to third-party servers.
+
+- **NotebookLM Queries**: All queries sent to NotebookLM are routed through your own configured NotebookLM MCP server instance. The plugin does not intercept, log, or forward these requests.
+- **Local Scripts**: All validation and utility scripts run locally on your machine (or within your local WSL environment) and do not connect to external APIs.
+
+---
+
 ## License
 
 MIT © 2026 — See [LICENSE](LICENSE) for details.
