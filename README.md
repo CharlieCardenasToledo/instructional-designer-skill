@@ -59,14 +59,31 @@ This skill guides Claude Code to produce **weekly self-instructional guides in L
 ### 1. Clone the repository
 
 ```bash
-# Option A: Into your Claude Code global skills directory
+# Option A: Personal skills (available across ALL your projects)
+# macOS / Linux
 git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
   ~/.claude/skills/instructional-designer-skill
 
-# Option B: Into your project's .agents directory (project-scoped)
-git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
-  .agents/skills/instructional-designer-skill
+# Windows (PowerShell)
+git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill `
+  "$env:USERPROFILE\.claude\skills\instructional-designer-skill"
 ```
+
+```bash
+# Option B: Project-scoped (only this project's .claude/skills/)
+git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
+  .claude/skills/instructional-designer-skill
+```
+
+> **After installation**, Claude Code detects the skill automatically — no restart needed if the `~/.claude/skills/` directory already existed.
+
+### Usage
+
+Once installed, you can invoke the skill in two ways inside Claude Code:
+
+- **Automatic**: Claude loads it when your request matches the `description` (e.g. "Create the week 3 guide for my database course")
+- **Manual slash command**: type `/instructional-designer-skill` in the chat
+
 
 ### 2. Configure your institution (required)
 
