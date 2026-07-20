@@ -1,12 +1,12 @@
 # Plantilla LaTeX — Preamble, Bloques y Patrones Canónicos
 
-Referencia de la skill `instructional-designer-uide`. Leer cuando la tarea implique crear o editar el archivo principal, la introducción, secciones de teoría, el estudio de caso o tablas comparativas.
+Referencia de la skill `instructional-designer-skill`. Leer cuando la tarea implique crear o editar el archivo principal, la introducción, secciones de teoría, el estudio de caso o tablas comparativas.
 
 ---
 
 ## Plantilla Principal: `guia-semanaXX.tex`
 
-Este archivo es el orquestador del documento. **Nunca contiene contenido didáctico**: solo preamble, definiciones y secuencia de `\input`. El patrón base es la plantilla del curso LTI_05A_458 Semana 02; sin embargo, **la semana compilada más reciente del mismo curso manda** sobre este documento si difieren (ver Regla de plantilla de facto en SKILL.md). Adiciones específicas de curso ya observadas: clase compartida en `semanas/_shared/latex/`, paquete `siunitx` con separadores en español, y `\fancyfoot` con logo UIDE y número de página.
+Este archivo es el orquestador del documento. **Nunca contiene contenido didáctico**: solo preamble, definiciones y secuencia de `\input`. El patrón base es la primera semana compilada del curso; sin embargo, **la semana compilada más reciente del mismo curso manda** sobre este documento si difieren (ver Regla de plantilla de facto en SKILL.md). Adiciones específicas de curso ya observadas: clase compartida en `semanas/_shared/latex/`, paquete `siunitx` con separadores en español, y `\fancyfoot` con logo institucional y número de página.
 
 ### Clase de documento y opciones
 
@@ -154,12 +154,12 @@ Este archivo es el orquestador del documento. **Nunca contiene contenido didáct
 
 \frontmatter
 \fancyhead{}
-\fancyhead[LO]{\color{structurecolor}\small Elaborado por: Mgtr. Charlie Cárdenas Toledo, Ing.}
+\fancyhead[LO]{\color{structurecolor}\small Elaborado por: [Tu nombre con grado académico]}
 \fancyhead[RO]{\color{structurecolor}\small Carrera: [Nombre de la carrera]}
 \renewcommand{\headrulewidth}{0.8pt}
 \fancypagestyle{plain}{
   \fancyhead{}
-  \fancyhead[LO]{\color{structurecolor}\small Elaborado por: Mgtr. Charlie Cárdenas Toledo, Ing.}
+  \fancyhead[LO]{\color{structurecolor}\small Elaborado por: [Tu nombre con grado académico]}
   \fancyhead[RO]{\color{structurecolor}\small Carrera: [Nombre de la carrera]}
   \renewcommand{\headrulewidth}{0.8pt}
 }
@@ -351,7 +351,7 @@ Descripción técnica de la mala práctica y su impacto operativo concreto.
 
 ## Patrón Canónico del Estudio de Caso (`XX-escenario.tex`)
 
-El estudio de caso es una sección de **síntesis** que aparece **después de todas las secciones de teoría** y antes de la aplicación. Su función es demostrar cómo los conceptos de la semana resuelven un problema institucional concreto de la UIDE.
+El estudio de caso es una sección de **síntesis** que aparece **después de todas las secciones de teoría** y antes de la aplicación. Su función es demostrar cómo los conceptos de la semana resuelven un problema institucional concreto (usando el ecosistema configurado en el Paso 0 del flujo de arranque).
 
 ```latex
 \guidesection{Estudio de Caso: [Título descriptivo del análisis]}
@@ -359,7 +359,7 @@ El estudio de caso es una sección de **síntesis** que aparece **después de to
 \begin{accentblock}
 {\bfseries \iconidea\hspace{0.5em}[Título del análisis institucional]}\par
 Descripción del contexto institucional concreto (matrícula, pagos, aulas virtuales,
-autenticación, etc.). Nombrar el sistema o proceso específico de la UIDE.
+autenticación, etc.). Nombrar el sistema o proceso específico de tu institución.
 
 \textbf{[Evaluación o análisis técnico]:} Texto introductorio al análisis.
 \begin{itemize}
@@ -376,7 +376,7 @@ operativo institucional. Máximo 2 oraciones.
 
 **Reglas:**
 - La sección usa **un único `accentblock`** grande que concentra todo el análisis.
-- Los bullets conectan cada concepto de la semana con una aplicación específica e identificable del ecosistema UIDE.
+- Los bullets conectan cada concepto de la semana con una aplicación específica e identificable del ecosistema institucional configurado.
 - Los ejemplos no repiten los ya usados en las secciones de teoría — deben ser casos nuevos o extensiones del mismo escenario con datos distintos.
 - No usar `\begin{figure}` salvo que un diagrama sea indispensable para el análisis.
 - El archivo puede llamarse `XX-escenario.tex` o `XX-estudio-de-caso.tex`.

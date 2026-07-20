@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Legacy Manager - UIDE Instructional Design Skill
+ * Legacy Manager - Instructional Design Skill
  * Mueve el contenido actual de una carpeta de semana a 'legacy' antes de reestructurar.
  */
 

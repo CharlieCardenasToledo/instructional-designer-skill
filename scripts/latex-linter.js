@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * LaTeX Linter - UIDE Instructional Design Skill
+ * LaTeX Linter - Instructional Design Skill
  * Realiza un análisis estático de las guías LaTeX para asegurar el cumplimiento
  * de la política editorial y de los principios de diseño instruccional (R1, R2, D2, etc.).
  */

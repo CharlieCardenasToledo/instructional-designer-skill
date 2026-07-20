@@ -1,6 +1,6 @@
 # Bibliografía — Citas, Política de Evidencia y Workflow NotebookLM
 
-Referencia de la skill `instructional-designer-uide`. Leer siempre que la tarea implique redactar contenido con respaldo bibliográfico o construir la sección de referencias.
+Referencia de la skill `instructional-designer-skill`. Leer siempre que la tarea implique redactar contenido con respaldo bibliográfico o construir la sección de referencias.
 
 ---
 

@@ -1,6 +1,6 @@
 # Figuras HTML — Mock-ups de Interfaz y Captura a PNG
 
-Referencia de la skill `instructional-designer-uide`. Leer cuando la guía requiera figuras de interfaz de usuario (apps móviles, portales web), típicamente en cursos de HCI.
+Referencia de la skill `instructional-designer-skill`. Leer cuando la guía requiera figuras de interfaz de usuario (apps móviles, portales web), típicamente en cursos de HCI.
 
 ---
 

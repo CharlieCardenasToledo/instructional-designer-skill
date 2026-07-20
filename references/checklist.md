@@ -1,6 +1,6 @@
 # Checklist Final Obligatorio
 
-Referencia de la skill `instructional-designer-uide`. Ejecutar esta verificación completa antes de entregar cualquier guía generada o editada.
+Referencia de la skill `instructional-designer-skill`. Ejecutar esta verificación completa antes de entregar cualquier guía generada o editada.
 
 **Flujo de arranque**
 - [ ] El `README.md` del curso fue leído antes de comenzar la generación.

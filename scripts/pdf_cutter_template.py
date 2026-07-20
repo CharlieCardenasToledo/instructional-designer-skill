@@ -1,7 +1,7 @@
 import fitz # PyMuPDF
 import os
 
-# PDF Cutter Template - UIDE Instructional Design Skill
+# PDF Cutter Template - Instructional Design Skill
 # Extrae rangos de paginas de los libros en bibliografia/ y los guarda como
 # lecturas semanales en bibliografia/recortes_por_semana/semana-XX/
 # (la misma carpeta que consulta la Politica de Evidencia en references/bibliografia.md).

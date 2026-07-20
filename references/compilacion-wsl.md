@@ -1,6 +1,6 @@
 # Compilación LaTeX via WSL y Scripts Auxiliares
 
-Referencia de la skill `instructional-designer-uide`. Leer cuando haya que compilar una guía, exportar figuras o usar los scripts de la carpeta `scripts/`.
+Referencia de la skill `instructional-designer-skill`. Leer cuando haya que compilar una guía, exportar figuras o usar los scripts de la carpeta `scripts/`.
 
 ---
 

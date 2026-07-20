@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * LaTeX Validator - UIDE Instructional Design Skill
+ * LaTeX Validator - Instructional Design Skill
  * Si existe figure/screenshot.mjs, captura primero los PNG de las figuras HTML.
  * Luego compila la guía con la secuencia completa de 3 pasadas via WSL:
  * pdflatex -> biber -> pdflatex -> pdflatex

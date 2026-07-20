@@ -41,6 +41,28 @@ Este archivo contiene el flujo de trabajo y las reglas editoriales. El detalle t
 
 Este flujo es obligatorio cada vez que se genera o edita una guía semanal, independientemente de si la carpeta ya existe.
 
+### Paso 0: Verificar configuración institucional (primera vez)
+
+Antes de cualquier otra acción, leer `references/plantilla-latex.md` y verificar si aún existen valores placeholder (texto entre corchetes como `[Tu nombre completo con grado académico]`, `[Nombre de la carrera]`, `[Nombre de tu institución]`, o valores RGB de ejemplo como `RGB{0,121,107}`).
+
+**Si se detectan placeholders sin reemplazar**, solicitar al usuario los siguientes datos antes de continuar:
+
+1. **Nombre completo del autor con grado académico** (ej. `Mgtr. Ana López, Ing.`)
+2. **Nombre de la carrera** (ej. `Ingeniería en Sistemas`)
+3. **Facultad o Escuela** (ej. `Facultad de Tecnología`)
+4. **Nombre de la institución** (ej. `Universidad Nacional Ejemplo`)
+5. **Color institucional primario en RGB** — tres valores separados por coma (ej. `0,121,107`). Si el usuario no sabe el valor exacto, sugerir que consulte el manual de identidad visual de su institución o la hoja de estilos del sitio web oficial.
+6. **Ecosistema digital institucional** — sistemas y procesos que los estudiantes reconocen como propios de su contexto. Ejemplos de categorías a completar: LMS (Canvas, Moodle u otro), sistemas de pagos y becas, autenticación e identidad, servicios administrativos. El usuario puede proporcionar nombres específicos de sus sistemas.
+
+Con los datos recibidos, actualizar en `references/plantilla-latex.md`:
+- Los metadatos de `\author{}`, `\institute{}`, `\extrainfo{}` con nombre, carrera e institución reales.
+- Los tres valores RGB de `weekaccent`, `structurecolor` y `main` con el color institucional.
+- La sección **Anclaje Institucional** en `SKILL.md` con el ecosistema digital proporcionado.
+
+Confirmar al usuario que la configuración quedó guardada y que no se volverá a pedir en sesiones futuras.
+
+**Si no se detectan placeholders**, omitir este paso por completo y continuar al Paso 1.
+
 ### Paso 1: Leer el sílabo canónico
 
 **Antes de generar cualquier contenido**, leer el archivo `README.md` en la raíz de la carpeta del curso. Este archivo es la fuente canónica del sílabo: contiene temas, resultados de aprendizaje, actividades calificadas y bibliografía por semana. Las carpetas raíz por asignatura están en la tabla de Registros de NotebookLM (`references/bibliografia.md`).
@@ -198,7 +220,7 @@ El orden de `\input` en el archivo principal define el flujo pedagógico. El nom
 |---|---|---|
 | 1 | `01-introduccion.tex` | Apertura editorial, contexto, alineación ASU. Sin RA ni listas de objetivos. |
 | 2 … N | `02-[tema].tex`, `03-[tema].tex`, … | Desarrollo teórico. Cada archivo aborda una distinción, patrón o concepto. Activación inline mediante `accentblock`. |
-| N+1 | `XX-escenario.tex` | Estudio de caso síntesis: los conceptos de la semana aplicados al ecosistema UIDE. Siempre **después** de toda la teoría. |
+| N+1 | `XX-escenario.tex` | Estudio de caso síntesis: los conceptos de la semana aplicados al ecosistema institucional configurado en el Paso 0. Siempre **después** de toda la teoría. |
 | N+2 | `YY-aplicacion.tex` | Preguntas de recuperación (retrieval practice) y guía de transferencia profesional. Sin actividades calificadas. |
 | N+3 | `NN-bibliografia.tex` | Referencias. Numeración secuencial (ver Paso 5). |
 

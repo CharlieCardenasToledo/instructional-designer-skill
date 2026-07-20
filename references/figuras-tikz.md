@@ -1,6 +1,6 @@
 # Figuras TikZ — Paleta, Notación Chen y Exportación PNG
 
-Referencia de la skill `instructional-designer-uide`. Leer cuando la tarea implique crear o editar diagramas TikZ, modelos ER o exportar figuras como PNG.
+Referencia de la skill `instructional-designer-skill`. Leer cuando la tarea implique crear o editar diagramas TikZ, modelos ER o exportar figuras como PNG.
 
 ---
 
