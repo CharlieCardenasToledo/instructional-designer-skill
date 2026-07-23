@@ -1,5 +1,9 @@
 # instructional-designer-skill
 
+<p align="right">
+  <a href="README.es.md">🇪🇸 Leer en Español</a>
+</p>
+
 > **Claude Code skill** for evidence-based, self-paced instructional design.  
 > Creates weekly LaTeX guides, self-instructional modules, and aligned assessments for higher education — with NotebookLM MCP integration.
 
@@ -184,6 +188,14 @@ node [SKILL_PATH]/scripts/legacy-manager.js "01 MY_COURSE/semanas/semana-03"
 pip install -r [SKILL_PATH]/requirements.txt   # first time only
 python [SKILL_PATH]/scripts/pdf_cutter_template.py
 ```
+
+---
+
+## Using with Claude Desktop and CoWork
+
+For step-by-step instructions on using this skill from **Claude Desktop** (Projects) or **Claude Cowork** — including MCP setup, team sharing, and the full production workflow — see the dedicated guide:
+
+📄 **[docs/guia-claude-desktop.md](docs/guia-claude-desktop.md)**
 
 ---
 

@@ -1,5 +1,10 @@
 # instructional-designer-skill
 
+<p align="right">
+  <a href="README.md">🇺🇸 Read in English</a> &nbsp;|&nbsp;
+  <a href="docs/guia-claude-desktop.md">📖 Guía Claude Desktop y CoWork</a>
+</p>
+
 > **Skill de Claude Code** para diseño instruccional autodirigido basado en evidencia.  
 > Crea guías didácticas semanales en LaTeX, módulos de autoaprendizaje y evaluaciones alineadas para educación superior — con integración de NotebookLM MCP.
 
