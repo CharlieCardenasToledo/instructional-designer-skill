@@ -343,9 +343,36 @@ window.saveSyllabus = async function() {
 };
 
 // ── PAGE: NOTEBOOKLM ───────────────────────────────────────────────────────
-function renderNotebookLM() {
+async function renderNotebookLM() {
+  // 1. Verificar sesión via JSON-RPC al MCP
+  const authDot  = document.getElementById("auth-dot");
+  const authText = document.getElementById("auth-status-text");
+
+  if (authDot) {
+    authDot.className = "status-dot loading";
+    authText.textContent = "Verificando sesión...";
+  }
+
+  let authStatus = { authenticated: false, message: "Verificando..." };
+  try {
+    authStatus = await invoke("check_notebooklm_auth");
+  } catch { /* MCP no instalado aún */ }
+
+  if (authDot) {
+    authDot.className = `status-dot ${authStatus.authenticated ? "ok" : "err"}`;
+    authText.textContent = authStatus.message;
+  }
+
+  // 2. Mostrar advertencia si no hay sesión
+  const warning = document.getElementById("auth-warning");
+  if (warning) {
+    warning.style.display = authStatus.authenticated ? "none" : "block";
+  }
+
+  // 3. Renderizar lista de notebooks
   const notebooks = JSON.parse(localStorage.getItem("ids_notebooks") || "[]");
   const container = document.getElementById("notebook-list");
+  if (!container) return;
 
   if (!notebooks.length) {
     container.innerHTML = '<div class="text-muted" style="padding:16px 0">No hay notebooks registrados.</div>';
@@ -355,7 +382,7 @@ function renderNotebookLM() {
         <div class="dep-info">
           <div>
             <div class="dep-name">${n.course}</div>
-            <div class="dep-version">ID: ${n.id} · ${n.url ? '<a href="#" style="color:var(--teal-light)">Abrir</a>' : 'Sin URL'}</div>
+            <div class="dep-version">ID: ${n.id} · ${n.url ? `<span style="color:var(--teal-light)">${n.url.slice(0,40)}…</span>` : 'Sin URL'}</div>
           </div>
         </div>
         <button class="btn btn-sm btn-danger" onclick="deleteNotebook(${i})">✕</button>
@@ -428,17 +455,22 @@ window.copyNotebookConfig = function() {
 
 // ── PAGE: ACTIVATE ────────────────────────────────────────────────────────
 async function renderActivate() {
-  let status;
+  let status, authStatus;
   try {
-    status = await invoke("get_setup_status");
+    [status, authStatus] = await Promise.all([
+      invoke("get_setup_status"),
+      invoke("check_notebooklm_auth"),
+    ]);
   } catch {
     status = { skill_installed: false, mcp_configured: false, institution_configured: false, skill_path: "~/.claude/skills/instructional-designer-skill", mcp_config_path: "" };
+    authStatus = { authenticated: false, message: "No verificado" };
   }
 
   const steps = [
     { id: "skill",       label: "Skill instalado en Claude",             ok: status.skill_installed,          detail: status.skill_path },
     { id: "mcp",         label: "NotebookLM MCP configurado",            ok: status.mcp_configured,           detail: status.mcp_config_path },
     { id: "institution", label: "Configuración institucional aplicada",  ok: status.institution_configured,   detail: "SKILL.md y plantilla-latex.md" },
+    { id: "auth",        label: "Sesión de NotebookLM activa",           ok: authStatus.authenticated,        detail: authStatus.message },
   ];
 
   const allDone = steps.every(s => s.ok);
@@ -476,6 +508,13 @@ window.runStep = async function(step) {
     try {
       const r = await invoke("configure_mcp");
       toast(r.message, r.success ? "success" : "error", 6000);
+    } catch(e) { toast(`Error: ${e}`, "error"); }
+
+  } else if (step === "auth") {
+    toast("Iniciando sesión en NotebookLM... Inicia sesión con tu cuenta Google en el navegador que se abrirá.", "info", 30000);
+    try {
+      const r = await invoke("run_notebooklm_auth");
+      toast(r.message, r.success ? "success" : "error", 7000);
     } catch(e) { toast(`Error: ${e}`, "error"); }
 
   } else if (step === "institution") {
@@ -782,6 +821,12 @@ function render() {
               <button class="btn btn-primary" onclick="addNotebook()">+ Registrar</button>
             </div>
           </div>
+          <!-- Banner de advertencia: sin sesión no se puede usar el skill -->
+          <div id="auth-warning" style="display:none;background:rgba(248,81,73,0.08);border:1px solid rgba(248,81,73,0.3);border-radius:10px;padding:14px 18px;margin-bottom:16px;color:#f85149;">
+            ⚠️ <strong>Sin sesión activa</strong> — El skill fallará en el Paso 2 al intentar consultar NotebookLM.
+            Inicia sesión antes de usar el skill en Claude Desktop.
+          </div>
+
           <div class="card">
             <div class="card-title">🔐 Sesión de Google (requerida)</div>
             <p class="text-muted mb-12">

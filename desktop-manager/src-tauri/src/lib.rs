@@ -537,50 +537,129 @@ async fn get_setup_status() -> SetupStatus {
 }
 
 // ── Autenticación NotebookLM MCP ───────────────────────────────────────────
+
+#[derive(Serialize)]
+struct NotebookLMAuthStatus {
+    authenticated: bool,
+    message: String,
+}
+
+/// Llama al get_health del MCP via JSON-RPC en subproceso para saber si hay sesión activa.
+/// Es la única forma fiable — no depende de rutas de cookies que cambian entre versiones.
 #[tauri::command]
-async fn check_notebooklm_auth() -> bool {
-    let home = std::env::var("USERPROFILE")
-        .or_else(|_| std::env::var("HOME"))
-        .unwrap_or_default();
+async fn check_notebooklm_auth() -> NotebookLMAuthStatus {
+    use std::io::Write;
+    use std::process::Stdio;
 
-    // El MCP de NotebookLM guarda cookies en estas rutas según el OS
-    let cookie_paths = vec![
-        format!("{}/AppData/Roaming/notebooklm-mcp/cookies.json", home),
-        format!("{}/.config/notebooklm-mcp/cookies.json", home),
-        format!("{}/Library/Application Support/notebooklm-mcp/cookies.json", home),
-        // Algunas versiones usan puppeteer-core con perfil de Chrome
-        format!("{}/AppData/Local/notebooklm-mcp/Default/Cookies", home),
-    ];
+    // Levantar el proceso MCP
+    let mut child = match Command::new("npx")
+        .args(["-y", "notebooklm-mcp"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(c) => c,
+        Err(_) => return NotebookLMAuthStatus {
+            authenticated: false,
+            message: "notebooklm-mcp no está instalado. Instala Node.js primero.".into(),
+        },
+    };
 
-    cookie_paths.iter().any(|p| std::path::Path::new(p).exists())
+    // Protocolo MCP: primero initialize, luego tools/call get_health
+    let initialize = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ids-manager","version":"0.1"}}}"#;
+    let get_health = r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_health","arguments":{}}}"#;
+
+    if let Some(stdin) = child.stdin.as_mut() {
+        let _ = writeln!(stdin, "{}", initialize);
+        let _ = writeln!(stdin, "{}", get_health);
+    }
+
+    // Leer respuesta con timeout de 8 segundos
+    let output = {
+        let handle = child.stdout.take();
+        let result = std::thread::spawn(move || {
+            use std::io::BufRead;
+            let mut lines = Vec::new();
+            if let Some(out) = handle {
+                let reader = std::io::BufReader::new(out);
+                for line in reader.lines().take(10) {
+                    if let Ok(l) = line { lines.push(l); }
+                }
+            }
+            lines
+        });
+        std::thread::sleep(std::time::Duration::from_secs(8));
+        let _ = child.kill();
+        result.join().unwrap_or_default()
+    };
+
+    // Buscar la respuesta de get_health (id:2) y extraer "authenticated"
+    for line in &output {
+        if line.contains("\"id\":2") || line.contains("authenticated") {
+            // authenticated: true → sesión activa
+            if line.contains("\"authenticated\":true") || line.contains("\"authenticated\": true") {
+                return NotebookLMAuthStatus {
+                    authenticated: true,
+                    message: "Sesión activa — NotebookLM MCP puede consultar tus notebooks.".into(),
+                };
+            }
+            // authenticated: false → sin sesión
+            if line.contains("\"authenticated\":false") || line.contains("\"authenticated\": false") {
+                return NotebookLMAuthStatus {
+                    authenticated: false,
+                    message: "Sin sesión activa. Debes iniciar sesión antes de usar el skill.".into(),
+                };
+            }
+        }
+    }
+
+    // Sin respuesta clara → MCP instalado pero no autenticado
+    NotebookLMAuthStatus {
+        authenticated: false,
+        message: "No se pudo verificar la sesión. Usa el botón de abajo para iniciar sesión.".into(),
+    }
 }
 
 #[tauri::command]
 async fn run_notebooklm_auth() -> InstallResult {
-    // Ejecutar `npx notebooklm-mcp` que lanza el flujo de auth con Playwright
-    // El proceso abre Chrome, el usuario inicia sesión y las cookies se guardan
-    let status = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(["/C", "npx", "-y", "notebooklm-mcp", "--auth"])
-            .status()
-    } else {
-        Command::new("npx")
-            .args(["-y", "notebooklm-mcp", "--auth"])
-            .status()
+    // El MCP expone setup_auth como herramienta, pero para lanzarlo desde la app
+    // lo más fiable es ejecutar npx notebooklm-mcp en modo interactivo y dejar
+    // que el proceso abra el browser para que el usuario inicie sesión.
+    use std::process::Stdio;
+
+    let child = Command::new("npx")
+        .args(["-y", "notebooklm-mcp"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn();
+
+    let mut child = match child {
+        Ok(c) => c,
+        Err(e) => return InstallResult { success: false, message: format!("Error iniciando MCP: {}", e) },
     };
 
-    match status {
-        Ok(s) if s.success() => InstallResult {
-            success: true,
-            message: "Sesión de NotebookLM guardada. El skill puede consultar tus notebooks automáticamente.".into(),
-        },
-        _ => {
-            // Si --auth no existe en esta versión, intentar el flujo setup_auth via MCP
-            InstallResult {
-                success: false,
-                message: "Para autenticar manualmente: en Claude Desktop escribe /instructional-designer-skill y el skill ejecutará setup_auth automáticamente al inicio de la sesión.".into(),
-            }
-        }
+    // Enviar initialize + setup_auth
+    use std::io::Write;
+    let initialize = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"ids-manager","version":"0.1"}}}"#;
+    let setup_auth = r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"setup_auth","arguments":{}}}"#;
+
+    if let Some(stdin) = child.stdin.as_mut() {
+        let _ = writeln!(stdin, "{}", initialize);
+        let _ = writeln!(stdin, "{}", setup_auth);
+    }
+
+    // Esperar hasta 3 min (el usuario necesita tiempo para iniciar sesión en el browser)
+    std::thread::sleep(std::time::Duration::from_secs(180));
+    let _ = child.kill();
+
+    // Verificar si ahora está autenticado
+    let status = check_notebooklm_auth().await;
+    if status.authenticated {
+        InstallResult { success: true, message: "Sesión iniciada correctamente. El skill ya puede consultar tus notebooks.".into() }
+    } else {
+        InstallResult { success: false, message: "No se pudo confirmar la sesión. Intenta de nuevo o inicia sesión manualmente desde Claude Desktop.".into() }
     }
 }
 
