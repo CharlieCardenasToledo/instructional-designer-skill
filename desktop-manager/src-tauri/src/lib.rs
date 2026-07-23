@@ -299,6 +299,291 @@ fn build_syllabus_md(
     md
 }
 
+// ── Instalar skill en ~/.claude/skills/ ───────────────────────────────────
+#[tauri::command]
+async fn install_skill() -> InstallResult {
+    let home = std::env::var("USERPROFILE")
+        .or_else(|_| std::env::var("HOME"))
+        .unwrap_or_default();
+
+    let skills_dir = format!("{}/.claude/skills", home);
+    let skill_dir  = format!("{}/instructional-designer-skill", skills_dir);
+
+    // Crear directorio de skills si no existe
+    if let Err(e) = std::fs::create_dir_all(&skills_dir) {
+        return InstallResult { success: false, message: format!("No se pudo crear {}: {}", skills_dir, e) };
+    }
+
+    // Si ya existe, solo actualizar con git pull
+    if std::path::Path::new(&skill_dir).exists() {
+        let status = Command::new("git")
+            .args(["-C", &skill_dir, "pull", "origin", "master"])
+            .status();
+        return match status {
+            Ok(s) if s.success() => InstallResult { success: true, message: format!("Skill actualizado en:\n{}", skill_dir) },
+            _ => InstallResult { success: true, message: format!("Skill ya estaba instalado en:\n{}\n(No se pudo actualizar — sin conexión o sin Git)", skill_dir) },
+        };
+    }
+
+    // Intentar clonar con git primero
+    if command_exists("git") {
+        let status = Command::new("git")
+            .args(["clone", "https://github.com/CharlieCardenasToledo/instructional-designer-skill", &skill_dir])
+            .status();
+        if let Ok(s) = status {
+            if s.success() {
+                return InstallResult { success: true, message: format!("Skill instalado en:\n{}", skill_dir) };
+            }
+        }
+    }
+
+    // Fallback: descargar ZIP via PowerShell
+    #[cfg(target_os = "windows")]
+    {
+        let zip_path = format!("{}/.claude/skills/ids-skill.zip", home);
+        let ps_cmd = format!(
+            "Invoke-WebRequest -Uri 'https://github.com/CharlieCardenasToledo/instructional-designer-skill/archive/refs/heads/master.zip' -OutFile '{}'; \
+             Expand-Archive -Path '{}' -DestinationPath '{}'; \
+             Rename-Item -Path '{}/instructional-designer-skill-master' -NewName 'instructional-designer-skill'; \
+             Remove-Item '{}'",
+            zip_path, zip_path, skills_dir, skills_dir, zip_path
+        );
+        let status = Command::new("powershell")
+            .args(["-NoProfile", "-Command", &ps_cmd])
+            .status();
+        return match status {
+            Ok(s) if s.success() => InstallResult { success: true, message: format!("Skill instalado (ZIP) en:\n{}", skill_dir) },
+            _ => InstallResult { success: false, message: "No se pudo descargar el skill. Verifica tu conexión a internet.".into() },
+        };
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    InstallResult { success: false, message: "Instala Git e inténtalo de nuevo.".into() }
+}
+
+// ── Configurar MCP en Claude Desktop ──────────────────────────────────────
+#[derive(Serialize, Deserialize)]
+struct McpConfig {
+    #[serde(rename = "mcpServers")]
+    mcp_servers: std::collections::HashMap<String, McpServer>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+struct McpServer {
+    command: String,
+    args: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    env: Option<std::collections::HashMap<String, String>>,
+}
+
+#[tauri::command]
+async fn configure_mcp() -> InstallResult {
+    // Rutas del config de Claude Desktop
+    let config_path = {
+        #[cfg(target_os = "windows")]
+        {
+            let appdata = std::env::var("APPDATA").unwrap_or_default();
+            format!("{}/Claude/claude_desktop_config.json", appdata)
+        }
+        #[cfg(target_os = "macos")]
+        {
+            let home = std::env::var("HOME").unwrap_or_default();
+            format!("{}/Library/Application Support/Claude/claude_desktop_config.json", home)
+        }
+        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+        {
+            let home = std::env::var("HOME").unwrap_or_default();
+            format!("{}/.config/claude/claude_desktop_config.json", home)
+        }
+    };
+
+    // Crear directorio si no existe
+    if let Some(parent) = std::path::Path::new(&config_path).parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+
+    // Leer config existente o crear vacía
+    let mut config: McpConfig = std::fs::read_to_string(&config_path)
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_else(|| McpConfig { mcp_servers: std::collections::HashMap::new() });
+
+    // Agregar notebooklm MCP si no existe
+    if !config.mcp_servers.contains_key("notebooklm") {
+        config.mcp_servers.insert("notebooklm".into(), McpServer {
+            command: "npx".into(),
+            args: vec!["-y".into(), "notebooklm-mcp".into()],
+            env: None,
+        });
+    }
+
+    // Escribir config actualizado
+    match serde_json::to_string_pretty(&config) {
+        Ok(json) => match std::fs::write(&config_path, json) {
+            Ok(_) => InstallResult {
+                success: true,
+                message: format!("NotebookLM MCP configurado en:\n{}\n\nReinicia Claude Desktop para aplicar los cambios.", config_path),
+            },
+            Err(e) => InstallResult { success: false, message: format!("Error escribiendo config: {}", e) },
+        },
+        Err(e) => InstallResult { success: false, message: format!("Error serializando config: {}", e) },
+    }
+}
+
+// ── Aplicar configuración institucional en archivos del skill ──────────────
+#[derive(Serialize, Deserialize)]
+struct InstitutionConfig {
+    author: String,
+    degree: String,
+    career: String,
+    faculty: String,
+    institution: String,
+    color_r: u8,
+    color_g: u8,
+    color_b: u8,
+    ecosystem: String,
+}
+
+#[tauri::command]
+async fn apply_institution_config(config: InstitutionConfig) -> InstallResult {
+    let home = std::env::var("USERPROFILE")
+        .or_else(|_| std::env::var("HOME"))
+        .unwrap_or_default();
+    let skill_dir = format!("{}/.claude/skills/instructional-designer-skill", home);
+
+    // ── 1. Actualizar plantilla-latex.md ──────────────────────────────────
+    let latex_path = format!("{}/references/plantilla-latex.md", skill_dir);
+    if let Ok(mut content) = std::fs::read_to_string(&latex_path) {
+        // Reemplazar marcadores de autor e institución
+        let replacements = [
+            ("YOUR_FULL_NAME, Your_Degree",    format!("{}, {}", config.author, config.degree)),
+            ("Your_Degree",                    config.degree.clone()),
+            ("Your Full Name",                 config.author.clone()),
+            ("Carrera de\\\\YOUR_CAREER",      format!("Carrera de\\\\{}", config.career)),
+            ("YOUR_FACULTY\\\\YOUR_INSTITUTION", format!("{}\\\\{}", config.faculty, config.institution)),
+            ("YOUR_INSTITUTION_NAME",          config.institution.clone()),
+            // Color institucional
+            ("RGB}{0,121,107}",                format!("RGB}}{{{},{},{}}}", config.color_r, config.color_g, config.color_b)),
+        ];
+        for (old, new) in &replacements {
+            content = content.replace(old, new);
+        }
+        let _ = std::fs::write(&latex_path, &content);
+    }
+
+    // ── 2. Actualizar SKILL.md (anclaje institucional) ────────────────────
+    let skill_md_path = format!("{}/SKILL.md", skill_dir);
+    if let Ok(mut content) = std::fs::read_to_string(&skill_md_path) {
+        content = content.replace("YOUR_INSTITUTION_NAME", &config.institution);
+        content = content.replace("YOUR_CAREER", &config.career);
+        content = content.replace("YOUR_FACULTY", &config.faculty);
+        if !config.ecosystem.is_empty() {
+            // Reemplazar bloque de ecosistema genérico
+            let eco_lines: String = config.ecosystem.lines()
+                .map(|l| format!("- {}", l))
+                .collect::<Vec<_>>()
+                .join("\n");
+            content = content.replace(
+                "- LMS institucional (ej: Moodle, Canvas, Blackboard)\n- Sistema de videoconferencia\n- Correo institucional",
+                &eco_lines
+            );
+        }
+        let _ = std::fs::write(&skill_md_path, &content);
+    }
+
+    InstallResult {
+        success: true,
+        message: format!(
+            "Configuración aplicada en el skill:\n• {}/references/plantilla-latex.md\n• {}/SKILL.md\n\nClaude Desktop detectará los cambios en la próxima sesión.",
+            skill_dir, skill_dir
+        ),
+    }
+}
+
+// ── Estado completo de configuración ──────────────────────────────────────
+#[derive(Serialize)]
+struct SetupStatus {
+    skill_installed: bool,
+    mcp_configured: bool,
+    institution_configured: bool,
+    skill_path: String,
+    mcp_config_path: String,
+}
+
+#[tauri::command]
+async fn get_setup_status() -> SetupStatus {
+    let home = std::env::var("USERPROFILE")
+        .or_else(|_| std::env::var("HOME"))
+        .unwrap_or_default();
+
+    let skill_path = format!("{}/.claude/skills/instructional-designer-skill", home);
+    let skill_installed = std::path::Path::new(&format!("{}/SKILL.md", skill_path)).exists();
+
+    #[cfg(target_os = "windows")]
+    let mcp_config_path = format!("{}/Claude/claude_desktop_config.json", std::env::var("APPDATA").unwrap_or_default());
+    #[cfg(not(target_os = "windows"))]
+    let mcp_config_path = format!("{}/Library/Application Support/Claude/claude_desktop_config.json", home);
+
+    let mcp_configured = std::fs::read_to_string(&mcp_config_path)
+        .map(|s| s.contains("notebooklm"))
+        .unwrap_or(false);
+
+    // Verificar si la config institucional fue aplicada (no hay placeholder)
+    let institution_configured = std::fs::read_to_string(format!("{}/SKILL.md", skill_path))
+        .map(|s| !s.contains("YOUR_INSTITUTION_NAME"))
+        .unwrap_or(false);
+
+    SetupStatus { skill_installed, mcp_configured, institution_configured, skill_path, mcp_config_path }
+}
+
+// ── Autenticación NotebookLM MCP ───────────────────────────────────────────
+#[tauri::command]
+async fn check_notebooklm_auth() -> bool {
+    let home = std::env::var("USERPROFILE")
+        .or_else(|_| std::env::var("HOME"))
+        .unwrap_or_default();
+
+    // El MCP de NotebookLM guarda cookies en estas rutas según el OS
+    let cookie_paths = vec![
+        format!("{}/AppData/Roaming/notebooklm-mcp/cookies.json", home),
+        format!("{}/.config/notebooklm-mcp/cookies.json", home),
+        format!("{}/Library/Application Support/notebooklm-mcp/cookies.json", home),
+        // Algunas versiones usan puppeteer-core con perfil de Chrome
+        format!("{}/AppData/Local/notebooklm-mcp/Default/Cookies", home),
+    ];
+
+    cookie_paths.iter().any(|p| std::path::Path::new(p).exists())
+}
+
+#[tauri::command]
+async fn run_notebooklm_auth() -> InstallResult {
+    // Ejecutar `npx notebooklm-mcp` que lanza el flujo de auth con Playwright
+    // El proceso abre Chrome, el usuario inicia sesión y las cookies se guardan
+    let status = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(["/C", "npx", "-y", "notebooklm-mcp", "--auth"])
+            .status()
+    } else {
+        Command::new("npx")
+            .args(["-y", "notebooklm-mcp", "--auth"])
+            .status()
+    };
+
+    match status {
+        Ok(s) if s.success() => InstallResult {
+            success: true,
+            message: "Sesión de NotebookLM guardada. El skill puede consultar tus notebooks automáticamente.".into(),
+        },
+        _ => {
+            // Si --auth no existe en esta versión, intentar el flujo setup_auth via MCP
+            InstallResult {
+                success: false,
+                message: "Para autenticar manualmente: en Claude Desktop escribe /instructional-designer-skill y el skill ejecutará setup_auth automáticamente al inicio de la sesión.".into(),
+            }
+        }
+    }
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -310,6 +595,12 @@ pub fn run() {
             get_skill_path,
             create_course_structure,
             generate_syllabus,
+            install_skill,
+            configure_mcp,
+            apply_institution_config,
+            get_setup_status,
+            check_notebooklm_auth,
+            run_notebooklm_auth,
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

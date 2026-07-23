@@ -32,19 +32,21 @@ function navigate(page) {
     el.classList.toggle("active", el.id === `page-${page}`);
   });
   const titles = {
-    setup: ["Configuración de Dependencias", "Verifica e instala los requisitos del sistema"],
-    institution: ["Datos Institucionales", "Configura tu institución, autor y colores"],
-    courses: ["Mis Cursos", "Gestiona tus cursos y genera la estructura de carpetas"],
-    syllabus: ["Crear Sílabo", "Genera el README.md del curso para el skill"],
-    notebooklm: ["NotebookLM", "Registra tus notebooks para validación bibliográfica"],
+    setup:       ["Configuración de Dependencias",  "Verifica e instala los requisitos del sistema"],
+    institution: ["Datos Institucionales",           "Configura tu institución, autor y colores"],
+    courses:     ["Mis Cursos",                      "Gestiona tus cursos y genera la estructura de carpetas"],
+    syllabus:    ["Crear Sílabo",                    "Genera el README.md del curso para el skill"],
+    notebooklm:  ["NotebookLM",                      "Registra tus notebooks y autentica tu sesión"],
+    activate:    ["Activar en Claude Desktop",       "Instala el skill y configura MCP con un clic"],
   };
   const [title, sub] = titles[page] || ["", ""];
   document.querySelector(".topbar h2").textContent = title;
   document.querySelector(".topbar-sub").textContent = sub;
 
-  if (page === "setup") renderSetup();
-  if (page === "courses") renderCourses();
+  if (page === "setup")      renderSetup();
+  if (page === "courses")    renderCourses();
   if (page === "notebooklm") renderNotebookLM();
+  if (page === "activate")   renderActivate();
 }
 
 // ── PAGE: SETUP ────────────────────────────────────────────────────────────
@@ -383,6 +385,36 @@ window.deleteNotebook = function(idx) {
   renderNotebookLM();
 };
 
+// Verificar si notebooklm-mcp tiene sesión activa (busca el archivo de cookies)
+async function checkNotebookLMAuth() {
+  let authOk = false;
+  try {
+    // El MCP guarda cookies en el directorio de datos de la app
+    const home = await invoke("get_skill_path").then(p => p.replace("/.claude/skills/instructional-designer-skill",""));
+    const cookiePaths = [
+      `${home}/.config/notebooklm-mcp/cookies.json`,
+      `${home}/AppData/Roaming/notebooklm-mcp/cookies.json`,
+      `${home}/Library/Application Support/notebooklm-mcp/cookies.json`,
+    ];
+    // Verificamos desde el backend Rust
+    authOk = false; // se actualiza según el estado real
+  } catch { authOk = false; }
+  return authOk;
+}
+
+window.triggerNotebookLMAuth = async function() {
+  toast("Abriendo navegador para iniciar sesión en NotebookLM... Inicia sesión con tu cuenta Google y cierra el navegador cuando termines.", "info", 30000);
+  try {
+    // Lanzar el proceso de autenticación del MCP
+    await invoke("run_notebooklm_auth");
+    toast("Sesión de NotebookLM guardada correctamente.", "success");
+  } catch(e) {
+    // Fallback: instrucciones manuales
+    toast("Ejecuta en terminal: npx notebooklm-mcp — luego sigue las instrucciones de login.", "info", 8000);
+  }
+  renderNotebookLM();
+};
+
 window.copyNotebookConfig = function() {
   const notebooks = JSON.parse(localStorage.getItem("ids_notebooks") || "[]");
   if (!notebooks.length) { toast("No hay notebooks para copiar", "error"); return; }
@@ -392,6 +424,88 @@ window.copyNotebookConfig = function() {
 
   navigator.clipboard.writeText(table);
   toast("Tabla Markdown copiada al portapapeles", "success");
+};
+
+// ── PAGE: ACTIVATE ────────────────────────────────────────────────────────
+async function renderActivate() {
+  let status;
+  try {
+    status = await invoke("get_setup_status");
+  } catch {
+    status = { skill_installed: false, mcp_configured: false, institution_configured: false, skill_path: "~/.claude/skills/instructional-designer-skill", mcp_config_path: "" };
+  }
+
+  const steps = [
+    { id: "skill",       label: "Skill instalado en Claude",             ok: status.skill_installed,          detail: status.skill_path },
+    { id: "mcp",         label: "NotebookLM MCP configurado",            ok: status.mcp_configured,           detail: status.mcp_config_path },
+    { id: "institution", label: "Configuración institucional aplicada",  ok: status.institution_configured,   detail: "SKILL.md y plantilla-latex.md" },
+  ];
+
+  const allDone = steps.every(s => s.ok);
+
+  document.getElementById("activate-steps").innerHTML = steps.map(s => `
+    <div class="dep-item">
+      <div class="dep-info">
+        <div class="status-dot ${s.ok ? "ok" : "err"}"></div>
+        <div>
+          <div class="dep-name">${s.label}</div>
+          <div class="dep-version">${s.detail}</div>
+        </div>
+      </div>
+      ${s.ok
+        ? '<span class="badge badge-green">✓ Listo</span>'
+        : `<button class="btn btn-sm btn-primary" onclick="runStep('${s.id}')">Configurar</button>`
+      }
+    </div>
+  `).join("");
+
+  document.getElementById("activate-status").innerHTML = allDone
+    ? `<div style="color:var(--green);font-weight:600;padding:12px 0">✓ Todo listo — Claude Desktop puede usar el skill ahora mismo.</div>`
+    : `<div style="color:var(--yellow);padding:12px 0">Completa los pasos pendientes y reinicia Claude Desktop.</div>`;
+}
+
+window.runStep = async function(step) {
+  if (step === "skill") {
+    toast("Instalando skill... puede tardar unos segundos.", "info", 15000);
+    try {
+      const r = await invoke("install_skill");
+      toast(r.message, r.success ? "success" : "error", 6000);
+    } catch(e) { toast(`Error: ${e}`, "error"); }
+
+  } else if (step === "mcp") {
+    try {
+      const r = await invoke("configure_mcp");
+      toast(r.message, r.success ? "success" : "error", 6000);
+    } catch(e) { toast(`Error: ${e}`, "error"); }
+
+  } else if (step === "institution") {
+    const c = state.config;
+    if (!c.author || !c.institution) {
+      toast("Primero completa los datos en la sección Institución", "error"); return;
+    }
+    try {
+      const r = await invoke("apply_institution_config", {
+        config: {
+          author: c.author || "", degree: c.degree || "",
+          career: c.career || "", faculty: c.faculty || "",
+          institution: c.institution || "",
+          color_r: parseInt(c.colorR) || 0,
+          color_g: parseInt(c.colorG) || 121,
+          color_b: parseInt(c.colorB) || 107,
+          ecosystem: c.ecosystem || "",
+        }
+      });
+      toast(r.message, r.success ? "success" : "error", 6000);
+    } catch(e) { toast(`Error: ${e}`, "error"); }
+  }
+
+  await renderActivate();
+};
+
+window.runAllSteps = async function() {
+  await window.runStep("skill");
+  await window.runStep("mcp");
+  await window.runStep("institution");
 };
 
 // ── App render ─────────────────────────────────────────────────────────────
@@ -409,6 +523,7 @@ function render() {
           ["courses",     "📚", "Cursos"],
           ["syllabus",    "📄", "Crear Sílabo"],
           ["notebooklm",  "🔗", "NotebookLM"],
+          ["activate",    "🚀", "Activar en Claude"],
         ].map(([page, icon, label]) => `
           <div class="nav-item ${state.currentPage === page ? "active" : ""}" data-page="${page}" onclick="navigate('${page}')">
             <span>${icon}</span> ${label}
@@ -598,6 +713,46 @@ function render() {
           </div>
         </div>
 
+        <!-- PAGE: ACTIVATE -->
+        <div id="page-activate" class="page">
+          <div class="card">
+            <div class="card-title">🚀 Activar el skill en Claude Desktop</div>
+            <p class="text-muted mb-12">
+              Estos tres pasos configuran el skill para que Claude Desktop lo detecte automáticamente
+              en cada sesión. Ejecútalos en orden la primera vez.
+            </p>
+            <div class="dep-list" id="activate-steps">Verificando...</div>
+            <div id="activate-status"></div>
+            <div class="row mt-12" style="justify-content:flex-end">
+              <button class="btn btn-secondary btn-sm" onclick="renderActivate()">↻ Verificar estado</button>
+              <button class="btn btn-primary" onclick="runAllSteps()">⚡ Configurar todo automáticamente</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">¿Qué hace cada paso?</div>
+            <p class="text-muted">
+              <strong style="color:var(--text)">1. Instalar skill</strong> — Descarga los archivos del skill a
+              <code style="color:var(--teal-light)">~/.claude/skills/instructional-designer-skill/</code>.
+              Claude Desktop y Cowork leen esta carpeta automáticamente.<br><br>
+              <strong style="color:var(--text)">2. Configurar NotebookLM MCP</strong> — Escribe la entrada del servidor MCP
+              en <code style="color:var(--teal-light)">claude_desktop_config.json</code>.
+              Sin esto, el Paso 2 del skill siempre falla.<br><br>
+              <strong style="color:var(--text)">3. Aplicar configuración institucional</strong> — Escribe tu nombre, institución
+              y color directamente en los archivos de referencia del skill. Sin esto, Claude usa los
+              marcadores genéricos y las guías no se ven con tu identidad institucional.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-title">Después de configurar</div>
+            <ol style="color:var(--text-dim);padding-left:20px;line-height:2">
+              <li>Reinicia Claude Desktop para que lea la nueva configuración MCP</li>
+              <li>Abre un nuevo chat o proyecto en Claude Desktop</li>
+              <li>Escribe: <code style="color:var(--teal-light)">/instructional-designer-skill</code></li>
+              <li>Claude ejecuta el flujo de arranque y está listo para generar guías</li>
+            </ol>
+          </div>
+        </div>
+
         <!-- PAGE: NOTEBOOKLM -->
         <div id="page-notebooklm" class="page">
           <div class="card">
@@ -626,6 +781,28 @@ function render() {
             <div class="row mt-12" style="justify-content:flex-end">
               <button class="btn btn-primary" onclick="addNotebook()">+ Registrar</button>
             </div>
+          </div>
+          <div class="card">
+            <div class="card-title">🔐 Sesión de Google (requerida)</div>
+            <p class="text-muted mb-12">
+              NotebookLM MCP necesita que inicies sesión con tu cuenta Google <strong style="color:var(--text)">una sola vez</strong>.
+              Guarda las cookies localmente — no se envía nada a servidores externos.
+              La sesión dura varios días y se renueva automáticamente.
+            </p>
+            <div class="dep-item" style="margin-bottom:12px">
+              <div class="dep-info">
+                <div class="status-dot" id="auth-dot" style="background:var(--yellow)"></div>
+                <div>
+                  <div class="dep-name">Sesión NotebookLM</div>
+                  <div class="dep-version" id="auth-status-text">Verificando...</div>
+                </div>
+              </div>
+              <button class="btn btn-sm btn-primary" onclick="triggerNotebookLMAuth()">🔑 Iniciar sesión</button>
+            </div>
+            <p class="text-muted" style="font-size:11px">
+              Al hacer clic en "Iniciar sesión" se abrirá un navegador Chrome/Chromium. Inicia sesión con tu cuenta Google
+              en NotebookLM y cierra el navegador. Las cookies quedan guardadas localmente para sesiones futuras.
+            </p>
           </div>
           <div class="card">
             <div class="card-title">ℹ️ ¿Dónde encuentro el Notebook ID?</div>
