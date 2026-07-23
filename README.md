@@ -8,6 +8,10 @@
 [![Category](https://img.shields.io/badge/category-pedagogy--design-green.svg)]()
 [![Frameworks](https://img.shields.io/badge/frameworks-UDL%203.0%20%7C%20Backward%20Design%20%7C%20QM%207th%20Ed-purple.svg)]()
 
+<p align="center">
+  <img src="docs/images/preview.png" alt="Instructional Designer Skill — notebook with equations, diagrams and pedagogical schemas" width="100%">
+</p>
+
 ---
 
 ## What This Skill Does
