@@ -1,129 +1,108 @@
-# Bibliografía — Citas, Política de Evidencia y Workflow NotebookLM
+# Bibliografía, evidencia y NotebookLM MCP
 
-Referencia de la skill `instructional-designer-skill`. Leer siempre que la tarea implique redactar contenido con respaldo bibliográfico o construir la sección de referencias.
+Leer cuando una tarea redacte contenido académico, resuelva fuentes o construya referencias.
 
----
+## Política vinculante
 
-## Convenciones de Citas
+- Verificar toda afirmación teórica central.
+- No inventar citas, autores, años, páginas, claves o referencias.
+- No entregar marcadores como `[Pendiente de Verificación]`.
+- Distinguir una elaboración propia de una afirmación respaldada.
+- Conservar recortes de las páginas citadas cuando las fuentes estén en PDF.
 
-### Criterio `\textcite{}` vs `\parencite{}`
+## Orden de resolución
 
-| Situación | Comando | Ejemplo en texto |
-|---|---|---|
-| El autor es **sujeto gramatical** de la oración | `\textcite{}` | `\textcite{newman2021} sostiene que los microservicios...` |
-| La cita respalda una afirmación (al final o entre paréntesis) | `\parencite{}` | `...despliegue independiente \parencite{newman2021}.` |
+1. `README.md` del curso.
+2. `bibliografia/recortes_por_semana/semana-XX/`.
+3. Fuentes locales en `bibliografia/`.
+4. NotebookLM MCP.
 
-**PROHIBIDO:** Usar `\cite{}` simple. Usar siempre `\parencite{}` o `\textcite{}`. Mezclar ambos en la misma oración.
+NotebookLM contrasta la cobertura y facilita localizar fuentes. No sustituye la comprobación de la referencia original.
 
-### Respaldo obligatorio
+## NotebookLM MCP 2.0
 
-Toda afirmación teórica central debe tener `\parencite{}` o `\textcite{}`. Las elaboraciones propias no llevan cita, pero deben distinguirse del contenido referenciado.
+El servidor oficial del proyecto se ejecuta con:
 
----
-
-## Política de Evidencia (ÚNICA Y VINCULANTE)
-
-- **OBLIGATORIO** consultar NotebookLM del curso en el arranque de toda guía (Paso 2 del Flujo de Arranque en SKILL.md), aunque existan fuentes locales. Las fuentes locales respaldan las citas; la consulta valida la cobertura.
-- **OBLIGATORIO** al cierre: verificar que los recortes PDF de la semana existan en `bibliografia/recortes_por_semana/semana-XX/` y cortarlos si faltan (ver Cierre de Tarea en SKILL.md).
-- **PROHIBIDO** inventar citas textuales, autores, años, páginas o referencias.
-- **PROHIBIDO** usar la etiqueta `[Pendiente de Verificación]` como salida. La etiqueta no resuelve el problema: si una fuente no se puede verificar, se ejecuta el workflow NotebookLM completo; si el workflow tampoco la resuelve, se detiene la redacción del párrafo afectado y se consulta al usuario (ver Flujo manual). Nunca se entrega una guía con esa etiqueta.
-
-> Esta es la única política sobre fuentes no verificadas. Si otra parte de la skill o una versión anterior sugiere "marcar [Pendiente de Verificación] y continuar", esa indicación está obsoleta y no debe seguirse.
-
-### Workflow cuando la fuente no está disponible en contexto
-
-1. Buscar en orden: README del curso → carpeta `bibliografia/recortes_por_semana/semana-XX/` → archivos PDF en `bibliografia/`.
-2. Si la fuente sigue sin estar disponible, consultar NotebookLM mediante el servidor MCP:
-
-**Paso A — Verificar el servidor MCP:**
-Llamar a `mcp__notebooklm__get_health`. Si `authenticated: true`, continuar al Paso B. Si `authenticated: false`:
-  1. Llamar a `mcp__notebooklm__setup_auth` (recupera cookies guardadas o abre navegador para login, hasta 10 minutos) y re-verificar.
-  2. Si sigue fallando, llamar a `mcp__notebooklm__re_auth` (fuerza sesión limpia) y re-verificar.
-  3. Solo si ambos fallan, ir al **Flujo manual**.
-
-**Paso B — Identificar el notebook del curso:**
-Usar la tabla de Registros de NotebookLM (abajo) para obtener el `notebook_id`. En orden:
-  1. Si el `notebook_id` está en la tabla: llamar a `mcp__notebooklm__select_notebook` con ese id para activarlo como notebook por defecto (las llamadas siguientes no necesitan `notebook_id`).
-  2. Si el id no es reconocido: llamar a `mcp__notebooklm__search_notebooks` con el nombre del curso para localizarlo.
-  3. Si tampoco aparece: la tabla incluye la URL de compartir; pasarla a `mcp__notebooklm__add_notebook` para re-registrar, o usarla como `notebook_url` directo en `ask_question`.
-
-**Paso C — Ejecutar la consulta:**
-Llamar a `mcp__notebooklm__ask_question` con:
-- `question`: la pregunta específica sobre el contenido del párrafo afectado.
-- `notebook_id`: el id del notebook del curso (omitir si ya se activó con `select_notebook`).
-- `source_format: "footnotes"`: obligatorio cuando la respuesta respalda citas bibliográficas; devuelve fuentes al pie para identificar la referencia exacta.
-- Guardar el `session_id` devuelto y reutilizarlo en todas las consultas sucesivas de la misma sesión.
-
-**Paso D — Redactar con la respuesta obtenida:**
-Usar la respuesta del MCP para redactar el párrafo con `\parencite{}` o `\textcite{}` sobre la fuente verificada.
-
-**Paso E (opcional) — Ingestar fuentes nuevas al notebook:**
-Si la bibliografía del curso incluye una URL pública (artículo, documentación técnica, página oficial) que todavía no está en el notebook, se puede agregar con `mcp__notebooklm__add_source`. Pasar `type: "url"` y la URL completa; NotebookLM indexa la fuente en 5-30 s y queda disponible en la misma sesión. Para fuentes en texto plano (extractos, resúmenes), usar `type: "text"` con el contenido. No ingestar archivos locales (no están soportados en v2.0).
-
-### Flujo manual — solo si el MCP no está disponible
-
-Si `authenticated: false` o el servidor MCP no responde, detener la redacción del párrafo afectado y emitir el siguiente bloque para el usuario:
-
+```text
+npx notebooklm-mcp@latest
 ```
+
+Flujo:
+
+1. Llamar `get_health`.
+2. Si `authenticated` es falso, llamar `setup_auth`. El navegador puede permanecer abierto hasta 10 minutos.
+3. Si las cookies no son válidas, llamar `re_auth`.
+4. Resolver el curso desde `config/notebooks.json`.
+5. Usar `select_notebook` cuando exista un id válido.
+6. Si el id no está disponible, usar `search_notebooks` o `list_notebooks`.
+7. Antes de llamar `add_notebook`, mostrar la URL y pedir confirmación explícita.
+8. Llamar `ask_question` con una pregunta específica y `source_format: "footnotes"`.
+9. Guardar y reutilizar el `session_id`.
+10. Revisar la procedencia devuelta por el servidor antes de redactar.
+
+`add_source` admite URLs y texto. No asumir que puede subir archivos locales. La indexación puede tardar varios segundos.
+
+## Flujo manual
+
+Si el MCP no responde y no existen fuentes locales suficientes, detener únicamente el fragmento afectado y emitir:
+
+```text
 CONSULTA NOTEBOOKLM REQUERIDA
-(El servidor MCP no está autenticado — ejecuta la consulta manualmente)
+Notebook: [nombre]
+Fuente prevista: [autor, año, título]
+Sección: [capítulo o apartado]
+Pregunta: [pregunta verificable y concreta]
 
-Notebook:  [Nombre del notebook del curso]
-Fuente:    [Autor, Año — Título completo]
-Capítulo:  [Cap. X: Nombre exacto del capítulo]
-Pregunta:  [Qué necesito saber para redactar este párrafo — ser específico]
-
-Pega la respuesta de NotebookLM aquí para continuar.
+Pega la respuesta con sus fuentes para continuar.
 ```
 
-No continuar con el párrafo hasta recibir la respuesta del usuario.
+## Citas en LaTeX
 
----
+| Situación | Comando |
+|---|---|
+| El autor es sujeto gramatical | `\textcite{clave}` |
+| La referencia respalda una afirmación | `\parencite{clave}` |
 
-## Registros de NotebookLM por Curso
+No usar `\cite{}` genérico. No mezclar `\textcite{}` y `\parencite{}` para la misma referencia en una oración.
 
-> ⚙️ **CONFIGURE — PASO OBLIGATORIO ANTES DE USAR LA SKILL**
->
-> Esta tabla vincula cada asignatura con su notebook de NotebookLM. **Sin esta configuración el Paso 2 del Flujo de Arranque no puede ejecutarse automáticamente.**
->
-> **Cómo obtener el `notebook_id`:**
-> 1. Abre [NotebookLM](https://notebooklm.google.com/) y crea un notebook para el curso.
-> 2. Agrega tus fuentes bibliográficas (PDFs de libros, artículos, documentación técnica). **NotebookLM necesita estas fuentes para responder consultas bibliográficas; sin ellas el Paso 2 devolverá respuestas vacías.**
-> 3. Haz clic en "Compartir" → "Copiar enlace" para obtener la URL de compartir.
-> 4. Ejecuta `mcp__notebooklm__list_notebooks` para ver el `notebook_id` asignado por el servidor MCP.
-> 5. Completa la tabla de abajo con los datos de cada curso.
+## Fuente bibliográfica única
 
-| Asignatura | Carpeta raíz | `notebook_id` | URL de compartir |
-|---|---|---|---|
-| ASIGNATURA_001 — Nombre del Curso | `01 ASIGNATURA_001/` | `tu-notebook-id-aqui` | `https://notebooklm.google.com/notebook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
-| ASIGNATURA_002 — Nombre del Curso | `02 ASIGNATURA_002/` | `tu-notebook-id-aqui` | (solicitar al usuario) |
-
-> Con la URL de esta tabla, el notebook puede re-registrarse con `add_notebook` sin pedirla al usuario, o consultarse directamente con `ask_question(notebook_url=...)`. Cuando el usuario proporcione una URL nueva, agregarla aquí de inmediato.
-
-> **Nota:** Estos ids viven en la biblioteca local del servidor MCP y pueden quedar huérfanos si esa biblioteca se reinicia. Si `list_notebooks` no los muestra, solicitar al usuario la URL de compartir del notebook del curso y re-registrarlo con `add_notebook`; luego actualizar esta tabla.
-
-
-
----
-
-## Gestión Bibliográfica (archivo de referencias)
-
-La plantilla usa `thebibliography` para las referencias en el archivo de sección, independientemente de que la clase tenga `citestyle=apa,bibstyle=apa` habilitado. Las citas en el texto usan `\parencite{}` y `\textcite{}` de biblatex.
+Usar `biblatex` y `reference.bib`:
 
 ```latex
-% En sections/NN-bibliografia.tex
-\renewcommand{\bibname}{Referencias bibliográficas}
-\begin{thebibliography}{9}
-\bibitem{clave}
-    Apellido, N. (Año). \textit{Título}. Editorial. Cap. X.
-\bibitem{clave2}
-    Apellido, N., \& Apellido, N. (Año). \textit{Título} (X.\textsuperscript{a} ed.). Editorial.
-\end{thebibliography}
+% En el preamble
+\addbibresource{reference.bib}
+
+% En la última sección
+\printbibliography[heading=bibintoc,title={Referencias bibliográficas}]
 ```
 
-**Reglas APA 7.ª ed.:**
-- Edición: `(2.\textsuperscript{a} ed.)` — no omitir si el libro tiene edición.
-- Capítulos: incluir `Cap. X` o `Cap. X y Cap. Y` al final de la referencia cuando la guía solo trabaja esas partes.
-- No usar `\guidesection{}` antes de `\renewcommand{\bibname}` — la bibliografía no lleva encabezado de sección extra.
+Ejemplo:
 
-**Recordatorio:** `reference.bib` debe existir en `latex/` con entradas `@book` para todas las claves `\bibitem` usadas en el texto. Sin él, biber falla y las citas no se resuelven.
+```bibtex
+@book{newman2021,
+  author    = {Sam Newman},
+  title     = {Building Microservices},
+  edition   = {2},
+  year      = {2021},
+  publisher = {O'Reilly Media}
+}
+```
+
+No combinar `\printbibliography` con `thebibliography` o `\bibitem`.
+
+## Recortes
+
+Guardar cada recorte en:
+
+```text
+bibliografia/recortes_por_semana/semana-XX/
+```
+
+Usar nombres trazables, por ejemplo:
+
+```text
+Autor_2024_Cap3_Sec31-34_pp80-96.pdf
+```
+
+Verificar que las páginas físicas extraídas correspondan a las páginas impresas de la fuente.

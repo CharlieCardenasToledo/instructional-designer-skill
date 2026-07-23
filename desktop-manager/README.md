@@ -4,11 +4,12 @@ App de escritorio (Tauri) para configurar e instalar el Instructional Designer S
 
 ## Qué hace
 
-- **Verifica e instala dependencias** automáticamente via `winget` (Git, Node.js, Python, WSL 2, TeX Live)
+- **Verifica dependencias** y ofrece instalación confirmada vía `winget` (Node.js/Git en Windows; WSL y TeX Live son opcionales)
+- **Onboarding secuencial bloqueado**: institución, plantilla, autenticación NotebookLM y destino deben estar completos antes del panel
 - **Configura datos institucionales** (nombre, color RGB, facultad) y genera la configuración LaTeX lista para copiar
 - **Gestiona cursos**: crea la estructura de carpetas correcta con un clic
 - **Genera sílabos** en formato `README.md` compatibles con el skill, con formulario visual por semana
-- **Registra notebooks** de NotebookLM y genera la tabla Markdown para `referencias/bibliografia.md`
+- **Configura NotebookLM MCP 2.0** con el comando oficial `npx notebooklm-mcp@latest`, preservando configuraciones MCP existentes
 
 ## Stack
 

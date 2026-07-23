@@ -1,24 +1,26 @@
 {
   "name": "instructional-designer-manager",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "description": "Gestor visual para el Instructional Designer Skill — configura dependencias, cursos y sílabos desde una interfaz gráfica",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node --test tests/*.test.mjs",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.0.0",
-    "@tauri-apps/plugin-dialog": "^2.0.0",
-    "@tauri-apps/plugin-fs": "^2.0.0",
-    "@tauri-apps/plugin-shell": "^2.0.0"
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-dialog": "2.7.2",
+    "lucide": "1.26.0"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@tauri-apps/cli": "^2.0.0",
-    "tailwindcss": "^4.3.3",
-    "vite": "^5.0.0"
+    "@tauri-apps/cli": "2.11.4",
+    "esbuild": "^0.28.1",
+    "vite": "8.1.5"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
   }
 }

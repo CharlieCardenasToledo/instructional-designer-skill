@@ -1,4 +1,4 @@
-# Compilación LaTeX via WSL y Scripts Auxiliares
+# Compilación LaTeX multiplataforma y Scripts Auxiliares
 
 Referencia de la skill `instructional-designer-skill`. Leer cuando haya que compilar una guía, exportar figuras o usar los scripts de la carpeta `scripts/`.
 
@@ -6,7 +6,7 @@ Referencia de la skill `instructional-designer-skill`. Leer cuando haya que comp
 
 ## Compilación LaTeX via WSL
 
-`pdflatex` y `biber` están instalados en **WSL (TeX Live 2023/Debian)**. No están disponibles en el PATH de Windows. **Siempre compilar a través de WSL.**
+En Windows, WSL 2 con TeX Live es la opción recomendada para aislar la toolchain. En macOS/Linux también puedes usar `pdflatex` y `biber` instalados localmente. El validador detecta el sistema operativo y solo usa WSL cuando es necesario.
 
 ### Secuencia completa (3 pasadas)
 

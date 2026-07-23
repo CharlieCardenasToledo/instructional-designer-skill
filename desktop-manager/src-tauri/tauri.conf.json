@@ -1,6 +1,6 @@
 {
   "productName": "Instructional Designer Manager",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.charliecardenas.ids-manager",
   "build": {
     "frontendDist": "../dist",
@@ -22,7 +22,17 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self'",
+        "connect-src": "ipc: http://ipc.localhost",
+        "img-src": "'self' data:",
+        "style-src": "'self' 'unsafe-inline'",
+        "font-src": "'self' data:",
+        "object-src": "'none'",
+        "base-uri": "'none'",
+        "frame-ancestors": "'none'"
+      },
+      "freezePrototype": true
     }
   },
   "bundle": {
@@ -31,17 +41,7 @@
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "windows": {
       "nsis": {
-        "installMode": "perMachine"
-      }
-    }
-  },
-  "plugins": {
-    "shell": {
-      "open": true
-    },
-    "fs": {
-      "scope": {
-        "allow": ["$HOME/.claude/**", "$APPDATA/**", "$DOCUMENT/**", "$DESKTOP/**"]
+        "installMode": "currentUser"
       }
     }
   }
