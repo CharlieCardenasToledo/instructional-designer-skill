@@ -133,6 +133,21 @@ Claude Cowork es la app de escritorio orientada a **tareas con acceso a archivos
 
 ### 3.2 Instalar el skill para Cowork
 
+**Opción recomendada — Sin Git (descarga ZIP):**
+
+1. Ve a [Releases del skill](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
+2. Descarga el ZIP → descomprímelo en:
+   - **Windows:** `%USERPROFILE%\.claude\skills\instructional-designer-skill\`
+   - **macOS/Linux:** `~/.claude/skills/instructional-designer-skill/`
+
+**Opción avanzada — Instalador automático Windows:**
+
+1. Descarga el ZIP del release
+2. Ejecuta `setup.ps1` con clic derecho → *Ejecutar con PowerShell* (como Administrador)
+3. El script instala Git, Node.js, Python, WSL y TeX Live automáticamente
+
+**Opción técnica — Clonar con Git:**
+
 ```powershell
 # Windows (PowerShell)
 git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill `

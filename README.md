@@ -64,10 +64,27 @@ This skill guides Claude Code to produce **weekly self-instructional guides in L
 
 ## Installation
 
-### 1. Clone the repository
+### Option A — Direct download (no Git required)
+
+1. Go to [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
+2. Download `instructional-designer-skill-v10.3.0.zip` (or Source code ZIP)
+3. Unzip into the Claude skills folder:
+   - **Windows:** `%USERPROFILE%\.claude\skills\instructional-designer-skill\`
+   - **macOS / Linux:** `~/.claude/skills/instructional-designer-skill/`
+
+### Option B — Automated installer for Windows (recommended)
+
+To install all dependencies (Git, Node.js, Python, WSL, TeX Live) automatically:
+
+1. Download the ZIP from [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
+2. Unzip and run `setup.ps1`:
+   - Right-click `setup.ps1` → **Run with PowerShell**
+   - Accept Administrator privileges when prompted
+3. The installer configures everything (~15–40 min depending on connection speed)
+
+### Option C — Clone with Git (for technical users)
 
 ```bash
-# Option A: Personal skills (available across ALL your projects)
 # macOS / Linux
 git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
   ~/.claude/skills/instructional-designer-skill
@@ -75,12 +92,6 @@ git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill 
 # Windows (PowerShell)
 git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill `
   "$env:USERPROFILE\.claude\skills\instructional-designer-skill"
-```
-
-```bash
-# Option B: Project-scoped (only this project's .claude/skills/)
-git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
-  .claude/skills/instructional-designer-skill
 ```
 
 > **After installation**, Claude Code detects the skill automatically — no restart needed if the `~/.claude/skills/` directory already existed.

@@ -65,10 +65,29 @@ Este skill guía a Claude Code para producir **guías de autoaprendizaje semanal
 
 ## Instalación
 
-### 1. Clonar el repositorio
+### Opción A — Descarga directa (sin Git, recomendado para usuarios sin experiencia técnica)
+
+1. Ve a la página de [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
+2. Descarga el archivo `instructional-designer-skill-v10.3.0.zip` (o el Source code ZIP)
+3. Descomprime el ZIP en la carpeta de skills de Claude:
+   - **Windows:** `%USERPROFILE%\.claude\skills\instructional-designer-skill\`
+   - **macOS / Linux:** `~/.claude/skills/instructional-designer-skill/`
+
+### Opción B — Instalación automática en Windows (recomendado)
+
+Si usas Windows y necesitas instalar todas las dependencias (Git, Node.js, Python, WSL, TeX Live):
+
+1. Descarga el ZIP desde [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
+2. Descomprime y ejecuta `setup.ps1`:
+   - Clic derecho sobre `setup.ps1` → **Ejecutar con PowerShell**
+   - Acepta ejecutar como Administrador cuando se solicite
+3. El instalador configura todo automáticamente (~15–40 min dependiendo de la conexión)
+
+> **Nota:** `setup.ps1` requiere conexión a internet. Si tu equipo necesita reiniciarse para completar la instalación de WSL, vuelve a ejecutar el script después del reinicio.
+
+### Opción C — Clonar con Git (para usuarios técnicos)
 
 ```bash
-# Opción A: Skills personales (disponibles en TODOS tus proyectos)
 # macOS / Linux
 git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
   ~/.claude/skills/instructional-designer-skill
@@ -76,12 +95,6 @@ git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill 
 # Windows (PowerShell)
 git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill `
   "$env:USERPROFILE\.claude\skills\instructional-designer-skill"
-```
-
-```bash
-# Opción B: Alcance de proyecto (solo en la carpeta .claude/skills/ de este proyecto)
-git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
-  .claude/skills/instructional-designer-skill
 ```
 
 > **Tras la instalación**, Claude Code detecta el skill automáticamente — no se necesita reiniciar si el directorio `~/.claude/skills/` ya existía.
