@@ -422,8 +422,18 @@ pub fn compile_syllabus_pdf(
         return ActionResult::error(format!("No se pudo escribir main.tex: {error}"));
     }
 
-    let compile_result = if cfg!(target_os = "windows") {
+    let compile_result = if docker_available() {
+        compile_via_docker(&latex_dir, "main")
+            .or_else(|_| {
+                if cfg!(target_os = "windows") {
+                    compile_via_wsl(&latex_dir, "main")
+                } else {
+                    compile_via_pdflatex(&latex_dir, "main")
+                }
+            })
+    } else if cfg!(target_os = "windows") {
         compile_via_wsl(&latex_dir, "main")
+            .or_else(|_| compile_via_pdflatex(&latex_dir, "main"))
     } else {
         compile_via_pdflatex(&latex_dir, "main")
     };
@@ -496,6 +506,61 @@ fn compile_via_pdflatex(latex_dir: &std::path::Path, base_name: &str) -> Result<
             String::from_utf8_lossy(&output.stderr).to_string()
         };
         Err(format!("Error en compilación LaTeX:\n{}", error_log.lines().take(5).collect::<Vec<_>>().join("\n")))
+    }
+}
+
+fn docker_available() -> bool {
+    Command::new("docker")
+        .args(["--version"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+fn compile_via_docker(latex_dir: &std::path::Path, base_name: &str) -> Result<std::path::PathBuf, String> {
+    let host_path = latex_dir.display().to_string();
+    let container_path = "/workspace";
+
+    let pdflatex_cmd = format!(
+        "cd {} && pdflatex -interaction=nonstopmode {} && echo 'success'",
+        container_path, base_name
+    );
+
+    let output = Command::new("docker")
+        .args([
+            "run",
+            "--rm",
+            "-v",
+            &format!("{}:{}", host_path, container_path),
+            "ids-texlive:latest",
+            "sh",
+            "-c",
+            &pdflatex_cmd,
+        ])
+        .output()
+        .map_err(|e| {
+            if e.to_string().contains("No such file or directory") {
+                "Docker no disponible o imagen no encontrada. Intenta WSL en su lugar.".to_string()
+            } else {
+                format!("Error ejecutando Docker: {e}")
+            }
+        })?;
+
+    if output.status.success() {
+        let pdf_path = latex_dir.join(format!("{}.pdf", base_name));
+        if pdf_path.exists() {
+            Ok(pdf_path)
+        } else {
+            Err("Docker compiló sin errores pero no generó PDF.".to_string())
+        }
+    } else {
+        let log_path = latex_dir.join(format!("{}.log", base_name));
+        let error_log = if log_path.exists() {
+            std::fs::read_to_string(&log_path).unwrap_or_default()
+        } else {
+            String::from_utf8_lossy(&output.stderr).to_string()
+        };
+        Err(format!("Error en compilación LaTeX (Docker):\n{}", error_log.lines().take(5).collect::<Vec<_>>().join("\n")))
     }
 }
 
