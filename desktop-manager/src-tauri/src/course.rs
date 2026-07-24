@@ -96,6 +96,15 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
         });
     }
 
+    let docker = command_exists("docker");
+    dependencies.push(DependencyStatus {
+        name: "Docker".to_string(),
+        installed: docker,
+        version: version("docker", &["--version"]),
+        required: false,
+        note: "Opcional: para compilar LaTeX en contenedor aislado (recomendado). La app usa WSL o pdflatex como fallback.".to_string(),
+    });
+
     dependencies
 }
 
