@@ -908,6 +908,60 @@ code {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Fondo ambiental del onboarding. Comparte la paleta con el loader, pero la
+   mantiene desenfocada y lejos del centro para no competir con el contenido. */
+.onboarding-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+}
+.onboarding-blob {
+  position: absolute;
+  width: clamp(320px, 48vw, 640px);
+  aspect-ratio: 1;
+  border-radius: 43% 57% 62% 38% / 52% 44% 56% 48%;
+  background: var(--blob-color);
+  filter: blur(84px);
+  opacity: 0.105;
+  mix-blend-mode: multiply;
+  will-change: transform, border-radius;
+}
+.onboarding-blob--1 {
+  top: -31%;
+  left: -13%;
+  animation: onboarding-blob-drift-a 28s ease-in-out infinite alternate;
+}
+.onboarding-blob--2 {
+  top: -27%;
+  right: -18%;
+  opacity: 0.085;
+  animation: onboarding-blob-drift-b 33s ease-in-out -9s infinite alternate;
+}
+.onboarding-blob--3 {
+  right: -12%;
+  bottom: -34%;
+  opacity: 0.09;
+  animation: onboarding-blob-drift-a 31s ease-in-out -15s infinite alternate-reverse;
+}
+.onboarding-blob--4 {
+  bottom: -37%;
+  left: -17%;
+  opacity: 0.08;
+  animation: onboarding-blob-drift-b 36s ease-in-out -21s infinite alternate-reverse;
+}
+@keyframes onboarding-blob-drift-a {
+  0%   { transform: translate3d(-2%, -1%, 0) scale(0.94) rotate(-4deg); }
+  50%  { border-radius: 57% 43% 38% 62% / 44% 56% 46% 54%; }
+  100% { transform: translate3d(15%, 10%, 0) scale(1.08) rotate(7deg); }
+}
+@keyframes onboarding-blob-drift-b {
+  0%   { transform: translate3d(2%, -4%, 0) scale(1.05) rotate(5deg); }
+  55%  { border-radius: 36% 64% 54% 46% / 60% 39% 61% 40%; }
+  100% { transform: translate3d(-13%, 13%, 0) scale(0.92) rotate(-6deg); }
+}
+
 
 @media (max-width: 980px) {
   .sidebar { width: 196px; }

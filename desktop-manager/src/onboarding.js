@@ -63,6 +63,18 @@ const DEP_ROW_CHECKING = "border-gray-200";
 const DEP_ROW_READY = "border-gray-900 bg-gray-50";
 const DEP_ROW_MISSING = "border-red-300 bg-red-50";
 const DEP_STATUS_BASE = "w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center";
+const LOADING_PALETTE = [
+  { hex: "#4285f4", rgb: [66, 133, 244] },
+  { hex: "#ea4335", rgb: [234, 67, 53] },
+  { hex: "#fbbc05", rgb: [251, 188, 5] },
+  { hex: "#34a853", rgb: [52, 168, 83] },
+];
+
+function onboardingAmbientBackground() {
+  return `<div class="onboarding-ambient" aria-hidden="true">
+    ${LOADING_PALETTE.map(({ hex }, index) => `<span class="onboarding-blob onboarding-blob--${index + 1}" style="--blob-color:${hex}"></span>`).join("")}
+  </div>`;
+}
 
 /**
  * Dibuja una pequeña red de nodos conectados que pulsan entre sí, en un
@@ -91,14 +103,8 @@ function startLoadingNetwork(canvas) {
 
   // Paleta de colores de Google (azul, rojo, amarillo, verde), para que
   // el grafo se sienta más vivo que un simple gris.
-  const PALETTE = [
-    [66, 133, 244],  // Azul Google #4285F4
-    [234, 67, 53],   // Rojo Google #EA4335
-    [251, 188, 5],   // Amarillo Google #FBBC05
-    [52, 168, 83],   // Verde Google #34A853
-  ];
   let colorIndex = 0;
-  const nextColor = () => PALETTE[colorIndex++ % PALETTE.length];
+  const nextColor = () => LOADING_PALETTE[colorIndex++ % LOADING_PALETTE.length].rgb;
 
   const nodes = [];
   for (let i = 0; i < OUTER_COUNT; i++) {
@@ -216,7 +222,8 @@ export async function renderOnboarding() {
   const root = document.getElementById("onboarding-root");
   if (!root) return;
   root.className = "fixed top-0 right-0 bottom-0 left-0 z-[10000] flex items-center justify-center overflow-hidden bg-gray-50";
-  root.innerHTML = `<div class="w-full max-w-3xl mx-auto h-full max-h-screen flex flex-col items-center justify-center gap-4 p-6">
+  root.innerHTML = `${onboardingAmbientBackground()}
+  <div class="relative z-[1] w-full max-w-3xl mx-auto h-full max-h-screen flex flex-col items-center justify-center gap-4 p-6">
     <canvas id="loading-orbs"></canvas>
   </div>`;
   const stopOrbs = startLoadingNetwork(document.getElementById("loading-orbs"));
@@ -233,7 +240,8 @@ export async function renderOnboarding() {
     renderCurrentStep();
   } catch (error) {
     stopOrbs();
-    root.innerHTML = `<div class="w-full max-w-3xl mx-auto h-full max-h-screen flex flex-col items-center justify-center p-6 text-center">
+    root.innerHTML = `${onboardingAmbientBackground()}
+    <div class="relative z-[1] w-full max-w-3xl mx-auto h-full max-h-screen flex flex-col items-center justify-center p-6 text-center">
       <h1 class="text-2xl font-semibold text-gray-900 mb-2">No se pudo iniciar el onboarding</h1>
       <p class="text-gray-600 mb-5">${escapeHtml(error)}</p>
       <button class="${BTN_PRIMARY} max-w-xs" data-onboarding-action="retry"><span>Reintentar</span></button>
@@ -257,11 +265,12 @@ function renderCurrentStep() {
   const current = stepNumber();
   const meta = STEP_META[current - 1];
   root.innerHTML = `
+    ${onboardingAmbientBackground()}
     <div class="absolute top-3 right-3 flex z-10" data-tauri-drag-region>
       <button class="win-btn" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
       <button class="win-btn win-btn--close" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
     </div>
-    <div class="w-full max-w-3xl mx-auto h-full flex flex-col p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+    <div class="relative z-[1] w-full max-w-3xl mx-auto h-full flex flex-col p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
       <div class="flex-1 min-h-0 overflow-y-auto pr-2 flex flex-col items-center justify-center ${SCROLL_THIN}">
         <div class="text-center mb-4 flex-shrink-0 w-full">
           <h1 id="onboarding-title" class="text-4xl font-semibold text-gray-900 tracking-tight animate-[fade-in-up_0.5s_ease-out_forwards]">${escapeHtml(meta.title)}</h1>
