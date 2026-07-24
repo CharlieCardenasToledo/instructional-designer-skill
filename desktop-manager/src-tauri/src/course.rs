@@ -438,9 +438,16 @@ pub fn compile_syllabus_pdf(
 }
 
 fn compile_via_wsl(latex_dir: &std::path::Path, base_name: &str) -> Result<std::path::PathBuf, String> {
-    let wsl_path = format!("/mnt/c/{}", latex_dir.display().to_string().replace("C:\\", "").replace('\\', "/"));
+    let mut path_str = latex_dir.display().to_string();
+    path_str = path_str.strip_prefix("\\\\?\\").unwrap_or(&path_str).to_string();
+    let wsl_path = format!(
+        "/mnt/{}{}",
+        path_str.chars().next().unwrap_or('c').to_lowercase().to_string(),
+        path_str[2..].replace('\\', "/")
+    );
+
     let cmd = format!(
-        "cd '{}' && pdflatex -interaction=nonstopmode {} 2>&1 > /dev/null && echo 'done'",
+        "cd '{}' && pdflatex -interaction=nonstopmode {} && echo 'success'",
         wsl_path, base_name
     );
 
