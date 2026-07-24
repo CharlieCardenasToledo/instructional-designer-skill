@@ -307,13 +307,19 @@ pub fn generate_syllabus(
     description: String,
     weeks_data: Vec<WeekData>,
 ) -> ActionResult {
-    let course = match canonical_directory(&course_path) {
+    let root = match canonical_directory(&course_path) {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
     };
     if let Err(error) = safe_segment(&course_code, "Código") {
         return ActionResult::error(error);
     }
+
+    let course = root.join(format!("{} {}", course_code, course_name));
+    if let Err(error) = std::fs::create_dir_all(&course) {
+        return ActionResult::error(format!("No se pudo crear carpeta del curso: {error}"));
+    }
+
     let content = match build_syllabus_md(
         &course_code,
         &course_name,
