@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/config/institution.schema.json",
+  "title": "Instructional Designer institution configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "institution", "branding", "digitalEcosystem", "activeTemplate", "options"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "institution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "faculty", "career", "author", "degree"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "faculty": { "type": "string", "minLength": 1 },
+        "career": { "type": "string", "minLength": 1 },
+        "author": { "type": "string", "minLength": 1 },
+        "degree": { "type": "string" }
+      }
+    },
+    "branding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primaryColor", "logoPath"],
+      "properties": {
+        "primaryColor": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+        "logoPath": { "type": "string" }
+      }
+    },
+    "digitalEcosystem": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "integrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "partnerName": { "type": "string" },
+        "partnerModule": { "type": "string" },
+        "partnerLogoPath": { "type": "string" }
+      }
+    },
+    "activeTemplate": {
+      "enum": ["elegantbook-clasico"]
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidenceMode", "includeGradedActivities"],
+      "properties": {
+        "evidenceMode": { "enum": ["notebooklm-preferred", "local-only"] },
+        "includeGradedActivities": { "type": "boolean" }
+      }
+    }
+  }
+}

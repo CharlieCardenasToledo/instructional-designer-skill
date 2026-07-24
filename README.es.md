@@ -8,7 +8,7 @@
 > **Skill de Claude Code** para diseño instruccional autodirigido basado en evidencia.  
 > Crea guías didácticas semanales en LaTeX, módulos de autoaprendizaje y evaluaciones alineadas para educación superior — con integración de NotebookLM MCP.
 
-[![Versión](https://img.shields.io/badge/version-10.3-blue.svg)](CHANGELOG.md)
+[![Versión](https://img.shields.io/badge/version-10.4-blue.svg)](CHANGELOG.md)
 [![Licencia: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Categoría](https://img.shields.io/badge/categoría-diseño--pedagógico-green.svg)]()
 [![Marcos](https://img.shields.io/badge/marcos-UDL%203.0%20%7C%20Backward%20Design%20%7C%20QM%207ª%20Ed-purple.svg)]()
@@ -52,7 +52,7 @@ Este skill guía a Claude Code para producir **guías de autoaprendizaje semanal
 | Requisito | Detalles |
 |---|---|
 | **Claude Code** | [docs.anthropic.com/claude-code](https://docs.anthropic.com/en/docs/claude-code/overview) |
-| **NotebookLM MCP** | [PleasePrompto/notebooklm-mcp](https://github.com/PleasePrompto/notebooklm-mcp) — requerido para validación bibliográfica |
+| **NotebookLM MCP** | [PleasePrompto/notebooklm-mcp](https://github.com/PleasePrompto/notebooklm-mcp) — recomendado; la skill conserva un modo local verificable |
 | **TeX Live** (vía WSL en Windows) | `pdflatex` + `biber` — instalar en WSL/Debian: `sudo apt install texlive-full` |
 | **Clase ElegantBook** | Incluida en tu repositorio de curso o disponible en [ElegantBook releases](https://github.com/ElegantLaTeX/ElegantBook/releases) |
 | **Node.js ≥18** | Para los scripts `latex-validator.js` y `legacy-manager.js` |
@@ -75,15 +75,15 @@ Este skill guía a Claude Code para producir **guías de autoaprendizaje semanal
 
 ### Opción B — Instalación automática en Windows (recomendado)
 
-Si usas Windows y necesitas instalar todas las dependencias (Git, Node.js, Python, WSL, TeX Live):
+En Windows, el onboarding de la aplicación verifica cada dependencia y pide confirmación antes de instalarla. `setup.ps1 -Install` solo prepara Node.js y Git mediante `winget`; WSL y TeX Live son opcionales y requieren pasos explícitos:
 
 1. Descarga el ZIP desde [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
 2. Descomprime y ejecuta `setup.ps1`:
    - Clic derecho sobre `setup.ps1` → **Ejecutar con PowerShell**
    - Acepta ejecutar como Administrador cuando se solicite
-3. El instalador configura todo automáticamente (~15–40 min dependiendo de la conexión)
+3. Abre la aplicación y completa el onboarding secuencial; no podrás usar el panel hasta validar Node.js, institución, plantilla, NotebookLM y el destino de instalación.
 
-> **Nota:** `setup.ps1` requiere conexión a internet. Si tu equipo necesita reiniciarse para completar la instalación de WSL, vuelve a ejecutar el script después del reinicio.
+> **Nota:** la autenticación de NotebookLM abre Chrome y utiliza la sesión local del usuario. Las consultas se envían al servidor MCP configurado por ti.
 
 ### Opción C — Clonar con Git (para usuarios técnicos)
 

@@ -28,6 +28,8 @@ env/
 
 # Node.js
 node_modules/
+desktop-manager/dist/
+desktop-manager/src-tauri/target/
 
 # OS artifacts
 .DS_Store
@@ -38,6 +40,11 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Local AI and browser-tool state
+.claude/
+.playwright-mcp/
+.rtfm/
 
 # Private configuration (DO NOT COMMIT)
 # If you store your personal bibliografia.md with real notebook IDs

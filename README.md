@@ -7,7 +7,7 @@
 > **Claude Code skill** for evidence-based, self-paced instructional design.  
 > Creates weekly LaTeX guides, self-instructional modules, and aligned assessments for higher education — with NotebookLM MCP integration.
 
-[![Version](https://img.shields.io/badge/version-10.3-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-10.4-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Category](https://img.shields.io/badge/category-pedagogy--design-green.svg)]()
 [![Frameworks](https://img.shields.io/badge/frameworks-UDL%203.0%20%7C%20Backward%20Design%20%7C%20QM%207th%20Ed-purple.svg)]()
@@ -51,7 +51,7 @@ This skill guides Claude Code to produce **weekly self-instructional guides in L
 | Requirement | Details |
 |---|---|
 | **Claude Code** | [docs.anthropic.com/claude-code](https://docs.anthropic.com/en/docs/claude-code/overview) |
-| **NotebookLM MCP** | [PleasePrompto/notebooklm-mcp](https://github.com/PleasePrompto/notebooklm-mcp) — required for bibliographic validation |
+| **NotebookLM MCP** | [PleasePrompto/notebooklm-mcp](https://github.com/PleasePrompto/notebooklm-mcp) — recommended, with a verified local fallback |
 | **TeX Live** (via WSL on Windows) | `pdflatex` + `biber` — install in WSL/Debian: `sudo apt install texlive-full` |
 | **ElegantBook class** | Included in your course repository or available at [ElegantBook releases](https://github.com/ElegantLaTeX/ElegantBook/releases) |
 | **Node.js** | For `latex-validator.js` and `legacy-manager.js` scripts |
@@ -74,13 +74,13 @@ This skill guides Claude Code to produce **weekly self-instructional guides in L
 
 ### Option B — Automated installer for Windows (recommended)
 
-To install all dependencies (Git, Node.js, Python, WSL, TeX Live) automatically:
+On Windows, the desktop onboarding checks each dependency and asks before installing it. `setup.ps1 -Install` only prepares Node.js and Git through `winget`; WSL and TeX Live remain optional:
 
 1. Download the ZIP from [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
 2. Unzip and run `setup.ps1`:
    - Right-click `setup.ps1` → **Run with PowerShell**
    - Accept Administrator privileges when prompted
-3. The installer configures everything (~15–40 min depending on connection speed)
+3. Open the desktop app and complete its sequential onboarding; the dashboard stays locked until Node.js, institution, template, NotebookLM and the selected target are verified.
 
 ### Option C — Clone with Git (for technical users)
 
