@@ -31,7 +31,15 @@ export async function installDependency(name, confirmed = false) {
   return invoke("install_dependency", { name, confirmed });
 }
 
+export async function resetOnboarding() {
+  return invoke("reset_onboarding");
+}
+
 // ── Skill y MCP ──────────────────────────────────────────────────────────
+export async function getSkillPath() {
+  return invoke("get_skill_path");
+}
+
 export async function installSkill() {
   return invoke("install_skill");
 }
@@ -72,6 +80,10 @@ export async function createCourseStructure({ rootPath, courseCode, courseName, 
 
 export async function generateSyllabus(payload) {
   return invoke("generate_syllabus", payload);
+}
+
+export async function compileSyllabusPdf(payload) {
+  return invoke("compile_syllabus_pdf", payload);
 }
 
 // ── Sistema de plantillas LaTeX ───────────────────────────────────────────

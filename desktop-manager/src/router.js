@@ -14,6 +14,8 @@ const PAGE_REGISTRY = {
   notebooklm:  { title: "NotebookLM",                    sub: "Gestiona notebooks y la sesión de autenticación Google" },
   templates:   { title: "Plantillas LaTeX",              sub: "Elige el diseño visual para tus guías de clase" },
   activate:    { title: "Activar en Claude Desktop",     sub: "Instala el skill y configura el servidor MCP con un clic" },
+  settings:    { title: "Configuración",                 sub: "Ajustes institucionales, MCP, entorno y preferencias" },
+  docs:        { title: "Documentación",                 sub: "Guías de inicio rápido, esquemas y referencias técnicas" },
 };
 
 /** Callbacks de renderizado registrados por cada módulo de página. */

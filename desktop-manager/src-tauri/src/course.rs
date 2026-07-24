@@ -344,6 +344,148 @@ pub fn generate_syllabus(
     }
 }
 
+pub fn compile_syllabus_pdf(
+    course_path: String,
+    course_code: String,
+    course_name: String,
+    _credits: u32,
+    academic_period: String,
+    _semester: String,
+    description: String,
+    weeks_data: Vec<WeekData>,
+) -> ActionResult {
+    let course = match canonical_directory(&course_path) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+
+    let course_dir = course.join(format!("{} {}", course_code, course_name));
+    if !course_dir.exists() {
+        return ActionResult::error(format!("Carpeta del curso no encontrada: {}", course_dir.display()));
+    }
+
+    let latex_dir = course_dir.join("latex");
+    if let Err(error) = std::fs::create_dir_all(&latex_dir) {
+        return ActionResult::error(format!("No se pudo crear carpeta latex: {error}"));
+    }
+
+    let sections_dir = latex_dir.join("sections");
+    if let Err(error) = std::fs::create_dir_all(&sections_dir) {
+        return ActionResult::error(format!("No se pudo crear carpeta sections: {error}"));
+    }
+
+    let mut full_content = format!(
+        "\\documentclass[11pt,oneside,lang=es,color=blue,citestyle=apa,bibstyle=apa]{{elegantbook}}\n\
+         \\usepackage[utf-8]{{inputenc}}\n\
+         \\usepackage[T1]{{fontenc}}\n\
+         \\usepackage{{microtype}}\n\
+         \\usepackage{{graphicx}}\n\
+         \\usepackage{{tikz}}\n\
+         \\usepackage{{booktabs}}\n\
+         \\usepackage{{tabularx}}\n\
+         \\usepackage{{csquotes}}\n\n\
+         \\title{{{} — {}}}\n\
+         \\subtitle{{Guía Didáctica}}\n\
+         \\author{{Instructional Designer Manager}}\n\
+         \\institute{{Sistema Académico}}\n\
+         \\date{{{}}}\n\n\
+         \\begin{{document}}\n\
+         \\frontmatter\n\
+         \\maketitle\n\
+         \\mainmatter\n\n\
+         \\section{{Descripción del Curso}}\n\
+         {}\n\n\
+         \\section{{Plan Semanal}}\n",
+        course_code, course_name, academic_period, description
+    );
+    for week in &weeks_data {
+        full_content.push_str(&format!(
+            "\\subsection{{Semana {:02} — {}}}\n\n",
+            week.number,
+            week.title.trim()
+        ));
+        full_content.push_str(&format!("\\textbf{{Unidad:}} {}\\\\[0.3cm]\n", week.unit.trim()));
+        full_content.push_str(&format!("\\textbf{{Horas:}} Docencia: {} | Práctica: {} | Autónomo: {}\\\\[0.3cm]\n\n",
+            week.teaching_hours, week.practice_hours, week.autonomous_hours));
+    }
+
+    full_content.push_str("\n\\end{document}\n");
+
+    let main_tex = latex_dir.join("main.tex");
+    if let Err(error) = atomic_write(&main_tex, full_content.as_bytes()) {
+        return ActionResult::error(format!("No se pudo escribir main.tex: {error}"));
+    }
+
+    let compile_result = if cfg!(target_os = "windows") {
+        compile_via_wsl(&latex_dir, "main")
+    } else {
+        compile_via_pdflatex(&latex_dir, "main")
+    };
+
+    match compile_result {
+        Ok(pdf_path) => {
+            ActionResult::ok(format!("PDF compilado exitosamente"))
+                .with_path(path_text(&pdf_path))
+        }
+        Err(error) => ActionResult::error(error),
+    }
+}
+
+fn compile_via_wsl(latex_dir: &std::path::Path, base_name: &str) -> Result<std::path::PathBuf, String> {
+    let wsl_path = format!("/mnt/c/{}", latex_dir.display().to_string().replace("C:\\", "").replace('\\', "/"));
+    let cmd = format!(
+        "cd '{}' && pdflatex -interaction=nonstopmode {} 2>&1 > /dev/null && echo 'done'",
+        wsl_path, base_name
+    );
+
+    let output = Command::new("wsl.exe")
+        .args(["--", "sh", "-c", &cmd])
+        .output()
+        .map_err(|e| format!("No se pudo ejecutar WSL: {e}"))?;
+
+    if output.status.success() {
+        let pdf_path = latex_dir.join(format!("{}.pdf", base_name));
+        if pdf_path.exists() {
+            Ok(pdf_path)
+        } else {
+            Err("pdflatex no generó PDF. Verifica que TeX Live esté instalado en WSL.".to_string())
+        }
+    } else {
+        let log_path = latex_dir.join(format!("{}.log", base_name));
+        let error_log = if log_path.exists() {
+            std::fs::read_to_string(&log_path).unwrap_or_default()
+        } else {
+            String::from_utf8_lossy(&output.stderr).to_string()
+        };
+        Err(format!("Error en compilación LaTeX:\n{}", error_log.lines().take(5).collect::<Vec<_>>().join("\n")))
+    }
+}
+
+fn compile_via_pdflatex(latex_dir: &std::path::Path, base_name: &str) -> Result<std::path::PathBuf, String> {
+    let output = Command::new("pdflatex")
+        .args(["-interaction=nonstopmode", &format!("{}.tex", base_name)])
+        .current_dir(latex_dir)
+        .output()
+        .map_err(|e| format!("No se pudo ejecutar pdflatex: {e}"))?;
+
+    if output.status.success() {
+        let pdf_path = latex_dir.join(format!("{}.pdf", base_name));
+        if pdf_path.exists() {
+            Ok(pdf_path)
+        } else {
+            Err("pdflatex no generó PDF.".to_string())
+        }
+    } else {
+        let log_path = latex_dir.join(format!("{}.log", base_name));
+        let error_log = if log_path.exists() {
+            std::fs::read_to_string(&log_path).unwrap_or_default()
+        } else {
+            String::from_utf8_lossy(&output.stderr).to_string()
+        };
+        Err(format!("Error en compilación LaTeX:\n{}", error_log.lines().take(5).collect::<Vec<_>>().join("\n")))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

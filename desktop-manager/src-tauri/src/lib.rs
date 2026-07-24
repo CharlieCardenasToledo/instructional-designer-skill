@@ -148,6 +148,33 @@ async fn generate_syllabus(
 }
 
 #[tauri::command]
+async fn compile_syllabus_pdf(
+    course_path: String,
+    course_code: String,
+    course_name: String,
+    credits: u32,
+    academic_period: String,
+    semester: String,
+    description: String,
+    weeks_data: Vec<WeekData>,
+) -> ActionResult {
+    tauri::async_runtime::spawn_blocking(move || {
+        course::compile_syllabus_pdf(
+            course_path,
+            course_code,
+            course_name,
+            credits,
+            academic_period,
+            semester,
+            description,
+            weeks_data,
+        )
+    })
+    .await
+    .unwrap_or_else(|e| ActionResult::error(format!("Error interno: {e}")))
+}
+
+#[tauri::command]
 async fn list_templates() -> Vec<TemplateMeta> {
     config::list_templates()
 }
@@ -185,6 +212,7 @@ pub fn run() {
             run_notebooklm_auth,
             create_course_structure,
             generate_syllabus,
+            compile_syllabus_pdf,
             list_templates,
             get_active_template,
             set_active_template,
