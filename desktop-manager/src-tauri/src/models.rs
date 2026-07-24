@@ -37,6 +37,7 @@ pub struct DependencyStatus {
     pub version: Option<String>,
     pub required: bool,
     pub note: String,
+    pub command: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -46,10 +47,24 @@ pub struct InstitutionConfig {
     pub career: String,
     pub faculty: String,
     pub institution: String,
+    #[serde(default)]
+    pub website: String,
     pub color_r: u8,
     pub color_g: u8,
     pub color_b: u8,
     pub ecosystem: String,
+}
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq)]
+pub struct PaletteColor {
+    pub color: String,
+    pub occurrences: usize,
+}
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq)]
+pub struct SitePalette {
+    pub site_name: Option<String>,
+    pub colors: Vec<PaletteColor>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -118,6 +133,11 @@ pub struct OnboardingStatus {
     pub max_completed_step: u8,
     pub selected_target: String,
     pub last_updated: u64,
+    /// Explica por qué el sistema devolvió al usuario a un paso anterior
+    /// (p. ej. una dependencia que antes estaba lista dejó de estarlo).
+    /// Solo se llena en el momento en que se detecta la regresión.
+    #[serde(default)]
+    pub regression_reason: Option<String>,
 }
 
 impl Default for OnboardingStatus {
@@ -129,6 +149,7 @@ impl Default for OnboardingStatus {
             max_completed_step: 0,
             selected_target: String::new(),
             last_updated: 0,
+            regression_reason: None,
         }
     }
 }

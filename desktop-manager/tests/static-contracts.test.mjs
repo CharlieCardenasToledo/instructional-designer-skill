@@ -9,9 +9,9 @@ test('el sistema visual no declara degradados CSS', async () => {
   assert.doesNotMatch(css, /gradient\s*\(/i);
 });
 
-test('el onboarding mantiene siete pasos y la llamada de finalización', async () => {
+test('el onboarding mantiene nueve pasos y la llamada de finalización', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
-  assert.match(source, /TOTAL_STEPS\s*=\s*7/);
+  assert.match(source, /TOTAL_STEPS\s*=\s*9/);
   assert.match(source, /completeOnboarding/);
   assert.match(source, /advanceOnboarding/);
 });

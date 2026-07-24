@@ -60,6 +60,10 @@ export async function applyInstitutionConfig(config) {
   return invoke("apply_institution_config", { config });
 }
 
+export async function extractSitePalette(url) {
+  return invoke("extract_site_palette", { url });
+}
+
 // ── NotebookLM MCP ───────────────────────────────────────────────────────
 export async function checkNotebookLMAuth() {
   return invoke("check_notebooklm_auth");

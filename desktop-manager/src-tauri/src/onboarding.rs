@@ -7,7 +7,7 @@ use crate::payload;
 use std::fs;
 use std::path::PathBuf;
 
-const LAST_STEP: u8 = 7;
+const LAST_STEP: u8 = 9;
 
 fn status_path() -> Result<PathBuf, String> {
     Ok(app_config_dir()?.join("onboarding.json"))
@@ -39,6 +39,12 @@ fn node_ready() -> bool {
         .is_some_and(|dependency| dependency.installed)
 }
 
+fn compilation_ready() -> bool {
+    course::check_dependencies()
+        .into_iter()
+        .any(|dependency| matches!(dependency.name.as_str(), "Docker" | "TeX Live (pdflatex)") && dependency.installed)
+}
+
 fn target_ready(target: &str) -> bool {
     let setup = config::setup_status();
     match target {
@@ -54,18 +60,25 @@ fn target_ready(target: &str) -> bool {
     }
 }
 
-fn first_invalid_step(status: &OnboardingStatus) -> Option<u8> {
+fn first_invalid_step(status: &OnboardingStatus) -> Option<(u8, &'static str)> {
     if !node_ready() {
-        return Some(1);
+        return Some((4, "Detectamos que falta un componente necesario para que la app funcione."));
+    }
+    if !compilation_ready() {
+        return Some((
+            4,
+            "Ya no encontramos Docker ni TeX Live instalados. Necesitas uno de los dos \
+             para poder generar el PDF de tu guía.",
+        ));
     }
     if !config::institution_is_configured() {
-        return Some(3);
+        return Some((5, "Los datos de tu institución ya no están guardados o se borraron."));
     }
     if !config::template_exists(&config::get_active_template()) {
-        return Some(4);
+        return Some((6, "La plantilla que tenías elegida ya no está disponible."));
     }
     if !target_ready(&status.selected_target) {
-        return Some(6);
+        return Some((8, "El destino que elegiste dejó de estar completamente configurado."));
     }
     None
 }
@@ -73,10 +86,13 @@ fn first_invalid_step(status: &OnboardingStatus) -> Option<u8> {
 pub fn get_status() -> OnboardingStatus {
     let mut status = load();
     if status.completed {
-        if let Some(step) = first_invalid_step(&status) {
+        if let Some((step, reason)) = first_invalid_step(&status) {
             status.completed = false;
             status.current_step = step;
             status.max_completed_step = step.saturating_sub(1);
+            status.regression_reason = Some(format!(
+                "Te devolvimos al paso {step}: {reason}"
+            ));
             let _ = save(&mut status);
         }
     }
@@ -107,21 +123,26 @@ pub fn advance(step: u8, selected_target: Option<String>) -> OnboardingResult {
     }
 
     let validation = match step {
-        1 if !node_ready() => Err(
-            "Node.js y npx son obligatorios para NotebookLM. Instálalos y pulsa “Verificar de nuevo”.".to_string(),
-        ),
+        1 => Ok(()),
         2 => Ok(()),
-        3 if !config::institution_is_configured() => {
-            Err("Guarda una configuración institucional completa.".to_string())
+        3 => Ok(()),
+        4 if !node_ready() => Err(
+            "Falta instalar un componente necesario. Instálalo y pulsa “Verificar de nuevo”.".to_string(),
+        ),
+        4 if !compilation_ready() => Err(
+            "Instala Docker o TeX Live para poder generar el PDF de tu guía.".to_string(),
+        ),
+        5 if !config::institution_is_configured() => {
+            Err("Completa los datos de tu institución antes de continuar.".to_string())
         }
-        4 if !config::template_exists(&config::get_active_template()) => {
-            Err("Selecciona y confirma una plantilla válida.".to_string())
+        6 if !config::template_exists(&config::get_active_template()) => {
+            Err("Elige una plantilla para continuar.".to_string())
         }
-        5 => {
+        7 => {
             let auth = mcp::check_auth();
             auth.authenticated.then_some(()).ok_or(auth.message)
         }
-        6 => {
+        8 => {
             let target = selected_target.unwrap_or_else(|| status.selected_target.clone());
             if !matches!(target.as_str(), "claude-cowork" | "claude-code" | "both") {
                 Err("Selecciona dónde usarás la skill.".to_string())
@@ -132,7 +153,7 @@ pub fn advance(step: u8, selected_target: Option<String>) -> OnboardingResult {
                 Ok(())
             }
         }
-        7 => Err("Usa el botón “Finalizar configuración”.".to_string()),
+        9 => Err("Usa el botón “Finalizar configuración”.".to_string()),
         _ => Ok(()),
     };
 
@@ -152,14 +173,14 @@ pub fn complete() -> OnboardingResult {
     if status.current_step != LAST_STEP {
         return result(false, "Completa todos los pasos antes de finalizar.", status);
     }
-    if let Some(step) = first_invalid_step(&status) {
+    if let Some((step, reason)) = first_invalid_step(&status) {
         status.current_step = step;
         let _ = save(&mut status);
-        return result(false, "Una configuración requerida dejó de estar disponible.", status);
+        return result(false, format!("Te devolvimos al paso {step}: {reason}"), status);
     }
     let auth = mcp::check_auth();
     if !auth.authenticated {
-        status.current_step = 5;
+        status.current_step = 7;
         let _ = save(&mut status);
         return result(false, auth.message, status);
     }

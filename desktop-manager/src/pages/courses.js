@@ -3,6 +3,7 @@ import { escapeHtml, safeIndex } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
 import { navigate } from "../router.js";
+import { confirm } from "@tauri-apps/plugin-dialog";
 
 let _filter = "";
 let _modalStep = 0;
@@ -166,9 +167,9 @@ function bindRowActions() {
   });
 }
 
-function deleteCourse(index) {
+async function deleteCourse(index) {
   const course = state.courses[index];
-  if (!confirm(`¿Eliminar "${course.code} — ${course.name}"?\nNo se borrarán carpetas del disco.`)) return;
+  if (!await confirm(`¿Eliminar "${course.code} — ${course.name}"?\nNo se borrarán carpetas del disco.`)) return;
   state.courses.splice(index, 1);
   saveCourses();
   renderCourses();

@@ -15,6 +15,7 @@ import { renderDocs }         from "./pages/docs.js";
 import { toast }              from "./toast.js";
 import { getOnboardingStatus } from "./api.js";
 import { renderOnboarding }  from "./onboarding.js";
+import { getCurrentWindow }  from "@tauri-apps/api/window";
 
 registerPage("courses",   renderCourses);
 registerPage("syllabus",  renderSyllabus);
@@ -72,7 +73,7 @@ function renderShell() {
 
     <!-- MAIN -->
     <main class="main" role="main">
-      <header class="topbar">
+      <header class="topbar" data-tauri-drag-region>
         <div class="topbar-left">
           <h2>Instructional Design Studio</h2>
           <div class="topbar-sub"></div>
@@ -89,6 +90,10 @@ function renderShell() {
               Deploy Skill
             </button>
           </div>
+          <div class="topbar-win-controls">
+            <button class="win-btn" id="app-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
+            <button class="win-btn win-btn--close" id="app-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
+          </div>
         </div>
       </header>
 
@@ -100,15 +105,8 @@ function renderShell() {
         <section id="p-docs"      class="page" aria-label="Documentación"></section>
       </div>
     </main>
-
-    <div id="toast" role="status" aria-live="polite"></div>
-    <div id="onboarding-root"></div>
-    <div id="modal-root"></div>
   `;
 }
-
-renderShell();
-refreshIcons();
 
 document.addEventListener("click", event => {
   const nav = event.target.closest(".nav-item[data-page], .sidebar-cta button[data-page]");
@@ -118,11 +116,20 @@ document.addEventListener("click", event => {
   if (deploy) { window.deploySkill?.(); return; }
 });
 
+// El onboarding es una página independiente: la app principal (sidebar,
+// topbar, páginas) ni siquiera se construye hasta que el onboarding termine.
 async function boot() {
   try {
     const onboarding = await getOnboardingStatus();
-    if (onboarding.completed) navigate(state.page || "courses");
-    else await renderOnboarding();
+    if (onboarding.completed) {
+      renderShell();
+      refreshIcons();
+      navigate(state.page || "courses");
+      document.getElementById("app-win-minimize")?.addEventListener("click", () => getCurrentWindow().minimize());
+      document.getElementById("app-win-close")?.addEventListener("click", () => getCurrentWindow().close());
+    } else {
+      await renderOnboarding();
+    }
   } catch {
     await renderOnboarding();
   }

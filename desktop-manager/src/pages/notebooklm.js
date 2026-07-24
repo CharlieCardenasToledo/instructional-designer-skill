@@ -7,6 +7,7 @@ import { escapeHtml, safeIndex } from "../dom.js";
 import { getNotebooks, saveNotebooks } from "../state.js";
 import { toast } from "../toast.js";
 import { ic, refreshIcons } from "../icons.js";
+import { confirm } from "@tauri-apps/plugin-dialog";
 
 export async function renderNotebookLM() {
   renderNotebookList();
@@ -121,7 +122,7 @@ window.addNotebook = async function addNotebook() {
 };
 
 async function deleteNotebook(index) {
-  if (!confirm("¿Eliminar este notebook del registro?")) return;
+  if (!await confirm("¿Eliminar este notebook del registro?")) return;
   const entries = notebooks();
   entries.splice(index, 1);
   if (await persist(entries)) renderNotebookList();

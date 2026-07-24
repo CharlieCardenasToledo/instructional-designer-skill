@@ -3,6 +3,7 @@ import { escapeHtml } from "../dom.js";
 import { state } from "../state.js";
 import { toast } from "../toast.js";
 import { ic, refreshIcons } from "../icons.js";
+import { confirm } from "@tauri-apps/plugin-dialog";
 
 const LARGE_INSTALLS = new Set(["WSL 2", "TeX Live (pdflatex)"]);
 
@@ -73,7 +74,7 @@ function depItem(dep) {
 
 async function installDep(name) {
   const large = LARGE_INSTALLS.has(name);
-  const confirmed = !large || confirm(
+  const confirmed = !large || await confirm(
     `${name} modifica componentes del sistema y puede descargar varios gigabytes.\n\n¿Deseas continuar?`
   );
   if (!confirmed) return;

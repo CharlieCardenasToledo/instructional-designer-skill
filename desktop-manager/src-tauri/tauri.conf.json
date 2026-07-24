@@ -18,21 +18,27 @@
         "minHeight": 600,
         "resizable": true,
         "fullscreen": false,
-        "center": true
+        "center": true,
+        "decorations": false
       }
     ],
     "security": {
       "csp": {
         "default-src": "'self'",
         "connect-src": "ipc: http://ipc.localhost",
-        "img-src": "'self' data:",
+        "img-src": "'self' data: asset: http://asset.localhost",
+        "frame-src": "'self' asset: http://asset.localhost",
         "style-src": "'self' 'unsafe-inline'",
         "font-src": "'self' data:",
         "object-src": "'none'",
         "base-uri": "'none'",
         "frame-ancestors": "'none'"
       },
-      "freezePrototype": true
+      "freezePrototype": true,
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$HOME/**", "$APPDATA/**", "$APPLOCALDATA/**"]
+      }
     }
   },
   "bundle": {

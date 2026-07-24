@@ -8,7 +8,8 @@ import { createIcons,
   Download, ClipboardCopy, KeyRound, Plus, Trash2, Pencil,
   Info, ChevronDown, AlertTriangle, Play, Package, Notebook,
   GraduationCap, Eye, LayoutTemplate
-  ,Network, Save, Check, Quote, ShieldCheck, AlertCircle, Circle, LockKeyhole
+  ,Network, Save, Check, Quote, ShieldCheck, AlertCircle, Circle, LockKeyhole,
+  Terminal, BrainCircuit, ChevronLeft, ChevronRight, Sparkles,
 } from "lucide";
 
 const ICONS = {
@@ -18,6 +19,7 @@ const ICONS = {
   Info, ChevronDown, AlertTriangle, Play, Package, Notebook,
   GraduationCap, Eye, LayoutTemplate,
   Network, Save, Check, Quote, ShieldCheck, AlertCircle, Circle, LockKeyhole,
+  Terminal, BrainCircuit, ChevronLeft, ChevronRight, Sparkles,
 };
 
 /** Re-renderiza todos los data-lucide del DOM. Llamar después de cada render dinámico. */

@@ -50,6 +50,83 @@ pub fn template_exists(id: &str) -> bool {
         && TEMPLATES.get_file(format!("{id}/preamble.tex")).is_some()
 }
 
+pub struct ActiveInstitution {
+    pub author: String,
+    pub career: String,
+    pub institution: String,
+    pub primary_rgb: String,
+}
+
+fn hex_to_rgb_csv(hex: &str) -> String {
+    let hex = hex.trim_start_matches('#');
+    if hex.len() == 6 {
+        if let (Ok(r), Ok(g), Ok(b)) = (
+            u8::from_str_radix(&hex[0..2], 16),
+            u8::from_str_radix(&hex[2..4], 16),
+            u8::from_str_radix(&hex[4..6], 16),
+        ) {
+            return format!("{r},{g},{b}");
+        }
+    }
+    "0,121,107".to_string()
+}
+
+/// Lee institution.json y devuelve los datos que necesita el preámbulo LaTeX
+/// (color de marca en RGB, autor, carrera, institución). Usa valores vacíos
+/// o el color por defecto si todavía no se configuró la institución.
+pub fn active_institution() -> ActiveInstitution {
+    let value = config_file_path("institution.json")
+        .ok()
+        .and_then(|path| fs::read_to_string(path).ok())
+        .and_then(|text| serde_json::from_str::<Value>(&text).ok());
+
+    let get = |path: &[&str]| -> Option<String> {
+        let mut current = value.as_ref()?;
+        for key in path {
+            current = current.get(key)?;
+        }
+        current.as_str().map(str::to_string)
+    };
+
+    ActiveInstitution {
+        author: get(&["institution", "author"]).unwrap_or_default(),
+        career: get(&["institution", "career"]).unwrap_or_default(),
+        institution: get(&["institution", "name"]).unwrap_or_default(),
+        primary_rgb: hex_to_rgb_csv(&get(&["branding", "primaryColor"]).unwrap_or_else(|| "#00796B".to_string())),
+    }
+}
+
+const TEMPLATE_CONTRACT_FILES: &[&str] = &["meta.json", "template.md", "skeleton.tex"];
+
+/// Copia el preámbulo y los archivos adicionales de la plantilla activa
+/// (clases .cls, .sty, etc.) a la carpeta de compilación: así no se depende
+/// de que el sistema del usuario ya tenga instaladas clases LaTeX poco
+/// comunes como `elegantbook`, y el PDF generado usa el mismo preámbulo
+/// visual (colores, bloques) que usa la skill para las guías reales.
+pub fn copy_active_template_assets(dest_dir: &std::path::Path) -> Result<(), String> {
+    let template_id = active_template_from_settings();
+    let Some(template_dir) = TEMPLATES.get_dir(&template_id) else {
+        return Ok(());
+    };
+    let primary_rgb = active_institution().primary_rgb;
+    for file in template_dir.files() {
+        let Some(name) = file.path().file_name().and_then(|n| n.to_str()) else { continue };
+        if TEMPLATE_CONTRACT_FILES.contains(&name) {
+            continue;
+        }
+        let bytes = if name == "preamble.tex" {
+            String::from_utf8_lossy(file.contents())
+                .replace("{{PRIMARY_RGB}}", &primary_rgb)
+                .into_bytes()
+        } else {
+            file.contents().to_vec()
+        };
+        fs::write(dest_dir.join(name), bytes)
+            .map_err(|error| format!("No se pudo copiar {name} de la plantilla: {error}"))?;
+    }
+    Ok(())
+}
+
 pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
     if let Err(error) = validate_institution(&config) {
         return ActionResult::error(error);
@@ -69,6 +146,7 @@ pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
         "schemaVersion": 1,
         "institution": {
             "name": clean(&config.institution),
+            "website": clean(&config.website),
             "faculty": clean(&config.faculty),
             "career": clean(&config.career),
             "author": clean(&config.author),
@@ -244,7 +322,13 @@ fn server_configured(path: Result<std::path::PathBuf, String>) -> bool {
         .and_then(|text| serde_json::from_str::<Value>(&text).ok())
         .and_then(|value| value.get("mcpServers")?.get("notebooklm").cloned())
         .and_then(|server| server.get("args")?.as_array().cloned())
-        .is_some_and(|args| args.iter().any(|arg| arg.as_str() == Some("notebooklm-mcp@latest")))
+        .is_some_and(|args| {
+            args.iter().any(|arg| {
+                let value = arg.as_str();
+                value == Some(crate::mcp::NOTEBOOKLM_MCP_PACKAGE)
+                    || value == Some("notebooklm-mcp@latest")
+            })
+        })
 }
 
 pub fn setup_status() -> SetupStatus {

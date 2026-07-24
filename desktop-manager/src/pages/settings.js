@@ -2,12 +2,13 @@ import {
   applyInstitutionConfig, checkDependencies, installDependency,
   configureMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
   installSkill, exportSkillZip, pickDirectory, saveNotebooksConfig,
-  resetOnboarding, getSkillPath
+  resetOnboarding, getSkillPath, extractSitePalette
 } from "../api.js";
 import { state, getNotebooks, saveNotebooks } from "../state.js";
 import { escapeHtml } from "../dom.js";
 import { toast } from "../toast.js";
 import { refreshIcons } from "../icons.js";
+import { confirm } from "@tauri-apps/plugin-dialog";
 
 // Convierte ecosystem a string independientemente de si es array o string
 function ecosystemToStr(val) {
@@ -92,6 +93,21 @@ export async function renderSettings() {
                 <span class="color-picker-label" id="cfg-color-label">${escapeHtml(state.config?.color || "#00317e")}</span>
               </div>
             </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label for="cfg-website">Sitio web institucional</label>
+              <div class="palette-url-row">
+                <input id="cfg-website" type="url" placeholder="https://www.uide.edu.ec/"
+                  value="${escapeHtml(state.config?.website || "")}">
+                <button class="btn btn-secondary" id="btn-extract-palette" type="button">
+                  <span class="material-symbols-outlined" style="font-size:15px">palette</span>
+                  Extraer paleta
+                </button>
+              </div>
+              <div class="text-muted" style="font-size:11.5px;margin-top:6px">
+                Analiza el HTML y las hojas de estilo públicas del sitio.
+              </div>
+            </div>
+            <div id="institution-palette" class="institution-palette" style="grid-column:1/-1" aria-live="polite"></div>
           </div>
           <div class="form-group" style="margin-bottom:16px">
             <label for="cfg-ecosystem">Ecosistema digital <span class="text-muted">(uno por línea)</span></label>
@@ -283,6 +299,7 @@ export async function renderSettings() {
     document.getElementById("cfg-color-label").textContent = e.target.value;
   });
   el.querySelector("#btn-save-institution")?.addEventListener("click", saveInstitution);
+  el.querySelector("#btn-extract-palette")?.addEventListener("click", loadInstitutionPalette);
 
   // ── MCP ───────────────────────────────────────────────────────────────────
   el.querySelectorAll(".mcp-target").forEach(btn => {
@@ -331,7 +348,7 @@ export async function renderSettings() {
   });
 
   el.querySelector("#btn-reset-onboarding")?.addEventListener("click", async () => {
-    if (!confirm("¿Reiniciar el onboarding? Perderás el progreso configurado.")) return;
+    if (!await confirm("¿Reiniciar el onboarding? Perderás el progreso configurado.")) return;
     try {
       const r = await resetOnboarding();
       toast(r.message || "Onboarding reiniciado", "info", 4000);
@@ -349,18 +366,32 @@ async function saveInstitution() {
   if (!author)      { toast("Nombre completo obligatorio", "error"); return; }
   if (!institution) { toast("Institución obligatoria", "error"); return; }
 
+  const color = document.getElementById("cfg-color")?.value || "#00317e";
+  const { r, g, b } = hexToRgb(color);
   const config = {
     author,
     degree:      get("cfg-degree"),
     institution,
     faculty:     get("cfg-faculty"),
     career:      get("cfg-career"),
-    color:       document.getElementById("cfg-color")?.value || "#00317e",
+    color,
+    website:     get("cfg-website"),
     ecosystem:   get("cfg-ecosystem").split("\n").map(s => s.trim()).filter(Boolean),
   };
   toast("Guardando configuración institucional…", "loading", 8000);
   try {
-    const result = await applyInstitutionConfig(config);
+    const result = await applyInstitutionConfig({
+      author: config.author,
+      degree: config.degree,
+      institution: config.institution,
+      website: config.website,
+      faculty: config.faculty,
+      career: config.career,
+      color_r: r,
+      color_g: g,
+      color_b: b,
+      ecosystem: config.ecosystem.join("\n"),
+    });
     if (result.success) {
       if (!state.config) state.config = {};
       Object.assign(state.config, config);
@@ -369,6 +400,105 @@ async function saveInstitution() {
       toast(result.message, "error");
     }
   } catch (e) { toast(`Error: ${e}`, "error"); }
+}
+
+async function loadInstitutionPalette() {
+  const urlInput = document.getElementById("cfg-website");
+  const container = document.getElementById("institution-palette");
+  const button = document.getElementById("btn-extract-palette");
+  if (!urlInput || !container || !button) return;
+
+  const url = urlInput.value.trim();
+  if (!url) {
+    toast("Escribe la URL del sitio institucional", "error");
+    urlInput.focus();
+    return;
+  }
+
+  button.disabled = true;
+  container.innerHTML = `<div class="palette-loading"><span class="material-symbols-outlined">progress_activity</span> Analizando sitio y hojas de estilo…</div>`;
+  try {
+    const result = await extractSitePalette(url);
+    if (!state.config) state.config = {};
+    state.config.website = url;
+    saveLocalConfig();
+    renderPalette(container, result.colors);
+    if (result.site_name && !document.getElementById("cfg-institution")?.value.trim()) {
+      document.getElementById("cfg-institution").value = result.site_name;
+    }
+    toast(`Paleta extraída: ${result.colors.length} colores`, "success", 3500);
+  } catch (error) {
+    container.innerHTML = `<div class="palette-error">${escapeHtml(String(error))}</div>`;
+    toast(`No se pudo extraer la paleta: ${error}`, "error", 6000);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function renderPalette(container, palette) {
+  container.innerHTML = `
+    <div class="palette-heading">
+      <span>Colores encontrados</span>
+      <span class="text-muted">Selecciona uno para usarlo como color institucional</span>
+    </div>
+    <div class="palette-grid">
+      ${palette.map(({ color, occurrences }) => `
+        <button class="palette-swatch" type="button" data-palette-color="${escapeHtml(color)}"
+          title="Usar ${escapeHtml(color)}">
+          <span class="palette-swatch-color" style="background:${escapeHtml(color)}"></span>
+          <span class="palette-swatch-meta">
+            <code>${escapeHtml(color)}</code>
+            <small>${occurrences} ${occurrences === 1 ? "aparición" : "apariciones"}</small>
+          </span>
+        </button>`).join("")}
+    </div>`;
+
+  container.querySelectorAll("[data-palette-color]").forEach(button => {
+    button.addEventListener("click", () => {
+      const hex = cssColorToHex(button.dataset.paletteColor);
+      if (!hex) {
+        toast("El navegador no pudo convertir este color a RGB", "error");
+        return;
+      }
+      const picker = document.getElementById("cfg-color");
+      const label = document.getElementById("cfg-color-label");
+      if (picker) picker.value = hex;
+      if (label) label.textContent = hex;
+      if (!state.config) state.config = {};
+      state.config.color = hex;
+      saveLocalConfig();
+      container.querySelectorAll(".palette-swatch").forEach(item => item.classList.remove("selected"));
+      button.classList.add("selected");
+      toast(`Color institucional actualizado a ${hex}`, "success", 2500);
+    });
+  });
+}
+
+function cssColorToHex(color) {
+  const probe = document.createElement("span");
+  probe.style.color = "";
+  probe.style.color = color;
+  if (!probe.style.color) return null;
+  probe.style.display = "none";
+  document.body.appendChild(probe);
+  const computed = getComputedStyle(probe).color;
+  probe.remove();
+  const match = computed.match(/^rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+  if (!match) return null;
+  return `#${[match[1], match[2], match[3]]
+    .map(value => Number(value).toString(16).padStart(2, "0"))
+    .join("")}`;
+}
+
+function hexToRgb(hex) {
+  const match = /^#([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return match
+    ? { r: parseInt(match[1], 16), g: parseInt(match[2], 16), b: parseInt(match[3], 16) }
+    : { r: 0, g: 49, b: 126 };
+}
+
+function saveLocalConfig() {
+  localStorage.setItem("ids_config", JSON.stringify(state.config));
 }
 
 // ── MCP ───────────────────────────────────────────────────────────────────────

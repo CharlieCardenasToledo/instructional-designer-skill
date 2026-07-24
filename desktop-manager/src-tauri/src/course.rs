@@ -23,6 +23,39 @@ fn version(command: &str, args: &[&str]) -> Option<String> {
         .and_then(|text| text.lines().find(|line| !line.trim().is_empty()).map(str::trim).map(str::to_string))
 }
 
+/// Decodifica stdout/stderr de un proceso externo. wsl.exe emite UTF-16LE
+/// (con o sin BOM) cuando su salida no va a una consola real, en vez de UTF-8.
+fn decode_output(bytes: &[u8]) -> String {
+    if let Ok(text) = std::str::from_utf8(bytes) {
+        let trimmed = text.trim();
+        if !trimmed.is_empty() && !trimmed.contains('\u{FFFD}') {
+            return trimmed.to_string();
+        }
+    }
+    let start = if bytes.len() >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE { 2 } else { 0 };
+    String::from_utf16_lossy(
+        &bytes[start..]
+            .chunks_exact(2)
+            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+            .collect::<Vec<_>>(),
+    )
+    .trim()
+    .to_string()
+}
+
+/// Ejecuta un comando y devuelve (éxito, salida real decodificada) para
+/// mostrarla tal cual al usuario, sin inventar un texto de estado genérico.
+fn run_capture(mut cmd: Command) -> (bool, Option<String>) {
+    match cmd.output() {
+        Ok(output) => {
+            let bytes = if output.stdout.is_empty() { &output.stderr } else { &output.stdout };
+            let text = decode_output(bytes);
+            (output.status.success(), if text.is_empty() { None } else { Some(text) })
+        }
+        Err(_) => (false, None),
+    }
+}
+
 pub fn check_dependencies() -> Vec<DependencyStatus> {
     let node = command_exists("node");
     let npx = command_exists(if cfg!(target_os = "windows") { "npx.cmd" } else { "npx" });
@@ -36,51 +69,53 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
             installed: node && npx,
             version: version("node", &["--version"]),
             required: true,
-            note: "Requerido para NotebookLM MCP y los validadores.".to_string(),
+            note: "Necesario para que la app funcione correctamente.".to_string(),
+            command: "node --version".to_string(),
         },
         DependencyStatus {
             name: "Git".to_string(),
             installed: git,
             version: version("git", &["--version"]),
             required: false,
-            note: "Opcional: útil para versionar cursos; la skill ya viene incluida en la app.".to_string(),
+            note: "Opcional: guarda el historial de cambios de tus cursos.".to_string(),
+            command: "git --version".to_string(),
         },
         DependencyStatus {
             name: "Python".to_string(),
             installed: python,
             version: version(python_command, &["--version"]),
             required: false,
-            note: "Opcional: necesario solo para recortar PDFs con PyMuPDF.".to_string(),
+            note: "Opcional: solo se usa para recortar imágenes de tus PDFs.".to_string(),
+            command: format!("{python_command} --version"),
         },
     ];
 
     #[cfg(target_os = "windows")]
     {
-        let wsl = Command::new("wsl.exe")
-            .arg("--status")
-            .output()
-            .map(|output| output.status.success())
-            .unwrap_or(false);
+        let mut wsl_cmd = Command::new("wsl.exe");
+        wsl_cmd.arg("--status");
+        let (wsl, wsl_output) = run_capture(wsl_cmd);
         dependencies.push(DependencyStatus {
             name: "WSL 2".to_string(),
             installed: wsl,
-            version: wsl.then(|| "Disponible".to_string()),
+            version: wsl_output,
             required: false,
-            note: "Opcional: una vía para compilar LaTeX en Windows.".to_string(),
+            note: "Opcional: una forma de generar tus PDFs en Windows.".to_string(),
+            command: "wsl.exe --status".to_string(),
         });
 
-        let latex = wsl
-            && Command::new("wsl.exe")
-                .args(["--", "sh", "-lc", "command -v pdflatex && command -v biber"])
-                .output()
-                .map(|output| output.status.success())
-                .unwrap_or(false);
+        let latex_command = "wsl.exe -- sh -lc \"command -v pdflatex && command -v biber\"";
+        let mut latex_cmd = Command::new("wsl.exe");
+        latex_cmd.args(["--", "sh", "-lc", "command -v pdflatex && command -v biber"]);
+        let (latex_ok, latex_output) = run_capture(latex_cmd);
+        let latex = wsl && latex_ok;
         dependencies.push(DependencyStatus {
             name: "TeX Live (pdflatex)".to_string(),
             installed: latex,
-            version: latex.then(|| "Disponible en WSL".to_string()),
+            version: latex_output,
             required: false,
-            note: "Opcional y de gran tamaño: necesario solo para compilar guías localmente.".to_string(),
+            note: "Ocupa bastante espacio, pero es lo que genera tus guías en PDF.".to_string(),
+            command: latex_command.to_string(),
         });
     }
 
@@ -92,7 +127,8 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
             installed: latex,
             version: version("pdflatex", &["--version"]),
             required: false,
-            note: "Opcional: necesario solo para compilar guías localmente.".to_string(),
+            note: "Es lo que genera tus guías en PDF.".to_string(),
+            command: "pdflatex --version".to_string(),
         });
     }
 
@@ -102,7 +138,8 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
         installed: docker,
         version: version("docker", &["--version"]),
         required: false,
-        note: "Opcional: para compilar LaTeX en contenedor aislado (recomendado). La app usa WSL o pdflatex como fallback.".to_string(),
+        note: "Recomendado: la forma más simple de generar tus guías en PDF.".to_string(),
+        command: "docker --version".to_string(),
     });
 
     dependencies
@@ -111,7 +148,7 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
 pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
     #[cfg(target_os = "windows")]
     {
-        if matches!(name.as_str(), "WSL 2" | "TeX Live (pdflatex)") && !confirmed {
+        if matches!(name.as_str(), "WSL 2" | "TeX Live (pdflatex)" | "Docker") && !confirmed {
             return ActionResult::error("Esta instalación cambia componentes del sistema y requiere confirmación explícita.");
         }
 
@@ -141,6 +178,7 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
             "Node.js" => "OpenJS.NodeJS.LTS",
             "Git" => "Git.Git",
             "Python" => "Python.Python.3.13",
+            "Docker" => "Docker.DockerDesktop",
             _ => return ActionResult::error(format!("Dependencia desconocida: {name}")),
         };
         match Command::new("winget.exe")
@@ -155,7 +193,14 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
             ])
             .status()
         {
-            Ok(status) if status.success() => ActionResult::ok(format!("{name} instalado correctamente.")),
+            Ok(status) if status.success() => {
+                let note = if name == "Docker" {
+                    " Puede requerir cerrar sesión o reiniciar Windows antes de que el comando docker esté disponible."
+                } else {
+                    ""
+                };
+                ActionResult::ok(format!("{name} instalado correctamente.{note}"))
+            }
             Ok(status) => ActionResult::error(format!("winget terminó con código {:?}.", status.code())),
             Err(error) => ActionResult::error(format!("No se pudo ejecutar winget: {error}")),
         }
@@ -389,39 +434,65 @@ pub fn compile_syllabus_pdf(
         return ActionResult::error(format!("No se pudo crear carpeta sections: {error}"));
     }
 
+    // Usa el mismo preámbulo (colores, bloques) que la skill usa para las
+    // guías reales, en vez de reimplementar un documento genérico aparte.
+    let institution = crate::config::active_institution();
+    let author = if institution.author.is_empty() { "Instructional Designer Manager".to_string() } else { institution.author };
+    let institute_line = if institution.career.is_empty() { "Sistema Académico".to_string() } else { institution.career };
+    let extrainfo_line = if institution.institution.is_empty() { String::new() } else { institution.institution };
+
     let mut full_content = format!(
         "\\documentclass[11pt,oneside,lang=es,color=blue,citestyle=apa,bibstyle=apa]{{elegantbook}}\n\
-         \\usepackage[utf-8]{{inputenc}}\n\
-         \\usepackage[T1]{{fontenc}}\n\
-         \\usepackage{{microtype}}\n\
-         \\usepackage{{graphicx}}\n\
-         \\usepackage{{tikz}}\n\
-         \\usepackage{{booktabs}}\n\
-         \\usepackage{{tabularx}}\n\
-         \\usepackage{{csquotes}}\n\n\
+         \\input{{preamble.tex}}\n\n\
          \\title{{{} — {}}}\n\
          \\subtitle{{Guía Didáctica}}\n\
-         \\author{{Instructional Designer Manager}}\n\
-         \\institute{{Sistema Académico}}\n\
-         \\date{{{}}}\n\n\
+         \\author{{{}}}\n\
+         \\institute{{{}}}\n\
+         \\date{{{}}}\n\
+         \\extrainfo{{{}}}\n\n\
          \\begin{{document}}\n\
          \\frontmatter\n\
          \\maketitle\n\
          \\mainmatter\n\n\
-         \\section{{Descripción del Curso}}\n\
+         \\guidesection{{Descripción del Curso}}\n\
          {}\n\n\
-         \\section{{Plan Semanal}}\n",
-        course_code, course_name, academic_period, description
+         \\guidesection{{Plan Semanal}}\n",
+        course_code, course_name, author, institute_line, academic_period, extrainfo_line, description
     );
     for week in &weeks_data {
         full_content.push_str(&format!(
-            "\\subsection{{Semana {:02} — {}}}\n\n",
+            "\\editorialtitle{{Semana {:02}}}{{{}}}\n\n",
             week.number,
             week.title.trim()
         ));
-        full_content.push_str(&format!("\\textbf{{Unidad:}} {}\\\\[0.3cm]\n", week.unit.trim()));
-        full_content.push_str(&format!("\\textbf{{Horas:}} Docencia: {} | Práctica: {} | Autónomo: {}\\\\[0.3cm]\n\n",
-            week.teaching_hours, week.practice_hours, week.autonomous_hours));
+        full_content.push_str(&format!(
+            "\\coursemeta{{Unidad: {} \\quad Horas: Docencia {} · Práctica {} · Autónomo {}}}\n\n",
+            week.unit.trim(), week.teaching_hours, week.practice_hours, week.autonomous_hours
+        ));
+        if !week.topics.trim().is_empty() {
+            full_content.push_str("\\begin{accentblock}[title=Temas]\n\\begin{itemize}\n");
+            for line in week.topics.lines().filter(|l| !l.trim().is_empty()) {
+                full_content.push_str(&format!("\\item {}\n", line.trim()));
+            }
+            full_content.push_str("\\end{itemize}\n\\end{accentblock}\n\n");
+        }
+        if !week.outcomes.trim().is_empty() {
+            full_content.push_str("\\begin{mintblock}[title=Resultado de aprendizaje]\n\\begin{itemize}\n");
+            for line in week.outcomes.lines().filter(|l| !l.trim().is_empty()) {
+                full_content.push_str(&format!("\\item {}\n", line.trim()));
+            }
+            full_content.push_str("\\end{itemize}\n\\end{mintblock}\n\n");
+        }
+        if let Some(activity) = week.graded_activity.as_ref().filter(|a| !a.trim().is_empty()) {
+            full_content.push_str(&format!("\\begin{{sandblock}}[title=Actividad calificada]\n{}\n\\end{{sandblock}}\n\n", activity.trim()));
+        }
+        if !week.bibliography.trim().is_empty() {
+            full_content.push_str("\\begin{softblock}[title=Bibliografía]\n\\begin{itemize}\n");
+            for line in week.bibliography.lines().filter(|l| !l.trim().is_empty()) {
+                full_content.push_str(&format!("\\item {}\n", line.trim()));
+            }
+            full_content.push_str("\\end{itemize}\n\\end{softblock}\n\n");
+        }
     }
 
     full_content.push_str("\n\\end{document}\n");
@@ -431,21 +502,29 @@ pub fn compile_syllabus_pdf(
         return ActionResult::error(format!("No se pudo escribir main.tex: {error}"));
     }
 
-    let compile_result = if docker_available() {
-        compile_via_docker(&latex_dir, "main")
-            .or_else(|_| {
-                if cfg!(target_os = "windows") {
-                    compile_via_wsl(&latex_dir, "main")
-                } else {
-                    compile_via_pdflatex(&latex_dir, "main")
-                }
-            })
-    } else if cfg!(target_os = "windows") {
-        compile_via_wsl(&latex_dir, "main")
-            .or_else(|_| compile_via_pdflatex(&latex_dir, "main"))
+    if let Err(error) = crate::config::copy_active_template_assets(&latex_dir) {
+        return ActionResult::error(error);
+    }
+
+    // El preámbulo hace \addbibresource{reference.bib}; si el curso todavía
+    // no tiene una, se crea vacía para que la compilación no falle.
+    let bib_path = latex_dir.join("reference.bib");
+    if !bib_path.exists() {
+        if let Err(error) = atomic_write(&bib_path, b"% Sin referencias bibliograficas todavia.\n") {
+            return ActionResult::error(format!("No se pudo crear reference.bib: {error}"));
+        }
+    }
+
+    let mut attempts: Vec<(&str, Box<dyn Fn() -> Result<std::path::PathBuf, String> + '_>)> = Vec::new();
+    if docker_available() {
+        attempts.push(("Docker", Box::new(|| compile_via_docker(&latex_dir, "main"))));
+    }
+    if cfg!(target_os = "windows") {
+        attempts.push(("WSL", Box::new(|| compile_via_wsl(&latex_dir, "main"))));
     } else {
-        compile_via_pdflatex(&latex_dir, "main")
-    };
+        attempts.push(("pdflatex", Box::new(|| compile_via_pdflatex(&latex_dir, "main"))));
+    }
+    let compile_result = try_compile(attempts);
 
     match compile_result {
         Ok(pdf_path) => {
@@ -489,7 +568,7 @@ fn compile_via_wsl(latex_dir: &std::path::Path, base_name: &str) -> Result<std::
         } else {
             String::from_utf8_lossy(&output.stderr).to_string()
         };
-        Err(format!("Error en compilación LaTeX:\n{}", error_log.lines().take(5).collect::<Vec<_>>().join("\n")))
+        Err(format!("Error en compilación LaTeX:\n{}", extract_tex_error(&error_log)))
     }
 }
 
@@ -514,8 +593,22 @@ fn compile_via_pdflatex(latex_dir: &std::path::Path, base_name: &str) -> Result<
         } else {
             String::from_utf8_lossy(&output.stderr).to_string()
         };
-        Err(format!("Error en compilación LaTeX:\n{}", error_log.lines().take(5).collect::<Vec<_>>().join("\n")))
+        Err(format!("Error en compilación LaTeX:\n{}", extract_tex_error(&error_log)))
     }
+}
+
+/// Extrae la parte útil de un log de pdflatex: las primeras líneas son
+/// siempre el banner de la versión, nunca el error. Busca la línea que
+/// empieza con "!" (marcador de error fatal de TeX) y su contexto; si no
+/// la encuentra, devuelve el final del log (donde suele estar el error).
+fn extract_tex_error(log: &str) -> String {
+    let lines: Vec<&str> = log.lines().collect();
+    if let Some(idx) = lines.iter().position(|line| line.trim_start().starts_with('!')) {
+        let end = (idx + 8).min(lines.len());
+        return lines[idx..end].join("\n");
+    }
+    let start = lines.len().saturating_sub(15);
+    lines[start..].join("\n")
 }
 
 fn docker_available() -> bool {
@@ -524,6 +617,24 @@ fn docker_available() -> bool {
         .output()
         .map(|o| o.status.success())
         .unwrap_or(false)
+}
+
+/// Prueba cada motor de compilación en orden y conserva el error real de
+/// todos los intentos fallidos, en vez de descartar los primeros con `or_else`.
+fn try_compile<'a>(
+    attempts: Vec<(&'a str, Box<dyn Fn() -> Result<std::path::PathBuf, String> + 'a>)>,
+) -> Result<std::path::PathBuf, String> {
+    let mut errors = Vec::new();
+    for (label, attempt) in attempts {
+        match attempt() {
+            Ok(path) => return Ok(path),
+            Err(err) => errors.push(format!("{label}: {err}")),
+        }
+    }
+    Err(format!(
+        "Ningún motor de compilación pudo generar el PDF:\n\n{}",
+        errors.join("\n\n")
+    ))
 }
 
 fn compile_via_docker(latex_dir: &std::path::Path, base_name: &str) -> Result<std::path::PathBuf, String> {
@@ -569,7 +680,7 @@ fn compile_via_docker(latex_dir: &std::path::Path, base_name: &str) -> Result<st
         } else {
             String::from_utf8_lossy(&output.stderr).to_string()
         };
-        Err(format!("Error en compilación LaTeX (Docker):\n{}", error_log.lines().take(5).collect::<Vec<_>>().join("\n")))
+        Err(format!("Error en compilación LaTeX (Docker):\n{}", extract_tex_error(&error_log)))
     }
 }
 

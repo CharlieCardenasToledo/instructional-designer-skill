@@ -3,6 +3,7 @@ mod course;
 mod mcp;
 mod models;
 mod onboarding;
+mod palette;
 mod paths;
 mod payload;
 
@@ -85,6 +86,11 @@ async fn configure_mcp(target: String) -> ActionResult {
 #[tauri::command]
 async fn apply_institution_config(config: InstitutionConfig) -> ActionResult {
     config::apply_institution(config)
+}
+
+#[tauri::command]
+async fn extract_site_palette(url: String) -> Result<models::SitePalette, String> {
+    palette::extract_site_palette(url).await
 }
 
 #[tauri::command]
@@ -206,6 +212,7 @@ pub fn run() {
             export_skill_zip,
             configure_mcp,
             apply_institution_config,
+            extract_site_palette,
             save_notebooks_config,
             get_setup_status,
             check_notebooklm_auth,

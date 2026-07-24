@@ -151,5 +151,9 @@ pub fn safe_segment(value: &str, field: &str) -> Result<String, String> {
 }
 
 pub fn path_text(path: &Path) -> String {
-    path.to_string_lossy().replace('\\', "/")
+    let text = path.to_string_lossy();
+    // En Windows, canonicalize() antepone el prefijo de ruta extendida
+    // \\?\, que no es válido dentro de una URL file:// ni útil para mostrar.
+    let stripped = text.strip_prefix(r"\\?\").unwrap_or(&text);
+    stripped.replace('\\', "/")
 }

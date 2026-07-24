@@ -41,6 +41,11 @@ Thumbs.db
 *.swo
 *~
 
+# Local AI and browser-tool state
+.claude/
+.playwright-mcp/
+.rtfm/
+
 # Private configuration (DO NOT COMMIT)
 # If you store your personal bibliografia.md with real notebook IDs
 # outside the skill folder, keep it out of version control.
