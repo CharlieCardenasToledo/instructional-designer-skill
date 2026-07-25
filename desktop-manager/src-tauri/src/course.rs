@@ -77,23 +77,25 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
             name: "Python".to_string(),
             installed: python,
             version: version(python_command, &["--version"]),
-            required: false,
-            note: "Opcional: solo se usa para recortar imágenes de tus PDFs.".to_string(),
+            required: true,
+            note: "Procesa recursos del curso (recortes bibliográficos).".to_string(),
             command: format!("{python_command} --version"),
         },
     ];
 
-    // TeX Live (pdflatex + biber) se verifica e instala de forma nativa en
-    // las tres plataformas (MiKTeX vía winget en Windows). La app ya no
-    // detecta ni ofrece WSL ni Docker: eran motores de compilación
-    // alternativos que el usuario final no debería tener que evaluar.
+    // El compilador LaTeX (pdflatex + biber) se verifica e instala de forma
+    // nativa en las tres plataformas: MiKTeX vía winget en Windows, TeX Live
+    // vía Homebrew/apt en macOS/Linux. La app ya no detecta ni ofrece WSL ni
+    // Docker: eran motores de compilación alternativos que el usuario final
+    // no debería tener que evaluar. El nombre visible es genérico
+    // ("Compilador LaTeX") porque el binario real detrás cambia según el SO.
     let latex = command_exists("pdflatex") && command_exists("biber");
     dependencies.push(DependencyStatus {
-        name: "TeX Live (pdflatex)".to_string(),
+        name: "Compilador LaTeX".to_string(),
         installed: latex,
         version: version("pdflatex", &["--version"]),
         required: true,
-        note: "Compilador LaTeX: genera el PDF de tu guía.".to_string(),
+        note: "Genera el PDF de tu guía (MiKTeX en Windows).".to_string(),
         command: "pdflatex --version".to_string(),
     });
 
@@ -123,7 +125,7 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
     invalidate_dependency_cache();
     #[cfg(target_os = "windows")]
     {
-        if name == "TeX Live (pdflatex)" && !confirmed {
+        if name == "Compilador LaTeX" && !confirmed {
             return ActionResult::error("Esta instalación cambia componentes del sistema y requiere confirmación explícita.");
         }
 
@@ -131,7 +133,7 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
             "Node.js" => "OpenJS.NodeJS.LTS",
             "Git" => "Git.Git",
             "Python" => "Python.Python.3.13",
-            "TeX Live (pdflatex)" => "MiKTeX.MiKTeX",
+            "Compilador LaTeX" => "MiKTeX.MiKTeX",
             _ => return ActionResult::error(format!("Dependencia desconocida: {name}")),
         };
         match Command::new("winget.exe")
@@ -152,7 +154,7 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
                 // permite que "Verificar de nuevo" encuentre la dependencia
                 // sin reiniciar la app completa.
                 refresh_path_from_registry();
-                if name == "TeX Live (pdflatex)" {
+                if name == "Compilador LaTeX" {
                     return finish_miktex_install();
                 }
                 ActionResult::ok(format!("{name} instalado correctamente."))

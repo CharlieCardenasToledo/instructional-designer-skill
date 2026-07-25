@@ -51,22 +51,23 @@ fn save(status: &mut OnboardingStatus) -> Result<(), String> {
 }
 
 fn validate_environment(dependencies: &[crate::models::DependencyStatus]) -> Result<(), String> {
-    let node_ready = dependencies
-        .iter()
-        .find(|dependency| dependency.name == "Node.js")
-        .is_some_and(|dependency| dependency.installed);
-    if !node_ready {
+    let installed = |target: &str| {
+        dependencies
+            .iter()
+            .find(|dependency| dependency.name == target)
+            .is_some_and(|dependency| dependency.installed)
+    };
+
+    if !installed("Node.js") {
         return Err(
             "Falta instalar un componente necesario. Instálalo y pulsa “Verificar de nuevo”."
                 .to_string(),
         );
     }
-
-    let latex_ready = dependencies
-        .iter()
-        .find(|dependency| dependency.name == "TeX Live (pdflatex)")
-        .is_some_and(|dependency| dependency.installed);
-    if !latex_ready {
+    if !installed("Python") {
+        return Err("Instala Python para poder continuar.".to_string());
+    }
+    if !installed("Compilador LaTeX") {
         return Err("Instala el compilador LaTeX para poder generar el PDF de tu guía.".to_string());
     }
     Ok(())
@@ -96,13 +97,11 @@ fn first_invalid_step(
     } else {
         course::check_dependencies_cached()
     };
-    if let Err(message) = validate_environment(&dependencies) {
-        let reason = if message.starts_with("Falta instalar") {
-            "Detectamos que falta un componente necesario para que la app funcione."
-        } else {
-            "Ya no encontramos el compilador LaTeX instalado. Lo necesitas para poder generar el PDF de tu guía."
-        };
-        return Some((4, reason));
+    if validate_environment(&dependencies).is_err() {
+        // El motivo exacto (Node.js, Python o el compilador LaTeX) ya se
+        // muestra en la tarjeta correspondiente del paso 4; este mensaje
+        // solo explica por qué se regresó a ese paso.
+        return Some((4, "Detectamos que falta una herramienta necesaria para que la app funcione."));
     }
     if !config::institution_is_configured() {
         return Some((6, "Los datos de tu institución o perfil académico ya no están guardados."));
@@ -240,39 +239,58 @@ mod tests {
     }
 
     fn dependency(name: &str, installed: bool) -> crate::models::DependencyStatus {
+        let required = matches!(name, "Node.js" | "Python" | "Compilador LaTeX");
         crate::models::DependencyStatus {
             name: name.to_string(),
             installed,
             version: None,
-            required: name == "Node.js",
+            required,
             note: String::new(),
             command: String::new(),
         }
     }
 
     #[test]
-    fn environment_validation_reports_node_before_pdf_compiler() {
-        let dependencies = vec![dependency("Node.js", false), dependency("TeX Live (pdflatex)", false)];
+    fn environment_validation_reports_node_before_the_rest() {
+        let dependencies = vec![
+            dependency("Node.js", false),
+            dependency("Python", false),
+            dependency("Compilador LaTeX", false),
+        ];
         assert!(validate_environment(&dependencies)
             .unwrap_err()
             .starts_with("Falta instalar"));
     }
 
     #[test]
-    fn environment_validation_requires_latex_and_no_longer_accepts_docker() {
-        // Docker ya no es una alternativa válida al compilador LaTeX: aunque
-        // apareciera en la lista (no debería, check_dependencies ya no lo
-        // reporta), la validación exige TeX Live específicamente.
-        let dependencies = vec![
+    fn environment_validation_requires_python_and_latex_explicitly() {
+        // El flujo obligatorio es Node.js + Python + compilador LaTeX; Docker
+        // ya no es una alternativa válida (ni aparece en check_dependencies).
+        let missing_python = vec![
             dependency("Node.js", true),
+            dependency("Python", false),
+            dependency("Compilador LaTeX", true),
+        ];
+        assert_eq!(
+            validate_environment(&missing_python).unwrap_err(),
+            "Instala Python para poder continuar."
+        );
+
+        let missing_latex = vec![
+            dependency("Node.js", true),
+            dependency("Python", true),
             dependency("Docker", true),
         ];
         assert_eq!(
-            validate_environment(&dependencies).unwrap_err(),
+            validate_environment(&missing_latex).unwrap_err(),
             "Instala el compilador LaTeX para poder generar el PDF de tu guía."
         );
 
-        let ready = vec![dependency("Node.js", true), dependency("TeX Live (pdflatex)", true)];
+        let ready = vec![
+            dependency("Node.js", true),
+            dependency("Python", true),
+            dependency("Compilador LaTeX", true),
+        ];
         assert!(validate_environment(&ready).is_ok());
     }
 

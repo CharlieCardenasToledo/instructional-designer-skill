@@ -40,7 +40,7 @@ import googleGLogo from "./assets/google-g.svg";
 import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 
 const TOTAL_STEPS = 10;
-const LARGE_DEPENDENCIES = new Set(["TeX Live (pdflatex)"]);
+const LARGE_DEPENDENCIES = new Set(["Compilador LaTeX"]);
 const STEP_META = [
   { title: "Del sílabo a una guía lista para publicar", subtitle: "Configura un sistema de producción académica, pedagógica y editorial.", icon: "graduation-cap" },
   { title: "Cómo funciona", subtitle: "Del documento base a un PDF validado y respaldado por evidencia.", icon: "network" },
@@ -260,7 +260,7 @@ function renderCurrentStep() {
 
 // El paso 4 (herramientas) ya no tiene un único punto: cuando las
 // dependencias terminaron de cargar, ese lugar en la pista se expande a un
-// punto por herramienta (Node, Git, Python, TeX Live), verde si ya está
+// punto por herramienta (Node, Git, Python, compilador LaTeX), verde si ya está
 // instalada. Es la misma pista de los 10 pasos, no una segunda aparte -así
 // el gusanito puede recorrer de un paso macro a una herramienta y viceversa
 // sin saltos.
@@ -525,8 +525,8 @@ function dependencyCardShell(dep) {
 // progressDots/animateStepTransition/handleAction), no en un stepper nuevo
 // aparte: esta función solo dibuja la tarjeta de la herramienta enfocada.
 function dependenciesStep() {
-  // Node.js y el compilador LaTeX son obligatorios (required=true desde el
-  // backend); Git y Python son recomendados pero no bloquean el avance.
+  // Node.js, Python y el compilador LaTeX son obligatorios (required=true
+  // desde el backend); Git es opcional y no bloquea el avance.
   const missing = runtime.dependencies.filter(dep => dep.required && !dep.installed);
   const sequence = dependencySequence();
 
@@ -551,7 +551,7 @@ function dependenciesStep() {
   return `<section>
     <div class="max-w-xl mx-auto mb-3 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3">
       <p class="text-xs text-gray-600 leading-relaxed"><strong class="text-gray-900">Node.js</strong> coordina la automatización; <strong class="text-gray-900">Python</strong> procesa recursos; y el <strong class="text-gray-900">compilador LaTeX</strong> genera el PDF.</p>
-      <p class="text-[10.5px] text-gray-400 mt-1.5">Node.js y el compilador LaTeX son obligatorios para poder generar tus guías.</p>
+      <p class="text-[10.5px] text-gray-400 mt-1.5">Node.js, Python y el compilador LaTeX son obligatorios para poder generar tus guías.</p>
     </div>
     <div class="max-w-xl mx-auto">${dependencyCardShell(sequence[focusIndex])}</div>
     ${nextBlocked ? `<div class="${INLINE_ERROR} !max-w-xl">${ic("alert-circle", 14)} ${escapeHtml(blockReason)}</div>` : ""}

@@ -4,7 +4,7 @@ App de escritorio (Tauri) para configurar e instalar el Instructional Designer S
 
 ## Qué hace
 
-- **Verifica dependencias** y ofrece instalación confirmada vía `winget`: Node.js y el compilador LaTeX (MiKTeX) son obligatorios; Git y Python son opcionales
+- **Verifica dependencias** y ofrece instalación confirmada vía `winget`: Node.js, Python y el compilador LaTeX (MiKTeX en Windows) son las herramientas necesarias; Git es opcional
 - **Onboarding secuencial bloqueado**: institución, plantilla, autenticación NotebookLM y destino deben estar completos antes del panel
 - **Configura datos institucionales** (nombre, color RGB, facultad) y genera la configuración LaTeX lista para copiar
 - **Gestiona cursos**: crea la estructura de carpetas correcta con un clic

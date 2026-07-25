@@ -12,7 +12,7 @@ import { confirm } from "@tauri-apps/plugin-dialog";
 
 // "Instalar herramientas necesarias" solo cubre lo indispensable para
 // producir el PDF; Git queda fuera aunque aparezca en la lista de abajo.
-const BULK_INSTALL_TARGETS = new Set(["Node.js", "Python", "TeX Live (pdflatex)"]);
+const BULK_INSTALL_TARGETS = new Set(["Node.js", "Python", "Compilador LaTeX"]);
 
 // Convierte ecosystem a string independientemente de si es array o string
 function ecosystemToStr(val) {

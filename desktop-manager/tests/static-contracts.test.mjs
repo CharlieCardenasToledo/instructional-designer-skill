@@ -109,12 +109,15 @@ test('la app no muestra ni instala Docker/WSL: solo Node, Git, Python y el compi
   assert.doesNotMatch(onboarding, /Docker|WSL/);
   assert.doesNotMatch(settings, /Docker|WSL/);
   // course.rs ya no declara DependencyStatus para Docker ni WSL 2 (los
-  // motores de compilación de reserva se eliminaron junto con ellos).
-  assert.doesNotMatch(course, /name:\s*"Docker"|name:\s*"WSL 2"|compile_via_docker|compile_via_wsl|docker_available/);
-  // La validación del onboarding exige el compilador LaTeX, no lo acepta
-  // como alternativa a Docker.
-  assert.doesNotMatch(onboardingRs, /"Docker" \| "TeX Live/);
-  assert.match(onboardingRs, /find\(\|dependency\| dependency\.name == "TeX Live \(pdflatex\)"\)/);
+  // motores de compilación de reserva se eliminaron junto con ellos), y el
+  // nombre visible del compilador ya no es el técnico "TeX Live (pdflatex)".
+  assert.doesNotMatch(course, /name:\s*"Docker"|name:\s*"WSL 2"|compile_via_docker|compile_via_wsl|docker_available|"TeX Live \(pdflatex\)"/);
+  assert.match(course, /name:\s*"Compilador LaTeX"/);
+  // La validación del onboarding exige Node.js, Python y el compilador
+  // LaTeX explícitamente; Docker ya no es una alternativa aceptada.
+  assert.doesNotMatch(onboardingRs, /"Docker" \| "TeX Live|"TeX Live \(pdflatex\)"/);
+  assert.match(onboardingRs, /installed\("Python"\)/);
+  assert.match(onboardingRs, /installed\("Compilador LaTeX"\)/);
   // "Instalar todo" del panel de Configuración > Entorno fue reemplazado.
   assert.doesNotMatch(settings, />Instalar todo</);
   assert.match(settings, /Instalar herramientas necesarias/);
