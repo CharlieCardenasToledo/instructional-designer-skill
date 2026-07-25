@@ -10,6 +10,10 @@ import { toast } from "../toast.js";
 import { refreshIcons } from "../icons.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
 
+// "Instalar herramientas necesarias" solo cubre lo indispensable para
+// producir el PDF; Git queda fuera aunque aparezca en la lista de abajo.
+const BULK_INSTALL_TARGETS = new Set(["Node.js", "Python", "TeX Live (pdflatex)"]);
+
 // Convierte ecosystem a string independientemente de si es array o string
 function ecosystemToStr(val) {
   if (Array.isArray(val)) return val.join("\n");
@@ -655,7 +659,7 @@ async function loadDeps() {
           </div>
         </div>
         <button class="btn btn-primary btn-sm" id="btn-install-all-deps" style="margin-left:auto">
-          <span class="material-symbols-outlined" style="font-size:14px">download</span> Instalar todo
+          <span class="material-symbols-outlined" style="font-size:14px">download</span> Instalar herramientas necesarias
         </button>
       </div>
       ${deps.map(dep => `
@@ -677,6 +681,7 @@ async function loadDeps() {
     container.querySelectorAll("[data-dep-name]").forEach(btn => {
       btn.addEventListener("click", async () => {
         const name = btn.dataset.depName;
+        if (!await confirm(`Vamos a instalar ${name} en tu sistema. ¿Continuar?`)) return;
         toast(`Instalando ${name}…`, "loading", 30000);
         try {
           const r = await installDependency(name, true);
@@ -687,7 +692,16 @@ async function loadDeps() {
     });
 
     container.querySelector("#btn-install-all-deps")?.addEventListener("click", async () => {
-      for (const dep of deps.filter(d => !d.installed)) {
+      // Solo las herramientas necesarias para producir el PDF: nunca instala
+      // Git aunque falte (es opcional, no lo pide este flujo simplificado).
+      const targets = deps.filter(d => !d.installed && BULK_INSTALL_TARGETS.has(d.name));
+      if (targets.length === 0) {
+        toast("Las herramientas necesarias ya están instaladas.", "info", 3500);
+        return;
+      }
+      const names = targets.map(d => d.name).join(", ");
+      if (!await confirm(`Se instalarán las herramientas necesarias para generar tus guías: ${names}. Esto puede tardar varios minutos. ¿Continuar?`)) return;
+      for (const dep of targets) {
         toast(`Instalando ${dep.name}…`, "loading", 30000);
         try {
           const r = await installDependency(dep.name, true);

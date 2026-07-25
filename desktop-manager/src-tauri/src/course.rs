@@ -41,39 +41,6 @@ fn version(command: &str, args: &[&str]) -> Option<String> {
         .and_then(|text| text.lines().find(|line| !line.trim().is_empty()).map(str::trim).map(str::to_string))
 }
 
-/// Decodifica stdout/stderr de un proceso externo. wsl.exe emite UTF-16LE
-/// (con o sin BOM) cuando su salida no va a una consola real, en vez de UTF-8.
-fn decode_output(bytes: &[u8]) -> String {
-    if let Ok(text) = std::str::from_utf8(bytes) {
-        let trimmed = text.trim();
-        if !trimmed.is_empty() && !trimmed.contains('\u{FFFD}') {
-            return trimmed.to_string();
-        }
-    }
-    let start = if bytes.len() >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE { 2 } else { 0 };
-    String::from_utf16_lossy(
-        &bytes[start..]
-            .chunks_exact(2)
-            .map(|c| u16::from_le_bytes([c[0], c[1]]))
-            .collect::<Vec<_>>(),
-    )
-    .trim()
-    .to_string()
-}
-
-/// Ejecuta un comando y devuelve (éxito, salida real decodificada) para
-/// mostrarla tal cual al usuario, sin inventar un texto de estado genérico.
-fn run_capture(mut cmd: Command) -> (bool, Option<String>) {
-    match cmd.output() {
-        Ok(output) => {
-            let bytes = if output.stdout.is_empty() { &output.stderr } else { &output.stdout };
-            let text = decode_output(bytes);
-            (output.status.success(), if text.is_empty() { None } else { Some(text) })
-        }
-        Err(_) => (false, None),
-    }
-}
-
 pub fn check_dependencies() -> Vec<DependencyStatus> {
     let node = command_exists("node");
     let npx = command_exists(if cfg!(target_os = "windows") { "npx.cmd" } else { "npx" });
@@ -108,42 +75,18 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
         },
     ];
 
-    // TeX Live (pdflatex + biber) se verifica de forma nativa en las tres
-    // plataformas. En Windows lo instala MiKTeX vía winget; ya no depende de
-    // WSL ni de un contenedor Docker para estar "instalado".
+    // TeX Live (pdflatex + biber) se verifica e instala de forma nativa en
+    // las tres plataformas (MiKTeX vía winget en Windows). La app ya no
+    // detecta ni ofrece WSL ni Docker: eran motores de compilación
+    // alternativos que el usuario final no debería tener que evaluar.
     let latex = command_exists("pdflatex") && command_exists("biber");
     dependencies.push(DependencyStatus {
         name: "TeX Live (pdflatex)".to_string(),
         installed: latex,
         version: version("pdflatex", &["--version"]),
-        required: false,
-        note: "Es lo que genera tus guías en PDF.".to_string(),
+        required: true,
+        note: "Compilador LaTeX: genera el PDF de tu guía.".to_string(),
         command: "pdflatex --version".to_string(),
-    });
-
-    #[cfg(target_os = "windows")]
-    {
-        let mut wsl_cmd = Command::new("wsl.exe");
-        wsl_cmd.arg("--status");
-        let (wsl, wsl_output) = run_capture(wsl_cmd);
-        dependencies.push(DependencyStatus {
-            name: "WSL 2".to_string(),
-            installed: wsl,
-            version: wsl_output,
-            required: false,
-            note: "Avanzado y opcional: solo si ya compilas tus PDFs con TeX Live dentro de WSL.".to_string(),
-            command: "wsl.exe --status".to_string(),
-        });
-    }
-
-    let docker = command_exists("docker");
-    dependencies.push(DependencyStatus {
-        name: "Docker".to_string(),
-        installed: docker,
-        version: version("docker", &["--version"]),
-        required: false,
-        note: "Avanzado y opcional: una alternativa a TeX Live si ya usas contenedores.".to_string(),
-        command: "docker --version".to_string(),
     });
 
     if let Ok(mut cache) = dependency_cache().lock() {
@@ -152,9 +95,9 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
     dependencies
 }
 
-/// Reutiliza la inspección que ya mostró el paso de entorno. Los comandos de
-/// WSL y TeX pueden tardar varios segundos en Windows, por lo que repetirlos
-/// inmediatamente al pulsar "Continuar" no aporta una validación más fiable.
+/// Reutiliza la inspección que ya mostró el paso de entorno. La verificación
+/// de TeX Live puede tardar varios segundos, así que repetirla inmediatamente
+/// al pulsar "Continuar" no aporta una validación más fiable.
 pub fn check_dependencies_cached() -> Vec<DependencyStatus> {
     if let Ok(cache) = dependency_cache().lock() {
         if let Some((checked_at, dependencies)) = cache.as_ref() {
@@ -172,18 +115,8 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
     invalidate_dependency_cache();
     #[cfg(target_os = "windows")]
     {
-        if matches!(name.as_str(), "WSL 2" | "TeX Live (pdflatex)" | "Docker") && !confirmed {
+        if name == "TeX Live (pdflatex)" && !confirmed {
             return ActionResult::error("Esta instalación cambia componentes del sistema y requiere confirmación explícita.");
-        }
-
-        if name == "WSL 2" {
-            return match Command::new("wsl.exe").args(["--install", "--no-distribution"]).status() {
-                Ok(status) if status.success() => ActionResult::ok(
-                    "WSL se habilitó. Windows puede requerir un reinicio antes de instalar una distribución.",
-                ),
-                Ok(status) => ActionResult::error(format!("WSL terminó con código {:?}.", status.code())),
-                Err(error) => ActionResult::error(format!("No se pudo iniciar el instalador de WSL: {error}")),
-            };
         }
 
         let package = match name.as_str() {
@@ -191,7 +124,6 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
             "Git" => "Git.Git",
             "Python" => "Python.Python.3.13",
             "TeX Live (pdflatex)" => "MiKTeX.MiKTeX",
-            "Docker" => "Docker.DockerDesktop",
             _ => return ActionResult::error(format!("Dependencia desconocida: {name}")),
         };
         match Command::new("winget.exe")
@@ -210,12 +142,7 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
                 if name == "TeX Live (pdflatex)" {
                     return finish_miktex_install();
                 }
-                let note = if name == "Docker" {
-                    " Puede requerir cerrar sesión o reiniciar Windows antes de que el comando docker esté disponible."
-                } else {
-                    ""
-                };
-                ActionResult::ok(format!("{name} instalado correctamente.{note}"))
+                ActionResult::ok(format!("{name} instalado correctamente."))
             }
             Ok(status) => ActionResult::error(format!("winget terminó con código {:?}.", status.code())),
             Err(error) => ActionResult::error(format!("No se pudo ejecutar winget: {error}")),
@@ -621,22 +548,10 @@ pub fn compile_syllabus_pdf(
         }
     }
 
-    // pdflatex nativo (MiKTeX en Windows, TeX Live en macOS/Linux) es la ruta
-    // principal desde que dejamos de depender de WSL para instalarlo. Docker
-    // y WSL quedan como alternativas para quien ya las tenía configuradas.
-    let mut attempts: Vec<(&str, Box<dyn Fn() -> Result<std::path::PathBuf, String> + '_>)> = Vec::new();
-    if docker_available() {
-        attempts.push(("Docker", Box::new(|| compile_via_docker(&latex_dir, "main"))));
-    }
-    if command_exists("pdflatex") && command_exists("biber") {
-        attempts.push(("pdflatex", Box::new(|| compile_via_pdflatex(&latex_dir, "main"))));
-    }
-    if cfg!(target_os = "windows") {
-        attempts.push(("WSL", Box::new(|| compile_via_wsl(&latex_dir, "main"))));
-    }
-    let compile_result = try_compile(attempts);
-
-    match compile_result {
+    // pdflatex nativo (MiKTeX en Windows, TeX Live en macOS/Linux) es el
+    // único motor de compilación: la app ya no ofrece Docker ni WSL como
+    // alternativas, así que tampoco aparecen en un mensaje de error.
+    match compile_via_pdflatex(&latex_dir, "main") {
         Ok(pdf_path) => {
             if reuse_if_valid {
                 let manifest = serde_json::json!({
@@ -657,43 +572,6 @@ pub fn compile_syllabus_pdf(
                 .with_path(path_text(&pdf_path))
         }
         Err(error) => ActionResult::error(error),
-    }
-}
-
-fn compile_via_wsl(latex_dir: &std::path::Path, base_name: &str) -> Result<std::path::PathBuf, String> {
-    let mut path_str = latex_dir.display().to_string();
-    path_str = path_str.strip_prefix("\\\\?\\").unwrap_or(&path_str).to_string();
-    let wsl_path = format!(
-        "/mnt/{}{}",
-        path_str.chars().next().unwrap_or('c').to_lowercase().to_string(),
-        path_str[2..].replace('\\', "/")
-    );
-
-    let cmd = format!(
-        "cd '{}' && pdflatex -interaction=nonstopmode {} && echo 'success'",
-        wsl_path, base_name
-    );
-
-    let output = Command::new("wsl.exe")
-        .args(["--", "sh", "-c", &cmd])
-        .output()
-        .map_err(|e| format!("No se pudo ejecutar WSL: {e}"))?;
-
-    if output.status.success() {
-        let pdf_path = latex_dir.join(format!("{}.pdf", base_name));
-        if pdf_path.exists() {
-            Ok(pdf_path)
-        } else {
-            Err("pdflatex no generó PDF. Verifica que TeX Live esté instalado en WSL.".to_string())
-        }
-    } else {
-        let log_path = latex_dir.join(format!("{}.log", base_name));
-        let error_log = if log_path.exists() {
-            std::fs::read_to_string(&log_path).unwrap_or_default()
-        } else {
-            String::from_utf8_lossy(&output.stderr).to_string()
-        };
-        Err(format!("Error en compilación LaTeX:\n{}", extract_tex_error(&error_log)))
     }
 }
 
@@ -734,79 +612,6 @@ fn extract_tex_error(log: &str) -> String {
     }
     let start = lines.len().saturating_sub(15);
     lines[start..].join("\n")
-}
-
-fn docker_available() -> bool {
-    Command::new("docker")
-        .args(["--version"])
-        .output()
-        .map(|o| o.status.success())
-        .unwrap_or(false)
-}
-
-/// Prueba cada motor de compilación en orden y conserva el error real de
-/// todos los intentos fallidos, en vez de descartar los primeros con `or_else`.
-fn try_compile<'a>(
-    attempts: Vec<(&'a str, Box<dyn Fn() -> Result<std::path::PathBuf, String> + 'a>)>,
-) -> Result<std::path::PathBuf, String> {
-    let mut errors = Vec::new();
-    for (label, attempt) in attempts {
-        match attempt() {
-            Ok(path) => return Ok(path),
-            Err(err) => errors.push(format!("{label}: {err}")),
-        }
-    }
-    Err(format!(
-        "Ningún motor de compilación pudo generar el PDF:\n\n{}",
-        errors.join("\n\n")
-    ))
-}
-
-fn compile_via_docker(latex_dir: &std::path::Path, base_name: &str) -> Result<std::path::PathBuf, String> {
-    let host_path = latex_dir.display().to_string();
-    let container_path = "/workspace";
-
-    let pdflatex_cmd = format!(
-        "cd {} && pdflatex -interaction=nonstopmode {} && echo 'success'",
-        container_path, base_name
-    );
-
-    let output = Command::new("docker")
-        .args([
-            "run",
-            "--rm",
-            "-v",
-            &format!("{}:{}", host_path, container_path),
-            "ids-texlive:latest",
-            "sh",
-            "-c",
-            &pdflatex_cmd,
-        ])
-        .output()
-        .map_err(|e| {
-            if e.to_string().contains("No such file or directory") {
-                "Docker no disponible o imagen no encontrada. Intenta WSL en su lugar.".to_string()
-            } else {
-                format!("Error ejecutando Docker: {e}")
-            }
-        })?;
-
-    if output.status.success() {
-        let pdf_path = latex_dir.join(format!("{}.pdf", base_name));
-        if pdf_path.exists() {
-            Ok(pdf_path)
-        } else {
-            Err("Docker compiló sin errores pero no generó PDF.".to_string())
-        }
-    } else {
-        let log_path = latex_dir.join(format!("{}.log", base_name));
-        let error_log = if log_path.exists() {
-            std::fs::read_to_string(&log_path).unwrap_or_default()
-        } else {
-            String::from_utf8_lossy(&output.stderr).to_string()
-        };
-        Err(format!("Error en compilación LaTeX (Docker):\n{}", extract_tex_error(&error_log)))
-    }
 }
 
 #[cfg(test)]

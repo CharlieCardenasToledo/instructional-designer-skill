@@ -99,6 +99,28 @@ test('la confirmación de instalar dependencias es un modal propio, no un diálo
   assert.match(source, /document\.getElementById\("onboarding-root"\)/);
 });
 
+test('la app no muestra ni instala Docker/WSL: solo Node, Git, Python y el compilador LaTeX', async () => {
+  const [onboarding, settings, course, onboardingRs] = await Promise.all([
+    readFile(new URL('src/onboarding.js', root), 'utf8'),
+    readFile(new URL('src/pages/settings.js', root), 'utf8'),
+    readFile(new URL('src-tauri/src/course.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/onboarding.rs', root), 'utf8'),
+  ]);
+  assert.doesNotMatch(onboarding, /Docker|WSL/);
+  assert.doesNotMatch(settings, /Docker|WSL/);
+  // course.rs ya no declara DependencyStatus para Docker ni WSL 2 (los
+  // motores de compilación de reserva se eliminaron junto con ellos).
+  assert.doesNotMatch(course, /name:\s*"Docker"|name:\s*"WSL 2"|compile_via_docker|compile_via_wsl|docker_available/);
+  // La validación del onboarding exige el compilador LaTeX, no lo acepta
+  // como alternativa a Docker.
+  assert.doesNotMatch(onboardingRs, /"Docker" \| "TeX Live/);
+  assert.match(onboardingRs, /find\(\|dependency\| dependency\.name == "TeX Live \(pdflatex\)"\)/);
+  // "Instalar todo" del panel de Configuración > Entorno fue reemplazado.
+  assert.doesNotMatch(settings, />Instalar todo</);
+  assert.match(settings, /Instalar herramientas necesarias/);
+  assert.match(settings, /BULK_INSTALL_TARGETS/);
+});
+
 test('el onboarding reutiliza validaciones y artefactos correctos', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
   const navigationStart = source.indexOf('function bindStepEvents');

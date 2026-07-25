@@ -62,12 +62,12 @@ fn validate_environment(dependencies: &[crate::models::DependencyStatus]) -> Res
         );
     }
 
-    let compilation_ready = dependencies.iter().any(|dependency| {
-        matches!(dependency.name.as_str(), "Docker" | "TeX Live (pdflatex)")
-            && dependency.installed
-    });
-    if !compilation_ready {
-        return Err("Instala TeX Live (o Docker) para poder generar el PDF de tu guía.".to_string());
+    let latex_ready = dependencies
+        .iter()
+        .find(|dependency| dependency.name == "TeX Live (pdflatex)")
+        .is_some_and(|dependency| dependency.installed);
+    if !latex_ready {
+        return Err("Instala el compilador LaTeX para poder generar el PDF de tu guía.".to_string());
     }
     Ok(())
 }
@@ -100,7 +100,7 @@ fn first_invalid_step(
         let reason = if message.starts_with("Falta instalar") {
             "Detectamos que falta un componente necesario para que la app funcione."
         } else {
-            "Ya no encontramos Docker ni TeX Live instalados. Necesitas uno de los dos para poder generar el PDF de tu guía."
+            "Ya no encontramos el compilador LaTeX instalado. Lo necesitas para poder generar el PDF de tu guía."
         };
         return Some((4, reason));
     }
@@ -239,29 +239,41 @@ mod tests {
         assert!(!target_ready("unknown"));
     }
 
+    fn dependency(name: &str, installed: bool) -> crate::models::DependencyStatus {
+        crate::models::DependencyStatus {
+            name: name.to_string(),
+            installed,
+            version: None,
+            required: name == "Node.js",
+            note: String::new(),
+            command: String::new(),
+        }
+    }
+
     #[test]
     fn environment_validation_reports_node_before_pdf_compiler() {
-        let dependencies = vec![
-            crate::models::DependencyStatus {
-                name: "Node.js".to_string(),
-                installed: false,
-                version: None,
-                required: true,
-                note: String::new(),
-                command: String::new(),
-            },
-            crate::models::DependencyStatus {
-                name: "Docker".to_string(),
-                installed: false,
-                version: None,
-                required: false,
-                note: String::new(),
-                command: String::new(),
-            },
-        ];
+        let dependencies = vec![dependency("Node.js", false), dependency("TeX Live (pdflatex)", false)];
         assert!(validate_environment(&dependencies)
             .unwrap_err()
             .starts_with("Falta instalar"));
+    }
+
+    #[test]
+    fn environment_validation_requires_latex_and_no_longer_accepts_docker() {
+        // Docker ya no es una alternativa válida al compilador LaTeX: aunque
+        // apareciera en la lista (no debería, check_dependencies ya no lo
+        // reporta), la validación exige TeX Live específicamente.
+        let dependencies = vec![
+            dependency("Node.js", true),
+            dependency("Docker", true),
+        ];
+        assert_eq!(
+            validate_environment(&dependencies).unwrap_err(),
+            "Instala el compilador LaTeX para poder generar el PDF de tu guía."
+        );
+
+        let ready = vec![dependency("Node.js", true), dependency("TeX Live (pdflatex)", true)];
+        assert!(validate_environment(&ready).is_ok());
     }
 
     #[test]

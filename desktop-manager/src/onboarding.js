@@ -27,6 +27,9 @@ import { state, saveConfig } from "./state.js";
 import { toast } from "./toast.js";
 import { ic, refreshIcons } from "./icons.js";
 import { renderTemplatePreview } from "./templatePreview.js";
+import { createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { ThinkingOrb } from "thinking-orbs";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import claudeLogo from "./assets/claude-symbol.svg";
@@ -37,7 +40,7 @@ import googleGLogo from "./assets/google-g.svg";
 import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 
 const TOTAL_STEPS = 10;
-const LARGE_DEPENDENCIES = new Set(["WSL 2", "TeX Live (pdflatex)", "Docker"]);
+const LARGE_DEPENDENCIES = new Set(["TeX Live (pdflatex)"]);
 const STEP_META = [
   { title: "Del sílabo a una guía lista para publicar", subtitle: "Configura un sistema de producción académica, pedagógica y editorial.", icon: "graduation-cap" },
   { title: "Cómo funciona", subtitle: "Del documento base a un PDF validado y respaldado por evidencia.", icon: "network" },
@@ -162,157 +165,20 @@ function onboardingAmbientBackground() {
   </div>`;
 }
 
-/**
- * Dibuja una pequeña red de nodos conectados que pulsan entre sí, en un
- * <canvas> 2D monocromático — sin librerías externas. Devuelve una función
- * para detener la animación y liberar el frame.
- */
-function startLoadingNetwork(canvas) {
-  const size = 168;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  canvas.width = size * dpr;
-  canvas.height = size * dpr;
-  canvas.style.width = `${size}px`;
-  canvas.style.height = `${size}px`;
-  const ctx = canvas.getContext("2d");
-  ctx.scale(dpr, dpr);
-
-  // Dos anillos concéntricos: cada uno se conecta consigo mismo formando un
-  // círculo cerrado, y unos pocos radios (a ángulos fijos) los enlazan entre
-  // sí. Así el grafo siempre se lee como una figura circular, nunca como una
-  // estrella con picos.
-  const OUTER_COUNT = 9;
-  const OUTER_RADIUS = 58;
-  const INNER_COUNT = 6;
-  const INNER_RADIUS = 30;
-  const SPOKE_COUNT = 4;
-
-  // Paleta de colores de Google (azul, rojo, amarillo, verde), para que
-  // el grafo se sienta más vivo que un simple gris.
-  let colorIndex = 0;
-  const nextColor = () => LOADING_PALETTE[colorIndex++ % LOADING_PALETTE.length].rgb;
-
-  const nodes = [];
-  for (let i = 0; i < OUTER_COUNT; i++) {
-    nodes.push({
-      baseAngle: (i / OUTER_COUNT) * Math.PI * 2,
-      radius: OUTER_RADIUS,
-      wobble: 1.6 + (i % 3) * 0.5,
-      phase: (i * 0.73) % (Math.PI * 2),
-      pulseFreq: 0.3 + (i % 5) * 0.045,
-      pulsePhase: i * 1.31,
-      color: nextColor(),
-    });
-  }
-  const innerStart = nodes.length;
-  for (let i = 0; i < INNER_COUNT; i++) {
-    nodes.push({
-      baseAngle: (i / INNER_COUNT) * Math.PI * 2 + 0.3,
-      radius: INNER_RADIUS,
-      wobble: 1.1 + (i % 3) * 0.4,
-      phase: (i * 0.91 + 1.7) % (Math.PI * 2),
-      pulseFreq: 0.36 + (i % 5) * 0.05,
-      pulsePhase: i * 2.07 + 3.1,
-      color: nextColor(),
-    });
-  }
-
-  const rgba = ([r, g, b], a) => `rgba(${r},${g},${b},${a})`;
-  const blend = (c1, c2) => [0, 1, 2].map(i => Math.round((c1[i] + c2[i]) / 2));
-
-  function pos(node, t) {
-    const a = node.baseAngle + Math.sin(t * 0.3 + node.phase) * 0.05;
-    const r = node.radius + Math.sin(t * 0.6 + node.phase) * node.wobble;
-    return { x: size / 2 + Math.cos(a) * r, y: size / 2 + Math.sin(a) * r };
-  }
-
-  // Cada nodo "vive" y "muere" en su propio ciclo (frecuencias distintas para
-  // que no queden sincronizados): la red nunca está toda conectada a la vez,
-  // se va formando y disolviendo, como una red neuronal disparando.
-  function presence(node, t) {
-    return Math.max(0, Math.sin(t * node.pulseFreq + node.pulsePhase));
-  }
-
-  function nearestByAngle(start, count, angle) {
-    let best = 0, bestDelta = Infinity;
-    for (let i = 0; i < count; i++) {
-      const delta = Math.abs(Math.atan2(Math.sin(angle - nodes[start + i].baseAngle), Math.cos(angle - nodes[start + i].baseAngle)));
-      if (delta < bestDelta) { bestDelta = delta; best = i; }
-    }
-    return start + best;
-  }
-
-  const edges = [];
-  const addEdge = (a, b) => edges.push([a, b, (a * 1.7 + b * 0.9) % (Math.PI * 2)]);
-  for (let i = 0; i < OUTER_COUNT; i++) addEdge(i, (i + 1) % OUTER_COUNT);
-  for (let i = 0; i < INNER_COUNT; i++) addEdge(innerStart + i, innerStart + ((i + 1) % INNER_COUNT));
-  for (let k = 0; k < SPOKE_COUNT; k++) {
-    const angle = (k / SPOKE_COUNT) * Math.PI * 2;
-    addEdge(nearestByAngle(0, OUTER_COUNT, angle), nearestByAngle(innerStart, INNER_COUNT, angle));
-  }
-
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  let raf = null;
-  function draw(t) {
-    ctx.clearRect(0, 0, size, size);
-    const positions = nodes.map(n => pos(n, t));
-    const presences = nodes.map(n => presence(n, t));
-    for (const [a, b, phase] of edges) {
-      const linkP = Math.min(presences[a], presences[b]);
-      if (linkP < 0.03) continue;
-      const pa = positions[a], pb = positions[b];
-      const pulse = (Math.sin(t * 1.1 + phase) + 1) / 2;
-      const color = blend(nodes[a].color, nodes[b].color);
-      ctx.shadowColor = rgba(color, 0.5 * linkP);
-      ctx.shadowBlur = 5;
-      ctx.beginPath();
-      ctx.moveTo(pa.x, pa.y);
-      ctx.lineTo(pb.x, pb.y);
-      ctx.strokeStyle = rgba(color, (0.15 + pulse * 0.45) * linkP);
-      ctx.lineWidth = 1.6;
-      ctx.stroke();
-      const along = ((t * 0.55 + phase) % (Math.PI * 2)) / (Math.PI * 2);
-      ctx.beginPath();
-      ctx.arc(pa.x + (pb.x - pa.x) * along, pa.y + (pb.y - pa.y) * along, 2.2, 0, Math.PI * 2);
-      ctx.fillStyle = rgba(color, (0.5 + pulse * 0.5) * linkP);
-      ctx.fill();
-    }
-    positions.forEach((p, i) => {
-      const np = presences[i];
-      if (np < 0.03) return;
-      const color = nodes[i].color;
-      ctx.shadowColor = rgba(color, 0.6 * np);
-      ctx.shadowBlur = 9;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 2 + np * 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = rgba(color, 0.9 * np);
-      ctx.fill();
-    });
-    ctx.shadowBlur = 0;
-  }
-
-  const SPEED = 2.2;
-  if (reduceMotion) {
-    draw(0);
-    return () => {};
-  }
-  function frame(t) {
-    draw((t / 1000) * SPEED);
-    raf = requestAnimationFrame(frame);
-  }
-  raf = requestAnimationFrame(frame);
-  return () => { if (raf) cancelAnimationFrame(raf); };
-}
-
 export async function renderOnboarding() {
   const root = document.getElementById("onboarding-root");
   if (!root) return;
   root.className = "fixed top-0 right-0 bottom-0 left-0 z-[10000] flex items-center justify-center overflow-hidden bg-gray-50";
   root.innerHTML = `${onboardingAmbientBackground()}
   <div class="relative z-[1] w-full max-w-3xl mx-auto h-full max-h-screen flex flex-col items-center justify-center gap-4 p-6">
-    <canvas id="loading-orbs"></canvas>
+    <div id="loading-orbs"></div>
   </div>`;
-  const stopOrbs = startLoadingNetwork(document.getElementById("loading-orbs"));
+  // thinking-orbs es un componente React aislado (no convertimos el resto de
+  // la app, que sigue siendo JS vanilla): monta su propio root solo dentro de
+  // este contenedor y se desmonta con stopOrbs() igual que el canvas previo.
+  const orbRoot = createRoot(document.getElementById("loading-orbs"));
+  orbRoot.render(createElement(ThinkingOrb, { state: "working", size: 64 }));
+  const stopOrbs = () => orbRoot.unmount();
 
   try {
     runtime.status = await getOnboardingStatus();
@@ -634,14 +500,10 @@ async function showPreparedStep(fromStep, destination, { force = false, depFocus
   renderCurrentStep();
 }
 
-// Docker y WSL 2 ya no se muestran en el stepper: siguen soportados como
-// motores de compilación de reserva si alguien ya los tenía configurados
-// (ver compile_syllabus_pdf en Rust), pero dejaron de ser parte del flujo
-// guiado desde que TeX Live se instala de forma nativa (MiKTeX) sin ellos.
-const HIDDEN_FROM_STEPPER = new Set(["Docker", "WSL 2"]);
-
+// El backend (check_dependencies en course.rs) ya solo reporta Node.js,
+// Git, Python y el compilador LaTeX: no hay nada que filtrar aquí.
 function dependencySequence() {
-  return runtime.dependencies.filter(dep => !HIDDEN_FROM_STEPPER.has(dep.name));
+  return runtime.dependencies;
 }
 
 function dependencyCardShell(dep) {
@@ -663,11 +525,9 @@ function dependencyCardShell(dep) {
 // progressDots/animateStepTransition/handleAction), no en un stepper nuevo
 // aparte: esta función solo dibuja la tarjeta de la herramienta enfocada.
 function dependenciesStep() {
-  const node = runtime.dependencies.find(dep => dep.name === "Node.js");
-  const docker = runtime.dependencies.find(dep => dep.name === "Docker");
-  const texlive = runtime.dependencies.find(dep => dep.name === "TeX Live (pdflatex)");
+  // Node.js y el compilador LaTeX son obligatorios (required=true desde el
+  // backend); Git y Python son recomendados pero no bloquean el avance.
   const missing = runtime.dependencies.filter(dep => dep.required && !dep.installed);
-  const compilationReady = Boolean(docker?.installed || texlive?.installed);
   const sequence = dependencySequence();
 
   if (sequence.length === 0) {
@@ -682,23 +542,16 @@ function dependenciesStep() {
   const isLast = focusIndex === sequence.length - 1;
   // La flecha "Continuar" solo debe frenarte en la última herramienta: antes
   // de eso, avanzar significa "ver la siguiente tarjeta", no salir del paso.
-  // El motivo del bloqueo puede estar en una tarjeta que ya no estás viendo
-  // (ej. Node.js sin instalar mientras miras TeX Live), así que el aviso
-  // siempre nombra la causa real en vez de asumir que es la compilación.
-  const blockReason = !node?.installed
-    ? "Node.js es obligatorio: instálalo para poder continuar (usa los puntos de arriba para volver a esa tarjeta)."
-    : missing.length > 0
-      ? `Falta instalar: ${missing.map(dep => dep.name).join(", ")}.`
-      : !compilationReady
-        ? "Instala TeX Live antes de continuar: sin él no podemos crear el PDF de tu guía."
-        : null;
+  // El motivo del bloqueo puede estar en una tarjeta que ya no estás viendo,
+  // así que el aviso siempre nombra la causa real por su nombre.
+  const blockReason = missing.length > 0 ? `Falta instalar: ${missing.map(dep => dep.name).join(", ")}.` : null;
   const nextBlocked = isLast && blockReason !== null;
   setFooter("Continuar", "advance", nextBlocked);
 
   return `<section>
     <div class="max-w-xl mx-auto mb-3 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3">
-      <p class="text-xs text-gray-600 leading-relaxed"><strong class="text-gray-900">Node.js</strong> coordina la automatización; <strong class="text-gray-900">Python</strong> procesa recursos; y <strong class="text-gray-900">TeX Live</strong> compila el PDF.</p>
-      <p class="text-[10.5px] text-gray-400 mt-1.5">Node.js y las dependencias marcadas son obligatorias. Para publicar el PDF necesitas TeX Live instalado.</p>
+      <p class="text-xs text-gray-600 leading-relaxed"><strong class="text-gray-900">Node.js</strong> coordina la automatización; <strong class="text-gray-900">Python</strong> procesa recursos; y el <strong class="text-gray-900">compilador LaTeX</strong> genera el PDF.</p>
+      <p class="text-[10.5px] text-gray-400 mt-1.5">Node.js y el compilador LaTeX son obligatorios para poder generar tus guías.</p>
     </div>
     <div class="max-w-xl mx-auto">${dependencyCardShell(sequence[focusIndex])}</div>
     ${nextBlocked ? `<div class="${INLINE_ERROR} !max-w-xl">${ic("alert-circle", 14)} ${escapeHtml(blockReason)}</div>` : ""}
@@ -768,7 +621,7 @@ function animateDependencyFocus(dep) {
       details.className = "mt-1";
       const summary = document.createElement("summary");
       summary.className = "flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden";
-      summary.innerHTML = `<span class="material-symbols-outlined text-[13px]">terminal</span> Ver comando`;
+      summary.innerHTML = `<span class="material-symbols-outlined text-[13px]">terminal</span> Ver detalle avanzado`;
       details.appendChild(summary);
       const term = document.createElement("div");
       term.className = "mt-1 px-2.5 py-2 rounded-md bg-gray-900 font-mono text-[10.5px] leading-snug";
@@ -1497,7 +1350,7 @@ async function animateFinalStep() {
     setMsg("No se pudo generar el PDF");
     showError(
       "No pudimos generar el PDF de tu guía",
-      "Vuelve al Paso 4 y confirma que TeX Live (o Docker) esté instalado y funcionando, luego vuelve a intentarlo.",
+      "Vuelve al paso de herramientas y verifica que el compilador LaTeX esté instalado, luego vuelve a intentarlo.",
       String(err)
     );
     return;
@@ -1608,7 +1461,7 @@ function confirmInOnboarding(message) {
 
 // Punto único de entrada para instalar una dependencia: nunca instala sin
 // que el usuario lo autorice explícitamente en este diálogo, sin importar
-// si es una descarga grande (MiKTeX, Docker, WSL) o liviana (Node, Git).
+// si es una descarga grande (MiKTeX) o liviana (Node, Git, Python).
 async function requestDependencyInstall(name, button) {
   if (onboardingActionInFlight) return;
   const confirmed = await confirmInOnboarding(dependencyInstallConfirmMessage(name));
