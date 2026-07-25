@@ -62,7 +62,7 @@ Convertir `branding.primaryColor` hexadecimal a RGB cuando se genere LaTeX. Si n
 }
 ```
 
-Los ids pertenecen a la biblioteca local de `notebooklm-mcp`. Si un id deja de existir, buscar por nombre. Antes de registrar una URL con `add_notebook`, pedir confirmación.
+Los ids pertenecen a la biblioteca local de `gemini-notebook-mcp`. Si un id deja de existir, buscar por nombre. Antes de registrar una URL con `add_notebook`, pedir confirmación.
 
 ## Plantilla activa
 

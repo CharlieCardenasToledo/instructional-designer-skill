@@ -143,7 +143,7 @@ pub struct OnboardingStatus {
 impl Default for OnboardingStatus {
     fn default() -> Self {
         Self {
-            version: 1,
+            version: 2,
             completed: false,
             current_step: 1,
             max_completed_step: 0,

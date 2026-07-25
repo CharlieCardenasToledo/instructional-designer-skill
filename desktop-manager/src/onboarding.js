@@ -27,7 +27,6 @@ import { state, saveConfig } from "./state.js";
 import { toast } from "./toast.js";
 import { ic, refreshIcons } from "./icons.js";
 import { renderTemplatePreview } from "./templatePreview.js";
-import { confirm } from "@tauri-apps/plugin-dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import claudeLogo from "./assets/claude-symbol.svg";
@@ -37,20 +36,105 @@ import geminiLogo from "./assets/gemini-icon.svg";
 import googleGLogo from "./assets/google-g.svg";
 import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 
-const TOTAL_STEPS = 9;
+const TOTAL_STEPS = 10;
 const LARGE_DEPENDENCIES = new Set(["WSL 2", "TeX Live (pdflatex)", "Docker"]);
 const STEP_META = [
-  { title: "Bienvenido", subtitle: "Un vistazo rápido a lo que esta aplicación hace por ti.", icon: "graduation-cap" },
-  { title: "Tecnología", subtitle: "Las herramientas sobre las que se construyen tus guías.", icon: "network" },
-  { title: "Marcos pedagógicos", subtitle: "El respaldo académico detrás de cada guía que generas.", icon: "brain-circuit" },
-  { title: "Verificación del entorno", subtitle: "Confirmamos que tu equipo tenga todo lo necesario para crear tus guías.", icon: "terminal" },
-  { title: "Identidad institucional", subtitle: "Estos datos personalizan las guías que genera la skill.", icon: "building-2" },
-  { title: "Plantilla de tus guías", subtitle: "Elige el diseño que tendrán tus guías.", icon: "layout-template" },
-  { title: "Evidencia verificable", subtitle: "Conecta tu cuenta de Google para contrastar fuentes bibliográficas.", icon: "notebook" },
-  { title: "Destino de instalación", subtitle: "Decide dónde vivirá la skill: Claude Code, Claude Desktop o ambos.", icon: "download" },
-  { title: "Revisión final", subtitle: "Generamos un documento de prueba para confirmar que todo funciona.", icon: "check-circle-2" },
+  { title: "Del sílabo a una guía lista para publicar", subtitle: "Configura un sistema de producción académica, pedagógica y editorial.", icon: "graduation-cap" },
+  { title: "Cómo funciona", subtitle: "Del documento base a un PDF validado y respaldado por evidencia.", icon: "network" },
+  { title: "Marcos pedagógicos", subtitle: "Decisiones de diseño guiadas por alineación, inclusión y accesibilidad.", icon: "brain-circuit" },
+  { title: "Entorno profesional", subtitle: "Verificamos las herramientas que intervienen en cada etapa de producción.", icon: "terminal" },
+  { title: "Tu institución", subtitle: "Identifica la organización y su presencia visual.", icon: "building-2" },
+  { title: "Tu perfil académico", subtitle: "Define cómo aparecerás y qué entorno digital utilizas.", icon: "badge" },
+  { title: "Sistema editorial", subtitle: "Elige la base visual y estructural de tus publicaciones.", icon: "layout-template" },
+  { title: "Evidencia verificable", subtitle: "Conecta Google para contrastar afirmaciones con fuentes autorizadas.", icon: "notebook" },
+  { title: "Dónde producirás tus cursos", subtitle: "Elige el entorno que mejor se adapte a tu flujo de trabajo.", icon: "download" },
+  { title: "Prueba de producción", subtitle: "Generamos una muestra para validar el sistema completo.", icon: "check-circle-2" },
 ];
-let runtime = { status: null, dependencies: [], auth: null, setup: null, templates: [], activeTemplate: "", sitePalette: null, detectedSiteName: "" };
+let runtime = {
+  status: null,
+  dependencies: [],
+  auth: null,
+  setup: null,
+  templates: [],
+  activeTemplate: "",
+  sitePalette: null,
+  detectedSiteName: "",
+  loads: new Map(),
+  loadingStep: null,
+  depFocusIndex: 0,
+};
+let onboardingActionInFlight = false;
+let onboardingBusyMessage = "";
+
+function loadOnce(key, loader, force = false) {
+  const existing = runtime.loads.get(key);
+  if (existing && (!force || existing.status === "pending")) {
+    return existing.promise;
+  }
+  const entry = { status: "pending", promise: null };
+  entry.promise = Promise.resolve()
+    .then(loader)
+    .then(value => {
+      entry.status = "fulfilled";
+      return value;
+    })
+    .catch(error => {
+      if (runtime.loads.get(key) === entry) runtime.loads.delete(key);
+      throw error;
+    });
+  runtime.loads.set(key, entry);
+  return entry.promise;
+}
+
+function rememberSuccessfulLoad(key) {
+  runtime.loads.set(key, {
+    status: "fulfilled",
+    promise: Promise.resolve(),
+  });
+}
+
+async function prepareOnboardingStep(step, { force = false } = {}) {
+  if (step >= 10) {
+    await Promise.all([
+      prepareOnboardingStep(4, { force }),
+      prepareOnboardingStep(7, { force }),
+      prepareOnboardingStep(8, { force }),
+    ]);
+  }
+  if (step === 4) {
+    await loadOnce("dependencies", async () => {
+      runtime.dependencies = await checkDependencies();
+    }, force);
+  }
+  if (step === 7) {
+    await loadOnce("templates", async () => {
+      [runtime.templates, runtime.activeTemplate] = await Promise.all([
+        listTemplates(),
+        getActiveTemplate(),
+      ]);
+    }, force);
+  }
+  if (step === 8) {
+    await loadOnce("notebooklm-auth", async () => {
+      runtime.auth = await checkNotebookLMAuth();
+    }, force);
+  }
+  if (step >= 9) {
+    await loadOnce("setup", async () => {
+      runtime.setup = await getSetupStatus();
+    }, force);
+  }
+}
+
+function warmOnboardingData(currentStep) {
+  const warm = [];
+  if (currentStep < 4) warm.push(prepareOnboardingStep(4));
+  if (currentStep < 7) warm.push(prepareOnboardingStep(7));
+  if (currentStep < 9) warm.push(prepareOnboardingStep(9));
+  // NotebookLM se excluye deliberadamente: iniciar npx/MCP cuesta varios
+  // segundos y solo aporta información cuando el usuario llega al paso 8.
+  void Promise.allSettled(warm);
+}
 
 const BTN_PRIMARY = "w-full h-11 rounded-md bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 border-0 cursor-pointer";
 const BTN_SECONDARY = "h-9 px-4 rounded-md bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 cursor-pointer";
@@ -58,11 +142,13 @@ const SCROLL_THIN = "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:b
 const CARD_LEAD = "max-w-md mx-auto mb-5 text-center text-gray-600 text-sm leading-relaxed";
 const CALLOUT = "flex gap-2.5 items-start max-w-lg mx-auto mt-4 p-3.5 rounded-xl bg-gray-100 text-gray-600 text-xs leading-relaxed";
 const INLINE_ERROR = "max-w-lg mx-auto mt-3 p-3 rounded-lg bg-red-50 border border-red-300 text-red-600 text-xs flex items-center gap-2";
-const DEP_ROW_BASE = "flex flex-col gap-1.5 p-2.5 rounded-xl bg-white border transition-colors min-w-0";
 const DEP_ROW_CHECKING = "border-gray-200";
 const DEP_ROW_READY = "border-gray-900 bg-gray-50";
 const DEP_ROW_MISSING = "border-red-300 bg-red-50";
-const DEP_STATUS_BASE = "w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center";
+// El paso 4 muestra una herramienta a la vez (ver dependenciesStep): una
+// tarjeta grande con su propio mini-stepper, no una cuadrícula compacta.
+const DEP_CARD_BASE = "flex flex-col gap-2.5 p-4 rounded-xl bg-white border transition-colors min-w-0";
+const DEP_CARD_STATUS_BASE = "w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center";
 const LOADING_PALETTE = [
   { hex: "#4285f4", rgb: [66, 133, 244] },
   { hex: "#ea4335", rgb: [234, 67, 53] },
@@ -230,14 +316,12 @@ export async function renderOnboarding() {
 
   try {
     runtime.status = await getOnboardingStatus();
-    runtime.dependencies = await checkDependencies();
-    runtime.templates = await listTemplates();
-    runtime.activeTemplate = await getActiveTemplate();
-    runtime.auth  = await checkNotebookLMAuth();
-    runtime.setup = await getSetupStatus();
+    const currentStep = Number(runtime.status?.currentStep || 1);
+    await prepareOnboardingStep(currentStep);
     stopOrbs();
     if (runtime.status.regressionReason) toast(runtime.status.regressionReason, "error", 12000);
     renderCurrentStep();
+    warmOnboardingData(currentStep);
   } catch (error) {
     stopOrbs();
     root.innerHTML = `${onboardingAmbientBackground()}
@@ -246,7 +330,10 @@ export async function renderOnboarding() {
       <p class="text-gray-600 mb-5">${escapeHtml(error)}</p>
       <button class="${BTN_PRIMARY} max-w-xs" data-onboarding-action="retry"><span>Reintentar</span></button>
     </div>`;
-    root.querySelector("[data-onboarding-action=retry]").addEventListener("click", renderOnboarding);
+    root.querySelector("[data-onboarding-action=retry]").addEventListener("click", () => runOnboardingOperation(
+      "Reintentando el inicio…",
+      renderOnboarding,
+    ));
   }
 }
 
@@ -285,32 +372,65 @@ function renderCurrentStep() {
   document.getElementById("onb-win-close")?.addEventListener("click", () => getCurrentWindow().close());
 
   const content = document.getElementById("onboarding-step-content");
-  if (current === 1) content.innerHTML = explanationStep();
-  if (current === 2) content.innerHTML = technologyStep();
-  if (current === 3) content.innerHTML = frameworksStep();
-  if (current === 4) content.innerHTML = dependenciesStep();
-  if (current === 5) content.innerHTML = institutionStep();
-  if (current === 6) content.innerHTML = templateStep();
-  if (current === 7) content.innerHTML = notebookStep();
-  if (current === 8) content.innerHTML = targetStep();
-  if (current === 9) content.innerHTML = finalStep();
+  if (runtime.loadingStep === current) {
+    content.innerHTML = loadingStep(current);
+  } else {
+    if (current === 1) content.innerHTML = explanationStep();
+    if (current === 2) content.innerHTML = technologyStep();
+    if (current === 3) content.innerHTML = frameworksStep();
+    if (current === 4) content.innerHTML = dependenciesStep();
+    if (current === 5) content.innerHTML = institutionStep();
+    if (current === 6) content.innerHTML = academicProfileStep();
+    if (current === 7) content.innerHTML = templateStep();
+    if (current === 8) content.innerHTML = notebookStep();
+    if (current === 9) content.innerHTML = targetStep();
+    if (current === 10) content.innerHTML = finalStep();
+  }
   document.getElementById("onboarding-bottom-nav").innerHTML = renderBottomNav(current);
   bindStepEvents(current);
   refreshIcons();
+  syncOnboardingBusyState();
 }
 
+// El paso 4 (herramientas) ya no tiene un único punto: cuando las
+// dependencias terminaron de cargar, ese lugar en la pista se expande a un
+// punto por herramienta (Node, Git, Python, TeX Live), verde si ya está
+// instalada. Es la misma pista de los 10 pasos, no una segunda aparte -así
+// el gusanito puede recorrer de un paso macro a una herramienta y viceversa
+// sin saltos.
 function progressDots(current) {
   const maxDone = Number(runtime.status.maxCompletedStep || 0);
-  return Array.from({ length: TOTAL_STEPS }, (_, index) => {
-    const step = index + 1;
+  const stepAvailable = step => step <= maxDone + 1;
+
+  const macroDot = step => {
     const isActive = step === current;
     const isCompleted = !isActive && step <= maxDone;
-    const isAvailable = step <= maxDone + 1;
-    const size = isActive ? "w-6 h-2.5 rounded-full" : "w-2.5 h-2.5 rounded-full";
+    const available = stepAvailable(step);
     const color = isCompleted ? "bg-green-600" : isActive ? "bg-gray-900" : "bg-gray-300";
-    const interactive = isAvailable ? "cursor-pointer hover:opacity-80" : "cursor-default";
-    return `<button class="${size} ${color} ${interactive} border-0 transition-all duration-300 p-0" ${isAvailable ? `data-onboarding-step="${step}"` : "disabled"} aria-label="Ir al paso ${step}" aria-current="${isActive ? "step" : "false"}"></button>`;
-  }).join("");
+    const interactive = available ? "cursor-pointer hover:opacity-80" : "cursor-default";
+    return `<button type="button" class="onboarding-progress-dot w-2.5 h-2.5 rounded-full ${color} ${interactive} border-0 transition-[transform,opacity] duration-200 p-0 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}" data-step-index="${step}" ${available ? `data-onboarding-step="${step}"` : "disabled"} aria-label="Ir al paso ${step}" aria-current="${isActive ? "step" : "false"}"></button>`;
+  };
+
+  const toolDots = sequence => {
+    const available = stepAvailable(4);
+    return sequence.map((dep, index) => {
+      const isActive = current === 4 && index === runtime.depFocusIndex;
+      const color = dep.installed ? "bg-green-600" : isActive ? "bg-gray-900" : "bg-gray-300";
+      const interactive = available ? "cursor-pointer hover:opacity-80" : "cursor-default";
+      return `<button type="button" class="onboarding-progress-dot w-2 h-2 rounded-full ${color} ${interactive} border-0 transition-[transform,opacity] duration-200 p-0 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}" data-dep-step-index="${index}" ${available ? "data-onboarding-dep-step" : "disabled"} aria-label="Ver ${escapeHtml(dep.name)}" aria-current="${isActive ? "step" : "false"}"></button>`;
+    }).join("");
+  };
+
+  const parts = [];
+  for (let step = 1; step <= TOTAL_STEPS; step++) {
+    if (step === 4) {
+      const sequence = dependencySequence();
+      parts.push(sequence.length > 0 ? toolDots(sequence) : macroDot(4));
+    } else {
+      parts.push(macroDot(step));
+    }
+  }
+  return parts.join("");
 }
 
 function actionButton(label, action, disabled = false, secondary = false, iconHtml = "") {
@@ -327,82 +447,387 @@ function setFooter(label, action = "advance", disabled = false) {
 
 function renderBottomNav(current) {
   const canBack = current > 1;
-  return `<div class="flex items-center justify-center gap-4 pt-3 flex-shrink-0" data-tauri-drag-region>
-    <button class="win-btn ${canBack ? "" : "opacity-0 pointer-events-none"}" data-onboarding-action="back" aria-label="Paso anterior" title="Paso anterior">${ic("chevron-left", 16)}</button>
-    <div class="flex items-center gap-1.5">${progressDots(current)}</div>
-    <button class="win-btn" data-onboarding-action="${footerConfig.action}" aria-label="${escapeHtml(footerConfig.label)}" title="${escapeHtml(footerConfig.label)}" ${footerConfig.disabled ? "disabled" : ""}>${ic("chevron-right", 16)}</button>
+  return `<div class="flex flex-col items-center pt-2 flex-shrink-0">
+    <div id="onboarding-operation-status" class="h-5 mb-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-gray-500 transition-opacity ${onboardingActionInFlight ? "opacity-100" : "opacity-0"}" role="status" aria-live="polite" aria-atomic="true">
+      <span class="material-symbols-outlined text-[13px] animate-spin">progress_activity</span>
+      <span data-operation-message>${escapeHtml(onboardingBusyMessage || "Procesando…")}</span>
+    </div>
+    <div class="flex items-center justify-center gap-4">
+      <button type="button" class="onboarding-nav-arrow onboarding-nav-arrow--back ${canBack ? "" : "opacity-0 pointer-events-none"}" data-onboarding-action="back" aria-label="Paso anterior" title="Paso anterior">${ic("chevron-left", 18)}</button>
+      <div class="onboarding-progress relative flex items-center gap-1.5">${progressDots(current)}</div>
+      <button type="button" class="onboarding-nav-arrow onboarding-nav-arrow--next" data-onboarding-action="${footerConfig.action}" aria-label="${escapeHtml(footerConfig.label)}" title="${escapeHtml(footerConfig.label)}" ${footerConfig.disabled ? "disabled" : ""}>${ic("chevron-right", 18)}</button>
+    </div>
   </div>`;
 }
 
+function syncOnboardingBusyState() {
+  const root = document.getElementById("onboarding-root");
+  if (!root) return;
+  root.setAttribute("aria-busy", String(onboardingActionInFlight));
+
+  const status = root.querySelector("#onboarding-operation-status");
+  const message = status?.querySelector("[data-operation-message]");
+  status?.classList.toggle("opacity-0", !onboardingActionInFlight);
+  status?.classList.toggle("opacity-100", onboardingActionInFlight);
+  if (message) message.textContent = onboardingBusyMessage || "Procesando…";
+
+  const controls = root.querySelectorAll(
+    "button:not(#onb-win-minimize):not(#onb-win-close), input, textarea, select",
+  );
+  controls.forEach(control => {
+    if (onboardingActionInFlight) {
+      if (!control.disabled) {
+        control.dataset.disabledByOperation = "true";
+        control.disabled = true;
+      }
+    } else if (control.dataset.disabledByOperation === "true") {
+      control.disabled = false;
+      delete control.dataset.disabledByOperation;
+    }
+  });
+}
+
+async function runOnboardingOperation(message, operation) {
+  if (onboardingActionInFlight) return;
+  onboardingActionInFlight = true;
+  onboardingBusyMessage = message;
+  syncOnboardingBusyState();
+  try {
+    return await operation();
+  } finally {
+    onboardingActionInFlight = false;
+    onboardingBusyMessage = "";
+    syncOnboardingBusyState();
+  }
+}
+
+function actionBusyMessage(action, current) {
+  const messages = {
+    retry: "Reintentando el inicio…",
+    back: "Volviendo al paso anterior…",
+    "start-auth": "Abriendo el inicio de sesión de Google…",
+    "verify-auth": "Verificando la sesión de NotebookLM…",
+    "save-institution-basics": "Guardando los datos de la institución…",
+    "save-institution": "Guardando el perfil académico…",
+    "save-template": "Guardando el sistema editorial…",
+    "export-zip": "Exportando el archivo de la skill…",
+    "install-local": "Instalando la skill en Claude Code…",
+    "configure-code": "Conectando la skill con Claude Code…",
+    "configure-desktop": "Conectando la skill con Claude Desktop…",
+    "advance-target": "Comprobando el destino seleccionado…",
+    complete: "Finalizando la configuración…",
+  };
+  if (action === "advance") {
+    return current === 4
+      ? "Confirmando las herramientas del entorno…"
+      : `Preparando el paso ${Math.min(TOTAL_STEPS, current + 1)}…`;
+  }
+  return messages[action] || "Procesando la solicitud…";
+}
+
+function loadingStep(step) {
+  const messages = {
+    4: "Verificando las herramientas de producción…",
+    7: "Preparando las plantillas editoriales…",
+    8: "Comprobando la sesión de NotebookLM…",
+    9: "Revisando los destinos de instalación…",
+    10: "Preparando la prueba de producción…",
+  };
+  setFooter("Preparando el siguiente paso", "advance", true);
+  return `<section class="flex flex-col items-center justify-center py-10" aria-live="polite">
+    <span class="material-symbols-outlined text-[26px] text-gray-700 animate-spin">progress_activity</span>
+    <p class="mt-3 text-sm font-medium text-gray-700">${messages[step] || "Preparando el siguiente paso…"}</p>
+    <p class="mt-1 text-xs text-gray-400">Puedes continuar en cuanto termine esta comprobación.</p>
+  </section>`;
+}
+
+function animateStepTransition(fromStep, toStep) {
+  const track = document.querySelector(".onboarding-progress");
+  const origin = stepperDotFor(track, fromStep);
+  const destination = stepperDotFor(track, toStep);
+  return animateDotWorm(track, origin, destination);
+}
+
+// El paso 4 puede no tener un único punto propio (ver progressDots): cuando
+// las herramientas ya están expandidas, su "entrada" es el punto de la
+// herramienta actualmente enfocada (runtime.depFocusIndex, que quien llama
+// ya dejó apuntando al primero o al último según la dirección del viaje).
+function stepperDotFor(track, step) {
+  if (!track) return null;
+  if (step === 4 && dependencySequence().length > 0) {
+    return track.querySelector(`[data-dep-step-index="${runtime.depFocusIndex}"]`);
+  }
+  return track.querySelector(`[data-step-index="${step}"]`);
+}
+
+// El mismo gusanito recorriendo una pista de puntos, pero parametrizado por
+// los elementos concretos: lo reutiliza tanto el stepper de los 10 pasos
+// del onboarding como el mini-stepper de herramientas dentro del paso 4.
+function animateDotWorm(track, origin, destination) {
+  if (!track || !origin || !destination || origin === destination || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    return Promise.resolve();
+  }
+
+  const trackRect = track.getBoundingClientRect();
+  const originRect = origin.getBoundingClientRect();
+  const destinationRect = destination.getBoundingClientRect();
+  const start = originRect.left + originRect.width / 2 - trackRect.left;
+  const end = destinationRect.left + destinationRect.width / 2 - trackRect.left;
+  const distance = Math.abs(end - start);
+  const worm = document.createElement("span");
+  const direction = end > start ? "forward" : "backward";
+  worm.className = `onboarding-progress-worm onboarding-progress-worm--${direction}`;
+  worm.setAttribute("aria-hidden", "true");
+  worm.innerHTML = `
+    <span class="onboarding-worm-segment onboarding-worm-segment--tail"></span>
+    <span class="onboarding-worm-segment"></span>
+    <span class="onboarding-worm-segment"></span>
+    <span class="onboarding-worm-segment onboarding-worm-segment--head"></span>`;
+  worm.style.left = `${start}px`;
+  track.appendChild(worm);
+  origin.style.opacity = "0";
+
+  const keyframes = [
+    { left: `${start}px`, transform: "translate(-50%, -50%) scaleX(.92)" },
+    { left: `${start + (end - start) * 0.45}px`, transform: "translate(-50%, -50%) scaleX(1.1)", offset: 0.48 },
+    { left: `${end}px`, transform: "translate(-50%, -50%) scaleX(.92)" },
+  ];
+  const animation = worm.animate(keyframes, {
+    duration: Math.min(760, 430 + distance * 2.4),
+    easing: "cubic-bezier(.45, .05, .25, 1)",
+    fill: "forwards",
+  });
+  return animation.finished.catch(() => {}).finally(() => worm.remove());
+}
+
+async function showPreparedStep(fromStep, destination, { force = false, depFocusIndex } = {}) {
+  // Entrar al paso 4 desde antes empieza en la primera herramienta; entrar
+  // desde después (volviendo del paso 5) empieza en la última -así el
+  // gusanito siempre avanza/retrocede en línea recta por la pista completa.
+  if (destination === 4 && fromStep !== 4) {
+    const sequence = dependencySequence();
+    if (sequence.length > 0) {
+      runtime.depFocusIndex = depFocusIndex ?? (fromStep < 4 ? 0 : sequence.length - 1);
+    }
+  }
+  const preparation = prepareOnboardingStep(destination, { force });
+  await animateStepTransition(fromStep, destination);
+
+  let prepared = false;
+  preparation.then(() => { prepared = true; }, () => { prepared = true; });
+  await Promise.resolve();
+  if (!prepared) {
+    runtime.loadingStep = destination;
+    renderCurrentStep();
+  }
+
+  try {
+    await preparation;
+  } catch (error) {
+    runtime.loadingStep = null;
+    renderCurrentStep();
+    toast(`No se pudo preparar el paso: ${error}`, "error", 9000);
+    return;
+  } finally {
+    runtime.loadingStep = null;
+  }
+  renderCurrentStep();
+}
+
+// Docker y WSL 2 ya no se muestran en el stepper: siguen soportados como
+// motores de compilación de reserva si alguien ya los tenía configurados
+// (ver compile_syllabus_pdf en Rust), pero dejaron de ser parte del flujo
+// guiado desde que TeX Live se instala de forma nativa (MiKTeX) sin ellos.
+const HIDDEN_FROM_STEPPER = new Set(["Docker", "WSL 2"]);
+
+function dependencySequence() {
+  return runtime.dependencies.filter(dep => !HIDDEN_FROM_STEPPER.has(dep.name));
+}
+
+function dependencyCardShell(dep) {
+  return `
+    <div class="${DEP_CARD_BASE} ${DEP_ROW_CHECKING}" data-dep-row data-dep-name="${escapeHtml(dep.name)}">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="${DEP_CARD_STATUS_BASE} bg-neutral-100 text-neutral-400" data-dep-status><span class="animate-spin flex">${ic("loader-2", 18)}</span></div>
+        <div class="min-w-0">
+          <strong class="text-[15px] font-semibold text-gray-900 truncate block">${escapeHtml(dep.name)}</strong>
+          <span class="dep-detail text-xs text-gray-500 leading-snug">Verificando…</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// Cada herramienta se revisa/instala en su propia tarjeta -un "sub-paso"
+// dentro del paso 4-, en vez de una cuadrícula con todas a la vez. La
+// navegación entre herramientas vive en la barra inferior general (ver
+// progressDots/animateStepTransition/handleAction), no en un stepper nuevo
+// aparte: esta función solo dibuja la tarjeta de la herramienta enfocada.
 function dependenciesStep() {
   const node = runtime.dependencies.find(dep => dep.name === "Node.js");
   const docker = runtime.dependencies.find(dep => dep.name === "Docker");
   const texlive = runtime.dependencies.find(dep => dep.name === "TeX Live (pdflatex)");
   const missing = runtime.dependencies.filter(dep => dep.required && !dep.installed);
   const compilationReady = Boolean(docker?.installed || texlive?.installed);
+  const sequence = dependencySequence();
 
-  const rows = runtime.dependencies.map(dep => `
-    <div class="${DEP_ROW_BASE} ${DEP_ROW_CHECKING}" data-dep-row data-dep-name="${escapeHtml(dep.name)}">
-      <div class="flex items-center gap-1.5 min-w-0">
-        <div class="${DEP_STATUS_BASE} bg-neutral-100 text-neutral-400" data-dep-status><span class="animate-spin flex">${ic("loader-2", 13)}</span></div>
-        <strong class="text-[12.5px] font-medium text-gray-900 truncate">${escapeHtml(dep.name)}</strong>
-      </div>
-      <span class="dep-detail text-[10.5px] text-gray-500 leading-snug">Verificando…</span>
-    </div>`).join("");
+  if (sequence.length === 0) {
+    setFooter("Continuar", "advance", true);
+    return `<section class="flex items-center justify-center py-10" aria-live="polite">
+      <span class="material-symbols-outlined text-[26px] text-gray-700 animate-spin">progress_activity</span>
+    </section>`;
+  }
 
-  setFooter("Continuar", "advance", !node?.installed || missing.length > 0 || !compilationReady);
+  runtime.depFocusIndex = Math.min(Math.max(runtime.depFocusIndex, 0), sequence.length - 1);
+  const focusIndex = runtime.depFocusIndex;
+  const isLast = focusIndex === sequence.length - 1;
+  // La flecha "Continuar" solo debe frenarte en la última herramienta: antes
+  // de eso, avanzar significa "ver la siguiente tarjeta", no salir del paso.
+  // El motivo del bloqueo puede estar en una tarjeta que ya no estás viendo
+  // (ej. Node.js sin instalar mientras miras TeX Live), así que el aviso
+  // siempre nombra la causa real en vez de asumir que es la compilación.
+  const blockReason = !node?.installed
+    ? "Node.js es obligatorio: instálalo para poder continuar (usa los puntos de arriba para volver a esa tarjeta)."
+    : missing.length > 0
+      ? `Falta instalar: ${missing.map(dep => dep.name).join(", ")}.`
+      : !compilationReady
+        ? "Instala TeX Live antes de continuar: sin él no podemos crear el PDF de tu guía."
+        : null;
+  const nextBlocked = isLast && blockReason !== null;
+  setFooter("Continuar", "advance", nextBlocked);
+
   return `<section>
-    <div class="grid grid-cols-3 gap-2.5 max-w-xl mx-auto">${rows}</div>
-    ${!compilationReady ? `<div class="${INLINE_ERROR} !max-w-xl">${ic("alert-circle", 14)} Instala Docker o TeX Live antes de continuar: sin uno de los dos no podemos crear el PDF de tu guía.</div>` : ""}
+    <div class="max-w-xl mx-auto mb-3 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3">
+      <p class="text-xs text-gray-600 leading-relaxed"><strong class="text-gray-900">Node.js</strong> coordina la automatización; <strong class="text-gray-900">Python</strong> procesa recursos; y <strong class="text-gray-900">TeX Live</strong> compila el PDF.</p>
+      <p class="text-[10.5px] text-gray-400 mt-1.5">Node.js y las dependencias marcadas son obligatorias. Para publicar el PDF necesitas TeX Live instalado.</p>
+    </div>
+    <div class="max-w-xl mx-auto">${dependencyCardShell(sequence[focusIndex])}</div>
+    ${nextBlocked ? `<div class="${INLINE_ERROR} !max-w-xl">${ic("alert-circle", 14)} ${escapeHtml(blockReason)}</div>` : ""}
   </section>`;
 }
 
-function animateDependencyGroup() {
-  const rows = document.querySelectorAll("#onboarding-step-content [data-dep-row]");
-  rows.forEach((row, i) => {
-    const dep = runtime.dependencies.find(d => d.name === row.dataset.depName);
-    if (!dep) return;
-    setTimeout(() => {
-      row.className = `${DEP_ROW_BASE} ${dep.installed ? DEP_ROW_READY : DEP_ROW_MISSING}`;
-      const statusEl = row.querySelector("[data-dep-status]");
-      const detailEl = row.querySelector(".dep-detail");
-      if (statusEl) {
-        statusEl.className = `${DEP_STATUS_BASE} ${dep.installed ? "bg-gray-200 text-green-700" : "bg-red-100 text-red-500"}`;
-        statusEl.innerHTML = dep.installed ? ic("check-circle-2", 13) : ic("alert-circle", 13);
-      }
-      if (detailEl) detailEl.textContent = dep.note || (dep.installed ? "Listo" : "No encontrado");
+// Reemplaza el botón "Instalar" por una pista de puntos con el mismo
+// "gusanito" del stepper superior recorriéndola en bucle: la instalación de
+// una dependencia (winget) no reporta progreso real, así que esto es un
+// indicador indeterminado, no una barra con porcentaje. Se detiene solo
+// cuando el propio performDependencyInstall vuelve a renderizar el paso.
+const DEP_PROGRESS_DOTS = 6;
+function beginDependencyInstallProgress(row, statusEl, detailEl, installButton) {
+  if (statusEl) {
+    statusEl.className = `${DEP_CARD_STATUS_BASE} bg-neutral-100 text-neutral-400`;
+    statusEl.innerHTML = `<span class="animate-spin flex">${ic("loader-2", 18)}</span>`;
+  }
+  if (detailEl) detailEl.textContent = "Instalando…";
+  installButton?.remove();
 
-      if (!dep.installed) {
-        const btn = document.createElement("button");
-        btn.className = BTN_SECONDARY + " !h-6 !px-2 !text-[10.5px] mt-1 self-start";
-        btn.dataset.installDependency = dep.name;
-        btn.innerHTML = "<span>Instalar</span>";
-        btn.addEventListener("click", () => installDependencyStep(dep.name));
-        row.appendChild(btn);
-      } else {
-        const badge = document.createElement("span");
-        badge.className = "inline-flex text-[10px] font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0 self-start mt-1";
-        badge.textContent = "Listo";
-        row.appendChild(badge);
-      }
+  const track = document.createElement("div");
+  track.className = "dep-progress-track mt-1 self-start";
+  track.setAttribute("role", "status");
+  track.setAttribute("aria-label", "Instalando…");
+  const dots = Array.from({ length: DEP_PROGRESS_DOTS }, () => `<span class="dep-progress-dot"></span>`).join("");
+  track.innerHTML = `${dots}<span class="dep-progress-worm" aria-hidden="true">
+    <span class="onboarding-worm-segment onboarding-worm-segment--tail"></span>
+    <span class="onboarding-worm-segment"></span>
+    <span class="onboarding-worm-segment"></span>
+    <span class="onboarding-worm-segment onboarding-worm-segment--head"></span>
+  </span>`;
+  row.appendChild(track);
+}
 
-      if (dep.command) {
-        const details = document.createElement("details");
-        details.className = "mt-0.5";
-        const summary = document.createElement("summary");
-        summary.className = "flex items-center gap-1 text-[9.5px] text-gray-400 hover:text-gray-600 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden";
-        summary.innerHTML = `<span class="material-symbols-outlined text-[11px]">terminal</span> Ver comando`;
-        details.appendChild(summary);
-        const term = document.createElement("div");
-        term.className = "mt-1 px-2 py-1.5 rounded-md bg-gray-900 font-mono text-[9.5px] leading-snug";
-        const resultText = dep.installed ? (dep.version || "OK") : (dep.version || "No encontrado");
-        term.innerHTML = `<span class="block text-gray-400 whitespace-pre-wrap break-words"><span class="text-green-400 mr-1">$</span>${escapeHtml(dep.command)}</span><span class="block text-gray-200 whitespace-pre-wrap break-words">${escapeHtml(resultText)}</span>`;
-        details.appendChild(term);
-        row.appendChild(details);
-      }
-      refreshIcons();
-    }, 260 + i * 380);
-  });
+// Revela el estado final de la tarjeta enfocada tras un pequeño retardo
+// cosmético (el chequeo real ya terminó antes de entrar al paso 4; esto solo
+// mantiene la sensación de "verificando" al cambiar de herramienta).
+function animateDependencyFocus(dep) {
+  const card = document.querySelector("#onboarding-step-content [data-dep-row]");
+  if (!card) return;
+  setTimeout(() => {
+    card.className = `${DEP_CARD_BASE} ${dep.installed ? DEP_ROW_READY : DEP_ROW_MISSING}`;
+    const statusEl = card.querySelector("[data-dep-status]");
+    const detailEl = card.querySelector(".dep-detail");
+    if (statusEl) {
+      statusEl.className = `${DEP_CARD_STATUS_BASE} ${dep.installed ? "bg-gray-200 text-green-700" : "bg-red-100 text-red-500"}`;
+      statusEl.innerHTML = dep.installed ? ic("check-circle-2", 20) : ic("alert-circle", 20);
+    }
+    if (detailEl) detailEl.textContent = dep.note || (dep.installed ? "Listo" : "No encontrado");
+
+    if (!dep.installed) {
+      const btn = document.createElement("button");
+      btn.className = BTN_SECONDARY + " mt-1 self-start";
+      btn.dataset.installDependency = dep.name;
+      btn.innerHTML = "<span>Instalar</span>";
+      btn.addEventListener("click", () => requestDependencyInstall(dep.name, btn));
+      card.appendChild(btn);
+    } else {
+      const badge = document.createElement("span");
+      badge.className = "inline-flex text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 flex-shrink-0 self-start mt-1";
+      badge.textContent = "Listo";
+      card.appendChild(badge);
+    }
+
+    if (dep.command) {
+      const details = document.createElement("details");
+      details.className = "mt-1";
+      const summary = document.createElement("summary");
+      summary.className = "flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden";
+      summary.innerHTML = `<span class="material-symbols-outlined text-[13px]">terminal</span> Ver comando`;
+      details.appendChild(summary);
+      const term = document.createElement("div");
+      term.className = "mt-1 px-2.5 py-2 rounded-md bg-gray-900 font-mono text-[10.5px] leading-snug";
+      const resultText = dep.installed ? (dep.version || "OK") : (dep.version || "No encontrado");
+      term.innerHTML = `<span class="block text-gray-400 whitespace-pre-wrap break-words"><span class="text-green-400 mr-1">$</span>${escapeHtml(dep.command)}</span><span class="block text-gray-200 whitespace-pre-wrap break-words">${escapeHtml(resultText)}</span>`;
+      details.appendChild(term);
+      card.appendChild(details);
+    }
+    refreshIcons();
+    syncOnboardingBusyState();
+  }, 260);
+}
+
+function revealFocusedDependency() {
+  const sequence = dependencySequence();
+  if (sequence.length > 0) animateDependencyFocus(sequence[runtime.depFocusIndex]);
+}
+
+// Mueve el foco entre herramientas del paso 4 sin llamar al backend: anima
+// el gusanito sobre la pista general de abajo (los puntos de herramienta
+// viven ahí, no en un stepper aparte) y vuelve a renderizar. La usan tanto
+// los puntos de la pista como las flechas Atrás/Continuar del pie mientras
+// estás dentro del paso 4 (ver handleAction).
+async function moveDependencyFocus(toIndex) {
+  // Único punto de entrada para moverse entre herramientas (flechas del pie
+  // y puntos de la pista convergen aquí), así que la guardia de reentrancia
+  // vive acá adentro en vez de repetirse en cada llamador: sin esto, un
+  // doble clic durante los ~700ms del gusanito dispara dos animaciones
+  // superpuestas y una de las dos tarjetas nunca revela su estado final.
+  if (onboardingActionInFlight) return;
+  const sequence = dependencySequence();
+  const clamped = Math.min(Math.max(toIndex, 0), sequence.length - 1);
+  if (clamped === runtime.depFocusIndex) return;
+  onboardingActionInFlight = true;
+  syncOnboardingBusyState();
+  try {
+    const track = document.querySelector(".onboarding-progress");
+    const origin = track?.querySelector(`[data-dep-step-index="${runtime.depFocusIndex}"]`);
+    const destination = track?.querySelector(`[data-dep-step-index="${clamped}"]`);
+    await animateDotWorm(track, origin, destination);
+    runtime.depFocusIndex = clamped;
+    renderCurrentStep();
+  } finally {
+    onboardingActionInFlight = false;
+    syncOnboardingBusyState();
+  }
+}
+
+// Saltar directo a una herramienta desde otro paso macro (clic en su punto
+// en la pista general estando, por ejemplo, en el paso 7): primero navega
+// el backend al paso 4 y luego enfoca esa herramienta puntual.
+async function jumpToDependencyTool(fromStep, toolIndex) {
+  const result = await goToOnboardingStep(4);
+  if (!result.success) {
+    toast(result.message, "error");
+    return;
+  }
+  runtime.status = result.status;
+  await showPreparedStep(fromStep, 4, { depFocusIndex: toolIndex });
 }
 
 function explanationStep() {
@@ -414,11 +839,11 @@ function explanationStep() {
       <p class="text-xs text-gray-500 leading-relaxed">${desc}</p>
     </article>`;
   return `<section>
-    <p class="${CARD_LEAD} !max-w-xl">Esta aplicación configura la <strong>skill de diseño instruccional</strong> que usa Claude para convertir el sílabo de tu materia en guías didácticas semanales, con evidencia pedagógica verificable en cada afirmación.</p>
+    <p class="${CARD_LEAD} !max-w-xl">Configura una <strong>skill de producción editorial académica</strong> que transforma el sílabo de tu materia en guías semanales coherentes, documentadas y listas para publicar.</p>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto">
-      ${feature("book-open", "Del sílabo a la guía", "Toma la información de tu curso y la organiza en secciones claras, semana por semana.")}
-      ${feature("quote", "Con fuentes verificadas", "Contrasta la bibliografía con tus propias fuentes. Nunca inventa referencias.")}
-      ${feature("layout-template", "Con tu propio estilo", "Usa el diseño y los colores de tu institución en cada guía que generes.")}
+      ${feature("brain-circuit", "Estructura pedagógica", "Alinea resultados, actividades, evaluación y contenidos en una secuencia autoinstruccional.")}
+      ${feature("quote", "Evidencia académica", "Contrasta afirmaciones y referencias con las fuentes autorizadas para tu curso.")}
+      ${feature("layout-template", "Publicación profesional", "Produce materiales modulares con identidad institucional y salida PDF validada.")}
     </div>
   </section>`;
 }
@@ -430,8 +855,20 @@ function technologyStep() {
       ${src ? `<img src="${src}" alt="${escapeHtml(name)}" class="w-full h-full object-contain">` : ic(icon, 40)}
     </div>`;
   return `<section>
-    <p class="${CARD_LEAD}">Se apoya en estas herramientas para generar y verificar tus guías.</p>
-    <div class="flex flex-wrap justify-center gap-4 max-w-xl mx-auto mb-6">
+    <p class="${CARD_LEAD}">El sistema conduce el contenido por un flujo editorial reproducible.</p>
+    <div class="max-w-2xl mx-auto mb-5 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-gray-700">
+      <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Sílabo</span>
+      ${ic("arrow-right", 14)}
+      <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Evidencia</span>
+      ${ic("arrow-right", 14)}
+      <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Diseño pedagógico</span>
+      ${ic("arrow-right", 14)}
+      <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">LaTeX</span>
+      ${ic("arrow-right", 14)}
+      <span class="rounded-lg border border-gray-900 bg-gray-900 text-white px-3 py-2">PDF validado</span>
+    </div>
+    <p class="text-center text-[11px] text-gray-400 mb-2.5">Herramientas que respaldan el proceso</p>
+    <div class="flex flex-wrap justify-center gap-4 max-w-xl mx-auto mb-5">
       ${techCard("Claude", claudeLogo)}
       ${techCard("Gemini", geminiLogo)}
       ${techCard("NotebookLM", notebookLmLogo)}
@@ -452,13 +889,14 @@ function frameworksStep() {
       <p class="text-xs text-gray-500 leading-relaxed">${escapeHtml(desc)}</p>
     </article>`;
   return `<section>
-    <p class="${CARD_LEAD}">Cada guía se redacta sobre marcos con respaldo académico, no solo sobre un estilo visual.</p>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto">
+    <p class="${CARD_LEAD}">Tres marcos principales gobiernan la alineación del curso y las decisiones de aprendizaje.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
       ${card("UDL 3.0", "CAST, 2024", "Múltiples medios de representación, participación, acción y expresión.")}
       ${card("Backward Design", "Wiggins & McTighe", "Primero los resultados de aprendizaje, luego la evaluación, luego el contenido.")}
       ${card("Quality Matters", "7ª ed.", "Alineación entre resultados, actividades y materiales.")}
-      ${card("WCAG", "2.2", "Accesibilidad en materiales digitales e impresos.")}
-      ${card("Principios multimedia", "Mayer", "Coherencia, señalización, contigüidad espacial y segmentación.")}
+    </div>
+    <div class="max-w-2xl mx-auto mt-3 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[11.5px] text-gray-600 leading-relaxed">
+      <strong class="text-gray-900">Criterios complementarios:</strong> WCAG 2.2 para accesibilidad; principios multimedia de Mayer para reducir carga cognitiva; práctica espaciada e intercalada para reforzar la retención.
     </div>
   </section>`;
 }
@@ -467,10 +905,11 @@ const FIELD_INPUT = "bg-white text-gray-900 border border-gray-300 rounded-lg px
 const FIELD_LABEL = "flex flex-col gap-1.5 text-gray-700 text-xs";
 
 function institutionStep() {
-  setFooter("Guardar y continuar", "save-institution", false);
+  setFooter("Continuar", "save-institution-basics", false);
   const config = state.config;
   const value = key => escapeHtml(config[key] || "");
   return `<section>
+    <p class="${CARD_LEAD} !max-w-lg">Estos datos contextualizan las portadas, los casos y los metadatos de cada publicación.</p>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-lg mx-auto">
       <label class="${FIELD_LABEL} sm:col-span-2">
         Sitio web de la institución <span class="text-gray-400 font-normal">(opcional)</span>
@@ -485,13 +924,32 @@ function institutionStep() {
       <div id="onb-site-analysis" class="sm:col-span-2" aria-live="polite">
         ${renderOnboardingSiteAnalysis()}
       </div>
-      <label class="${FIELD_LABEL}">Nombre completo<input class="${FIELD_INPUT}" id="onb-author" value="${value("author")}" placeholder="Mgtr. Ana López"></label>
-      <label class="${FIELD_LABEL}">Grado académico<input class="${FIELD_INPUT}" id="onb-degree" value="${value("degree")}" placeholder="Mgtr."></label>
       <label class="${FIELD_LABEL}">Institución<input class="${FIELD_INPUT}" id="onb-institution" value="${value("institution")}" placeholder="Universidad Ejemplo"></label>
       <label class="${FIELD_LABEL}">Facultad<input class="${FIELD_INPUT}" id="onb-faculty" value="${value("faculty")}" placeholder="Facultad de Ingeniería"></label>
       <label class="${FIELD_LABEL}">Carrera<input class="${FIELD_INPUT}" id="onb-career" value="${value("career")}" placeholder="Ingeniería de Software"></label>
       <label class="${FIELD_LABEL}">Color institucional<input class="${FIELD_INPUT} h-9 p-1" id="onb-color" type="color" value="${escapeHtml(config.colorHex || "#00796b")}"></label>
-      <label class="${FIELD_LABEL} sm:col-span-2">Ecosistema digital <span class="text-gray-400 font-normal">uno por línea</span><textarea class="${FIELD_INPUT} min-h-20 resize-y" id="onb-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${value("ecosystem")}</textarea></label>
+    </div>
+    <div class="${INLINE_ERROR}" id="onb-form-error" hidden></div>
+  </section>`;
+}
+
+function academicProfileStep() {
+  setFooter("Guardar perfil y continuar", "save-institution", false);
+  const config = state.config;
+  const value = key => escapeHtml(config[key] || "");
+  return `<section>
+    <p class="${CARD_LEAD} !max-w-lg">Tu nombre aparecerá como autor. El ecosistema digital ayuda a contextualizar instrucciones, ejemplos y actividades.</p>
+    <div class="max-w-lg mx-auto mb-4 flex items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5">
+      <span class="material-symbols-outlined text-[18px] text-gray-500">account_balance</span>
+      <div class="min-w-0">
+        <div class="text-[10.5px] uppercase tracking-wide font-semibold text-gray-400">Institución configurada</div>
+        <div class="text-xs font-medium text-gray-800 truncate">${value("institution") || "Sin nombre"}</div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-lg mx-auto">
+      <label class="${FIELD_LABEL}">Nombre completo<input class="${FIELD_INPUT}" id="onb-author" value="${value("author")}" placeholder="Ana López"></label>
+      <label class="${FIELD_LABEL}">Grado académico <span class="text-gray-400 font-normal">(opcional)</span><input class="${FIELD_INPUT}" id="onb-degree" value="${value("degree")}" placeholder="Mgtr."></label>
+      <label class="${FIELD_LABEL} sm:col-span-2">Ecosistema digital <span class="text-gray-400 font-normal">uno por línea · opcional</span><textarea class="${FIELD_INPUT} min-h-24 resize-y" id="onb-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${value("ecosystem")}</textarea></label>
     </div>
     <div class="${INLINE_ERROR}" id="onb-form-error" hidden></div>
   </section>`;
@@ -548,6 +1006,7 @@ async function analyzeInstitutionWebsite() {
     if (area) area.innerHTML = renderOnboardingSiteAnalysis();
     bindOnboardingPaletteButtons();
     refreshIcons();
+    syncOnboardingBusyState();
     toast(`Encontramos ${result.colors.length} colores${result.site_name ? " y completamos el nombre" : ""}`, "success", 4500);
   } catch (error) {
     if (area) area.innerHTML = `<div class="${INLINE_ERROR} !mt-0 !max-w-none">${ic("alert-circle", 14)} ${escapeHtml(String(error))}</div>`;
@@ -560,6 +1019,7 @@ async function analyzeInstitutionWebsite() {
 function bindOnboardingPaletteButtons() {
   document.querySelectorAll("[data-onb-palette-color]").forEach(button => {
     button.addEventListener("click", () => {
+      if (onboardingActionInFlight) return;
       const hex = cssColorToHex(button.dataset.onbPaletteColor);
       if (!hex) return toast("No se pudo convertir este color", "error");
       const picker = document.getElementById("onb-color");
@@ -591,6 +1051,7 @@ function templateStep() {
   }).join("");
   setFooter("Confirmar plantilla", "save-template", !template);
   return `<section>
+    <p class="${CARD_LEAD} !max-w-lg">La plantilla define tipografía, bloques pedagógicos, diagramas, bibliografía y reglas de consistencia; no es solo una elección estética.</p>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3 max-w-lg mx-auto mb-1">${cards}</div>
   </section>`;
 }
@@ -601,6 +1062,7 @@ function notebookStep() {
   const iconCls = authenticated ? "text-gray-900" : "text-amber-600";
   setFooter("Continuar", "advance", !authenticated);
   return `<section>
+    <p class="${CARD_LEAD} !max-w-lg">NotebookLM contrasta afirmaciones con las fuentes autorizadas de tu curso. <strong>No diseña la guía ni reemplaza tu criterio docente.</strong></p>
     <img src="${notebookLmWordmark}" alt="NotebookLM" class="h-7 w-auto mx-auto mb-5 block">
     <button class="flex items-center gap-3 max-w-md mx-auto p-3.5 rounded-xl border w-full text-left cursor-pointer transition-colors ${statusCls}" data-onboarding-action="verify-auth" title="Volver a verificar">
       <div class="${iconCls} flex flex-shrink-0">${authenticated ? ic("check-circle-2", 18) : ic("lock-keyhole", 18)}</div>
@@ -611,6 +1073,7 @@ function notebookStep() {
       <div class="text-gray-400 flex-shrink-0">${ic("refresh-cw", 15)}</div>
     </button>
     <div class="flex justify-center mt-4">${actionButton("Iniciar sesión con Google", "start-auth", false, true, `<img src="${googleGLogo}" alt="" class="w-4 h-4">`)}</div>
+    <div class="${CALLOUT} !mt-4">${ic("shield-check", 16)} <span>La sesión permanece en tu equipo. Solo se envían a NotebookLM las consultas bibliográficas que autorices durante la producción.</span></div>
   </section>`;
 }
 
@@ -620,9 +1083,9 @@ function targetStep() {
   const zipOk    = Boolean(state.config.lastSkillZip);
 
   const targets = [
-    { id: "claude-code",    title: "Claude Code",              icon: "terminal",     desc: "La skill queda instalada y lista para usar desde Claude Code." },
-    { id: "claude-cowork",  title: "Claude Desktop / Cowork",  icon: "desktop_windows", desc: "Prepara un archivo para subir la skill desde Claude Desktop." },
-    { id: "both",           title: "Ambos destinos",           icon: "devices",      desc: "Deja todo listo para usar la skill desde cualquiera de los dos." },
+    { id: "claude-code",    title: "Claude Code",              icon: "terminal",     desc: "Producción técnica completa dentro del proyecto, con archivos y validaciones locales." },
+    { id: "claude-cowork",  title: "Claude Desktop / Cowork",  icon: "desktop_windows", desc: "Flujo visual y colaborativo mediante un archivo de skill exportado." },
+    { id: "both",           title: "Ambos destinos",           icon: "devices",      desc: "Combina el trabajo técnico local con el flujo visual y colaborativo." },
   ];
 
   // Checklist de pasos para el destino seleccionado
@@ -665,7 +1128,7 @@ function targetStep() {
 
   setFooter("Continuar al paso final", "advance-target", !allReady);
   return `<section>
-    <p class="${CARD_LEAD}">Completa las acciones en orden: primero instala, luego conecta.</p>
+    <p class="${CARD_LEAD}">Elige dónde producirás tus cursos según tu forma de trabajar. Después completa las acciones en orden: primero instala o exporta, luego conecta.</p>
 
     <!-- Selector de destino -->
     <div class="grid gap-2 max-w-lg mx-auto">
@@ -723,7 +1186,7 @@ function finalStep() {
           </div>
         </div>
 
-        <div id="final-loading-msg" role="status" aria-live="polite" class="text-[13.5px] font-semibold text-gray-700 text-center">Iniciando verificación…</div>
+        <div id="final-loading-msg" role="status" aria-live="polite" class="text-[13.5px] font-semibold text-gray-700 text-center">Iniciando prueba de producción…</div>
 
         <!-- Barra de progreso -->
         <div class="w-full max-w-xs h-[3px] rounded-full bg-gray-200 overflow-hidden">
@@ -733,19 +1196,19 @@ function finalStep() {
         <div id="final-loading-steps" class="flex flex-col gap-1.5 w-full max-w-sm">
           <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="0">
             <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Leyendo perfil institucional…</span>
+            <span>Preparando perfil editorial…</span>
           </div>
           <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="1">
             <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Localizando skill instalado…</span>
+            <span>Verificando motor de producción…</span>
           </div>
           <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="2">
             <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Generando sílabo de prueba (2 semanas)…</span>
+            <span>Generando contenido de prueba (2 semanas)…</span>
           </div>
           <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="3">
             <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Generando el PDF de la guía…</span>
+            <span>Compilando PDF de validación…</span>
           </div>
         </div>
       </div>
@@ -753,6 +1216,16 @@ function finalStep() {
       <!-- Resultado — aparece solo tras éxito o fallo definitivo -->
       <div id="final-result-wrap" class="hidden">
         <div id="final-result-content"></div>
+      </div>
+    </div>
+
+    <div class="max-w-md mx-auto mb-4">
+      <div class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Capacidades habilitadas</div>
+      <div class="grid grid-cols-2 gap-1.5 text-[11px] text-gray-600">
+        ${["Guías modulares", "Bibliografía APA/Biber", "Diagramas TikZ", "Casos y ejercicios", "Recortes bibliográficos", "PDF con validación"].map(item => `
+          <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
+            ${ic("check", 13)} <span>${item}</span>
+          </div>`).join("")}
       </div>
     </div>
 
@@ -845,8 +1318,12 @@ async function animateFinalStep() {
         });
         if (fillEl) fillEl.style.width = "25%";
       }
-      animateFinalStep();
+      void runOnboardingOperation(
+        "Reintentando la prueba de producción…",
+        animateFinalStep,
+      );
     });
+    syncOnboardingBusyState();
   }
 
   function showSuccess(basePath, message, pdfPath) {
@@ -868,6 +1345,7 @@ async function animateFinalStep() {
     document.getElementById("btn-copy-pdf-path")?.addEventListener("click", () => {
       navigator.clipboard.writeText(pdfPath).then(() => toast("Ruta copiada", "success", 3000));
     });
+    syncOnboardingBusyState();
   }
 
   function renderSyllabusDoc(pdfPath, message) {
@@ -923,7 +1401,7 @@ async function animateFinalStep() {
     setMsg("Skill no encontrado");
     showError(
       "Skill no instalado",
-      "Vuelve al Paso 8 con los puntos de progreso de arriba y pulsa 'Instalar skill' antes de continuar.",
+      "Vuelve al Paso 9 con los puntos de progreso de arriba y pulsa 'Instalar skill' antes de continuar.",
       String(err)
     );
     return;
@@ -989,7 +1467,7 @@ async function animateFinalStep() {
     setMsg("La generación falló");
     showError(
       "Error al generar el documento",
-      "La skill está instalada pero no pudo crear el archivo. Reintenta o vuelve al paso 6 para reinstalar.",
+      "La skill está instalada pero no pudo crear el archivo. Reintenta o vuelve al paso 7 para reinstalar.",
       String(err)
     );
     return;
@@ -1001,7 +1479,11 @@ async function animateFinalStep() {
   setProgress(85);
   let pdfResult;
   try {
-    pdfResult = await compileSyllabusPdf({ coursePath: testBasePath, ...syllabusTestData });
+    pdfResult = await compileSyllabusPdf({
+      coursePath: testBasePath,
+      ...syllabusTestData,
+      reuseIfValid: true,
+    });
     if (pdfResult?.success) {
       setRow(3, "done");
       setProgress(100);
@@ -1015,7 +1497,7 @@ async function animateFinalStep() {
     setMsg("No se pudo generar el PDF");
     showError(
       "No pudimos generar el PDF de tu guía",
-      "Vuelve al Paso 4 y confirma que Docker o TeX Live estén instalados y funcionando, luego vuelve a intentarlo.",
+      "Vuelve al Paso 4 y confirma que TeX Live (o Docker) esté instalado y funcionando, luego vuelve a intentarlo.",
       String(err)
     );
     return;
@@ -1027,28 +1509,50 @@ async function animateFinalStep() {
 
 function bindStepEvents(current) {
   const root = document.getElementById("onboarding-root");
-  if (current === 4) animateDependencyGroup();
+  if (current === 4) revealFocusedDependency();
   if (current === 5) {
-    root.querySelector("#onb-extract-palette")?.addEventListener("click", analyzeInstitutionWebsite);
+    root.querySelector("#onb-extract-palette")?.addEventListener("click", () => runOnboardingOperation(
+      "Analizando el sitio institucional…",
+      analyzeInstitutionWebsite,
+    ));
     bindOnboardingPaletteButtons();
   }
-  if (current === 9) animateFinalStep();
+  if (current === 10) {
+    setTimeout(() => {
+      void runOnboardingOperation(
+        "Ejecutando la prueba de producción…",
+        animateFinalStep,
+      );
+    }, 0);
+  }
   root.querySelectorAll("[data-onboarding-step]").forEach(button => button.addEventListener("click", async () => {
-    const result = await goToOnboardingStep(Number(button.dataset.onboardingStep));
-    if (result.success) {
-      runtime.status = result.status;
+    const dest = Number(button.dataset.onboardingStep);
+    await runOnboardingOperation(`Abriendo el paso ${dest}…`, async () => {
       const dest = Number(button.dataset.onboardingStep);
-      if (dest === 7) runtime.auth  = await checkNotebookLMAuth();
-      if (dest >= 8)  runtime.setup = await getSetupStatus();
-      renderCurrentStep();
-    } else toast(result.message, "error");
+      const result = await goToOnboardingStep(dest);
+      if (result.success) {
+        runtime.status = result.status;
+        await showPreparedStep(current, dest);
+      } else toast(result.message, "error");
+    });
   }));
-  root.querySelectorAll("[data-install-dependency]").forEach(button => button.addEventListener("click", () => installDependencyStep(button.dataset.installDependency)));
+  root.querySelectorAll("[data-install-dependency]").forEach(button => button.addEventListener("click", () => requestDependencyInstall(button.dataset.installDependency, button)));
+  root.querySelectorAll("[data-onboarding-dep-step]").forEach(dot => dot.addEventListener("click", () => {
+    if (onboardingActionInFlight) return;
+    const toolIndex = Number(dot.dataset.depStepIndex);
+    if (current === 4) {
+      moveDependencyFocus(toolIndex);
+      return;
+    }
+    void runOnboardingOperation(`Abriendo el paso 4…`, () => jumpToDependencyTool(current, toolIndex));
+  }));
   root.querySelectorAll("[data-template-id]").forEach(button => button.addEventListener("click", () => {
+    if (onboardingActionInFlight) return;
     runtime.activeTemplate = button.dataset.templateId;
     renderCurrentStep();
   }));
   root.querySelectorAll("input[name=onboarding-target]").forEach(input => input.addEventListener("change", event => {
+    if (onboardingActionInFlight) return;
     state.config.onboardingTarget = event.target.value;
     saveConfig();
     renderCurrentStep();
@@ -1056,22 +1560,92 @@ function bindStepEvents(current) {
   root.querySelectorAll("[data-onboarding-action]").forEach(button => button.addEventListener("click", () => handleAction(button.dataset.onboardingAction, current)));
 }
 
-async function installDependencyStep(name) {
-  const confirmed = !LARGE_DEPENDENCIES.has(name) || await confirm(`${name} puede descargar componentes grandes y requiere permisos del sistema. ¿Continuar?`);
+function dependencyInstallConfirmMessage(name) {
+  return LARGE_DEPENDENCIES.has(name)
+    ? `${name} puede descargar componentes grandes y requiere permisos del sistema. ¿Instalarlo ahora?`
+    : `Vamos a instalar ${name} en tu sistema. ¿Continuar?`;
+}
+
+// Diálogo de confirmación propio del onboarding: la app no tiene barra de
+// título del sistema (ventana sin marco), así que un confirm() nativo de
+// Tauri se ve como una ventana ajena flotando encima. Este vive dentro del
+// mismo #onboarding-root, con el estilo del resto de la app.
+function confirmInOnboarding(message) {
+  return new Promise(resolve => {
+    const root = document.getElementById("onboarding-root");
+    if (!root) {
+      resolve(false);
+      return;
+    }
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/45 px-6" role="alertdialog" aria-modal="true" aria-labelledby="onboarding-confirm-message">
+        <div class="w-full max-w-sm rounded-xl bg-white border border-gray-200 shadow-2xl p-5 animate-[fade-in-up_0.2s_ease-out_forwards]">
+          <p id="onboarding-confirm-message" class="text-sm text-gray-700 leading-relaxed">${escapeHtml(message)}</p>
+          <div class="mt-4 flex justify-end gap-2">
+            <button type="button" class="${BTN_SECONDARY}" data-onboarding-confirm="cancel">Cancelar</button>
+            <button type="button" class="${BTN_PRIMARY} !w-auto h-9 px-4" data-onboarding-confirm="ok">Continuar</button>
+          </div>
+        </div>
+      </div>`;
+    const overlay = wrapper.firstElementChild;
+    root.appendChild(overlay);
+
+    const cleanup = value => {
+      overlay.removeEventListener("keydown", onKeydown);
+      overlay.remove();
+      resolve(value);
+    };
+    const onKeydown = event => {
+      if (event.key === "Escape") cleanup(false);
+    };
+    overlay.querySelector('[data-onboarding-confirm="cancel"]').addEventListener("click", () => cleanup(false));
+    overlay.querySelector('[data-onboarding-confirm="ok"]').addEventListener("click", () => cleanup(true));
+    overlay.addEventListener("keydown", onKeydown);
+    overlay.querySelector('[data-onboarding-confirm="ok"]').focus();
+  });
+}
+
+// Punto único de entrada para instalar una dependencia: nunca instala sin
+// que el usuario lo autorice explícitamente en este diálogo, sin importar
+// si es una descarga grande (MiKTeX, Docker, WSL) o liviana (Node, Git).
+async function requestDependencyInstall(name, button) {
+  if (onboardingActionInFlight) return;
+  const confirmed = await confirmInOnboarding(dependencyInstallConfirmMessage(name));
   if (!confirmed) return;
+  const row = button?.closest("[data-dep-row]");
+  if (row) {
+    beginDependencyInstallProgress(row, row.querySelector("[data-dep-status]"), row.querySelector(".dep-detail"), button);
+  }
+  await runOnboardingOperation(`Instalando ${name}…`, () => performDependencyInstall(name));
+}
+
+async function performDependencyInstall(name) {
   toast(`Instalando ${name}…`, "loading", 120000);
-  const result = await installDependency(name, confirmed);
+  const result = await installDependency(name, true);
   toast(result.message, result.success ? "success" : "error", 9000);
   runtime.dependencies = await checkDependencies();
   renderCurrentStep();
 }
 
+// Dentro del paso 4, las flechas Atrás/Continuar del pie primero recorren
+// las herramientas (sin tocar el backend) y solo al llegar al borde -primera
+// o última- hacen lo que siempre hicieron: retroceder al paso 3 o avanzar al
+// 5. Así la pista de abajo se siente como una sola secuencia continua.
 async function handleAction(action, current) {
-  if (["retry", "back"].includes(action)) return performAction(action, current);
-  const buttons = [...document.querySelectorAll(`[data-onboarding-action="${action}"]`)].filter(button => !button.disabled);
-  buttons.forEach(button => { button.dataset.originalLabel = button.querySelector("span")?.textContent || "Procesar"; setBusyState(button, true, "Procesando…"); });
-  try { return await performAction(action, current); }
-  finally { buttons.forEach(button => setBusyState(button, false)); }
+  if (current === 4 && (action === "advance" || action === "back")) {
+    const sequence = dependencySequence();
+    if (sequence.length > 0) {
+      const nextIndex = runtime.depFocusIndex + (action === "advance" ? 1 : -1);
+      if (nextIndex >= 0 && nextIndex < sequence.length) {
+        return moveDependencyFocus(nextIndex);
+      }
+    }
+  }
+  return runOnboardingOperation(
+    actionBusyMessage(action, current),
+    () => performAction(action, current),
+  );
 }
 
 function setBusyState(button, busy, label = "") {
@@ -1087,28 +1661,71 @@ async function performAction(action, current) {
   if (action === "retry") return renderOnboarding();
   if (action === "back") {
     const result = await goToOnboardingStep(Math.max(1, current - 1));
-    if (result.success) { runtime.status = result.status; renderCurrentStep(); }
+    if (result.success) {
+      runtime.status = result.status;
+      const destination = Number(result.status.currentStep);
+      await showPreparedStep(current, destination);
+    }
     else toast(result.message, "error");
     return;
   }
   if (action === "start-auth") {
     toast("Completa el inicio de sesión en Chrome. Esto puede tardar unos minutos…", "loading", 630000);
     const result = await runNotebookLMAuth();
-    if (result.success) runtime.auth = await checkNotebookLMAuth();
+    if (result.success) {
+      runtime.auth = {
+        authenticated: true,
+        message: result.message || "Sesión iniciada y verificada con NotebookLM.",
+      };
+      rememberSuccessfulLoad("notebooklm-auth");
+    }
     toast(result.message, result.success ? "success" : "error", 10000);
     renderCurrentStep();
     return;
   }
   if (action === "verify-auth") {
-    runtime.auth = await checkNotebookLMAuth();
+    await prepareOnboardingStep(8, { force: true });
     renderCurrentStep();
     return;
   }
-  if (action === "save-institution") {
+  if (action === "save-institution-basics") {
     const color = document.getElementById("onb-color").value;
     const rgb = hexToRgb(color);
+    const basicConfig = {
+      website: document.getElementById("onb-website").value.trim(),
+      institution: document.getElementById("onb-institution").value.trim(),
+      faculty: document.getElementById("onb-faculty").value.trim(),
+      career: document.getElementById("onb-career").value.trim(),
+      colorHex: color,
+      colorR: rgb.r,
+      colorG: rgb.g,
+      colorB: rgb.b,
+    };
+    const missingLabels = {
+      institution: "Institución",
+      faculty: "Facultad",
+      career: "Carrera",
+    };
+    const missing = Object.keys(missingLabels).filter(key => !basicConfig[key]);
+    const errorEl = document.getElementById("onb-form-error");
+    if (missing.length > 0) {
+      errorEl.hidden = false;
+      errorEl.textContent = `Completa los campos obligatorios: ${missing.map(key => missingLabels[key]).join(", ")}.`;
+      return;
+    }
+    state.config = {
+      ...state.config,
+      ...basicConfig,
+    };
+    saveConfig();
+    return advance(current);
+  }
+  if (action === "save-institution") {
     const config = {
-      author: document.getElementById("onb-author").value.trim(), degree: document.getElementById("onb-degree").value.trim(), institution: document.getElementById("onb-institution").value.trim(), faculty: document.getElementById("onb-faculty").value.trim(), career: document.getElementById("onb-career").value.trim(), ecosystem: document.getElementById("onb-ecosystem").value.trim(), website: document.getElementById("onb-website").value.trim(), colorR: rgb.r, colorG: rgb.g, colorB: rgb.b, colorHex: color,
+      ...state.config,
+      author: document.getElementById("onb-author").value.trim(),
+      degree: document.getElementById("onb-degree").value.trim(),
+      ecosystem: document.getElementById("onb-ecosystem").value.trim(),
     };
     const errorEl = document.getElementById("onb-form-error");
     const missingLabels = { author: "Nombre completo", institution: "Institución", faculty: "Facultad", career: "Carrera" };
@@ -1120,7 +1737,7 @@ async function performAction(action, current) {
     }
     errorEl.hidden = true;
     state.config = { ...state.config, ...config }; saveConfig();
-    const result = await applyInstitutionConfig({ author: config.author, degree: config.degree, institution: config.institution, website: config.website, faculty: config.faculty, career: config.career, ecosystem: config.ecosystem, color_r: rgb.r, color_g: rgb.g, color_b: rgb.b });
+    const result = await applyInstitutionConfig({ author: config.author, degree: config.degree, institution: config.institution, website: config.website, faculty: config.faculty, career: config.career, ecosystem: config.ecosystem, color_r: config.colorR, color_g: config.colorG, color_b: config.colorB });
     toast(result.message, result.success ? "success" : "error", 8000);
     if (!result.success) return;
     return advance(current);
@@ -1171,14 +1788,13 @@ async function advance(step, selectedTarget) {
   if (result.success) {
     runtime.status = result.status;
     const next = Number(result.status.currentStep);
-    if (next === 7) runtime.auth  = await checkNotebookLMAuth();
-    if (next >= 8)  runtime.setup = await getSetupStatus();
-    renderCurrentStep();
+    await showPreparedStep(step, next);
   }
 }
 
 async function refreshTarget() {
   runtime.setup = await getSetupStatus();
+  rememberSuccessfulLoad("setup");
 }
 
 function targetReady(target) {

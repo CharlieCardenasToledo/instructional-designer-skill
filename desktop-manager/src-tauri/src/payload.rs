@@ -1,9 +1,11 @@
 use crate::models::ActionResult;
-use crate::paths::{app_config_dir, atomic_write, canonical_directory, path_text, skill_dir, timestamp};
+use crate::paths::{app_config_dir, atomic_write, atomic_write_if_changed, canonical_directory, path_text, skill_dir, timestamp};
 use include_dir::{include_dir, Dir};
 use std::fs;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use zip::write::SimpleFileOptions;
 
 const SKILL_MD: &[u8] = include_bytes!("../../../SKILL.md");
@@ -13,6 +15,7 @@ static REFERENCES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../references"
 static SCRIPTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../scripts");
 static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../templates");
 static CONFIG: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../config");
+static PAYLOAD_OPERATION: Mutex<()> = Mutex::new(());
 
 fn write_embedded_dir(dir: &Dir<'_>, target: &Path) -> Result<(), String> {
     for entry in dir.files() {
@@ -57,7 +60,47 @@ fn materialize_payload(target: &Path, installed: Option<&Path>) -> Result<(), St
     Ok(())
 }
 
+fn embedded_dir_matches(
+    dir: &Dir<'_>,
+    target: &Path,
+    installed: &Path,
+    preserve_user_config: bool,
+) -> bool {
+    let files_match = dir.files().all(|file| {
+        let name = file.path().file_name().and_then(|value| value.to_str());
+        let expected = if preserve_user_config
+            && matches!(name, Some("institution.json" | "notebooks.json"))
+        {
+            name.and_then(|name| user_config(name, Some(installed)))
+                .unwrap_or_else(|| file.contents().to_vec())
+        } else {
+            file.contents().to_vec()
+        };
+        fs::read(target.join(file.path()))
+            .ok()
+            .is_some_and(|actual| actual == expected)
+    });
+    files_match
+        && dir
+            .dirs()
+            .all(|child| embedded_dir_matches(child, target, installed, preserve_user_config))
+}
+
+fn installed_payload_matches(target: &Path) -> bool {
+    fs::read(target.join("SKILL.md")).ok().as_deref() == Some(SKILL_MD)
+        && fs::read(target.join("LICENSE")).ok().as_deref() == Some(LICENSE)
+        && fs::read(target.join("requirements.txt")).ok().as_deref() == Some(REQUIREMENTS)
+        && embedded_dir_matches(&REFERENCES, &target.join("references"), target, false)
+        && embedded_dir_matches(&SCRIPTS, &target.join("scripts"), target, false)
+        && embedded_dir_matches(&TEMPLATES, &target.join("templates"), target, false)
+        && embedded_dir_matches(&CONFIG, &target.join("config"), target, true)
+}
+
 pub fn install_local_skill() -> ActionResult {
+    let _operation = match PAYLOAD_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno de instalación está bloqueado."),
+    };
     let target = match skill_dir() {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
@@ -69,13 +112,19 @@ pub fn install_local_skill() -> ActionResult {
     if let Err(error) = fs::create_dir_all(&parent) {
         return ActionResult::error(format!("No se pudo crear {}: {error}", parent.display()));
     }
+    if target.exists() && installed_payload_matches(&target) {
+        return ActionResult::ok(format!(
+            "La skill ya estaba instalada y actualizada; no se creó otra copia ni respaldo.\n{}",
+            path_text(&target)
+        ))
+        .with_path(path_text(&target));
+    }
 
     let stage = parent.join(format!(".instructional-designer-skill.stage-{}", timestamp()));
     if let Err(error) = materialize_payload(&stage, target.exists().then_some(target.as_path())) {
         let _ = fs::remove_dir_all(&stage);
         return ActionResult::error(error);
     }
-
     let backup = parent.join(format!("instructional-designer-skill.backup-{}", timestamp()));
     if target.exists() {
         if let Err(error) = fs::rename(&target, &backup) {
@@ -139,19 +188,97 @@ fn add_dir_to_zip(
     Ok(())
 }
 
+fn hash_embedded_dir(
+    dir: &Dir<'_>,
+    hasher: &mut DefaultHasher,
+    installed: Option<&Path>,
+    preserve_user_config: bool,
+) {
+    for file in dir.files() {
+        file.path().to_string_lossy().hash(hasher);
+        let name = file.path().file_name().and_then(|value| value.to_str());
+        let bytes = if preserve_user_config
+            && matches!(name, Some("institution.json" | "notebooks.json"))
+        {
+            name.and_then(|name| user_config(name, installed))
+                .unwrap_or_else(|| file.contents().to_vec())
+        } else {
+            file.contents().to_vec()
+        };
+        bytes.hash(hasher);
+    }
+    for child in dir.dirs() {
+        hash_embedded_dir(child, hasher, installed, preserve_user_config);
+    }
+}
+
+fn payload_fingerprint(installed: Option<&Path>) -> String {
+    let mut hasher = DefaultHasher::new();
+    SKILL_MD.hash(&mut hasher);
+    LICENSE.hash(&mut hasher);
+    REQUIREMENTS.hash(&mut hasher);
+    hash_embedded_dir(&REFERENCES, &mut hasher, installed, false);
+    hash_embedded_dir(&SCRIPTS, &mut hasher, installed, false);
+    hash_embedded_dir(&TEMPLATES, &mut hasher, installed, false);
+    hash_embedded_dir(&CONFIG, &mut hasher, installed, true);
+    format!("{:016x}", hasher.finish())
+}
+
+fn export_record_matches(path: &Path, fingerprint: &str) -> bool {
+    let record_path = match app_config_dir() {
+        Ok(directory) => directory.join("export.json"),
+        Err(_) => return false,
+    };
+    fs::read(record_path)
+        .ok()
+        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+        .is_some_and(|value| {
+            value.get("lastExportPath").and_then(serde_json::Value::as_str)
+                == Some(path_text(path).as_str())
+                && value.get("fingerprint").and_then(serde_json::Value::as_str)
+                    == Some(fingerprint)
+                && path.is_file()
+        })
+}
+
+fn files_equal(left: &Path, right: &Path) -> bool {
+    let same_len = fs::metadata(left)
+        .ok()
+        .zip(fs::metadata(right).ok())
+        .is_some_and(|(left_meta, right_meta)| left_meta.len() == right_meta.len());
+    same_len
+        && fs::read(left)
+            .ok()
+            .zip(fs::read(right).ok())
+            .is_some_and(|(left_bytes, right_bytes)| left_bytes == right_bytes)
+}
+
 pub fn export_skill_zip(destination_dir: String) -> ActionResult {
+    let _operation = match PAYLOAD_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno de exportación está bloqueado."),
+    };
     let destination = match canonical_directory(&destination_dir) {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
     };
     let final_path = destination.join("instructional-designer-skill-10.4.0.zip");
+    let installed = skill_dir().ok();
+    let fingerprint = payload_fingerprint(installed.as_deref());
+    if export_record_matches(&final_path, &fingerprint) {
+        return ActionResult::ok(format!(
+            "El ZIP existente ya corresponde a la versión actual de la skill; no se creó ningún archivo nuevo.\n{}",
+            path_text(&final_path)
+        ))
+        .with_path(path_text(&final_path));
+    }
     let temp_path = destination.join(format!(".instructional-designer-skill-{}.tmp", timestamp()));
     let file = match fs::File::create(&temp_path) {
         Ok(file) => file,
         Err(error) => return ActionResult::error(format!("No se pudo crear el ZIP: {error}")),
     };
 
-    let result = (|| -> Result<(), String> {
+    let result = (|| -> Result<bool, String> {
         let mut zip = zip::ZipWriter::new(file);
         add_bytes(&mut zip, "SKILL.md", SKILL_MD)?;
         add_bytes(&mut zip, "LICENSE", LICENSE)?;
@@ -161,7 +288,6 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
         add_dir_to_zip(&mut zip, &TEMPLATES, "templates")?;
         add_dir_to_zip(&mut zip, &CONFIG, "config")?;
 
-        let installed = skill_dir().ok();
         for name in ["institution.json", "notebooks.json"] {
             if let Some(bytes) = user_config(name, installed.as_deref()) {
                 add_bytes(&mut zip, &format!("config/{name}"), &bytes)?;
@@ -169,17 +295,37 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
         }
         zip.finish().map_err(|error| format!("No se pudo finalizar el ZIP: {error}"))?;
 
+        if final_path.exists() && files_equal(&temp_path, &final_path) {
+            fs::remove_file(&temp_path)
+                .map_err(|error| format!("No se pudo retirar el ZIP temporal: {error}"))?;
+            return Ok(false);
+        }
         if final_path.exists() {
             fs::remove_file(&final_path)
                 .map_err(|error| format!("No se pudo reemplazar {}: {error}", final_path.display()))?;
         }
         fs::rename(&temp_path, &final_path)
-            .map_err(|error| format!("No se pudo guardar {}: {error}", final_path.display()))
+            .map_err(|error| format!("No se pudo guardar {}: {error}", final_path.display()))?;
+        Ok(true)
     })();
 
     match result {
-        Ok(_) => {
-            if let Err(error) = record_export(&final_path) {
+        Ok(changed) => {
+            if !changed {
+                if last_export_path().as_deref() != Some(path_text(&final_path).as_str()) {
+                    if let Err(error) = record_export(&final_path, &fingerprint) {
+                        return ActionResult::error(format!(
+                            "El ZIP ya era válido, pero no se pudo registrar su ubicación: {error}"
+                        ));
+                    }
+                }
+                return ActionResult::ok(format!(
+                    "El ZIP existente ya contiene la versión actual de la skill; no se volvió a crear.\n{}",
+                    path_text(&final_path)
+                ))
+                .with_path(path_text(&final_path));
+            }
+            if let Err(error) = record_export(&final_path, &fingerprint) {
                 return ActionResult::error(format!(
                     "El ZIP se creó en {}, pero no se pudo registrar el progreso: {error}",
                     path_text(&final_path)
@@ -198,10 +344,11 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
     }
 }
 
-pub fn record_export(path: &Path) -> Result<(), String> {
+pub fn record_export(path: &Path, fingerprint: &str) -> Result<(), String> {
     let value = serde_json::json!({
         "schemaVersion": 1,
         "lastExportPath": path_text(path),
+        "fingerprint": fingerprint,
         "exportedAt": timestamp()
     });
     let bytes = serde_json::to_vec_pretty(&value).map_err(|error| error.to_string())?;
@@ -226,7 +373,7 @@ pub fn skill_is_installed() -> bool {
 pub fn sync_user_config_to_install(name: &str, bytes: &[u8]) -> Result<(), String> {
     let target = skill_dir()?.join("config").join(name);
     if target.parent().is_some_and(Path::exists) {
-        atomic_write(&target, bytes)?;
+        atomic_write_if_changed(&target, bytes)?;
     }
     Ok(())
 }

@@ -1,6 +1,24 @@
 use crate::models::{ActionResult, DependencyStatus, WeekData};
-use crate::paths::{atomic_write, backup_file, canonical_directory, path_text, safe_segment};
+use crate::paths::{atomic_write, atomic_write_if_changed, backup_file, canonical_directory, path_text, safe_segment, timestamp};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::process::Command;
+use std::sync::{Mutex, OnceLock};
+use std::time::{Duration, Instant};
+
+const DEPENDENCY_CACHE_TTL: Duration = Duration::from_secs(300);
+static DEPENDENCY_CACHE: OnceLock<Mutex<Option<(Instant, Vec<DependencyStatus>)>>> = OnceLock::new();
+static SYLLABUS_WRITE_OPERATION: Mutex<()> = Mutex::new(());
+static PDF_COMPILE_OPERATION: Mutex<()> = Mutex::new(());
+
+fn dependency_cache() -> &'static Mutex<Option<(Instant, Vec<DependencyStatus>)>> {
+    DEPENDENCY_CACHE.get_or_init(|| Mutex::new(None))
+}
+
+fn invalidate_dependency_cache() {
+    if let Ok(mut cache) = dependency_cache().lock() {
+        *cache = None;
+    }
+}
 
 fn command_exists(command: &str) -> bool {
     let checker = if cfg!(target_os = "windows") { "where.exe" } else { "which" };
@@ -90,6 +108,19 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
         },
     ];
 
+    // TeX Live (pdflatex + biber) se verifica de forma nativa en las tres
+    // plataformas. En Windows lo instala MiKTeX vía winget; ya no depende de
+    // WSL ni de un contenedor Docker para estar "instalado".
+    let latex = command_exists("pdflatex") && command_exists("biber");
+    dependencies.push(DependencyStatus {
+        name: "TeX Live (pdflatex)".to_string(),
+        installed: latex,
+        version: version("pdflatex", &["--version"]),
+        required: false,
+        note: "Es lo que genera tus guías en PDF.".to_string(),
+        command: "pdflatex --version".to_string(),
+    });
+
     #[cfg(target_os = "windows")]
     {
         let mut wsl_cmd = Command::new("wsl.exe");
@@ -100,35 +131,8 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
             installed: wsl,
             version: wsl_output,
             required: false,
-            note: "Opcional: una forma de generar tus PDFs en Windows.".to_string(),
+            note: "Avanzado y opcional: solo si ya compilas tus PDFs con TeX Live dentro de WSL.".to_string(),
             command: "wsl.exe --status".to_string(),
-        });
-
-        let latex_command = "wsl.exe -- sh -lc \"command -v pdflatex && command -v biber\"";
-        let mut latex_cmd = Command::new("wsl.exe");
-        latex_cmd.args(["--", "sh", "-lc", "command -v pdflatex && command -v biber"]);
-        let (latex_ok, latex_output) = run_capture(latex_cmd);
-        let latex = wsl && latex_ok;
-        dependencies.push(DependencyStatus {
-            name: "TeX Live (pdflatex)".to_string(),
-            installed: latex,
-            version: latex_output,
-            required: false,
-            note: "Ocupa bastante espacio, pero es lo que genera tus guías en PDF.".to_string(),
-            command: latex_command.to_string(),
-        });
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        let latex = command_exists("pdflatex") && command_exists("biber");
-        dependencies.push(DependencyStatus {
-            name: "TeX Live (pdflatex)".to_string(),
-            installed: latex,
-            version: version("pdflatex", &["--version"]),
-            required: false,
-            note: "Es lo que genera tus guías en PDF.".to_string(),
-            command: "pdflatex --version".to_string(),
         });
     }
 
@@ -138,14 +142,34 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
         installed: docker,
         version: version("docker", &["--version"]),
         required: false,
-        note: "Recomendado: la forma más simple de generar tus guías en PDF.".to_string(),
+        note: "Avanzado y opcional: una alternativa a TeX Live si ya usas contenedores.".to_string(),
         command: "docker --version".to_string(),
     });
 
+    if let Ok(mut cache) = dependency_cache().lock() {
+        *cache = Some((Instant::now(), dependencies.clone()));
+    }
     dependencies
 }
 
+/// Reutiliza la inspección que ya mostró el paso de entorno. Los comandos de
+/// WSL y TeX pueden tardar varios segundos en Windows, por lo que repetirlos
+/// inmediatamente al pulsar "Continuar" no aporta una validación más fiable.
+pub fn check_dependencies_cached() -> Vec<DependencyStatus> {
+    if let Ok(cache) = dependency_cache().lock() {
+        if let Some((checked_at, dependencies)) = cache.as_ref() {
+            if checked_at.elapsed() <= DEPENDENCY_CACHE_TTL {
+                return dependencies.clone();
+            }
+        }
+    }
+    check_dependencies()
+}
+
 pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
+    // Una instalación puede cambiar el estado del entorno. La siguiente
+    // verificación debe inspeccionarlo de nuevo.
+    invalidate_dependency_cache();
     #[cfg(target_os = "windows")]
     {
         if matches!(name.as_str(), "WSL 2" | "TeX Live (pdflatex)" | "Docker") && !confirmed {
@@ -162,22 +186,11 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
             };
         }
 
-        if name == "TeX Live (pdflatex)" {
-            let script = "apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y texlive-latex-extra texlive-bibtex-extra texlive-lang-spanish biber latexmk poppler-utils";
-            return match Command::new("wsl.exe")
-                .args(["-u", "root", "--", "sh", "-lc", script])
-                .status()
-            {
-                Ok(status) if status.success() => ActionResult::ok("Componentes LaTeX instalados en WSL."),
-                Ok(status) => ActionResult::error(format!("La instalación LaTeX terminó con código {:?}.", status.code())),
-                Err(error) => ActionResult::error(format!("No se pudo ejecutar WSL: {error}")),
-            };
-        }
-
         let package = match name.as_str() {
             "Node.js" => "OpenJS.NodeJS.LTS",
             "Git" => "Git.Git",
             "Python" => "Python.Python.3.13",
+            "TeX Live (pdflatex)" => "MiKTeX.MiKTeX",
             "Docker" => "Docker.DockerDesktop",
             _ => return ActionResult::error(format!("Dependencia desconocida: {name}")),
         };
@@ -194,6 +207,9 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
             .status()
         {
             Ok(status) if status.success() => {
+                if name == "TeX Live (pdflatex)" {
+                    return finish_miktex_install();
+                }
                 let note = if name == "Docker" {
                     " Puede requerir cerrar sesión o reiniciar Windows antes de que el comando docker esté disponible."
                 } else {
@@ -217,6 +233,48 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
         ActionResult::error(format!(
             "La instalación automática de {name} está disponible solo en Windows. {instructions}"
         ))
+    }
+}
+
+/// Tras instalar MiKTeX vía winget, el PATH del proceso actual sigue siendo
+/// el de antes de la instalación (Windows solo lo actualiza para procesos
+/// nuevos), así que no podemos ubicar `initexmf`/`mpm` con `Command::new`
+/// simple. En vez de depender del PATH, se usa la ruta por defecto del
+/// instalador de MiKTeX para: (1) desactivar el diálogo de "¿instalar
+/// paquete faltante?" que colgaría una compilación no interactiva, y (2)
+/// instalar `biber`, que la skill necesita para la bibliografía.
+#[cfg(target_os = "windows")]
+fn finish_miktex_install() -> ActionResult {
+    let local_appdata = std::env::var("LOCALAPPDATA").unwrap_or_default();
+    let bin_dir = std::path::Path::new(&local_appdata)
+        .join("Programs")
+        .join("MiKTeX")
+        .join("miktex")
+        .join("bin")
+        .join("x64");
+    let initexmf = bin_dir.join("initexmf.exe");
+    let mpm = bin_dir.join("mpm.exe");
+
+    if !initexmf.exists() {
+        return ActionResult::ok(
+            "MiKTeX se instaló correctamente. Reinicia la app para que Windows reconozca pdflatex y biber, y vuelve a verificar.",
+        );
+    }
+
+    let auto_install = Command::new(&initexmf)
+        .arg("--set-config-value=[MPM]AutoInstall=1")
+        .status();
+    let biber = Command::new(&mpm)
+        .args(["--install=biber", "--install=biblatex"])
+        .status();
+
+    match (auto_install, biber) {
+        (Ok(a), Ok(b)) if a.success() && b.success() => ActionResult::ok(
+            "MiKTeX instalado y configurado: pdflatex y biber quedaron listos. Los paquetes LaTeX que falten se instalarán automáticamente durante la compilación.",
+        ),
+        _ => ActionResult::ok(
+            "MiKTeX se instaló correctamente, pero no se pudo terminar de configurar biber en automático. Abre MiKTeX Console e instala el paquete “biber”, o reinicia la app y vuelve a verificar.",
+        ),
     }
 }
 
@@ -361,6 +419,10 @@ pub fn generate_syllabus(
     description: String,
     weeks_data: Vec<WeekData>,
 ) -> ActionResult {
+    let _operation = match SYLLABUS_WRITE_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno del sílabo está bloqueado."),
+    };
     let root = match canonical_directory(&course_path) {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
@@ -387,6 +449,13 @@ pub fn generate_syllabus(
         Err(error) => return ActionResult::error(error),
     };
     let path = course.join("README.md");
+    if std::fs::read(&path).ok().as_deref() == Some(content.as_bytes()) {
+        return ActionResult::ok(format!(
+            "El sílabo de prueba ya estaba actualizado; no se creó otro archivo ni respaldo.\n{}",
+            path_text(&path)
+        ))
+        .with_path(path_text(&path));
+    }
     let backup = match backup_file(&path) {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
@@ -413,7 +482,12 @@ pub fn compile_syllabus_pdf(
     _semester: String,
     description: String,
     weeks_data: Vec<WeekData>,
+    reuse_if_valid: bool,
 ) -> ActionResult {
+    let _operation = match PDF_COMPILE_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno de compilación está bloqueado."),
+    };
     let course = match canonical_directory(&course_path) {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
@@ -437,6 +511,8 @@ pub fn compile_syllabus_pdf(
     // Usa el mismo preámbulo (colores, bloques) que la skill usa para las
     // guías reales, en vez de reimplementar un documento genérico aparte.
     let institution = crate::config::active_institution();
+    let primary_rgb = institution.primary_rgb.clone();
+    let active_template = crate::config::get_active_template();
     let author = if institution.author.is_empty() { "Instructional Designer Manager".to_string() } else { institution.author };
     let institute_line = if institution.career.is_empty() { "Sistema Académico".to_string() } else { institution.career };
     let extrainfo_line = if institution.institution.is_empty() { String::new() } else { institution.institution };
@@ -498,6 +574,36 @@ pub fn compile_syllabus_pdf(
     full_content.push_str("\n\\end{document}\n");
 
     let main_tex = latex_dir.join("main.tex");
+    let pdf_path = latex_dir.join("main.pdf");
+    let validation_path = latex_dir.join(".production-validation.json");
+    let mut hasher = DefaultHasher::new();
+    env!("CARGO_PKG_VERSION").hash(&mut hasher);
+    active_template.hash(&mut hasher);
+    primary_rgb.hash(&mut hasher);
+    full_content.hash(&mut hasher);
+    let fingerprint = format!("{:016x}", hasher.finish());
+
+    let valid_pdf = || {
+        std::fs::metadata(&pdf_path).ok().is_some_and(|metadata| metadata.len() > 100)
+            && std::fs::read(&pdf_path)
+                .ok()
+                .is_some_and(|bytes| bytes.starts_with(b"%PDF-"))
+    };
+    let manifest_matches = || {
+        std::fs::read(&validation_path)
+            .ok()
+            .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
+            .and_then(|value| value.get("fingerprint")?.as_str().map(str::to_string))
+            .as_deref()
+            == Some(fingerprint.as_str())
+    };
+    if reuse_if_valid && valid_pdf() && manifest_matches() {
+        return ActionResult::ok(
+            "La prueba de producción ya estaba validada y vigente; se reutilizó el PDF existente.",
+        )
+        .with_path(path_text(&pdf_path));
+    }
+
     if let Err(error) = atomic_write(&main_tex, full_content.as_bytes()) {
         return ActionResult::error(format!("No se pudo escribir main.tex: {error}"));
     }
@@ -515,19 +621,38 @@ pub fn compile_syllabus_pdf(
         }
     }
 
+    // pdflatex nativo (MiKTeX en Windows, TeX Live en macOS/Linux) es la ruta
+    // principal desde que dejamos de depender de WSL para instalarlo. Docker
+    // y WSL quedan como alternativas para quien ya las tenía configuradas.
     let mut attempts: Vec<(&str, Box<dyn Fn() -> Result<std::path::PathBuf, String> + '_>)> = Vec::new();
     if docker_available() {
         attempts.push(("Docker", Box::new(|| compile_via_docker(&latex_dir, "main"))));
     }
+    if command_exists("pdflatex") && command_exists("biber") {
+        attempts.push(("pdflatex", Box::new(|| compile_via_pdflatex(&latex_dir, "main"))));
+    }
     if cfg!(target_os = "windows") {
         attempts.push(("WSL", Box::new(|| compile_via_wsl(&latex_dir, "main"))));
-    } else {
-        attempts.push(("pdflatex", Box::new(|| compile_via_pdflatex(&latex_dir, "main"))));
     }
     let compile_result = try_compile(attempts);
 
     match compile_result {
         Ok(pdf_path) => {
+            if reuse_if_valid {
+                let manifest = serde_json::json!({
+                    "schemaVersion": 1,
+                    "fingerprint": fingerprint,
+                    "pdfPath": path_text(&pdf_path),
+                    "validatedAt": timestamp()
+                });
+                if let Ok(bytes) = serde_json::to_vec_pretty(&manifest) {
+                    if let Err(error) = atomic_write_if_changed(&validation_path, &bytes) {
+                        return ActionResult::error(format!(
+                            "El PDF se generó, pero no se pudo registrar la validación: {error}"
+                        ));
+                    }
+                }
+            }
             ActionResult::ok(format!("PDF compilado exitosamente"))
                 .with_path(path_text(&pdf_path))
         }

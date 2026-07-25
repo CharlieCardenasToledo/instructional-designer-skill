@@ -24,7 +24,7 @@ NotebookLM contrasta la cobertura y facilita localizar fuentes. No sustituye la 
 El servidor oficial del proyecto se ejecuta con:
 
 ```text
-npx notebooklm-mcp@latest
+npx gemini-notebook-mcp@latest
 ```
 
 Flujo:

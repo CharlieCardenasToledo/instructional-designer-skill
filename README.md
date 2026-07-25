@@ -51,7 +51,7 @@ This skill guides Claude Code to produce **weekly self-instructional guides in L
 | Requirement | Details |
 |---|---|
 | **Claude Code** | [docs.anthropic.com/claude-code](https://docs.anthropic.com/en/docs/claude-code/overview) |
-| **NotebookLM MCP** | [PleasePrompto/notebooklm-mcp](https://github.com/PleasePrompto/notebooklm-mcp) — recommended, with a verified local fallback |
+| **NotebookLM MCP** | [CharlieCardenasToledo/gemini-notebook-mcp](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp) — recommended, with a verified local fallback |
 | **TeX Live** (via WSL on Windows) | `pdflatex` + `biber` — install in WSL/Debian: `sudo apt install texlive-full` |
 | **ElegantBook class** | Included in your course repository or available at [ElegantBook releases](https://github.com/ElegantLaTeX/ElegantBook/releases) |
 | **Node.js** | For `latex-validator.js` and `legacy-manager.js` scripts |
@@ -123,7 +123,7 @@ Open these files and fill in the `⚙️ CONFIGURE` markers:
 
 ### 3. Set up NotebookLM MCP
 
-Follow the [notebooklm-mcp setup guide](https://github.com/PleasePrompto/notebooklm-mcp) to authenticate and configure the MCP server in Claude Code.
+Follow the [gemini-notebook-mcp setup guide](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp) to authenticate and configure the MCP server in Claude Code.
 
 ### 4. Prepare your course repository structure
 

@@ -105,7 +105,7 @@ async fn get_setup_status() -> SetupStatus {
 
 #[tauri::command]
 async fn check_notebooklm_auth() -> NotebookLmAuthStatus {
-    tauri::async_runtime::spawn_blocking(mcp::check_auth)
+    tauri::async_runtime::spawn_blocking(mcp::check_auth_fresh)
         .await
         .unwrap_or_else(|error| NotebookLmAuthStatus {
             authenticated: false,
@@ -163,6 +163,7 @@ async fn compile_syllabus_pdf(
     semester: String,
     description: String,
     weeks_data: Vec<WeekData>,
+    reuse_if_valid: Option<bool>,
 ) -> ActionResult {
     tauri::async_runtime::spawn_blocking(move || {
         course::compile_syllabus_pdf(
@@ -174,6 +175,7 @@ async fn compile_syllabus_pdf(
             semester,
             description,
             weeks_data,
+            reuse_if_valid.unwrap_or(false),
         )
     })
     .await

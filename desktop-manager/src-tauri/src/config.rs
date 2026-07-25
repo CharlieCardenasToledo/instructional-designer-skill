@@ -1,16 +1,18 @@
 use crate::models::{ActionResult, InstitutionConfig, NotebookEntry, SetupStatus, TemplateMeta};
-use crate::paths::{app_config_dir, atomic_write, claude_code_config_path, claude_desktop_config_path, path_text};
+use crate::paths::{app_config_dir, atomic_write, atomic_write_if_changed, claude_code_config_path, claude_desktop_config_path, path_text};
 use crate::payload::{config_file_path, installed_skill_path, skill_is_installed, sync_user_config_to_install};
 use include_dir::{include_dir, Dir};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::fs;
+use std::sync::Mutex;
 
 static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../templates");
 const DEFAULT_TEMPLATE: &str = "elegantbook-clasico";
 const EMBEDDED_TEMPLATE_IDS: &[&str] = &[
     "elegantbook-clasico",
 ];
+static CONFIG_WRITE_OPERATION: Mutex<()> = Mutex::new(());
 
 fn clean(value: &str) -> String {
     value.trim().chars().filter(|character| !character.is_control()).collect()
@@ -128,6 +130,10 @@ pub fn copy_active_template_assets(dest_dir: &std::path::Path) -> Result<(), Str
 }
 
 pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
+    let _operation = match CONFIG_WRITE_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno de configuración está bloqueado."),
+    };
     if let Err(error) = validate_institution(&config) {
         return ActionResult::error(error);
     }
@@ -177,16 +183,22 @@ pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
     };
-    if let Err(error) = atomic_write(&path, &bytes) {
-        return ActionResult::error(error);
-    }
+    let changed = match atomic_write_if_changed(&path, &bytes) {
+        Ok(changed) => changed,
+        Err(error) => return ActionResult::error(error),
+    };
     if let Err(error) = sync_user_config_to_install("institution.json", &bytes) {
         return ActionResult::error(format!(
             "La configuración principal se guardó, pero no pudo sincronizarse con Claude Code: {error}"
         ));
     }
 
-    ActionResult::ok(format!("Configuración institucional guardada en:\n{}", path_text(&path)))
+    let message = if changed {
+        format!("Configuración institucional guardada en:\n{}", path_text(&path))
+    } else {
+        "La configuración institucional ya estaba actualizada; no se volvió a escribir.".to_string()
+    };
+    ActionResult::ok(message)
         .with_path(path_text(&path))
 }
 
@@ -281,6 +293,10 @@ mod tests {
 }
 
 pub fn set_active_template(template_id: String) -> ActionResult {
+    let _operation = match CONFIG_WRITE_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno de plantillas está bloqueado."),
+    };
     if !template_exists(&template_id) {
         return ActionResult::error(format!("Plantilla desconocida o incompleta: {template_id}"));
     }
@@ -293,17 +309,19 @@ pub fn set_active_template(template_id: String) -> ActionResult {
         Ok(bytes) => bytes,
         Err(error) => return ActionResult::error(error.to_string()),
     };
-    if let Err(error) = atomic_write(&settings_path, &settings_bytes) {
-        return ActionResult::error(error);
-    }
+    let mut changed = match atomic_write_if_changed(&settings_path, &settings_bytes) {
+        Ok(changed) => changed,
+        Err(error) => return ActionResult::error(error),
+    };
 
     if let Ok(institution_path) = config_file_path("institution.json") {
         if let Ok(text) = fs::read_to_string(&institution_path) {
             if let Ok(mut value) = serde_json::from_str::<Value>(&text) {
                 value["activeTemplate"] = Value::String(template_id.clone());
                 if let Ok(bytes) = serde_json::to_vec_pretty(&value) {
-                    if let Err(error) = atomic_write(&institution_path, &bytes) {
-                        return ActionResult::error(error);
+                    match atomic_write_if_changed(&institution_path, &bytes) {
+                        Ok(institution_changed) => changed |= institution_changed,
+                        Err(error) => return ActionResult::error(error),
                     }
                     if let Err(error) = sync_user_config_to_install("institution.json", &bytes) {
                         return ActionResult::error(error);
@@ -313,7 +331,11 @@ pub fn set_active_template(template_id: String) -> ActionResult {
         }
     }
 
-    ActionResult::ok(format!("Plantilla '{template_id}' activada y guardada en la configuración."))
+    if changed {
+        ActionResult::ok(format!("Plantilla '{template_id}' activada y guardada en la configuración."))
+    } else {
+        ActionResult::ok(format!("La plantilla '{template_id}' ya estaba activa; no se volvió a escribir."))
+    }
 }
 
 fn server_configured(path: Result<std::path::PathBuf, String>) -> bool {
@@ -326,7 +348,7 @@ fn server_configured(path: Result<std::path::PathBuf, String>) -> bool {
             args.iter().any(|arg| {
                 let value = arg.as_str();
                 value == Some(crate::mcp::NOTEBOOKLM_MCP_PACKAGE)
-                    || value == Some("notebooklm-mcp@latest")
+                    || value == Some("gemini-notebook-mcp@latest")
             })
         })
 }

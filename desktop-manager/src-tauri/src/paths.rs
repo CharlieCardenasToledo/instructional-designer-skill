@@ -110,6 +110,16 @@ pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<(), String> {
     result
 }
 
+/// Escribe únicamente cuando el contenido cambia. Devuelve `true` si hubo
+/// una modificación real.
+pub fn atomic_write_if_changed(path: &Path, bytes: &[u8]) -> Result<bool, String> {
+    if fs::read(path).ok().as_deref() == Some(bytes) {
+        return Ok(false);
+    }
+    atomic_write(path, bytes)?;
+    Ok(true)
+}
+
 pub fn backup_file(path: &Path) -> Result<Option<PathBuf>, String> {
     if !path.exists() {
         return Ok(None);
@@ -156,4 +166,25 @@ pub fn path_text(path: &Path) -> String {
     // \\?\, que no es válido dentro de una URL file:// ni útil para mostrar.
     let stripped = text.strip_prefix(r"\\?\").unwrap_or(&text);
     stripped.replace('\\', "/")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unchanged_atomic_write_is_skipped() {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "instructional-designer-atomic-{unique}-{}.txt",
+            std::process::id()
+        ));
+        assert!(atomic_write_if_changed(&path, b"same").expect("first write"));
+        assert!(!atomic_write_if_changed(&path, b"same").expect("unchanged write"));
+        assert!(atomic_write_if_changed(&path, b"changed").expect("changed write"));
+        let _ = fs::remove_file(path);
+    }
 }

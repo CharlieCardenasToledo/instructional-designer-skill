@@ -10,12 +10,19 @@ use std::sync::{mpsc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-pub const NOTEBOOKLM_MCP_PACKAGE: &str = "notebooklm-mcp@2.0.0";
+pub const NOTEBOOKLM_MCP_PACKAGE: &str = "gemini-notebook-mcp@2.0.0";
 const AUTH_STATE_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
+const AUTH_VALIDATION_TTL: Duration = Duration::from_secs(5 * 60);
 const GOOGLE_API_AUTH_COOKIE: &[u8] = b"SAPISID";
 const GOOGLE_SECURE_AUTH_COOKIES: [&[u8]; 2] = [b"__Secure-1PSID", b"__Secure-3PSID"];
+static AUTH_VALIDATION: Mutex<Option<(Instant, NotebookLmAuthStatus)>> = Mutex::new(None);
+static MCP_CONFIG_OPERATION: Mutex<()> = Mutex::new(());
 
 pub fn configure_mcp(target: String) -> ActionResult {
+    let _operation = match MCP_CONFIG_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno de configuración MCP está bloqueado."),
+    };
     let (path, label) = match target.as_str() {
         "desktop" => match claude_desktop_config_path() {
             Ok(path) => (path, "Claude Desktop"),
@@ -54,10 +61,17 @@ pub fn configure_mcp(target: String) -> ActionResult {
     if root.get("mcpServers").is_none() {
         root["mcpServers"] = json!({});
     }
+    let previous = root.clone();
     root["mcpServers"]["notebooklm"] = json!({
         "command": "npx",
-        "args": [NOTEBOOKLM_MCP_PACKAGE]
+        "args": ["-y", NOTEBOOKLM_MCP_PACKAGE]
     });
+    if root == previous {
+        return ActionResult::ok(format!(
+            "NotebookLM MCP ya estaba configurado correctamente para {label}; no se volvió a escribir."
+        ))
+        .with_path(path_text(&path));
+    }
 
     let bytes = match serde_json::to_vec_pretty(&root) {
         Ok(bytes) => bytes,
@@ -98,8 +112,19 @@ fn receive_json(
         if remaining.is_zero() {
             return Err(format!("NotebookLM MCP no respondió a la solicitud {id} dentro del tiempo esperado."));
         }
-        let line = receiver.recv_timeout(remaining)
-            .map_err(|_| format!("NotebookLM MCP cerró la conexión durante la solicitud {id}."))?;
+        let line = match receiver.recv_timeout(remaining) {
+            Ok(line) => line,
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                return Err(format!(
+                    "NotebookLM MCP no respondió a la solicitud {id} dentro del tiempo esperado."
+                ))
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(format!(
+                    "NotebookLM MCP cerró la conexión durante la solicitud {id}."
+                ))
+            }
+        };
         if let Ok(value) = serde_json::from_str::<Value>(&line) {
             if value.get("id").and_then(Value::as_i64) == Some(id) {
                 return Ok(value);
@@ -108,7 +133,7 @@ fn receive_json(
     }
 }
 
-// notebooklm-mcp v2.0 mantiene su navegador y perfil de Chrome persistentes
+// gemini-notebook-mcp v2.0 mantiene su navegador y perfil de Chrome persistentes
 // en un `SharedContextManager` que vive en memoria mientras el proceso del
 // servidor está vivo. Antes lanzábamos (y matábamos) un proceso nuevo por
 // cada llamada — get_health y setup_auth terminaban en procesos distintos
@@ -125,12 +150,13 @@ struct McpConnection {
 impl McpConnection {
     fn spawn() -> Result<Self, String> {
         let mut child = Command::new(npx_command())
+            .arg("-y")
             .arg(NOTEBOOKLM_MCP_PACKAGE)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
-            .map_err(|error| format!("No se pudo iniciar notebooklm-mcp. Verifica Node.js y npx: {error}"))?;
+            .map_err(|error| format!("No se pudo iniciar gemini-notebook-mcp. Verifica Node.js y npx: {error}"))?;
 
         let stdout = child.stdout.take().ok_or_else(|| "No se pudo leer la salida del MCP.".to_string())?;
         let stdin = child.stdin.take().ok_or_else(|| "No se pudo escribir al MCP.".to_string())?;
@@ -140,13 +166,13 @@ impl McpConnection {
             loop {
                 match reader.next() {
                     Some(Ok(line)) => {
-                        eprintln!("[notebooklm-mcp] {line}");
+                        eprintln!("[gemini-notebook-mcp] {line}");
                         if sender.send(line).is_err() {
                             break;
                         }
                     }
                     Some(Err(error)) => {
-                        eprintln!("[notebooklm-mcp] error leyendo stdout: {error}");
+                        eprintln!("[gemini-notebook-mcp] error leyendo stdout: {error}");
                         break;
                     }
                     None => break,
@@ -215,6 +241,26 @@ impl Drop for McpConnection {
 
 static CONNECTION: Mutex<Option<McpConnection>> = Mutex::new(None);
 
+fn spawn_connection() -> Result<McpConnection, String> {
+    match McpConnection::spawn() {
+        Ok(connection) => Ok(connection),
+        Err(first_error) => {
+            // npx/Node puede cerrar prematuramente la primera tubería mientras
+            // prepara su caché. Un único reintento acotado evita que ese EOF
+            // transitorio llegue al onboarding como un fallo permanente.
+            eprintln!(
+                "[gemini-notebook-mcp] primer arranque falló; reintentando una vez: {first_error}"
+            );
+            thread::sleep(Duration::from_millis(350));
+            McpConnection::spawn().map_err(|second_error| {
+                format!(
+                    "{second_error} El primer intento también falló: {first_error}"
+                )
+            })
+        }
+    }
+}
+
 fn call_tool(tool: &'static str, arguments: Value, timeout: Duration) -> Result<Value, String> {
     let mut guard = CONNECTION
         .lock()
@@ -226,7 +272,7 @@ fn call_tool(tool: &'static str, arguments: Value, timeout: Duration) -> Result<
         }
     }
     if guard.is_none() {
-        *guard = Some(McpConnection::spawn()?);
+        *guard = Some(spawn_connection()?);
     }
     let connection = guard.as_mut().expect("la conexión se acaba de crear");
 
@@ -296,11 +342,14 @@ fn tool_error_message(value: &Value) -> String {
         .unwrap_or_else(|| value.to_string())
 }
 
+// gemini-notebook-mcp persiste el perfil de Chrome en una carpeta distinta
+// por plataforma (ver su README): en Windows es %APPDATA%\notebooklm, sin el
+// sufijo "-mcp" ni la subcarpeta "Data" que usaba el paquete anterior.
 fn notebooklm_data_dir() -> Option<PathBuf> {
     if cfg!(target_os = "windows") {
-        env::var_os("LOCALAPPDATA")
+        env::var_os("APPDATA")
             .map(PathBuf::from)
-            .map(|path| path.join("notebooklm-mcp").join("Data"))
+            .map(|path| path.join("notebooklm"))
     } else if cfg!(target_os = "macos") {
         env::var_os("HOME")
             .map(PathBuf::from)
@@ -317,7 +366,7 @@ fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
     haystack.windows(needle.len()).any(|window| window == needle)
 }
 
-/// Workaround para notebooklm-mcp 2.0.0: `get_health` solo comprueba
+/// Workaround para gemini-notebook-mcp 2.0.0: `get_health` solo comprueba
 /// browser_state/state.json, aunque el perfil persistente de Chrome ya tenga
 /// una sesión válida. Si el detector perdió la pestaña durante el redirect,
 /// Chrome igualmente guarda sus cookies al cerrar el contexto.
@@ -354,8 +403,34 @@ fn discard_connection() {
     }
 }
 
+fn remember_auth_validation(status: &NotebookLmAuthStatus) {
+    if let Ok(mut cache) = AUTH_VALIDATION.lock() {
+        *cache = Some((Instant::now(), status.clone()));
+    }
+}
+
+fn clear_auth_validation() {
+    if let Ok(mut cache) = AUTH_VALIDATION.lock() {
+        *cache = None;
+    }
+}
+
 pub fn check_auth() -> NotebookLmAuthStatus {
-    match call_tool("get_health", json!({}), Duration::from_secs(60)) {
+    if let Ok(cache) = AUTH_VALIDATION.lock() {
+        if let Some((checked_at, status)) = cache.as_ref() {
+            if status.authenticated && checked_at.elapsed() <= AUTH_VALIDATION_TTL {
+                return NotebookLmAuthStatus {
+                    authenticated: true,
+                    message: "Sesión ya verificada recientemente. No fue necesario consultar NotebookLM otra vez.".to_string(),
+                };
+            }
+        }
+    }
+    check_auth_fresh()
+}
+
+pub fn check_auth_fresh() -> NotebookLmAuthStatus {
+    let status = match call_tool("get_health", json!({}), Duration::from_secs(60)) {
         Ok(value) if !is_tool_error(&value) => match find_bool_field(&value, "authenticated") {
             Some(true) => NotebookLmAuthStatus {
                 authenticated: true,
@@ -379,11 +454,13 @@ pub fn check_auth() -> NotebookLmAuthStatus {
             message: format!("NotebookLM MCP devolvió un error: {}", tool_error_message(&value)),
         },
         Err(error) => NotebookLmAuthStatus { authenticated: false, message: error },
-    }
+    };
+    remember_auth_validation(&status);
+    status
 }
 
 pub fn start_auth() -> ActionResult {
-    // setup_auth es síncrono en notebooklm-mcp: bloquea sondeando la URL de la
+    // setup_auth es síncrono en gemini-notebook-mcp: bloquea sondeando la URL de la
     // ventana hasta ver notebooklm.google.com (hasta 10 min) y solo entonces
     // guarda las cookies, cierra el navegador y responde. Un timeout más corto
     // aquí (antes, 90 s) provocaba que matáramos el proceso a medio login,
@@ -398,25 +475,37 @@ pub fn start_auth() -> ActionResult {
             if !is_tool_error(&value)
                 && find_bool_field(&value, "authenticated") == Some(true) =>
         {
-            ActionResult::ok("Sesión iniciada y verificada con NotebookLM.")
+            let status = NotebookLmAuthStatus {
+                authenticated: true,
+                message: "Sesión iniciada y verificada con NotebookLM.".to_string(),
+            };
+            remember_auth_validation(&status);
+            ActionResult::ok(status.message)
         }
         Ok(_value) if persistent_profile_has_recent_google_auth() => {
             // El MCP 2.0.0 puede perder la referencia de la pestaña durante el
             // redirect. Cerramos cualquier contexto residual y usamos el
             // perfil que Chrome ya persistió como fuente de verificación.
             discard_connection();
-            ActionResult::ok(
-                "Sesión iniciada. Se verificó mediante el perfil persistente de NotebookLM.",
-            )
+            let status = NotebookLmAuthStatus {
+                authenticated: true,
+                message: "Sesión iniciada. Se verificó mediante el perfil persistente de NotebookLM.".to_string(),
+            };
+            remember_auth_validation(&status);
+            ActionResult::ok(status.message)
         }
         Ok(value) => {
+            clear_auth_validation();
             discard_connection();
             ActionResult::error(format!(
                 "NotebookLM MCP no pudo iniciar la autenticación: {}",
                 tool_error_message(&value)
             ))
         }
-        Err(error) => ActionResult::error(error),
+        Err(error) => {
+            clear_auth_validation();
+            ActionResult::error(error)
+        }
     }
 }
 
@@ -460,5 +549,18 @@ mod tests {
         let data = b"sqlite-prefix-SAPISID-value-__Secure-1PSID-suffix";
         assert!(contains_bytes(data, b"SAPISID"));
         assert!(!contains_bytes(data, b"APISID3"));
+    }
+
+    #[test]
+    fn successful_auth_validation_is_reused() {
+        let status = NotebookLmAuthStatus {
+            authenticated: true,
+            message: "verified".to_string(),
+        };
+        remember_auth_validation(&status);
+        let cached = check_auth();
+        assert!(cached.authenticated);
+        assert!(cached.message.contains("recientemente"));
+        clear_auth_validation();
     }
 }

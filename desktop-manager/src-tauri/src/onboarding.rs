@@ -7,7 +7,8 @@ use crate::payload;
 use std::fs;
 use std::path::PathBuf;
 
-const LAST_STEP: u8 = 9;
+const ONBOARDING_VERSION: u32 = 2;
+const LAST_STEP: u8 = 10;
 
 fn status_path() -> Result<PathBuf, String> {
     Ok(app_config_dir()?.join("onboarding.json"))
@@ -18,12 +19,29 @@ fn load() -> OnboardingStatus {
         .ok()
         .and_then(|path| fs::read(path).ok())
         .and_then(|bytes| serde_json::from_slice::<OnboardingStatus>(&bytes).ok())
-        .map(|mut status| {
+        .map(|status| {
+            let mut status = migrate_status(status);
             status.current_step = status.current_step.clamp(1, LAST_STEP);
             status.max_completed_step = status.max_completed_step.min(LAST_STEP);
             status
         })
         .unwrap_or_default()
+}
+
+fn migrate_status(mut status: OnboardingStatus) -> OnboardingStatus {
+    if status.version < ONBOARDING_VERSION {
+        // La versión 2 separa la antigua identidad institucional (paso 5)
+        // en institución (5) y perfil académico (6). Los pasos posteriores
+        // se desplazan una posición sin perder el progreso ya completado.
+        if status.current_step >= 6 {
+            status.current_step = status.current_step.saturating_add(1);
+        }
+        if status.max_completed_step >= 5 {
+            status.max_completed_step = status.max_completed_step.saturating_add(1);
+        }
+        status.version = ONBOARDING_VERSION;
+    }
+    status
 }
 
 fn save(status: &mut OnboardingStatus) -> Result<(), String> {
@@ -32,17 +50,26 @@ fn save(status: &mut OnboardingStatus) -> Result<(), String> {
     atomic_write(&status_path()?, &bytes)
 }
 
-fn node_ready() -> bool {
-    course::check_dependencies()
-        .into_iter()
+fn validate_environment(dependencies: &[crate::models::DependencyStatus]) -> Result<(), String> {
+    let node_ready = dependencies
+        .iter()
         .find(|dependency| dependency.name == "Node.js")
-        .is_some_and(|dependency| dependency.installed)
-}
+        .is_some_and(|dependency| dependency.installed);
+    if !node_ready {
+        return Err(
+            "Falta instalar un componente necesario. Instálalo y pulsa “Verificar de nuevo”."
+                .to_string(),
+        );
+    }
 
-fn compilation_ready() -> bool {
-    course::check_dependencies()
-        .into_iter()
-        .any(|dependency| matches!(dependency.name.as_str(), "Docker" | "TeX Live (pdflatex)") && dependency.installed)
+    let compilation_ready = dependencies.iter().any(|dependency| {
+        matches!(dependency.name.as_str(), "Docker" | "TeX Live (pdflatex)")
+            && dependency.installed
+    });
+    if !compilation_ready {
+        return Err("Instala TeX Live (o Docker) para poder generar el PDF de tu guía.".to_string());
+    }
+    Ok(())
 }
 
 fn target_ready(target: &str) -> bool {
@@ -60,25 +87,31 @@ fn target_ready(target: &str) -> bool {
     }
 }
 
-fn first_invalid_step(status: &OnboardingStatus) -> Option<(u8, &'static str)> {
-    if !node_ready() {
-        return Some((4, "Detectamos que falta un componente necesario para que la app funcione."));
-    }
-    if !compilation_ready() {
-        return Some((
-            4,
-            "Ya no encontramos Docker ni TeX Live instalados. Necesitas uno de los dos \
-             para poder generar el PDF de tu guía.",
-        ));
+fn first_invalid_step(
+    status: &OnboardingStatus,
+    refresh_environment: bool,
+) -> Option<(u8, &'static str)> {
+    let dependencies = if refresh_environment {
+        course::check_dependencies()
+    } else {
+        course::check_dependencies_cached()
+    };
+    if let Err(message) = validate_environment(&dependencies) {
+        let reason = if message.starts_with("Falta instalar") {
+            "Detectamos que falta un componente necesario para que la app funcione."
+        } else {
+            "Ya no encontramos Docker ni TeX Live instalados. Necesitas uno de los dos para poder generar el PDF de tu guía."
+        };
+        return Some((4, reason));
     }
     if !config::institution_is_configured() {
-        return Some((5, "Los datos de tu institución ya no están guardados o se borraron."));
+        return Some((6, "Los datos de tu institución o perfil académico ya no están guardados."));
     }
     if !config::template_exists(&config::get_active_template()) {
-        return Some((6, "La plantilla que tenías elegida ya no está disponible."));
+        return Some((7, "La plantilla que tenías elegida ya no está disponible."));
     }
     if !target_ready(&status.selected_target) {
-        return Some((8, "El destino que elegiste dejó de estar completamente configurado."));
+        return Some((9, "El destino que elegiste dejó de estar completamente configurado."));
     }
     None
 }
@@ -86,7 +119,7 @@ fn first_invalid_step(status: &OnboardingStatus) -> Option<(u8, &'static str)> {
 pub fn get_status() -> OnboardingStatus {
     let mut status = load();
     if status.completed {
-        if let Some((step, reason)) = first_invalid_step(&status) {
+        if let Some((step, reason)) = first_invalid_step(&status, true) {
             status.completed = false;
             status.current_step = step;
             status.max_completed_step = step.saturating_sub(1);
@@ -126,23 +159,19 @@ pub fn advance(step: u8, selected_target: Option<String>) -> OnboardingResult {
         1 => Ok(()),
         2 => Ok(()),
         3 => Ok(()),
-        4 if !node_ready() => Err(
-            "Falta instalar un componente necesario. Instálalo y pulsa “Verificar de nuevo”.".to_string(),
-        ),
-        4 if !compilation_ready() => Err(
-            "Instala Docker o TeX Live para poder generar el PDF de tu guía.".to_string(),
-        ),
-        5 if !config::institution_is_configured() => {
+        4 => validate_environment(&course::check_dependencies_cached()),
+        5 => Ok(()),
+        6 if !config::institution_is_configured() => {
             Err("Completa los datos de tu institución antes de continuar.".to_string())
         }
-        6 if !config::template_exists(&config::get_active_template()) => {
+        7 if !config::template_exists(&config::get_active_template()) => {
             Err("Elige una plantilla para continuar.".to_string())
         }
-        7 => {
+        8 => {
             let auth = mcp::check_auth();
             auth.authenticated.then_some(()).ok_or(auth.message)
         }
-        8 => {
+        9 => {
             let target = selected_target.unwrap_or_else(|| status.selected_target.clone());
             if !matches!(target.as_str(), "claude-cowork" | "claude-code" | "both") {
                 Err("Selecciona dónde usarás la skill.".to_string())
@@ -153,7 +182,7 @@ pub fn advance(step: u8, selected_target: Option<String>) -> OnboardingResult {
                 Ok(())
             }
         }
-        9 => Err("Usa el botón “Finalizar configuración”.".to_string()),
+        10 => Err("Usa el botón “Finalizar configuración”.".to_string()),
         _ => Ok(()),
     };
 
@@ -173,14 +202,14 @@ pub fn complete() -> OnboardingResult {
     if status.current_step != LAST_STEP {
         return result(false, "Completa todos los pasos antes de finalizar.", status);
     }
-    if let Some((step, reason)) = first_invalid_step(&status) {
+    if let Some((step, reason)) = first_invalid_step(&status, false) {
         status.current_step = step;
         let _ = save(&mut status);
         return result(false, format!("Te devolvimos al paso {step}: {reason}"), status);
     }
     let auth = mcp::check_auth();
     if !auth.authenticated {
-        status.current_step = 7;
+        status.current_step = 8;
         let _ = save(&mut status);
         return result(false, auth.message, status);
     }
@@ -208,5 +237,44 @@ mod tests {
     #[test]
     fn target_names_are_explicit() {
         assert!(!target_ready("unknown"));
+    }
+
+    #[test]
+    fn environment_validation_reports_node_before_pdf_compiler() {
+        let dependencies = vec![
+            crate::models::DependencyStatus {
+                name: "Node.js".to_string(),
+                installed: false,
+                version: None,
+                required: true,
+                note: String::new(),
+                command: String::new(),
+            },
+            crate::models::DependencyStatus {
+                name: "Docker".to_string(),
+                installed: false,
+                version: None,
+                required: false,
+                note: String::new(),
+                command: String::new(),
+            },
+        ];
+        assert!(validate_environment(&dependencies)
+            .unwrap_err()
+            .starts_with("Falta instalar"));
+    }
+
+    #[test]
+    fn migrates_progress_after_splitting_institution_step() {
+        let legacy = OnboardingStatus {
+            version: 1,
+            current_step: 8,
+            max_completed_step: 7,
+            ..OnboardingStatus::default()
+        };
+        let migrated = migrate_status(legacy);
+        assert_eq!(migrated.version, 2);
+        assert_eq!(migrated.current_step, 9);
+        assert_eq!(migrated.max_completed_step, 8);
     }
 }

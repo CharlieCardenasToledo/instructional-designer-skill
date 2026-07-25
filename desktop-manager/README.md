@@ -9,7 +9,7 @@ App de escritorio (Tauri) para configurar e instalar el Instructional Designer S
 - **Configura datos institucionales** (nombre, color RGB, facultad) y genera la configuración LaTeX lista para copiar
 - **Gestiona cursos**: crea la estructura de carpetas correcta con un clic
 - **Genera sílabos** en formato `README.md` compatibles con el skill, con formulario visual por semana
-- **Configura NotebookLM MCP 2.0** con el comando oficial `npx notebooklm-mcp@latest`, preservando configuraciones MCP existentes
+- **Configura NotebookLM MCP 2.0** con el comando oficial `npx gemini-notebook-mcp@latest`, preservando configuraciones MCP existentes
 
 ## Stack
 
