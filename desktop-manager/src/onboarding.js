@@ -499,10 +499,13 @@ async function showPreparedStep(fromStep, destination, { force = false, depFocus
   renderCurrentStep();
 }
 
-// El backend (check_dependencies en course.rs) ya solo reporta Node.js,
-// Git, Python y el compilador LaTeX: no hay nada que filtrar aquí.
+// El backend (check_dependencies en course.rs) reporta Node.js, Git, Python
+// y el compilador LaTeX. Git es opcional y no forma parte del flujo
+// obligatorio: mostrarlo aquí solo agrega una decisión extra que el usuario
+// final no necesita tomar. Sigue disponible en Configuración > Entorno para
+// quien sí quiera instalarlo.
 function dependencySequence() {
-  return runtime.dependencies;
+  return runtime.dependencies.filter(dep => dep.required);
 }
 
 function dependencyCardShell(dep) {
@@ -785,10 +788,20 @@ function profileStep() {
     </button>`;
   }).join("");
 
+  // Encabezado con numeración visible (1/3, 2/3, 3/3) y un borde superior
+  // que separa cada sección: al vivir las tres en una sola pantalla larga,
+  // una división visual clara ayuda más que solo el espaciado vertical.
+  const sectionHeading = (index, title) => `
+    <div class="flex items-center gap-2 mb-2">
+      <span class="flex-shrink-0 w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-bold flex items-center justify-center">${index}</span>
+      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-500">${title}</h3>
+      <span class="text-[10px] text-gray-300 font-medium ml-auto">${index} / 3</span>
+    </div>`;
+
   setFooter("Guardar y continuar", "save-profile-and-template", !template);
   return `<section>
     <div class="max-w-lg mx-auto mb-5">
-      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Institución</h3>
+      ${sectionHeading(1, "Institución")}
       <p class="${CARD_LEAD} !max-w-lg !mb-3">Estos datos contextualizan las portadas, los casos y los metadatos de cada publicación.</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <label class="${FIELD_LABEL} sm:col-span-2">
@@ -811,8 +824,8 @@ function profileStep() {
       </div>
     </div>
 
-    <div class="max-w-lg mx-auto mb-5">
-      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Tu perfil</h3>
+    <div class="max-w-lg mx-auto mb-5 pt-5 border-t border-gray-200">
+      ${sectionHeading(2, "Tu perfil")}
       <p class="${CARD_LEAD} !max-w-lg !mb-3">Tu nombre aparecerá como autor. El ecosistema digital ayuda a contextualizar instrucciones, ejemplos y actividades.</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <label class="${FIELD_LABEL}">Nombre completo<input class="${FIELD_INPUT}" id="onb-author" value="${value("author")}" placeholder="Ana López"></label>
@@ -821,8 +834,8 @@ function profileStep() {
       </div>
     </div>
 
-    <div class="max-w-lg mx-auto">
-      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Sistema editorial</h3>
+    <div class="max-w-lg mx-auto pt-5 border-t border-gray-200">
+      ${sectionHeading(3, "Sistema editorial")}
       <p class="${CARD_LEAD} !max-w-lg !mb-3">La plantilla define tipografía, bloques pedagógicos, diagramas, bibliografía y reglas de consistencia.</p>
       <div class="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">${templateCards}</div>
     </div>
@@ -919,10 +932,13 @@ function connectStep() {
   const selected = runtime.status.selectedTarget || state.config.onboardingTarget || "claude-code";
   const zipOk    = Boolean(state.config.lastSkillZip);
 
+  // Los ids internos (claude-code, claude-cowork, both) no cambian: solo el
+  // título visible pasa de nombres de producto a lenguaje de tarea, para
+  // usuario final que no necesita saber qué es "Claude Code" de antemano.
   const targets = [
-    { id: "claude-code",    title: "Claude Code",              icon: "terminal",     desc: "Producción técnica completa dentro del proyecto, con archivos y validaciones locales." },
-    { id: "claude-cowork",  title: "Claude Desktop / Cowork",  icon: "desktop_windows", desc: "Flujo visual y colaborativo mediante un archivo de skill exportado." },
-    { id: "both",           title: "Ambos destinos",           icon: "devices",      desc: "Combina el trabajo técnico local con el flujo visual y colaborativo." },
+    { id: "claude-code",    title: "Trabajar en proyectos locales", icon: "terminal",        desc: "Usa la skill directamente en Claude Code, con archivos y validaciones en tu proyecto." },
+    { id: "claude-cowork",  title: "Usar en la app de Claude",      icon: "desktop_windows",  desc: "Flujo visual en Claude Desktop / Cowork mediante un archivo de skill exportado." },
+    { id: "both",           title: "Usar en ambos lugares",         icon: "devices",          desc: "Combina Claude Code y Claude Desktop." },
   ];
 
   // Checklist de pasos para el destino seleccionado
@@ -1010,15 +1026,33 @@ function finalStep() {
   const config = state.config || {};
   const setup  = runtime.setup || {};
   const target = runtime.status?.selectedTarget || config.onboardingTarget || "claude-code";
-  const targetLabel = { "claude-code": "Claude Code", "claude-cowork": "Claude Desktop / Cowork", "both": "Ambos destinos" }[target] || target;
+  const targetLabel = { "claude-code": "Trabajar en proyectos locales", "claude-cowork": "Usar en la app de Claude", "both": "Usar en ambos lugares" }[target] || target;
 
+  // El checklist de conexión depende del destino elegido: a "claude-cowork"
+  // no le corresponde "Skill instalada" (usa un ZIP exportado, no una
+  // instalación local), así que mostrar esa fila ahí sería una X roja falsa.
+  const connectionChecks = {
+    "claude-code": [
+      { label: "Skill instalada", ok: setup.skill_installed },
+      { label: "Conectada con Claude Code", ok: setup.mcp_claude_code_configured },
+    ],
+    "claude-cowork": [
+      { label: "Archivo de skill exportado", ok: Boolean(config.lastSkillZip) },
+      { label: "Conectada con Claude Desktop", ok: setup.mcp_desktop_configured },
+    ],
+    both: [
+      { label: "Skill instalada", ok: setup.skill_installed },
+      { label: "Conectada con Claude Code", ok: setup.mcp_claude_code_configured },
+      { label: "Archivo de skill exportado", ok: Boolean(config.lastSkillZip) },
+      { label: "Conectada con Claude Desktop", ok: setup.mcp_desktop_configured },
+    ],
+  };
   const checks = [
     { label: "Dependencias",        ok: runtime.dependencies.filter(d => d.required).every(d => d.installed) },
     { label: "Perfil institucional", ok: !!(config.author && config.institution) },
     { label: "Plantilla activa",     ok: !!runtime.activeTemplate },
     { label: "Sesión de Google",     ok: runtime.auth?.authenticated === true },
-    { label: "Skill instalada",      ok: setup.skill_installed },
-    { label: "Conexión con Claude",  ok: setup.mcp_claude_code_configured || setup.mcp_desktop_configured },
+    ...(connectionChecks[target] || connectionChecks["claude-code"]),
   ];
 
   setFooter("Finalizar configuración", "complete", true);

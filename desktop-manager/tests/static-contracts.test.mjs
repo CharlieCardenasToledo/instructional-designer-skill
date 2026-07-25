@@ -165,6 +165,43 @@ test('el paso de herramientas exige Node, Python y compilador LaTeX explícitame
   assert.match(source, /Node\.js, Python y el compilador LaTeX son obligatorios/);
 });
 
+test('Git no aparece como tarjeta en el onboarding (solo en Configuración > Entorno)', async () => {
+  const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  const start = source.indexOf('function dependencySequence');
+  const end = source.indexOf('\n}', start);
+  const fn = source.slice(start, end);
+  assert.match(fn, /runtime\.dependencies\.filter\(dep => dep\.required\)/);
+});
+
+test('los destinos usan lenguaje de tarea, no nombres de producto, en título visible', async () => {
+  const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  const start = source.indexOf('function connectStep');
+  const end = source.indexOf('function finalStep', start);
+  const connect = source.slice(start, end);
+  assert.match(connect, /id: "claude-code",\s*title: "Trabajar en proyectos locales"/);
+  assert.match(connect, /id: "claude-cowork",\s*title: "Usar en la app de Claude"/);
+  assert.match(connect, /id: "both",\s*title: "Usar en ambos lugares"/);
+});
+
+test('el checklist final depende del destino elegido (no asume Skill instalada siempre)', async () => {
+  const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  const start = source.indexOf('function finalStep');
+  const end = source.indexOf('function animateFinalStep', start);
+  const final = source.slice(start, end);
+  assert.match(final, /const connectionChecks = \{/);
+  assert.match(final, /"claude-cowork":\s*\[/);
+  assert.match(final, /Archivo de skill exportado/);
+});
+
+test('el paso de perfil fusionado tiene divisores visuales numerados entre secciones', async () => {
+  const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  const start = source.indexOf('function profileStep');
+  const end = source.indexOf('function renderOnboardingSiteAnalysis', start);
+  const profile = source.slice(start, end);
+  assert.match(profile, /function sectionHeading|const sectionHeading/);
+  assert.match(profile, /border-t border-gray-200/);
+});
+
 test('el backend evita reescrituras, reinstalaciones y recompilaciones idénticas', async () => {
   const [paths, payload, course, mcp] = await Promise.all([
     readFile(new URL('src-tauri/src/paths.rs', root), 'utf8'),
