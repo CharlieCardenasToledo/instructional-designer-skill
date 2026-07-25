@@ -140,7 +140,7 @@ function warmOnboardingData(currentStep) {
 
 const BTN_PRIMARY = "w-full h-11 rounded-md bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 border-0 cursor-pointer";
 const BTN_SECONDARY = "h-9 px-4 rounded-md bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 cursor-pointer";
-const SCROLL_THIN = "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent";
+const SCROLL_THIN = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
 const CARD_LEAD = "max-w-md mx-auto mb-5 text-center text-gray-600 text-sm leading-relaxed";
 const CALLOUT = "flex gap-2.5 items-start max-w-lg mx-auto mt-4 p-3.5 rounded-xl bg-gray-100 text-gray-600 text-xs leading-relaxed";
 const INLINE_ERROR = "max-w-lg mx-auto mt-3 p-3 rounded-lg bg-red-50 border border-red-300 text-red-600 text-xs flex items-center gap-2";
@@ -223,12 +223,14 @@ function renderCurrentStep() {
       <button class="win-btn win-btn--close" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="relative z-[1] w-full max-w-3xl mx-auto h-full flex flex-col p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
-      <div class="flex-1 min-h-0 overflow-y-auto pr-2 flex flex-col items-center justify-center ${SCROLL_THIN}">
-        <div class="text-center mb-4 flex-shrink-0 w-full">
-          <h1 id="onboarding-title" class="text-4xl font-semibold text-gray-900 tracking-tight animate-[fade-in-up_0.5s_ease-out_forwards]">${escapeHtml(meta.title)}</h1>
-          <p class="mt-3 text-base text-gray-600 max-w-md mx-auto leading-relaxed animate-[fade-in-up_0.5s_ease-out_forwards] [animation-delay:75ms]">${escapeHtml(meta.subtitle)}</p>
+      <div class="flex-1 min-h-0 overflow-y-auto pr-2 flex flex-col items-center ${SCROLL_THIN}">
+        <div class="w-full my-auto">
+          <div class="text-center mb-4 w-full">
+            <h1 id="onboarding-title" class="text-4xl font-semibold text-gray-900 tracking-tight animate-[fade-in-up_0.5s_ease-out_forwards]">${escapeHtml(meta.title)}</h1>
+            <p class="mt-3 text-base text-gray-600 max-w-md mx-auto leading-relaxed animate-[fade-in-up_0.5s_ease-out_forwards] [animation-delay:75ms]">${escapeHtml(meta.subtitle)}</p>
+          </div>
+          <div id="onboarding-step-content" class="w-full"></div>
         </div>
-        <div id="onboarding-step-content" class="w-full"></div>
       </div>
       <div id="onboarding-bottom-nav" class="flex-shrink-0"></div>
     </div>`;
@@ -826,11 +828,10 @@ function profileStep() {
 
     <div class="max-w-lg mx-auto mb-5 pt-5 border-t border-gray-200">
       ${sectionHeading(2, "Tu perfil")}
-      <p class="${CARD_LEAD} !max-w-lg !mb-3">Tu nombre aparecerá como autor. El ecosistema digital ayuda a contextualizar instrucciones, ejemplos y actividades.</p>
+      <p class="${CARD_LEAD} !max-w-lg !mb-3">Tu nombre aparecerá como autor de tus publicaciones.</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         <label class="${FIELD_LABEL}">Nombre completo<input class="${FIELD_INPUT}" id="onb-author" value="${value("author")}" placeholder="Ana López"></label>
         <label class="${FIELD_LABEL}">Grado académico <span class="text-gray-400 font-normal">(opcional)</span><input class="${FIELD_INPUT}" id="onb-degree" value="${value("degree")}" placeholder="Mgtr."></label>
-        <label class="${FIELD_LABEL} sm:col-span-2">Ecosistema digital <span class="text-gray-400 font-normal">uno por línea · opcional</span><textarea class="${FIELD_INPUT} min-h-24 resize-y" id="onb-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${value("ecosystem")}</textarea></label>
       </div>
     </div>
 
@@ -955,38 +956,40 @@ function connectStep() {
 
   if (selected === "claude-code") {
     checklist = checkItem("Skill instalada", setup.skill_installed) +
-                checkItem("Conectada con Claude Code", setup.mcp_claude_code_configured);
+                checkItem("Proyecto local conectado", setup.mcp_claude_code_configured);
     allReady  = !!(setup.skill_installed && setup.mcp_claude_code_configured);
     actions   = actionButton("1. Instalar skill", "install-local", setup.skill_installed, true) +
-                actionButton("2. Conectar con Claude Code", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true);
+                actionButton("2. Conectar proyecto local", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true);
 
   } else if (selected === "claude-cowork") {
     checklist = checkItem("Archivo de la skill exportado", zipOk) +
-                checkItem("Conectada con Claude Desktop", setup.mcp_desktop_configured);
+                checkItem("App de Claude conectada", setup.mcp_desktop_configured);
     allReady  = !!(zipOk && setup.mcp_desktop_configured);
     actions   = actionButton("1. Exportar archivo de la skill", "export-zip", zipOk, true) +
-                actionButton("2. Conectar con Claude Desktop", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
+                actionButton("2. Conectar app de Claude", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
 
   } else { // both
     checklist = checkItem("Skill instalada", setup.skill_installed) +
-                checkItem("Conectada con Claude Code", setup.mcp_claude_code_configured) +
+                checkItem("Proyecto local conectado", setup.mcp_claude_code_configured) +
                 checkItem("Archivo de la skill exportado", zipOk) +
-                checkItem("Conectada con Claude Desktop", setup.mcp_desktop_configured);
+                checkItem("App de Claude conectada", setup.mcp_desktop_configured);
     allReady  = !!(setup.skill_installed && setup.mcp_claude_code_configured && zipOk && setup.mcp_desktop_configured);
-    actions   = actionButton("Instalar skill (Claude Code)", "install-local", setup.skill_installed, true) +
-                actionButton("Exportar archivo (Claude/Cowork)", "export-zip", zipOk, true) +
-                actionButton("Conectar con Claude Code", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true) +
-                actionButton("Conectar con Claude Desktop", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
+    actions   = actionButton("Instalar skill (proyecto local)", "install-local", setup.skill_installed, true) +
+                actionButton("Exportar archivo (app de Claude)", "export-zip", zipOk, true) +
+                actionButton("Conectar proyecto local", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true) +
+                actionButton("Conectar app de Claude", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
   }
 
   setFooter("Continuar al paso final", "advance-target", !authenticated || !allReady);
   return `<section>
     <div class="max-w-lg mx-auto mb-5">
-      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Evidencia verificable</h3>
-      <p class="${CARD_LEAD} !max-w-lg !mb-3">NotebookLM contrasta afirmaciones con las fuentes autorizadas de tu curso. <strong>No diseña la guía ni reemplaza tu criterio docente.</strong></p>
-      <img src="${notebookLmWordmark}" alt="NotebookLM" class="h-6 w-auto mx-auto mb-4 block">
-      <button class="flex items-center gap-3 w-full p-3.5 rounded-xl border text-left cursor-pointer transition-colors ${statusCls}" data-onboarding-action="verify-auth" title="Volver a verificar">
-        <div class="${iconCls} flex flex-shrink-0">${authenticated ? ic("check-circle-2", 18) : ic("lock-keyhole", 18)}</div>
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400">Evidencia verificable</h3>
+        <img src="${notebookLmWordmark}" alt="NotebookLM" class="h-4 w-auto shrink-0">
+      </div>
+      <p class="${CARD_LEAD} !max-w-lg !mb-3">No diseña la guía ni reemplaza tu criterio docente: solo contrasta afirmaciones con las fuentes de tu curso.</p>
+      <button class="flex items-start sm:items-center gap-3 w-full p-3.5 rounded-xl border text-left cursor-pointer transition-colors ${statusCls}" data-onboarding-action="verify-auth" title="Volver a verificar">
+        <div class="${iconCls} flex flex-shrink-0 mt-0.5 sm:mt-0">${authenticated ? ic("check-circle-2", 18) : ic("lock-keyhole", 18)}</div>
         <div class="flex flex-col gap-0.5 flex-1 min-w-0">
           <strong class="text-gray-900 text-sm">${authenticated ? "Sesión verificada" : "Sesión pendiente"}</strong>
           <span class="text-gray-500 text-xs">${escapeHtml(runtime.auth?.message || "Pulsa iniciar sesión y luego toca aquí para verificar.")}</span>
@@ -996,22 +999,21 @@ function connectStep() {
       <div class="flex justify-center mt-3">${actionButton("Iniciar sesión con Google", "start-auth", false, true, `<img src="${googleGLogo}" alt="" class="w-4 h-4">`)}</div>
     </div>
 
-    <div class="max-w-lg mx-auto">
+    <div class="max-w-lg mx-auto pt-5 border-t border-gray-200">
       <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Dónde producirás tus cursos</h3>
-      <p class="${CARD_LEAD} !max-w-lg !mb-3">Elige tu destino y completa las acciones en orden: primero instala o exporta, luego conecta.</p>
       <div class="grid gap-2">
         ${targets.map(t => `
-          <label class="flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer ${t.id === selected ? "border-gray-900 bg-gray-50" : "border-gray-200 bg-white"}">
-            <input type="radio" class="accent-gray-900" name="onboarding-target" value="${t.id}" ${t.id === selected ? "checked" : ""}>
+          <label class="flex items-start sm:items-center gap-3 p-3.5 rounded-xl border cursor-pointer ${t.id === selected ? "border-gray-900 bg-gray-50" : "border-gray-200 bg-white"}">
+            <input type="radio" class="accent-gray-900 flex-shrink-0 mt-1 sm:mt-0" name="onboarding-target" value="${t.id}" ${t.id === selected ? "checked" : ""}>
             <span class="material-symbols-outlined text-[18px] flex-shrink-0 text-gray-500">${t.icon}</span>
-            <span class="flex-1 flex flex-col gap-0.5"><strong class="text-gray-900 text-sm">${t.title}</strong><small class="text-gray-500 text-xs leading-snug">${t.desc}</small></span>
-            <span class="material-symbols-outlined text-[18px] ${targetReady(t.id) ? "text-green-600" : "text-gray-300"}">${targetReady(t.id) ? "check_circle" : "pending"}</span>
+            <span class="flex-1 min-w-0 flex flex-col gap-0.5"><strong class="text-gray-900 text-sm">${t.title}</strong><small class="text-gray-500 text-xs leading-snug">${t.desc}</small></span>
+            <span class="material-symbols-outlined text-[18px] flex-shrink-0 ${targetReady(t.id) ? "text-green-600" : "text-gray-300"}">${targetReady(t.id) ? "check_circle" : "pending"}</span>
           </label>`).join("")}
       </div>
 
       <div class="my-4">
         <div class="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">
-          Estado — ${targets.find(t => t.id === selected)?.title || selected}
+          Pendiente para ${targets.find(t => t.id === selected)?.title || selected}
         </div>
         <div class="flex flex-col gap-1.5">${checklist}</div>
       </div>
@@ -1034,17 +1036,17 @@ function finalStep() {
   const connectionChecks = {
     "claude-code": [
       { label: "Skill instalada", ok: setup.skill_installed },
-      { label: "Conectada con Claude Code", ok: setup.mcp_claude_code_configured },
+      { label: "Proyecto local conectado", ok: setup.mcp_claude_code_configured },
     ],
     "claude-cowork": [
       { label: "Archivo de skill exportado", ok: Boolean(config.lastSkillZip) },
-      { label: "Conectada con Claude Desktop", ok: setup.mcp_desktop_configured },
+      { label: "App de Claude conectada", ok: setup.mcp_desktop_configured },
     ],
     both: [
       { label: "Skill instalada", ok: setup.skill_installed },
-      { label: "Conectada con Claude Code", ok: setup.mcp_claude_code_configured },
+      { label: "Proyecto local conectado", ok: setup.mcp_claude_code_configured },
       { label: "Archivo de skill exportado", ok: Boolean(config.lastSkillZip) },
-      { label: "Conectada con Claude Desktop", ok: setup.mcp_desktop_configured },
+      { label: "App de Claude conectada", ok: setup.mcp_desktop_configured },
     ],
   };
   const checks = [
@@ -1603,7 +1605,6 @@ async function performAction(action, current) {
       colorB: rgb.b,
       author: document.getElementById("onb-author").value.trim(),
       degree: document.getElementById("onb-degree").value.trim(),
-      ecosystem: document.getElementById("onb-ecosystem").value.trim(),
     };
     const errorEl = document.getElementById("onb-form-error");
     const missingLabels = { author: "Nombre completo", institution: "Institución", faculty: "Facultad", career: "Carrera" };

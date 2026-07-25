@@ -13,20 +13,20 @@ export async function renderTemplates() {
   if (!el) return;
 
   el.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:16px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px">
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.03em">Biblioteca de plantillas</h1>
           <p style="font-size:13px;color:var(--muted);margin-top:4px">Explora y activa plantillas LaTeX y Markdown para tus cursos.</p>
         </div>
-        <div style="display:flex;gap:8px" id="tpl-filter-btns">
+        <div class="flex flex-wrap gap-2" id="tpl-filter-btns">
           <button class="btn btn-primary btn-sm tpl-filter-btn" data-filter="all">Todas</button>
           <button class="btn btn-secondary btn-sm tpl-filter-btn" data-filter="institutional">Institucional</button>
           <button class="btn btn-secondary btn-sm tpl-filter-btn" data-filter="personal">Personal</button>
         </div>
       </div>
-      <div id="tpl-bento" style="display:grid;grid-template-columns:repeat(12,1fr);gap:14px">
-        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--dim)">
+      <div id="tpl-bento" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3.5">
+        <div class="col-span-full text-center" style="padding:40px;color:var(--dim)">
           <span class="material-symbols-outlined" style="font-size:32px;display:block;margin-bottom:8px">hourglass_empty</span>
           Cargando plantillas…
         </div>
@@ -64,7 +64,7 @@ function renderBento(filter) {
   if (filter === "personal")     templates = _templates.filter(t => !t.featured);
 
   if (!templates.length) {
-    bento.innerHTML = `<div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--dim)">Sin plantillas en esta categoría.</div>`;
+    bento.innerHTML = `<div class="col-span-full" style="padding:30px;text-align:center;color:var(--dim)">Sin plantillas en esta categoría.</div>`;
     return;
   }
 
@@ -74,9 +74,9 @@ function renderBento(filter) {
 
   bento.innerHTML = `
     <!-- Featured (8-col) -->
-    <div class="glass-card" style="grid-column:span 8;padding:18px;display:flex;gap:18px;position:relative;overflow:hidden">
+    <div class="glass-card col-span-1 md:col-span-2 xl:col-span-8 flex flex-col sm:flex-row" style="padding:18px;gap:18px;position:relative;overflow:hidden">
       <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,49,126,0.04),transparent);pointer-events:none"></div>
-      <div style="width:45%;aspect-ratio:4/3;border-radius:8px;border:1px solid rgba(195,198,213,0.50);background:white;overflow:hidden;position:relative;flex-shrink:0">
+      <div class="w-full sm:w-[45%] shrink-0" style="aspect-ratio:4/3;border-radius:8px;border:1px solid rgba(195,198,213,0.50);background:white;overflow:hidden;position:relative">
         <div style="padding:12px;font-size:10px;color:#374151;line-height:1.5;transform:scale(0.62);transform-origin:top left;width:161%;pointer-events:none">
           <h1 style="font-weight:700;font-size:14px;margin-bottom:8px;border-bottom:1px solid #e5e7eb;padding-bottom:6px">${escapeHtml(featured.name)}</h1>
           <p style="margin-bottom:10px;color:#666">${escapeHtml(featured.description?.slice(0, 80) || "")}</p>
@@ -109,7 +109,7 @@ function renderBento(filter) {
 
     <!-- Secondary (4-col) -->
     ${secondary ? `
-    <div class="glass-card" style="grid-column:span 4;padding:16px;display:flex;flex-direction:column;justify-content:space-between">
+    <div class="glass-card col-span-1 xl:col-span-4" style="padding:16px;display:flex;flex-direction:column;justify-content:space-between">
       <div>
         <div style="width:100%;aspect-ratio:16/9;border-radius:8px;border:1px solid rgba(195,198,213,0.40);background:white;overflow:hidden;margin-bottom:12px;padding:10px;font-size:10px;color:#374151;line-height:1.5">
           <div style="font-weight:700;text-align:center;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:8px">${escapeHtml(secondary.name)}</div>
@@ -126,7 +126,7 @@ function renderBento(filter) {
 
     <!-- Grid items (4-col each) -->
     ${gridItems.map(t => `
-    <div class="glass-card" style="grid-column:span 4;padding:16px;display:flex;flex-direction:column">
+    <div class="glass-card col-span-1 xl:col-span-4" style="padding:16px;display:flex;flex-direction:column">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(195,198,213,0.30)">
         <span class="material-symbols-outlined" style="color:var(--teal);font-size:20px">assignment_ind</span>
         <span style="font-size:13px;font-weight:700;color:var(--text)">${escapeHtml(t.name)}</span>
@@ -141,7 +141,7 @@ function renderBento(filter) {
     </div>`).join("")}
 
     <!-- Create blank (4-col) -->
-    <div class="glass-card" style="grid-column:span 4;min-height:180px;border:2px dashed rgba(195,198,213,0.60);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:10px;border-radius:12px;transition:border-color 0.15s,background 0.15s" id="tpl-blank">
+    <div class="glass-card col-span-1 xl:col-span-4" style="min-height:180px;border:2px dashed rgba(195,198,213,0.60);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:10px;border-radius:12px;transition:border-color 0.15s,background 0.15s" id="tpl-blank">
       <div style="width:44px;height:44px;border-radius:50%;background:rgba(195,198,213,0.25);display:flex;align-items:center;justify-content:center">
         <span class="material-symbols-outlined" style="color:var(--teal)">add</span>
       </div>

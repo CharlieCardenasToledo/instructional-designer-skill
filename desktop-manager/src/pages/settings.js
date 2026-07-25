@@ -30,24 +30,24 @@ export async function renderSettings() {
       <h2 style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.03em">Configuración</h2>
       <p style="font-size:13px;color:var(--muted);margin-top:4px">Ajustes institucionales, MCP, notebooks, entorno y preferencias.</p>
     </div>
-    <div class="settings-layout">
+    <div class="settings-layout grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-5 items-start">
 
       <!-- Left nav -->
       <div>
-        <div class="glass-pane" style="padding:8px;position:sticky;top:0">
-          <a class="settings-nav-item active" data-section="inst-profile" href="#inst-profile">
+        <div class="glass-pane flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible" style="padding:8px;position:sticky;top:0">
+          <a class="settings-nav-item active w-auto shrink-0 lg:w-full" data-section="inst-profile" href="#inst-profile">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
-          <a class="settings-nav-item" data-section="mcp-config" href="#mcp-config">
+          <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="mcp-config" href="#mcp-config">
             <span class="material-symbols-outlined">hub</span> Configuración MCP
           </a>
-          <a class="settings-nav-item" data-section="notebooks-section" href="#notebooks-section">
+          <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="notebooks-section" href="#notebooks-section">
             <span class="material-symbols-outlined">menu_book</span> Notebooks
           </a>
-          <a class="settings-nav-item" data-section="environment" href="#environment">
+          <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="environment" href="#environment">
             <span class="material-symbols-outlined">terminal</span> Entorno
           </a>
-          <a class="settings-nav-item" data-section="app-prefs" href="#app-prefs">
+          <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="app-prefs" href="#app-prefs">
             <span class="material-symbols-outlined">tune</span> Preferencias
           </a>
         </div>

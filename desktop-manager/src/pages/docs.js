@@ -3,7 +3,7 @@ export function renderDocs() {
   if (!el) return;
 
   el.innerHTML = `
-    <div class="docs-layout">
+    <div class="docs-layout grid grid-cols-1 lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_220px] gap-5 items-start">
 
       <!-- Left nav -->
       <aside>
@@ -101,7 +101,7 @@ Paso 2: Estructura de carpetas
       </article>
 
       <!-- Right ToC -->
-      <aside class="docs-toc">
+      <aside class="docs-toc hidden xl:block">
         <div class="docs-toc-title">En esta página</div>
         <ul style="list-style:none;padding:0">
           <li><a class="docs-toc-link active" href="#">1. Inicialización</a></li>

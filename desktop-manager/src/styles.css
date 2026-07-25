@@ -658,7 +658,7 @@ label {
   color: var(--text-2);
 }
 
-input, select, textarea {
+input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   width: 100%;
   padding: 8px 11px;
   border: 1px solid var(--glass-border);
@@ -671,6 +671,13 @@ input, select, textarea {
   -webkit-backdrop-filter: var(--blur-sm);
   transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
+}
+
+input[type="checkbox"], input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: var(--teal);
 }
 input::placeholder, textarea::placeholder { color: var(--dim); }
 input:focus, select:focus, textarea:focus {

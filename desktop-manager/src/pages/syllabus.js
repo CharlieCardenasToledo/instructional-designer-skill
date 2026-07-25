@@ -35,7 +35,7 @@ export function renderSyllabus() {
   const pct = weekCount > 0 ? Math.round((complete / weekCount) * 100) : 0;
 
   el.innerHTML = `
-    <div class="syllabus-layout">
+    <div class="syllabus-layout grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3.5 items-start">
 
       <!-- Left column -->
       <div class="syllabus-left">

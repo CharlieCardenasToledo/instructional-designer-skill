@@ -22,7 +22,7 @@ export function renderCourses() {
     <div class="courses-layout">
 
       <!-- Stats -->
-      <div class="stat-grid">
+      <div class="stat-grid grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="stat-card">
           <div class="stat-card-label">Asignaturas</div>
           <div class="stat-card-value">${total}</div>
@@ -46,12 +46,12 @@ export function renderCourses() {
       </div>
 
       <!-- Toolbar -->
-      <div class="courses-toolbar">
+      <div class="courses-toolbar flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
         <div class="courses-search">
           <span class="material-symbols-outlined">search</span>
           <input id="courses-search-input" placeholder="Buscar por código o nombre…" value="${escapeHtml(_filter)}">
         </div>
-        <button class="btn btn-primary" id="btn-new-course">
+        <button class="btn btn-primary sm:shrink-0" id="btn-new-course">
           <span class="material-symbols-outlined" style="font-size:15px">add</span>
           Nueva asignatura
         </button>
@@ -59,7 +59,8 @@ export function renderCourses() {
 
       <!-- Table -->
       <div class="courses-table-wrap">
-        <table class="courses-table">
+        <div class="overflow-x-auto">
+        <table class="courses-table min-w-[760px]">
           <thead>
             <tr>
               <th>Código</th>
@@ -76,6 +77,7 @@ export function renderCourses() {
             ${renderTableRows()}
           </tbody>
         </table>
+        </div>
         ${state.courses.length === 0 ? `
           <div class="table-empty">
             <span class="material-symbols-outlined">school</span>
