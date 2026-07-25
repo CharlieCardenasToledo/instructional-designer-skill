@@ -42,6 +42,14 @@ fn version(command: &str, args: &[&str]) -> Option<String> {
 }
 
 pub fn check_dependencies() -> Vec<DependencyStatus> {
+    // El registro puede tener el PATH correcto (por una instalación de esta
+    // sesión o de una sesión anterior de la app) sin que este proceso lo
+    // haya heredado todavía. Releerlo antes de cada verificación evita que
+    // "Verificar de nuevo" reporte "no encontrado" para algo que sí está
+    // instalado, sin depender de que el usuario reinicie la app.
+    #[cfg(target_os = "windows")]
+    refresh_path_from_registry();
+
     let node = command_exists("node");
     let npx = command_exists(if cfg!(target_os = "windows") { "npx.cmd" } else { "npx" });
     let python_command = if command_exists("python3") { "python3" } else { "python" };
@@ -139,6 +147,11 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
             .status()
         {
             Ok(status) if status.success() => {
+                // winget ya actualizó el PATH en el registro, pero este
+                // proceso lo heredó una sola vez al arrancar. Releerlo ahora
+                // permite que "Verificar de nuevo" encuentre la dependencia
+                // sin reiniciar la app completa.
+                refresh_path_from_registry();
                 if name == "TeX Live (pdflatex)" {
                     return finish_miktex_install();
                 }
@@ -163,13 +176,37 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
     }
 }
 
-/// Tras instalar MiKTeX vía winget, el PATH del proceso actual sigue siendo
-/// el de antes de la instalación (Windows solo lo actualiza para procesos
-/// nuevos), así que no podemos ubicar `initexmf`/`mpm` con `Command::new`
-/// simple. En vez de depender del PATH, se usa la ruta por defecto del
-/// instalador de MiKTeX para: (1) desactivar el diálogo de "¿instalar
-/// paquete faltante?" que colgaría una compilación no interactiva, y (2)
-/// instalar `biber`, que la skill necesita para la bibliografía.
+/// El PATH del registro cambia con cada `winget install`, pero un proceso ya
+/// en ejecución solo hereda el PATH una vez, al arrancar (Windows no lo
+/// actualiza en caliente). Se relee Machine+User desde el registro -en ese
+/// orden, igual que arma el PATH un proceso nuevo- y se aplica a este mismo
+/// proceso con `set_var`, para que los siguientes `Command::new(...)` (y la
+/// próxima verificación de dependencias) ya vean el binario recién instalado
+/// sin necesidad de reiniciar la app completa.
+#[cfg(target_os = "windows")]
+fn refresh_path_from_registry() {
+    let script = "[Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')";
+    let Ok(output) = Command::new("powershell.exe")
+        .args(["-NoProfile", "-NonInteractive", "-Command", script])
+        .output()
+    else {
+        return;
+    };
+    if !output.status.success() {
+        return;
+    }
+    let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if !path.is_empty() {
+        std::env::set_var("PATH", path);
+    }
+}
+
+/// Tras instalar MiKTeX vía winget, `initexmf`/`mpm` viven en una ruta fija
+/// del perfil del usuario. Se usa esa ruta directa (en vez de depender del
+/// PATH, por si `refresh_path_from_registry` no alcanzó a verlos todavía)
+/// para: (1) desactivar el diálogo de "¿instalar paquete faltante?" que
+/// colgaría una compilación no interactiva, y (2) instalar `biber`, que la
+/// skill necesita para la bibliografía.
 #[cfg(target_os = "windows")]
 fn finish_miktex_install() -> ActionResult {
     let local_appdata = std::env::var("LOCALAPPDATA").unwrap_or_default();
@@ -184,7 +221,7 @@ fn finish_miktex_install() -> ActionResult {
 
     if !initexmf.exists() {
         return ActionResult::ok(
-            "MiKTeX se instaló correctamente. Reinicia la app para que Windows reconozca pdflatex y biber, y vuelve a verificar.",
+            "MiKTeX se instaló correctamente. Si “Verificar de nuevo” todavía no lo detecta, reinicia la app.",
         );
     }
 
