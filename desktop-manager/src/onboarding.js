@@ -39,18 +39,18 @@ import geminiLogo from "./assets/gemini-icon.svg";
 import googleGLogo from "./assets/google-g.svg";
 import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 
-const TOTAL_STEPS = 10;
+// Esquema de 5 pasos (v3 en el backend): colapsa los antiguos 10 pasos
+// agrupando contenido educativo o formularios relacionados en una sola
+// pantalla, para reducir la cantidad de decisiones/pantallas que ve un
+// usuario final antes de poder producir algo (ver migrate_status en
+// onboarding.rs para el mapeo exacto de pasos viejos a nuevos).
+const TOTAL_STEPS = 5;
 const LARGE_DEPENDENCIES = new Set(["Compilador LaTeX"]);
 const STEP_META = [
-  { title: "Del sílabo a una guía lista para publicar", subtitle: "Configura un sistema de producción académica, pedagógica y editorial.", icon: "graduation-cap" },
-  { title: "Cómo funciona", subtitle: "Del documento base a un PDF validado y respaldado por evidencia.", icon: "network" },
-  { title: "Marcos pedagógicos", subtitle: "Decisiones de diseño guiadas por alineación, inclusión y accesibilidad.", icon: "brain-circuit" },
-  { title: "Entorno profesional", subtitle: "Verificamos las herramientas que intervienen en cada etapa de producción.", icon: "terminal" },
-  { title: "Tu institución", subtitle: "Identifica la organización y su presencia visual.", icon: "building-2" },
-  { title: "Tu perfil académico", subtitle: "Define cómo aparecerás y qué entorno digital utilizas.", icon: "badge" },
-  { title: "Sistema editorial", subtitle: "Elige la base visual y estructural de tus publicaciones.", icon: "layout-template" },
-  { title: "Evidencia verificable", subtitle: "Conecta Google para contrastar afirmaciones con fuentes autorizadas.", icon: "notebook" },
-  { title: "Dónde producirás tus cursos", subtitle: "Elige el entorno que mejor se adapte a tu flujo de trabajo.", icon: "download" },
+  { title: "Del sílabo a una guía lista para publicar", subtitle: "Genera guías en PDF con tu identidad institucional, a partir de tus propias fuentes.", icon: "graduation-cap" },
+  { title: "Herramientas necesarias", subtitle: "La app instala automáticamente lo que falte.", icon: "terminal" },
+  { title: "Tu institución y tu perfil", subtitle: "Identidad, autoría y sistema editorial de tus publicaciones.", icon: "building-2" },
+  { title: "Conectar Google y Claude", subtitle: "Evidencia verificable y el destino donde producirás tus cursos.", icon: "notebook" },
   { title: "Prueba de producción", subtitle: "Generamos una muestra para validar el sistema completo.", icon: "check-circle-2" },
 ];
 let runtime = {
@@ -97,19 +97,19 @@ function rememberSuccessfulLoad(key) {
 }
 
 async function prepareOnboardingStep(step, { force = false } = {}) {
-  if (step >= 10) {
+  if (step >= 5) {
     await Promise.all([
+      prepareOnboardingStep(2, { force }),
+      prepareOnboardingStep(3, { force }),
       prepareOnboardingStep(4, { force }),
-      prepareOnboardingStep(7, { force }),
-      prepareOnboardingStep(8, { force }),
     ]);
   }
-  if (step === 4) {
+  if (step === 2) {
     await loadOnce("dependencies", async () => {
       runtime.dependencies = await checkDependencies();
     }, force);
   }
-  if (step === 7) {
+  if (step === 3) {
     await loadOnce("templates", async () => {
       [runtime.templates, runtime.activeTemplate] = await Promise.all([
         listTemplates(),
@@ -117,12 +117,10 @@ async function prepareOnboardingStep(step, { force = false } = {}) {
       ]);
     }, force);
   }
-  if (step === 8) {
+  if (step === 4) {
     await loadOnce("notebooklm-auth", async () => {
       runtime.auth = await checkNotebookLMAuth();
     }, force);
-  }
-  if (step >= 9) {
     await loadOnce("setup", async () => {
       runtime.setup = await getSetupStatus();
     }, force);
@@ -131,11 +129,12 @@ async function prepareOnboardingStep(step, { force = false } = {}) {
 
 function warmOnboardingData(currentStep) {
   const warm = [];
-  if (currentStep < 4) warm.push(prepareOnboardingStep(4));
-  if (currentStep < 7) warm.push(prepareOnboardingStep(7));
-  if (currentStep < 9) warm.push(prepareOnboardingStep(9));
-  // NotebookLM se excluye deliberadamente: iniciar npx/MCP cuesta varios
-  // segundos y solo aporta información cuando el usuario llega al paso 8.
+  if (currentStep < 2) warm.push(prepareOnboardingStep(2));
+  if (currentStep < 3) warm.push(prepareOnboardingStep(3));
+  // El destino (setup) se calienta por separado de la sesión de NotebookLM,
+  // aunque ambos vivan en el mismo paso 4: iniciar npx/MCP cuesta varios
+  // segundos y solo aporta información cuando el usuario llega a ese paso.
+  if (currentStep < 4) warm.push(loadOnce("setup", async () => { runtime.setup = await getSetupStatus(); }));
   void Promise.allSettled(warm);
 }
 
@@ -148,7 +147,7 @@ const INLINE_ERROR = "max-w-lg mx-auto mt-3 p-3 rounded-lg bg-red-50 border bord
 const DEP_ROW_CHECKING = "border-gray-200";
 const DEP_ROW_READY = "border-gray-900 bg-gray-50";
 const DEP_ROW_MISSING = "border-red-300 bg-red-50";
-// El paso 4 muestra una herramienta a la vez (ver dependenciesStep): una
+// El paso 2 muestra una herramienta a la vez (ver dependenciesStep): una
 // tarjeta grande con su propio mini-stepper, no una cuadrícula compacta.
 const DEP_CARD_BASE = "flex flex-col gap-2.5 p-4 rounded-xl bg-white border transition-colors min-w-0";
 const DEP_CARD_STATUS_BASE = "w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center";
@@ -241,16 +240,11 @@ function renderCurrentStep() {
   if (runtime.loadingStep === current) {
     content.innerHTML = loadingStep(current);
   } else {
-    if (current === 1) content.innerHTML = explanationStep();
-    if (current === 2) content.innerHTML = technologyStep();
-    if (current === 3) content.innerHTML = frameworksStep();
-    if (current === 4) content.innerHTML = dependenciesStep();
-    if (current === 5) content.innerHTML = institutionStep();
-    if (current === 6) content.innerHTML = academicProfileStep();
-    if (current === 7) content.innerHTML = templateStep();
-    if (current === 8) content.innerHTML = notebookStep();
-    if (current === 9) content.innerHTML = targetStep();
-    if (current === 10) content.innerHTML = finalStep();
+    if (current === 1) content.innerHTML = welcomeStep();
+    if (current === 2) content.innerHTML = dependenciesStep();
+    if (current === 3) content.innerHTML = profileStep();
+    if (current === 4) content.innerHTML = connectStep();
+    if (current === 5) content.innerHTML = finalStep();
   }
   document.getElementById("onboarding-bottom-nav").innerHTML = renderBottomNav(current);
   bindStepEvents(current);
@@ -258,12 +252,16 @@ function renderCurrentStep() {
   syncOnboardingBusyState();
 }
 
-// El paso 4 (herramientas) ya no tiene un único punto: cuando las
+// El paso 2 (herramientas) ya no tiene un único punto: cuando las
 // dependencias terminaron de cargar, ese lugar en la pista se expande a un
 // punto por herramienta (Node, Git, Python, compilador LaTeX), verde si ya está
-// instalada. Es la misma pista de los 10 pasos, no una segunda aparte -así
+// instalada. Es la misma pista de los 5 pasos, no una segunda aparte -así
 // el gusanito puede recorrer de un paso macro a una herramienta y viceversa
 // sin saltos.
+//
+// Cada punto visual (10px o menos) vive dentro de un botón de ~32x32px: el
+// punto pequeño es solo el indicador, el área de clic real es mucho más
+// grande (Ley de Fitts) tanto en mouse como en pantallas táctiles/trackpad.
 function progressDots(current) {
   const maxDone = Number(runtime.status.maxCompletedStep || 0);
   const stepAvailable = step => step <= maxDone + 1;
@@ -274,24 +272,28 @@ function progressDots(current) {
     const available = stepAvailable(step);
     const color = isCompleted ? "bg-green-600" : isActive ? "bg-gray-900" : "bg-gray-300";
     const interactive = available ? "cursor-pointer hover:opacity-80" : "cursor-default";
-    return `<button type="button" class="onboarding-progress-dot w-2.5 h-2.5 rounded-full ${color} ${interactive} border-0 transition-[transform,opacity] duration-200 p-0 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}" data-step-index="${step}" ${available ? `data-onboarding-step="${step}"` : "disabled"} aria-label="Ir al paso ${step}" aria-current="${isActive ? "step" : "false"}"></button>`;
+    return `<button type="button" class="onboarding-progress-dot-hit w-8 h-8 flex items-center justify-center border-0 bg-transparent p-0 ${interactive}" data-step-index="${step}" ${available ? `data-onboarding-step="${step}"` : "disabled"} aria-label="Ir al paso ${step}" aria-current="${isActive ? "step" : "false"}">
+      <span class="onboarding-progress-dot w-2.5 h-2.5 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}"></span>
+    </button>`;
   };
 
   const toolDots = sequence => {
-    const available = stepAvailable(4);
+    const available = stepAvailable(2);
     return sequence.map((dep, index) => {
-      const isActive = current === 4 && index === runtime.depFocusIndex;
+      const isActive = current === 2 && index === runtime.depFocusIndex;
       const color = dep.installed ? "bg-green-600" : isActive ? "bg-gray-900" : "bg-gray-300";
       const interactive = available ? "cursor-pointer hover:opacity-80" : "cursor-default";
-      return `<button type="button" class="onboarding-progress-dot w-2 h-2 rounded-full ${color} ${interactive} border-0 transition-[transform,opacity] duration-200 p-0 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}" data-dep-step-index="${index}" ${available ? "data-onboarding-dep-step" : "disabled"} aria-label="Ver ${escapeHtml(dep.name)}" aria-current="${isActive ? "step" : "false"}"></button>`;
+      return `<button type="button" class="onboarding-progress-dot-hit w-8 h-8 flex items-center justify-center border-0 bg-transparent p-0 ${interactive}" data-dep-step-index="${index}" ${available ? "data-onboarding-dep-step" : "disabled"} aria-label="Ver ${escapeHtml(dep.name)}" aria-current="${isActive ? "step" : "false"}">
+        <span class="onboarding-progress-dot w-2 h-2 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}"></span>
+      </button>`;
     }).join("");
   };
 
   const parts = [];
   for (let step = 1; step <= TOTAL_STEPS; step++) {
-    if (step === 4) {
+    if (step === 2) {
       const sequence = dependencySequence();
-      parts.push(sequence.length > 0 ? toolDots(sequence) : macroDot(4));
+      parts.push(sequence.length > 0 ? toolDots(sequence) : macroDot(2));
     } else {
       parts.push(macroDot(step));
     }
@@ -318,10 +320,10 @@ function renderBottomNav(current) {
       <span class="material-symbols-outlined text-[13px] animate-spin">progress_activity</span>
       <span data-operation-message>${escapeHtml(onboardingBusyMessage || "Procesando…")}</span>
     </div>
-    <div class="flex items-center justify-center gap-4">
+    <div class="flex items-center justify-center gap-3">
       <button type="button" class="onboarding-nav-arrow onboarding-nav-arrow--back ${canBack ? "" : "opacity-0 pointer-events-none"}" data-onboarding-action="back" aria-label="Paso anterior" title="Paso anterior">${ic("chevron-left", 18)}</button>
       <div class="onboarding-progress relative flex items-center gap-1.5">${progressDots(current)}</div>
-      <button type="button" class="onboarding-nav-arrow onboarding-nav-arrow--next" data-onboarding-action="${footerConfig.action}" aria-label="${escapeHtml(footerConfig.label)}" title="${escapeHtml(footerConfig.label)}" ${footerConfig.disabled ? "disabled" : ""}>${ic("chevron-right", 18)}</button>
+      <button type="button" class="h-10 pl-4 pr-3 rounded-full bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1 border-0 cursor-pointer" data-onboarding-action="${footerConfig.action}" ${footerConfig.disabled ? "disabled" : ""}><span>${escapeHtml(footerConfig.label)}</span>${ic("chevron-right", 16)}</button>
     </div>
   </div>`;
 }
@@ -373,9 +375,7 @@ function actionBusyMessage(action, current) {
     back: "Volviendo al paso anterior…",
     "start-auth": "Abriendo el inicio de sesión de Google…",
     "verify-auth": "Verificando la sesión de NotebookLM…",
-    "save-institution-basics": "Guardando los datos de la institución…",
-    "save-institution": "Guardando el perfil académico…",
-    "save-template": "Guardando el sistema editorial…",
+    "save-profile-and-template": "Guardando tu institución, perfil y plantilla…",
     "export-zip": "Exportando el archivo de la skill…",
     "install-local": "Instalando la skill en Claude Code…",
     "configure-code": "Conectando la skill con Claude Code…",
@@ -384,7 +384,7 @@ function actionBusyMessage(action, current) {
     complete: "Finalizando la configuración…",
   };
   if (action === "advance") {
-    return current === 4
+    return current === 2
       ? "Confirmando las herramientas del entorno…"
       : `Preparando el paso ${Math.min(TOTAL_STEPS, current + 1)}…`;
   }
@@ -393,11 +393,10 @@ function actionBusyMessage(action, current) {
 
 function loadingStep(step) {
   const messages = {
-    4: "Verificando las herramientas de producción…",
-    7: "Preparando las plantillas editoriales…",
-    8: "Comprobando la sesión de NotebookLM…",
-    9: "Revisando los destinos de instalación…",
-    10: "Preparando la prueba de producción…",
+    2: "Verificando las herramientas de producción…",
+    3: "Preparando tu institución, perfil y plantillas…",
+    4: "Comprobando NotebookLM y tu destino de producción…",
+    5: "Preparando la prueba de producción…",
   };
   setFooter("Preparando el siguiente paso", "advance", true);
   return `<section class="flex flex-col items-center justify-center py-10" aria-live="polite">
@@ -414,13 +413,13 @@ function animateStepTransition(fromStep, toStep) {
   return animateDotWorm(track, origin, destination);
 }
 
-// El paso 4 puede no tener un único punto propio (ver progressDots): cuando
+// El paso 2 puede no tener un único punto propio (ver progressDots): cuando
 // las herramientas ya están expandidas, su "entrada" es el punto de la
 // herramienta actualmente enfocada (runtime.depFocusIndex, que quien llama
 // ya dejó apuntando al primero o al último según la dirección del viaje).
 function stepperDotFor(track, step) {
   if (!track) return null;
-  if (step === 4 && dependencySequence().length > 0) {
+  if (step === 2 && dependencySequence().length > 0) {
     return track.querySelector(`[data-dep-step-index="${runtime.depFocusIndex}"]`);
   }
   return track.querySelector(`[data-step-index="${step}"]`);
@@ -467,13 +466,13 @@ function animateDotWorm(track, origin, destination) {
 }
 
 async function showPreparedStep(fromStep, destination, { force = false, depFocusIndex } = {}) {
-  // Entrar al paso 4 desde antes empieza en la primera herramienta; entrar
-  // desde después (volviendo del paso 5) empieza en la última -así el
+  // Entrar al paso 2 desde antes empieza en la primera herramienta; entrar
+  // desde después (volviendo del paso 3) empieza en la última -así el
   // gusanito siempre avanza/retrocede en línea recta por la pista completa.
-  if (destination === 4 && fromStep !== 4) {
+  if (destination === 2 && fromStep !== 2) {
     const sequence = dependencySequence();
     if (sequence.length > 0) {
-      runtime.depFocusIndex = depFocusIndex ?? (fromStep < 4 ? 0 : sequence.length - 1);
+      runtime.depFocusIndex = depFocusIndex ?? (fromStep < 2 ? 0 : sequence.length - 1);
     }
   }
   const preparation = prepareOnboardingStep(destination, { force });
@@ -520,7 +519,7 @@ function dependencyCardShell(dep) {
 }
 
 // Cada herramienta se revisa/instala en su propia tarjeta -un "sub-paso"
-// dentro del paso 4-, en vez de una cuadrícula con todas a la vez. La
+// dentro del paso 2-, en vez de una cuadrícula con todas a la vez. La
 // navegación entre herramientas vive en la barra inferior general (ver
 // progressDots/animateStepTransition/handleAction), no en un stepper nuevo
 // aparte: esta función solo dibuja la tarjeta de la herramienta enfocada.
@@ -587,7 +586,7 @@ function beginDependencyInstallProgress(row, statusEl, detailEl, installButton) 
 }
 
 // Revela el estado final de la tarjeta enfocada tras un pequeño retardo
-// cosmético (el chequeo real ya terminó antes de entrar al paso 4; esto solo
+// cosmético (el chequeo real ya terminó antes de entrar al paso 2; esto solo
 // mantiene la sensación de "verificando" al cambiar de herramienta).
 function animateDependencyFocus(dep) {
   const card = document.querySelector("#onboarding-step-content [data-dep-row]");
@@ -640,11 +639,11 @@ function revealFocusedDependency() {
   if (sequence.length > 0) animateDependencyFocus(sequence[runtime.depFocusIndex]);
 }
 
-// Mueve el foco entre herramientas del paso 4 sin llamar al backend: anima
+// Mueve el foco entre herramientas del paso 2 sin llamar al backend: anima
 // el gusanito sobre la pista general de abajo (los puntos de herramienta
 // viven ahí, no en un stepper aparte) y vuelve a renderizar. La usan tanto
 // los puntos de la pista como las flechas Atrás/Continuar del pie mientras
-// estás dentro del paso 4 (ver handleAction).
+// estás dentro del paso 2 (ver handleAction).
 async function moveDependencyFocus(toIndex) {
   // Único punto de entrada para moverse entre herramientas (flechas del pie
   // y puntos de la pista convergen aquí), así que la guardia de reentrancia
@@ -671,19 +670,24 @@ async function moveDependencyFocus(toIndex) {
 }
 
 // Saltar directo a una herramienta desde otro paso macro (clic en su punto
-// en la pista general estando, por ejemplo, en el paso 7): primero navega
-// el backend al paso 4 y luego enfoca esa herramienta puntual.
+// en la pista general estando, por ejemplo, en el paso 4): primero navega
+// el backend al paso 2 y luego enfoca esa herramienta puntual.
 async function jumpToDependencyTool(fromStep, toolIndex) {
-  const result = await goToOnboardingStep(4);
+  const result = await goToOnboardingStep(2);
   if (!result.success) {
     toast(result.message, "error");
     return;
   }
   runtime.status = result.status;
-  await showPreparedStep(fromStep, 4, { depFocusIndex: toolIndex });
+  await showPreparedStep(fromStep, 2, { depFocusIndex: toolIndex });
 }
 
-function explanationStep() {
+// Fusiona lo que antes eran tres pasos separados (explicación, tecnología,
+// marcos pedagógicos) en una sola pantalla de bienvenida: solo se muestran
+// los beneficios concretos por defecto; el detalle técnico y pedagógico
+// queda en secciones plegables ("Ver cómo funciona"/"Ver fundamentos") que
+// no bloquean el avance. Menos que leer antes de poder empezar a configurar.
+function welcomeStep() {
   setFooter("Continuar", "advance", false);
   const feature = (icon, title, desc) => `
     <article class="p-4 rounded-xl border border-gray-200 bg-white">
@@ -691,49 +695,11 @@ function explanationStep() {
       <h3 class="text-[13px] font-semibold text-gray-900 mb-1">${title}</h3>
       <p class="text-xs text-gray-500 leading-relaxed">${desc}</p>
     </article>`;
-  return `<section>
-    <p class="${CARD_LEAD} !max-w-xl">Configura una <strong>skill de producción editorial académica</strong> que transforma el sílabo de tu materia en guías semanales coherentes, documentadas y listas para publicar.</p>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto">
-      ${feature("brain-circuit", "Estructura pedagógica", "Alinea resultados, actividades, evaluación y contenidos en una secuencia autoinstruccional.")}
-      ${feature("quote", "Evidencia académica", "Contrasta afirmaciones y referencias con las fuentes autorizadas para tu curso.")}
-      ${feature("layout-template", "Publicación profesional", "Produce materiales modulares con identidad institucional y salida PDF validada.")}
-    </div>
-  </section>`;
-}
-
-function technologyStep() {
-  setFooter("Continuar", "advance", false);
   const techCard = (name, src, icon) => `
     <div class="flex items-center justify-center w-11 h-11 text-gray-700" title="${escapeHtml(name)}">
       ${src ? `<img src="${src}" alt="${escapeHtml(name)}" class="w-full h-full object-contain">` : ic(icon, 40)}
     </div>`;
-  return `<section>
-    <p class="${CARD_LEAD}">El sistema conduce el contenido por un flujo editorial reproducible.</p>
-    <div class="max-w-2xl mx-auto mb-5 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-gray-700">
-      <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Sílabo</span>
-      ${ic("arrow-right", 14)}
-      <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Evidencia</span>
-      ${ic("arrow-right", 14)}
-      <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Diseño pedagógico</span>
-      ${ic("arrow-right", 14)}
-      <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">LaTeX</span>
-      ${ic("arrow-right", 14)}
-      <span class="rounded-lg border border-gray-900 bg-gray-900 text-white px-3 py-2">PDF validado</span>
-    </div>
-    <p class="text-center text-[11px] text-gray-400 mb-2.5">Herramientas que respaldan el proceso</p>
-    <div class="flex flex-wrap justify-center gap-4 max-w-xl mx-auto mb-5">
-      ${techCard("Claude", claudeLogo)}
-      ${techCard("Gemini", geminiLogo)}
-      ${techCard("NotebookLM", notebookLmLogo)}
-      ${techCard("LaTeX", latexLogo)}
-    </div>
-    <div class="${CALLOUT}">${ic("shield-check", 16)} <span>Todo lo que configures se guarda en tu computadora. Las búsquedas bibliográficas solo se comparten con NotebookLM cuando tú lo autorizas.</span></div>
-  </section>`;
-}
-
-function frameworksStep() {
-  setFooter("Continuar", "advance", false);
-  const card = (name, source, desc) => `
+  const framework = (name, source, desc) => `
     <article class="p-3.5 rounded-xl border border-gray-200 bg-white">
       <div class="flex items-baseline gap-1.5 mb-1">
         <h3 class="text-[13px] font-semibold text-gray-900">${escapeHtml(name)}</h3>
@@ -741,69 +707,126 @@ function frameworksStep() {
       </div>
       <p class="text-xs text-gray-500 leading-relaxed">${escapeHtml(desc)}</p>
     </article>`;
+  const disclosure = (summaryText, bodyHtml) => `
+    <details class="max-w-2xl mx-auto group">
+      <summary class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden py-2 border-t border-gray-100">
+        <span class="material-symbols-outlined text-[15px] transition-transform group-open:rotate-90">chevron_right</span>
+        ${summaryText}
+      </summary>
+      <div class="pt-2 pb-1">${bodyHtml}</div>
+    </details>`;
+
   return `<section>
-    <p class="${CARD_LEAD}">Tres marcos principales gobiernan la alineación del curso y las decisiones de aprendizaje.</p>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto">
-      ${card("UDL 3.0", "CAST, 2024", "Múltiples medios de representación, participación, acción y expresión.")}
-      ${card("Backward Design", "Wiggins & McTighe", "Primero los resultados de aprendizaje, luego la evaluación, luego el contenido.")}
-      ${card("Quality Matters", "7ª ed.", "Alineación entre resultados, actividades y materiales.")}
+    <p class="${CARD_LEAD} !max-w-xl">Configura una <strong>skill de producción editorial académica</strong> que transforma el sílabo de tu materia en guías semanales coherentes, documentadas y listas para publicar.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto mb-3">
+      ${feature("brain-circuit", "Estructura pedagógica", "Alinea resultados, actividades, evaluación y contenidos en una secuencia autoinstruccional.")}
+      ${feature("quote", "Evidencia académica", "Contrasta afirmaciones y referencias con las fuentes autorizadas para tu curso.")}
+      ${feature("layout-template", "Publicación profesional", "Produce materiales modulares con identidad institucional y salida PDF validada.")}
     </div>
-    <div class="max-w-2xl mx-auto mt-3 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[11.5px] text-gray-600 leading-relaxed">
-      <strong class="text-gray-900">Criterios complementarios:</strong> WCAG 2.2 para accesibilidad; principios multimedia de Mayer para reducir carga cognitiva; práctica espaciada e intercalada para reforzar la retención.
-    </div>
+
+    ${disclosure("Ver cómo funciona el sistema", `
+      <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-gray-700 mb-4">
+        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Sílabo</span>
+        ${ic("arrow-right", 14)}
+        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Evidencia</span>
+        ${ic("arrow-right", 14)}
+        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Diseño pedagógico</span>
+        ${ic("arrow-right", 14)}
+        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">LaTeX</span>
+        ${ic("arrow-right", 14)}
+        <span class="rounded-lg border border-gray-900 bg-gray-900 text-white px-3 py-2">PDF validado</span>
+      </div>
+      <div class="flex flex-wrap justify-center gap-4 mb-4">
+        ${techCard("Claude", claudeLogo)}
+        ${techCard("Gemini", geminiLogo)}
+        ${techCard("NotebookLM", notebookLmLogo)}
+        ${techCard("LaTeX", latexLogo)}
+      </div>
+      <div class="${CALLOUT}">${ic("shield-check", 16)} <span>Todo lo que configures se guarda en tu computadora. Las búsquedas bibliográficas solo se comparten con NotebookLM cuando tú lo autorizas.</span></div>
+    `)}
+
+    ${disclosure("Ver fundamentos pedagógicos", `
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+        ${framework("UDL 3.0", "CAST, 2024", "Múltiples medios de representación, participación, acción y expresión.")}
+        ${framework("Backward Design", "Wiggins & McTighe", "Primero los resultados de aprendizaje, luego la evaluación, luego el contenido.")}
+        ${framework("Quality Matters", "7ª ed.", "Alineación entre resultados, actividades y materiales.")}
+      </div>
+      <div class="rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[11.5px] text-gray-600 leading-relaxed">
+        <strong class="text-gray-900">Criterios complementarios:</strong> WCAG 2.2 para accesibilidad; principios multimedia de Mayer para reducir carga cognitiva; práctica espaciada e intercalada para reforzar la retención.
+      </div>
+    `)}
   </section>`;
 }
 
 const FIELD_INPUT = "bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 transition-colors";
 const FIELD_LABEL = "flex flex-col gap-1.5 text-gray-700 text-xs";
 
-function institutionStep() {
-  setFooter("Continuar", "save-institution-basics", false);
+// Fusiona institución + perfil académico + plantilla (antes tres pasos
+// separados) en una sola pantalla con tres secciones apiladas y un único
+// botón de guardado (ver "save-profile-and-template" en performAction).
+function profileStep() {
   const config = state.config;
   const value = key => escapeHtml(config[key] || "");
-  return `<section>
-    <p class="${CARD_LEAD} !max-w-lg">Estos datos contextualizan las portadas, los casos y los metadatos de cada publicación.</p>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-lg mx-auto">
-      <label class="${FIELD_LABEL} sm:col-span-2">
-        Sitio web de la institución <span class="text-gray-400 font-normal">(opcional)</span>
-        <div class="flex gap-2">
-          <input class="${FIELD_INPUT}" id="onb-website" type="url" value="${value("website")}" placeholder="https://www.uide.edu.ec/">
-          <button class="${BTN_SECONDARY} flex-shrink-0" id="onb-extract-palette" type="button">
-            ${ic("palette", 15)} <span>Analizar</span>
-          </button>
-        </div>
-        <span class="text-[10.5px] text-gray-400 font-normal">Usaremos el sitio para completar el nombre y proponer sus colores. Puedes omitir este paso.</span>
-      </label>
-      <div id="onb-site-analysis" class="sm:col-span-2" aria-live="polite">
-        ${renderOnboardingSiteAnalysis()}
+  const selectedTemplate = runtime.activeTemplate;
+  const template = runtime.templates.find(item => item.id === selectedTemplate) || runtime.templates[0];
+  const templateCards = runtime.templates.map(t => {
+    const isSelected = t.id === selectedTemplate;
+    const cardCls = isSelected
+      ? "border-gray-900 bg-gray-50 shadow-[0_0_0_3px_rgba(17,24,39,0.08)]"
+      : "border-gray-200 bg-white hover:border-gray-400";
+    return `
+    <button class="flex flex-col gap-1.5 p-4 rounded-xl border text-left cursor-pointer transition-all ${cardCls}" data-template-id="${escapeHtml(t.id)}">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px] transition-colors ${isSelected ? "text-green-600" : "text-gray-400"}">${isSelected ? "check_circle" : "radio_button_unchecked"}</span>
+        <strong class="text-[13px] font-bold text-gray-900">${escapeHtml(t.name)}</strong>
       </div>
-      <label class="${FIELD_LABEL}">Institución<input class="${FIELD_INPUT}" id="onb-institution" value="${value("institution")}" placeholder="Universidad Ejemplo"></label>
-      <label class="${FIELD_LABEL}">Facultad<input class="${FIELD_INPUT}" id="onb-faculty" value="${value("faculty")}" placeholder="Facultad de Ingeniería"></label>
-      <label class="${FIELD_LABEL}">Carrera<input class="${FIELD_INPUT}" id="onb-career" value="${value("career")}" placeholder="Ingeniería de Software"></label>
-      <label class="${FIELD_LABEL}">Color institucional<input class="${FIELD_INPUT} h-9 p-1" id="onb-color" type="color" value="${escapeHtml(config.colorHex || "#00796b")}"></label>
-    </div>
-    <div class="${INLINE_ERROR}" id="onb-form-error" hidden></div>
-  </section>`;
-}
+      <p class="text-[11.5px] text-gray-500 leading-relaxed m-0">${escapeHtml(t.description)}</p>
+      ${t.features ? `<ul class="mt-1 pl-3.5 text-[11px] text-gray-400 leading-loose list-disc">${t.features.map(f => `<li>${escapeHtml(f)}</li>`).join("")}</ul>` : ""}
+    </button>`;
+  }).join("");
 
-function academicProfileStep() {
-  setFooter("Guardar perfil y continuar", "save-institution", false);
-  const config = state.config;
-  const value = key => escapeHtml(config[key] || "");
+  setFooter("Guardar y continuar", "save-profile-and-template", !template);
   return `<section>
-    <p class="${CARD_LEAD} !max-w-lg">Tu nombre aparecerá como autor. El ecosistema digital ayuda a contextualizar instrucciones, ejemplos y actividades.</p>
-    <div class="max-w-lg mx-auto mb-4 flex items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5">
-      <span class="material-symbols-outlined text-[18px] text-gray-500">account_balance</span>
-      <div class="min-w-0">
-        <div class="text-[10.5px] uppercase tracking-wide font-semibold text-gray-400">Institución configurada</div>
-        <div class="text-xs font-medium text-gray-800 truncate">${value("institution") || "Sin nombre"}</div>
+    <div class="max-w-lg mx-auto mb-5">
+      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Institución</h3>
+      <p class="${CARD_LEAD} !max-w-lg !mb-3">Estos datos contextualizan las portadas, los casos y los metadatos de cada publicación.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <label class="${FIELD_LABEL} sm:col-span-2">
+          Sitio web de la institución <span class="text-gray-400 font-normal">(opcional)</span>
+          <div class="flex gap-2">
+            <input class="${FIELD_INPUT}" id="onb-website" type="url" value="${value("website")}" placeholder="https://www.uide.edu.ec/">
+            <button class="${BTN_SECONDARY} flex-shrink-0" id="onb-extract-palette" type="button">
+              ${ic("palette", 15)} <span>Analizar</span>
+            </button>
+          </div>
+          <span class="text-[10.5px] text-gray-400 font-normal">Usaremos el sitio para completar el nombre y proponer sus colores. Puedes omitir este paso.</span>
+        </label>
+        <div id="onb-site-analysis" class="sm:col-span-2" aria-live="polite">
+          ${renderOnboardingSiteAnalysis()}
+        </div>
+        <label class="${FIELD_LABEL}">Institución<input class="${FIELD_INPUT}" id="onb-institution" value="${value("institution")}" placeholder="Universidad Ejemplo"></label>
+        <label class="${FIELD_LABEL}">Facultad<input class="${FIELD_INPUT}" id="onb-faculty" value="${value("faculty")}" placeholder="Facultad de Ingeniería"></label>
+        <label class="${FIELD_LABEL}">Carrera<input class="${FIELD_INPUT}" id="onb-career" value="${value("career")}" placeholder="Ingeniería de Software"></label>
+        <label class="${FIELD_LABEL}">Color institucional<input class="${FIELD_INPUT} h-9 p-1" id="onb-color" type="color" value="${escapeHtml(config.colorHex || "#00796b")}"></label>
       </div>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-lg mx-auto">
-      <label class="${FIELD_LABEL}">Nombre completo<input class="${FIELD_INPUT}" id="onb-author" value="${value("author")}" placeholder="Ana López"></label>
-      <label class="${FIELD_LABEL}">Grado académico <span class="text-gray-400 font-normal">(opcional)</span><input class="${FIELD_INPUT}" id="onb-degree" value="${value("degree")}" placeholder="Mgtr."></label>
-      <label class="${FIELD_LABEL} sm:col-span-2">Ecosistema digital <span class="text-gray-400 font-normal">uno por línea · opcional</span><textarea class="${FIELD_INPUT} min-h-24 resize-y" id="onb-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${value("ecosystem")}</textarea></label>
+
+    <div class="max-w-lg mx-auto mb-5">
+      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Tu perfil</h3>
+      <p class="${CARD_LEAD} !max-w-lg !mb-3">Tu nombre aparecerá como autor. El ecosistema digital ayuda a contextualizar instrucciones, ejemplos y actividades.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <label class="${FIELD_LABEL}">Nombre completo<input class="${FIELD_INPUT}" id="onb-author" value="${value("author")}" placeholder="Ana López"></label>
+        <label class="${FIELD_LABEL}">Grado académico <span class="text-gray-400 font-normal">(opcional)</span><input class="${FIELD_INPUT}" id="onb-degree" value="${value("degree")}" placeholder="Mgtr."></label>
+        <label class="${FIELD_LABEL} sm:col-span-2">Ecosistema digital <span class="text-gray-400 font-normal">uno por línea · opcional</span><textarea class="${FIELD_INPUT} min-h-24 resize-y" id="onb-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${value("ecosystem")}</textarea></label>
+      </div>
     </div>
+
+    <div class="max-w-lg mx-auto">
+      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Sistema editorial</h3>
+      <p class="${CARD_LEAD} !max-w-lg !mb-3">La plantilla define tipografía, bloques pedagógicos, diagramas, bibliografía y reglas de consistencia.</p>
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">${templateCards}</div>
+    </div>
+
     <div class="${INLINE_ERROR}" id="onb-form-error" hidden></div>
   </section>`;
 }
@@ -884,53 +907,14 @@ function bindOnboardingPaletteButtons() {
   });
 }
 
-function templateStep() {
-  const selected = runtime.activeTemplate;
-  const template = runtime.templates.find(item => item.id === selected) || runtime.templates[0];
-  const cards = runtime.templates.map(t => {
-    const isSelected = t.id === selected;
-    const cardCls = isSelected
-      ? "border-gray-900 bg-gray-50 shadow-[0_0_0_3px_rgba(17,24,39,0.08)]"
-      : "border-gray-200 bg-white hover:border-gray-400";
-    return `
-    <button class="flex flex-col gap-1.5 p-4 rounded-xl border text-left cursor-pointer transition-all ${cardCls}" data-template-id="${escapeHtml(t.id)}">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px] transition-colors ${isSelected ? "text-green-600" : "text-gray-400"}">${isSelected ? "check_circle" : "radio_button_unchecked"}</span>
-        <strong class="text-[13px] font-bold text-gray-900">${escapeHtml(t.name)}</strong>
-      </div>
-      <p class="text-[11.5px] text-gray-500 leading-relaxed m-0">${escapeHtml(t.description)}</p>
-      ${t.features ? `<ul class="mt-1 pl-3.5 text-[11px] text-gray-400 leading-loose list-disc">${t.features.map(f => `<li>${escapeHtml(f)}</li>`).join("")}</ul>` : ""}
-    </button>`;
-  }).join("");
-  setFooter("Confirmar plantilla", "save-template", !template);
-  return `<section>
-    <p class="${CARD_LEAD} !max-w-lg">La plantilla define tipografía, bloques pedagógicos, diagramas, bibliografía y reglas de consistencia; no es solo una elección estética.</p>
-    <div class="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3 max-w-lg mx-auto mb-1">${cards}</div>
-  </section>`;
-}
-
-function notebookStep() {
+// Fusiona la sesión de NotebookLM y la elección de destino (antes dos pasos
+// separados) en una sola pantalla: "Continuar al paso final" exige ambas
+// condiciones a la vez (ver advance-target en performAction).
+function connectStep() {
   const authenticated = runtime.auth?.authenticated === true;
   const statusCls = authenticated ? "border-gray-900 bg-gray-50" : "border-amber-200 bg-amber-50 hover:border-amber-300";
   const iconCls = authenticated ? "text-gray-900" : "text-amber-600";
-  setFooter("Continuar", "advance", !authenticated);
-  return `<section>
-    <p class="${CARD_LEAD} !max-w-lg">NotebookLM contrasta afirmaciones con las fuentes autorizadas de tu curso. <strong>No diseña la guía ni reemplaza tu criterio docente.</strong></p>
-    <img src="${notebookLmWordmark}" alt="NotebookLM" class="h-7 w-auto mx-auto mb-5 block">
-    <button class="flex items-center gap-3 max-w-md mx-auto p-3.5 rounded-xl border w-full text-left cursor-pointer transition-colors ${statusCls}" data-onboarding-action="verify-auth" title="Volver a verificar">
-      <div class="${iconCls} flex flex-shrink-0">${authenticated ? ic("check-circle-2", 18) : ic("lock-keyhole", 18)}</div>
-      <div class="flex flex-col gap-0.5 flex-1 min-w-0">
-        <strong class="text-gray-900 text-sm">${authenticated ? "Sesión verificada" : "Sesión pendiente"}</strong>
-        <span class="text-gray-500 text-xs">${escapeHtml(runtime.auth?.message || "Pulsa iniciar sesión y luego toca aquí para verificar.")}</span>
-      </div>
-      <div class="text-gray-400 flex-shrink-0">${ic("refresh-cw", 15)}</div>
-    </button>
-    <div class="flex justify-center mt-4">${actionButton("Iniciar sesión con Google", "start-auth", false, true, `<img src="${googleGLogo}" alt="" class="w-4 h-4">`)}</div>
-    <div class="${CALLOUT} !mt-4">${ic("shield-check", 16)} <span>La sesión permanece en tu equipo. Solo se envían a NotebookLM las consultas bibliográficas que autorices durante la producción.</span></div>
-  </section>`;
-}
 
-function targetStep() {
   const setup    = runtime.setup || {};
   const selected = runtime.status.selectedTarget || state.config.onboardingTarget || "claude-code";
   const zipOk    = Boolean(state.config.lastSkillZip);
@@ -979,32 +963,46 @@ function targetStep() {
                 actionButton("Conectar con Claude Desktop", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
   }
 
-  setFooter("Continuar al paso final", "advance-target", !allReady);
+  setFooter("Continuar al paso final", "advance-target", !authenticated || !allReady);
   return `<section>
-    <p class="${CARD_LEAD}">Elige dónde producirás tus cursos según tu forma de trabajar. Después completa las acciones en orden: primero instala o exporta, luego conecta.</p>
-
-    <!-- Selector de destino -->
-    <div class="grid gap-2 max-w-lg mx-auto">
-      ${targets.map(t => `
-        <label class="flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer ${t.id === selected ? "border-gray-900 bg-gray-50" : "border-gray-200 bg-white"}">
-          <input type="radio" class="accent-gray-900" name="onboarding-target" value="${t.id}" ${t.id === selected ? "checked" : ""}>
-          <span class="material-symbols-outlined text-[18px] flex-shrink-0 text-gray-500">${t.icon}</span>
-          <span class="flex-1 flex flex-col gap-0.5"><strong class="text-gray-900 text-sm">${t.title}</strong><small class="text-gray-500 text-xs leading-snug">${t.desc}</small></span>
-          <span class="material-symbols-outlined text-[18px] ${targetReady(t.id) ? "text-green-600" : "text-gray-300"}">${targetReady(t.id) ? "check_circle" : "pending"}</span>
-        </label>`).join("")}
+    <div class="max-w-lg mx-auto mb-5">
+      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Evidencia verificable</h3>
+      <p class="${CARD_LEAD} !max-w-lg !mb-3">NotebookLM contrasta afirmaciones con las fuentes autorizadas de tu curso. <strong>No diseña la guía ni reemplaza tu criterio docente.</strong></p>
+      <img src="${notebookLmWordmark}" alt="NotebookLM" class="h-6 w-auto mx-auto mb-4 block">
+      <button class="flex items-center gap-3 w-full p-3.5 rounded-xl border text-left cursor-pointer transition-colors ${statusCls}" data-onboarding-action="verify-auth" title="Volver a verificar">
+        <div class="${iconCls} flex flex-shrink-0">${authenticated ? ic("check-circle-2", 18) : ic("lock-keyhole", 18)}</div>
+        <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+          <strong class="text-gray-900 text-sm">${authenticated ? "Sesión verificada" : "Sesión pendiente"}</strong>
+          <span class="text-gray-500 text-xs">${escapeHtml(runtime.auth?.message || "Pulsa iniciar sesión y luego toca aquí para verificar.")}</span>
+        </div>
+        <div class="text-gray-400 flex-shrink-0">${ic("refresh-cw", 15)}</div>
+      </button>
+      <div class="flex justify-center mt-3">${actionButton("Iniciar sesión con Google", "start-auth", false, true, `<img src="${googleGLogo}" alt="" class="w-4 h-4">`)}</div>
     </div>
 
-    <!-- Estado de instalación del destino seleccionado -->
-    <div class="my-4 max-w-lg mx-auto">
-      <div class="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">
-        Estado — ${targets.find(t => t.id === selected)?.title || selected}
+    <div class="max-w-lg mx-auto">
+      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Dónde producirás tus cursos</h3>
+      <p class="${CARD_LEAD} !max-w-lg !mb-3">Elige tu destino y completa las acciones en orden: primero instala o exporta, luego conecta.</p>
+      <div class="grid gap-2">
+        ${targets.map(t => `
+          <label class="flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer ${t.id === selected ? "border-gray-900 bg-gray-50" : "border-gray-200 bg-white"}">
+            <input type="radio" class="accent-gray-900" name="onboarding-target" value="${t.id}" ${t.id === selected ? "checked" : ""}>
+            <span class="material-symbols-outlined text-[18px] flex-shrink-0 text-gray-500">${t.icon}</span>
+            <span class="flex-1 flex flex-col gap-0.5"><strong class="text-gray-900 text-sm">${t.title}</strong><small class="text-gray-500 text-xs leading-snug">${t.desc}</small></span>
+            <span class="material-symbols-outlined text-[18px] ${targetReady(t.id) ? "text-green-600" : "text-gray-300"}">${targetReady(t.id) ? "check_circle" : "pending"}</span>
+          </label>`).join("")}
       </div>
-      <div class="flex flex-col gap-1.5">${checklist}</div>
-    </div>
 
-    <!-- Acciones secuenciales -->
-    <div class="flex justify-center flex-wrap gap-2 mt-4">${actions}</div>
-    <div class="${INLINE_ERROR}" id="onb-target-message" hidden></div>
+      <div class="my-4">
+        <div class="text-[11px] font-bold uppercase tracking-wide text-gray-400 mb-2">
+          Estado — ${targets.find(t => t.id === selected)?.title || selected}
+        </div>
+        <div class="flex flex-col gap-1.5">${checklist}</div>
+      </div>
+
+      <div class="flex justify-center flex-wrap gap-2">${actions}</div>
+      <div class="${INLINE_ERROR}" id="onb-target-message" hidden></div>
+    </div>
   </section>`;
 }
 
@@ -1040,6 +1038,7 @@ function finalStep() {
         </div>
 
         <div id="final-loading-msg" role="status" aria-live="polite" class="text-[13.5px] font-semibold text-gray-700 text-center">Iniciando prueba de producción…</div>
+        <p class="text-[11px] text-gray-400 text-center -mt-2">Generamos un PDF real de prueba; puede tardar hasta un minuto.</p>
 
         <!-- Barra de progreso -->
         <div class="w-full max-w-xs h-[3px] rounded-full bg-gray-200 overflow-hidden">
@@ -1149,9 +1148,14 @@ async function animateFinalStep() {
         <div class="text-[15px] font-bold text-red-500 mb-1.5">${escapeHtml(title)}</div>
         <div class="text-[12.5px] text-gray-700 mb-3">${escapeHtml(detail)}</div>
         ${errStr ? `<div class="text-[10.5px] font-mono text-gray-500 bg-black/5 px-3 py-2 rounded-md text-left whitespace-pre-wrap break-words max-h-[220px] overflow-y-auto mb-3.5">${escapeHtml(errStr)}</div>` : ""}
-        <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-retry-gen">
-          <span class="material-symbols-outlined text-[15px]">refresh</span> Reintentar verificación
-        </button>
+        <div class="flex justify-center gap-2 flex-wrap">
+          <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-retry-gen">
+            <span class="material-symbols-outlined text-[15px]">refresh</span> Reintentar verificación
+          </button>
+          <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-back-to-tools">
+            <span class="material-symbols-outlined text-[15px]">terminal</span> Volver a herramientas
+          </button>
+        </div>
       </div>`;
     if (wrapEl) {
       wrapEl.style.display = "block";
@@ -1175,6 +1179,15 @@ async function animateFinalStep() {
         "Reintentando la prueba de producción…",
         animateFinalStep,
       );
+    });
+    document.getElementById("btn-back-to-tools")?.addEventListener("click", () => {
+      void runOnboardingOperation("Abriendo el paso de herramientas…", async () => {
+        const result = await goToOnboardingStep(2);
+        if (result.success) {
+          runtime.status = result.status;
+          await showPreparedStep(5, 2);
+        } else toast(result.message, "error");
+      });
     });
     syncOnboardingBusyState();
   }
@@ -1254,7 +1267,7 @@ async function animateFinalStep() {
     setMsg("Skill no encontrado");
     showError(
       "Skill no instalado",
-      "Vuelve al Paso 9 con los puntos de progreso de arriba y pulsa 'Instalar skill' antes de continuar.",
+      "Vuelve al paso de conexión y pulsa 'Instalar skill' antes de continuar.",
       String(err)
     );
     return;
@@ -1320,7 +1333,7 @@ async function animateFinalStep() {
     setMsg("La generación falló");
     showError(
       "Error al generar el documento",
-      "La skill está instalada pero no pudo crear el archivo. Reintenta o vuelve al paso 7 para reinstalar.",
+      "La skill está instalada pero no pudo crear el archivo. Reintenta o vuelve al paso de conexión para reinstalarla.",
       String(err)
     );
     return;
@@ -1362,15 +1375,15 @@ async function animateFinalStep() {
 
 function bindStepEvents(current) {
   const root = document.getElementById("onboarding-root");
-  if (current === 4) revealFocusedDependency();
-  if (current === 5) {
+  if (current === 2) revealFocusedDependency();
+  if (current === 3) {
     root.querySelector("#onb-extract-palette")?.addEventListener("click", () => runOnboardingOperation(
       "Analizando el sitio institucional…",
       analyzeInstitutionWebsite,
     ));
     bindOnboardingPaletteButtons();
   }
-  if (current === 10) {
+  if (current === 5) {
     setTimeout(() => {
       void runOnboardingOperation(
         "Ejecutando la prueba de producción…",
@@ -1393,11 +1406,11 @@ function bindStepEvents(current) {
   root.querySelectorAll("[data-onboarding-dep-step]").forEach(dot => dot.addEventListener("click", () => {
     if (onboardingActionInFlight) return;
     const toolIndex = Number(dot.dataset.depStepIndex);
-    if (current === 4) {
+    if (current === 2) {
       moveDependencyFocus(toolIndex);
       return;
     }
-    void runOnboardingOperation(`Abriendo el paso 4…`, () => jumpToDependencyTool(current, toolIndex));
+    void runOnboardingOperation(`Abriendo el paso 2…`, () => jumpToDependencyTool(current, toolIndex));
   }));
   root.querySelectorAll("[data-template-id]").forEach(button => button.addEventListener("click", () => {
     if (onboardingActionInFlight) return;
@@ -1481,12 +1494,12 @@ async function performDependencyInstall(name) {
   renderCurrentStep();
 }
 
-// Dentro del paso 4, las flechas Atrás/Continuar del pie primero recorren
+// Dentro del paso 2, las flechas Atrás/Continuar del pie primero recorren
 // las herramientas (sin tocar el backend) y solo al llegar al borde -primera
-// o última- hacen lo que siempre hicieron: retroceder al paso 3 o avanzar al
-// 5. Así la pista de abajo se siente como una sola secuencia continua.
+// o última- hacen lo que siempre hicieron: retroceder al paso 1 o avanzar al
+// 3. Así la pista de abajo se siente como una sola secuencia continua.
 async function handleAction(action, current) {
-  if (current === 4 && (action === "advance" || action === "back")) {
+  if (current === 2 && (action === "advance" || action === "back")) {
     const sequence = dependencySequence();
     if (sequence.length > 0) {
       const nextIndex = runtime.depFocusIndex + (action === "advance" ? 1 : -1);
@@ -1537,14 +1550,15 @@ async function performAction(action, current) {
     return;
   }
   if (action === "verify-auth") {
-    await prepareOnboardingStep(8, { force: true });
+    await prepareOnboardingStep(4, { force: true });
     renderCurrentStep();
     return;
   }
-  if (action === "save-institution-basics") {
+  if (action === "save-profile-and-template") {
     const color = document.getElementById("onb-color").value;
     const rgb = hexToRgb(color);
-    const basicConfig = {
+    const config = {
+      ...state.config,
       website: document.getElementById("onb-website").value.trim(),
       institution: document.getElementById("onb-institution").value.trim(),
       faculty: document.getElementById("onb-faculty").value.trim(),
@@ -1553,29 +1567,6 @@ async function performAction(action, current) {
       colorR: rgb.r,
       colorG: rgb.g,
       colorB: rgb.b,
-    };
-    const missingLabels = {
-      institution: "Institución",
-      faculty: "Facultad",
-      career: "Carrera",
-    };
-    const missing = Object.keys(missingLabels).filter(key => !basicConfig[key]);
-    const errorEl = document.getElementById("onb-form-error");
-    if (missing.length > 0) {
-      errorEl.hidden = false;
-      errorEl.textContent = `Completa los campos obligatorios: ${missing.map(key => missingLabels[key]).join(", ")}.`;
-      return;
-    }
-    state.config = {
-      ...state.config,
-      ...basicConfig,
-    };
-    saveConfig();
-    return advance(current);
-  }
-  if (action === "save-institution") {
-    const config = {
-      ...state.config,
       author: document.getElementById("onb-author").value.trim(),
       degree: document.getElementById("onb-degree").value.trim(),
       ecosystem: document.getElementById("onb-ecosystem").value.trim(),
@@ -1588,18 +1579,20 @@ async function performAction(action, current) {
       errorEl.textContent = `Completa los campos obligatorios: ${missing.map(key => missingLabels[key]).join(", ")}.`;
       return;
     }
+    if (!runtime.activeTemplate) {
+      errorEl.hidden = false;
+      errorEl.textContent = "Elige una plantilla para continuar.";
+      return;
+    }
     errorEl.hidden = true;
-    state.config = { ...state.config, ...config }; saveConfig();
+    state.config = config;
+    saveConfig();
     const result = await applyInstitutionConfig({ author: config.author, degree: config.degree, institution: config.institution, website: config.website, faculty: config.faculty, career: config.career, ecosystem: config.ecosystem, color_r: config.colorR, color_g: config.colorG, color_b: config.colorB });
-    toast(result.message, result.success ? "success" : "error", 8000);
-    if (!result.success) return;
+    if (!result.success) { toast(result.message, "error", 8000); return; }
+    const templateResult = await setActiveTemplate(runtime.activeTemplate);
+    toast(templateResult.message, templateResult.success ? "success" : "error", 7000);
+    if (!templateResult.success) return;
     return advance(current);
-  }
-  if (action === "save-template") {
-    const result = await setActiveTemplate(runtime.activeTemplate);
-    toast(result.message, result.success ? "success" : "error", 7000);
-    if (result.success) return advance(current);
-    return;
   }
   if (action === "export-zip") {
     const destination = await pickDirectory("Carpeta para guardar el ZIP de Claude/Cowork");
@@ -1618,6 +1611,11 @@ async function performAction(action, current) {
     const result = await configureMcp(action === "configure-code" ? "claude-code" : "desktop"); toast(result.message, result.success ? "success" : "error", 9000); await refreshTarget(); renderCurrentStep(); return;
   }
   if (action === "advance-target") {
+    if (!runtime.auth?.authenticated) {
+      document.getElementById("onb-target-message").hidden = false;
+      document.getElementById("onb-target-message").textContent = "Verifica tu sesión de NotebookLM antes de continuar.";
+      return;
+    }
     await refreshTarget();
     const target = document.querySelector("input[name=onboarding-target]:checked")?.value;
     if (!target) return toast("Selecciona un destino", "error");

@@ -9,11 +9,15 @@ test('el sistema visual no declara degradados CSS', async () => {
   assert.doesNotMatch(css, /gradient\s*\(/i);
 });
 
-test('el onboarding mantiene diez pasos y la llamada de finalización', async () => {
+test('el onboarding colapsó a cinco pasos y conserva la llamada de finalización', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
-  assert.match(source, /TOTAL_STEPS\s*=\s*10/);
+  assert.match(source, /TOTAL_STEPS\s*=\s*5/);
   assert.match(source, /completeOnboarding/);
   assert.match(source, /advanceOnboarding/);
+  const metaStart = source.indexOf('const STEP_META');
+  const metaEnd = source.indexOf('\n];', metaStart);
+  const stepMeta = source.slice(metaStart, metaEnd);
+  assert.equal((stepMeta.match(/\btitle:/g) || []).length, 5);
 });
 
 test('el onboarding no bloquea la carga inicial con NotebookLM', async () => {
@@ -24,22 +28,27 @@ test('el onboarding no bloquea la carga inicial con NotebookLM', async () => {
   assert.match(initialRender, /await getOnboardingStatus\(\)/);
   assert.match(initialRender, /prepareOnboardingStep\(currentStep/);
   assert.doesNotMatch(initialRender, /await checkNotebookLMAuth\(\)/);
-  assert.match(source, /if \(step === 8\)[\s\S]*runtime\.auth = await checkNotebookLMAuth\(\)/);
+  // NotebookLM ahora vive en el paso 4 (fusionado con destino), no en un
+  // paso dedicado -sigue sin calentarse por adelantado (ver warmOnboardingData).
+  assert.match(source, /if \(step === 4\)[\s\S]*runtime\.auth = await checkNotebookLMAuth\(\)/);
+  assert.doesNotMatch(source, /warmOnboardingData[\s\S]*?checkNotebookLMAuth/);
 });
 
-test('la identidad institucional se divide en institución y perfil académico', async () => {
+test('institución, perfil académico y plantilla viven en un solo paso fusionado', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
-  const institutionStart = source.indexOf('function institutionStep');
-  const profileStart = source.indexOf('function academicProfileStep');
-  const analysisStart = source.indexOf('function renderOnboardingSiteAnalysis');
-  const institution = source.slice(institutionStart, profileStart);
-  const profile = source.slice(profileStart, analysisStart);
-  assert.match(institution, /onb-institution/);
-  assert.match(institution, /onb-faculty/);
-  assert.match(institution, /onb-career/);
-  assert.doesNotMatch(institution, /onb-author/);
+  const start = source.indexOf('function profileStep');
+  const end = source.indexOf('function renderOnboardingSiteAnalysis', start);
+  assert.ok(start >= 0, 'profileStep debe existir');
+  const profile = source.slice(start, end);
+  assert.match(profile, /onb-institution/);
+  assert.match(profile, /onb-faculty/);
+  assert.match(profile, /onb-career/);
   assert.match(profile, /onb-author/);
   assert.match(profile, /onb-ecosystem/);
+  assert.match(profile, /data-template-id/);
+  assert.match(profile, /"save-profile-and-template"/);
+  // Un único guardado combinado: ya no existen las acciones separadas.
+  assert.doesNotMatch(source, /"save-institution-basics"|"save-institution"|"save-template"/);
 });
 
 test('el onboarding presenta el flujo de producción editorial aprobado', async () => {
@@ -131,9 +140,29 @@ test('el onboarding reutiliza validaciones y artefactos correctos', async () => 
   const navigation = source.slice(navigationStart, navigationEnd);
   assert.match(source, /existing\.status === "pending"/);
   assert.match(source, /rememberSuccessfulLoad\("notebooklm-auth"\)/);
-  assert.match(source, /prepareOnboardingStep\(8, \{ force: true \}\)/);
+  assert.match(source, /prepareOnboardingStep\(4, \{ force: true \}\)/);
   assert.doesNotMatch(navigation, /force:\s*(?:dest|destination|next)/);
   assert.match(source, /reuseIfValid:\s*true/);
+});
+
+test('la barra inferior tiene un botón principal con texto visible y puntos con área de clic ampliada', async () => {
+  const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  const start = source.indexOf('function renderBottomNav');
+  const end = source.indexOf('function syncOnboardingBusyState', start);
+  const bottomNav = source.slice(start, end);
+  // El botón de avance ya no es solo un ícono con tooltip: el label de
+  // footerConfig se ve como texto real dentro del botón (Ley de Fitts /
+  // "qué puedo hacer ahora" de Norman), no solo en aria-label/title.
+  assert.match(bottomNav, /<span>\$\{escapeHtml\(footerConfig\.label\)\}<\/span>/);
+  const dotsStart = source.indexOf('function progressDots');
+  const dotsEnd = source.indexOf('function actionButton', dotsStart);
+  const dots = source.slice(dotsStart, dotsEnd);
+  assert.match(dots, /onboarding-progress-dot-hit w-8 h-8/);
+});
+
+test('el paso de herramientas exige Node, Python y compilador LaTeX explícitamente en el flujo', async () => {
+  const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  assert.match(source, /Node\.js, Python y el compilador LaTeX son obligatorios/);
 });
 
 test('el backend evita reescrituras, reinstalaciones y recompilaciones idénticas', async () => {
