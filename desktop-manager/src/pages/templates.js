@@ -63,7 +63,7 @@ function renderBento(filter) {
   if (filter === "personal")     templates = _templates.filter(t => !t.featured);
 
   if (!templates.length) {
-    bento.innerHTML = `<div class="col-span-full" style="padding:30px;text-align:center;color:var(--dim)">Sin plantillas en esta categoría.</div>`;
+    bento.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400">Sin plantillas en esta categoría.</div>`;
     return;
   }
 
@@ -74,8 +74,8 @@ function renderBento(filter) {
   bento.innerHTML = `
     <!-- Featured (8-col) -->
     <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-[18px] shadow-glass backdrop-blur-xl col-span-1 md:col-span-2 xl:col-span-8 flex flex-col gap-[18px] sm:flex-row relative overflow-hidden">
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,49,126,0.04),transparent);pointer-events:none"></div>
-      <div class="w-full sm:w-[45%] shrink-0" style="aspect-ratio:4/3;border-radius:8px;border:1px solid rgba(195,198,213,0.50);background:white;overflow:hidden;position:relative">
+      <div class="pointer-events-none absolute inset-0 bg-brand-soft"></div>
+      <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg border border-slate-300/50 bg-white sm:w-[45%]">
         <div style="padding:12px;font-size:10px;color:#374151;line-height:1.5;transform:scale(0.62);transform-origin:top left;width:161%;pointer-events:none">
           <h1 style="font-weight:700;font-size:14px;margin-bottom:8px;border-bottom:1px solid #e5e7eb;padding-bottom:6px">${escapeHtml(featured.name)}</h1>
           <p style="margin-bottom:10px;color:#666">${escapeHtml(featured.description?.slice(0, 80) || "")}</p>
@@ -83,19 +83,19 @@ function renderBento(filter) {
           <ul style="padding-left:14px;margin-bottom:8px"><li>Análisis de complejidad</li><li>Estructuras avanzadas</li></ul>
         </div>
       </div>
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;position:relative">
+      <div class="relative flex flex-1 flex-col justify-between">
         <div>
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-            <span style="background:rgba(0,49,126,0.10);color:var(--teal);font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;text-transform:uppercase">${featured.featured ? "INSTITUCIONAL ESTÁNDAR" : "PLANTILLA"}</span>
+          <div class="mb-2 flex items-start justify-between">
+            <span class="rounded bg-brand-soft px-2 py-0.5 text-[10px] font-bold uppercase text-brand">${featured.featured ? "INSTITUCIONAL ESTÁNDAR" : "PLANTILLA"}</span>
             ${featured.id === _activeId ? `<span class="material-symbols-outlined" style="color:var(--teal);font-size:20px;font-variation-settings:'FILL' 1">check_circle</span>` : ""}
           </div>
-          <h3 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">${escapeHtml(featured.name)}</h3>
-          <p style="font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.55">${escapeHtml(featured.description || "")}</p>
-          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">
-            ${(featured.tags || []).slice(0, 4).map(tag => `<span style="padding:2px 8px;background:rgba(195,198,213,0.25);border-radius:4px;font-size:10px;color:var(--muted);border:1px solid rgba(195,198,213,0.50)">${escapeHtml(tag)}</span>`).join("")}
+          <h3 class="mb-1.5 text-base font-bold text-app-text">${escapeHtml(featured.name)}</h3>
+          <p class="mb-3 text-[12.5px] leading-relaxed text-app-muted">${escapeHtml(featured.description || "")}</p>
+          <div class="mb-3.5 flex flex-wrap gap-1.5">
+            ${(featured.tags || []).slice(0, 4).map(tag => `<span class="rounded border border-slate-300/50 bg-slate-200/25 px-2 py-0.5 text-[10px] text-app-muted">${escapeHtml(tag)}</span>`).join("")}
           </div>
         </div>
-        <div style="display:flex;gap:8px">
+        <div class="flex gap-2">
           <button class="${cx(ui.button.base, featured.id === _activeId ? ui.button.secondary : ui.button.primary, ui.button.sm, 'flex-1')} tpl-btn" data-tpl-id="${escapeHtml(featured.id)}">
             ${featured.id === _activeId ? "Activa / Editar" : "Activar plantilla"}
           </button>
@@ -112,8 +112,8 @@ function renderBento(filter) {
           <div style="text-align:center;color:#666;font-style:italic;margin-bottom:10px">Docente: …</div>
           <div>${escapeHtml(secondary.description?.slice(0, 60) || "")}</div>
         </div>
-        <h3 style="font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:5px">${escapeHtml(secondary.name)}</h3>
-        <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">${escapeHtml(secondary.description?.slice(0, 100) || "")}</p>
+        <h3 class="mb-1.5 text-[13.5px] font-bold text-app-text">${escapeHtml(secondary.name)}</h3>
+        <p class="mb-2.5 text-xs leading-normal text-app-muted">${escapeHtml(secondary.description?.slice(0, 100) || "")}</p>
       </div>
       <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'w-full')} tpl-btn" data-tpl-id="${escapeHtml(secondary.id)}">
         ${secondary.id === _activeId ? "Activa" : "Seleccionar"}
@@ -123,13 +123,13 @@ function renderBento(filter) {
     <!-- Grid items (4-col each) -->
     ${gridItems.map(t => `
     <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 shadow-glass backdrop-blur-xl col-span-1 xl:col-span-4 flex flex-col">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(195,198,213,0.30)">
-        <span class="material-symbols-outlined" style="color:var(--teal);font-size:20px">assignment_ind</span>
-        <span style="font-size:13px;font-weight:700;color:var(--text)">${escapeHtml(t.name)}</span>
+      <div class="mb-2.5 flex items-center gap-2 border-b border-slate-300/30 pb-2.5">
+        <span class="material-symbols-outlined text-xl text-brand">assignment_ind</span>
+        <span class="text-[13px] font-bold text-app-text">${escapeHtml(t.name)}</span>
       </div>
-      <p style="font-size:12px;color:var(--muted);line-height:1.55;flex:1;margin-bottom:12px">${escapeHtml(t.description || "")}</p>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)">${t.featured ? "INSTITUCIONAL" : "PERSONAL"}</span>
+      <p class="mb-3 flex-1 text-xs leading-relaxed text-app-muted">${escapeHtml(t.description || "")}</p>
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] uppercase tracking-wider text-slate-400">${t.featured ? "INSTITUCIONAL" : "PERSONAL"}</span>
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm, 'text-brand px-2.5 py-1')} tpl-btn" data-tpl-id="${escapeHtml(t.id)}">
           ${t.id === _activeId ? "Activa" : "Seleccionar"}
         </button>
