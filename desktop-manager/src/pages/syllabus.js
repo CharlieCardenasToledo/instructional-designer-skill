@@ -58,7 +58,7 @@ export function renderSyllabus() {
         </div>
 
         <!-- Week editor pane -->
-        <div class="glass-panel" style="flex:1;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+        <div class="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-900/10 bg-white/55 backdrop-blur-xl">
 
           <!-- Week tabs -->
           <div class="week-tabs-bar">
