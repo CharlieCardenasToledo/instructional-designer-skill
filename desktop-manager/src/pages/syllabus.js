@@ -167,13 +167,13 @@ export function renderSyllabus() {
 function renderWeekForm(weekData, weekIndex) {
   const w = weekData || {};
   return `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(195,198,213,0.30)">
-      <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--text)">
+    <div class="mb-4 flex items-center justify-between border-b border-slate-300/30 pb-3">
+      <div class="flex items-center gap-2 text-[15px] font-bold text-app-text">
         <span class="material-symbols-outlined">edit_document</span>
         Editando: Semana ${weekIndex + 1}
       </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:14px">
+    <div class="flex flex-col gap-3.5">
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div class="flex flex-col gap-1.5">
           <label>Título de la semana</label>
@@ -186,11 +186,11 @@ function renderWeekForm(weekData, weekIndex) {
       </div>
       <div class="flex flex-col gap-1.5">
         <label>Contenido / Temas <span class="text-muted">(uno por línea)</span></label>
-        <textarea id="wf-topics" style="height:80px" placeholder="Tema 1&#10;Tema 2">${escapeHtml(w.topics || "")}</textarea>
+        <textarea id="wf-topics" class="h-20" placeholder="Tema 1&#10;Tema 2">${escapeHtml(w.topics || "")}</textarea>
       </div>
       <div class="flex flex-col gap-1.5">
         <label>Resultados de aprendizaje</label>
-        <textarea id="wf-outcomes" style="height:70px" placeholder="Docencia: Analizar…&#10;Práctica: Aplicar…">${escapeHtml(w.outcomes || "")}</textarea>
+        <textarea id="wf-outcomes" class="h-[70px]" placeholder="Docencia: Analizar…&#10;Práctica: Aplicar…">${escapeHtml(w.outcomes || "")}</textarea>
       </div>
       <div class="flex flex-col gap-1.5">
         <label>Bibliografía / Recursos</label>
@@ -199,11 +199,11 @@ function renderWeekForm(weekData, weekIndex) {
       <div class="flex flex-col gap-1.5">
         <label>Horas: docencia / práctica / autónomo</label>
         <div class="row">
-          <input id="wf-teaching" type="number" min="0" max="40" value="${Number(w.teaching_hours ?? 2)}" style="width:70px">
+          <input id="wf-teaching" class="w-[70px]" type="number" min="0" max="40" value="${Number(w.teaching_hours ?? 2)}">
           <span class="text-muted">/</span>
-          <input id="wf-practice" type="number" min="0" max="40" value="${Number(w.practice_hours ?? 1)}" style="width:70px">
+          <input id="wf-practice" class="w-[70px]" type="number" min="0" max="40" value="${Number(w.practice_hours ?? 1)}">
           <span class="text-muted">/</span>
-          <input id="wf-autonomous" type="number" min="0" max="40" value="${Number(w.autonomous_hours ?? 4)}" style="width:70px">
+          <input id="wf-autonomous" class="w-[70px]" type="number" min="0" max="40" value="${Number(w.autonomous_hours ?? 4)}">
         </div>
       </div>
       <div class="flex flex-col gap-1.5">

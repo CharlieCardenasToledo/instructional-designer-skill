@@ -15,8 +15,8 @@ export async function renderTemplates() {
     <div class="flex flex-col gap-4">
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.03em">Plantillas</h1>
-          <p style="font-size:13px;color:var(--muted);margin-top:4px">Elige el formato de tus guías.</p>
+          <h1 class="text-[22px] font-extrabold tracking-tight text-app-text">Plantillas</h1>
+          <p class="mt-1 text-[13px] text-app-muted">Elige el formato de tus guías.</p>
         </div>
         <div class="flex flex-wrap gap-2" id="tpl-filter-btns">
           <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)} tpl-filter-btn" data-filter="all">Todas</button>
@@ -25,8 +25,8 @@ export async function renderTemplates() {
         </div>
       </div>
       <div id="tpl-bento" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3.5">
-        <div class="col-span-full text-center" style="padding:40px;color:var(--dim)">
-          <span class="material-symbols-outlined" style="font-size:32px;display:block;margin-bottom:8px">hourglass_empty</span>
+        <div class="col-span-full p-10 text-center text-slate-400">
+          <span class="material-symbols-outlined mb-2 block text-[32px]">hourglass_empty</span>
           Cargando plantillas…
         </div>
       </div>
@@ -53,8 +53,8 @@ export async function renderTemplates() {
     renderBento("all");
   } catch (e) {
     document.getElementById("tpl-bento").innerHTML = `
-      <div style="grid-column:1/-1;padding:30px;text-align:center;color:var(--red)">
-        <span class="material-symbols-outlined" style="font-size:28px;display:block;margin-bottom:8px">error</span>
+      <div class="col-span-full p-8 text-center text-red-500">
+        <span class="material-symbols-outlined mb-2 block text-[28px]">error</span>
         Error al cargar plantillas: ${escapeHtml(String(e))}
       </div>`;
   }
