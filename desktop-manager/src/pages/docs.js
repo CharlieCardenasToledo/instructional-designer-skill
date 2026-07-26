@@ -6,8 +6,8 @@ export function renderDocs() {
 
   el.innerHTML = `
     <div class="max-w-3xl">
-      <div class="docs-content rounded-app-lg border border-slate-900/10 bg-white/65 shadow-glass backdrop-blur-xl">
-        <h1>Ayuda</h1>
+      <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-6 text-[13.5px] leading-[1.7] shadow-glass backdrop-blur-xl [&_h1]:mb-2 [&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h2]:mb-2.5 [&_h2]:mt-6 [&_h2]:text-[17px] [&_h2]:font-bold [&_p]:mb-3 [&_p]:text-app-text-2">
+        <h1 class="text-app-text">Ayuda</h1>
         <p class="mb-5 border-b border-slate-300/30 pb-4 text-sm text-app-muted">
           Lo esencial para dejar la app funcionando y resolver los problemas más comunes.
         </p>
@@ -17,8 +17,8 @@ export function renderDocs() {
 
         <h2>Conexión</h2>
         <p>Para usar NotebookLM y elegir dónde trabajar (proyecto local, app de Claude, o ambos), ve a <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="mcp-config">Configuración → Conexiones</button>.</p>
-        <div class="docs-admonition">
-          <span class="material-symbols-outlined">info</span>
+        <div class="my-3.5 flex items-start gap-3 rounded-lg border-l-[3px] border-teal-600 bg-brand/[0.05] px-3.5 py-3">
+          <span class="material-symbols-outlined mt-px shrink-0 text-lg text-teal-600">info</span>
           <div>
             <div class="mb-1 text-[13px] font-bold text-brand">Antes de generar tu primera guía</div>
             <p class="m-0 text-[12.5px] text-slate-700">Completa tu perfil institucional en <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 underline hover:text-teal-700 inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="inst-profile">Configuración → Perfil institucional</button>: esos datos se incrustan automáticamente en cada documento generado.</p>
