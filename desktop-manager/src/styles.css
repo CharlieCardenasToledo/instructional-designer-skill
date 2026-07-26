@@ -938,14 +938,6 @@ code {
 /* ── Settings page ─────────────────────────────────────────────────────────── */
 .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
 .settings-nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }
-.settings-panes { display: flex; flex-direction: column; gap: 20px; }
-.settings-pane {
-  padding: 20px;
-  background: rgba(255,255,255,0.72);
-  border: 1px solid rgba(195,198,213,0.50);
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0,49,126,0.04);
-}
 /* ── Docs page ─────────────────────────────────────────────────────────────── */
 /* ── Empty state (table) ───────────────────────────────────────────────────── */
 
