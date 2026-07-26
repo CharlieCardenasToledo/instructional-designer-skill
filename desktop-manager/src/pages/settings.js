@@ -125,7 +125,7 @@ export async function renderSettings() {
               <span class="material-symbols-outlined text-[15px]">save</span> Guardar perfil
             </button>
           </div>
-          <div id="institution-inline-error" class="inline-error" role="alert" hidden></div>
+            <div id="institution-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
         </section>
 
         <!-- ── Conexiones ── -->
@@ -153,7 +153,7 @@ export async function renderSettings() {
                 </button>
               </div>
             </div>
-            <div id="mcp-inline-error" class="inline-error" role="alert" hidden></div>
+            <div id="mcp-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
 
             <div class="info-box flex items-start gap-2">
               <span class="material-symbols-outlined mt-px shrink-0 text-[15px]">info</span>
@@ -227,7 +227,7 @@ export async function renderSettings() {
           <div class="text-muted mt-3 text-[11.5px]">
             El Notebook ID se encuentra en la URL: <code>notebooklm.google.com/notebook/<strong>ID</strong></code>
           </div>
-          <div id="notebooks-inline-error" class="inline-error" role="alert" hidden></div>
+          <div id="notebooks-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
         </section>
 
         <!-- ── Environment ── -->
@@ -246,7 +246,7 @@ export async function renderSettings() {
           <div id="deps-content" class="flex flex-col gap-2">
             <div class="p-6 text-center text-slate-400">Cargando…</div>
           </div>
-          <div id="deps-inline-error" class="inline-error" role="alert" hidden></div>
+          <div id="deps-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
         </section>
 
         <!-- ── Preferencias ── -->

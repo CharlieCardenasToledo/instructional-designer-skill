@@ -227,7 +227,7 @@ function renderModal() {
         </div>
       </div>
       <div class="p-5 px-6">
-        <div id="course-modal-error" class="inline-error" role="alert" hidden></div>
+        <div id="course-modal-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
         <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5 sm:col-span-2">
             <label for="m-name">Nombre de la asignatura *</label>

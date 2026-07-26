@@ -1014,7 +1014,6 @@ code {
 
 /* ── Docs page ─────────────────────────────────────────────────────────────── */
 /* ── Empty state (table) ───────────────────────────────────────────────────── */
-.inline-error { margin-top: 10px; padding: 9px 12px; border-radius: 7px; color: var(--red); background: var(--red-bg); border: 1px solid var(--red-border); font-size: 12px; }
 .color-picker-preview { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,.18); display: inline-block; flex: 0 0 20px; }
 
 /* ── Pagination ─────────────────────────────────────────────────────────────── */
