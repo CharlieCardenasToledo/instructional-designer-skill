@@ -228,32 +228,32 @@ function renderModal() {
       </div>
       <div class="modal-body">
         <div id="course-modal-error" class="inline-error" role="alert" hidden></div>
-        <div class="form-grid" style="gap:14px">
-          <div class="form-group" style="grid-column:1/-1">
+        <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <div class="flex flex-col gap-1.5 sm:col-span-2">
             <label for="m-name">Nombre de la asignatura *</label>
             <input id="m-name" placeholder="Ej: Bases de Datos" value="${escapeHtml(_modalData.name)}">
           </div>
-          <div class="form-group">
+          <div class="flex flex-col gap-1.5">
             <label for="m-code">Código único *</label>
             <input id="m-code" placeholder="Ej: IFT200" value="${escapeHtml(_modalData.code)}" style="text-transform:uppercase">
           </div>
-          <div class="form-group">
+          <div class="flex flex-col gap-1.5">
             <label for="m-period">Periodo académico</label>
             <input id="m-period" placeholder="Ej: Abril–Agosto 2026" value="${escapeHtml(_modalData.period)}">
           </div>
-          <div class="form-group">
+          <div class="flex flex-col gap-1.5">
             <label for="m-semester">Semestre / Nivel</label>
             <input id="m-semester" placeholder="Ej: Tercero" value="${escapeHtml(_modalData.semester)}">
           </div>
-          <div class="form-group">
+          <div class="flex flex-col gap-1.5">
             <label for="m-credits">Créditos *</label>
             <input id="m-credits" type="number" min="1" max="20" value="${_modalData.credits}">
           </div>
-          <div class="form-group">
+          <div class="flex flex-col gap-1.5">
             <label for="m-weeks">N.º de semanas</label>
             <input id="m-weeks" type="number" min="1" max="52" value="${_modalData.weeks}">
           </div>
-          <div class="form-group" style="grid-column:1/-1">
+          <div class="flex flex-col gap-1.5 sm:col-span-2">
             <label for="m-desc">Descripción (opcional)</label>
             <textarea id="m-desc" placeholder="Breve descripción del curso…" style="height:70px">${escapeHtml(_modalData.description)}</textarea>
           </div>
@@ -303,7 +303,7 @@ function renderModal() {
         </div>
       </div>
       <div class="modal-body">
-        <div class="glass-pane" style="padding:14px;margin-bottom:16px">
+        <div class="rounded-app border border-slate-900/10 bg-white/55 p-3.5 mb-4 backdrop-blur-xl">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px">Vista previa de carpetas</div>
           <div style="display:flex;flex-direction:column;gap:5px">
             <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2);font-weight:600">

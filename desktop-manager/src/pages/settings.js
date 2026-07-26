@@ -35,7 +35,7 @@ export async function renderSettings() {
 
       <!-- Left nav -->
       <div style="align-self:start;position:sticky;top:0;z-index:10">
-        <div class="glass-pane flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible" style="padding:8px">
+        <div class="rounded-app border border-slate-900/10 bg-white/55 p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible backdrop-blur-xl">
           <a class="settings-nav-item active w-auto shrink-0 lg:w-full" data-section="inst-profile" href="#inst-profile">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
@@ -63,13 +63,13 @@ export async function renderSettings() {
           <div class="settings-pane-title">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </div>
-          <div class="form-grid" style="margin-bottom:16px">
-            <div class="form-group" style="grid-column:1/-1">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
+            <div class="flex flex-col gap-1.5 sm:col-span-2">
               <label for="cfg-author">Nombre completo *</label>
               <input id="cfg-author" placeholder="Ej: Charlie Cárdenas Toledo" autocomplete="name"
                 value="${escapeHtml(state.config?.author || "")}">
             </div>
-            <div class="form-group">
+            <div class="flex flex-col gap-1.5">
               <label for="cfg-degree">Grado académico</label>
               <select id="cfg-degree">
                 ${["","Lic.","Ing.","Arq.","Mg.","M.Sc.","MBA","Esp.","Ph.D.","Dr.","Prof."]
@@ -77,22 +77,22 @@ export async function renderSettings() {
                   .join("")}
               </select>
             </div>
-            <div class="form-group">
+            <div class="flex flex-col gap-1.5">
               <label for="cfg-institution">Institución *</label>
               <input id="cfg-institution" placeholder="Ej: Universidad Internacional del Ecuador"
                 value="${escapeHtml(state.config?.institution || "")}">
             </div>
-            <div class="form-group">
+            <div class="flex flex-col gap-1.5">
               <label for="cfg-faculty">Facultad</label>
               <input id="cfg-faculty" placeholder="Ej: Facultad de Ingeniería"
                 value="${escapeHtml(state.config?.faculty || "")}">
             </div>
-            <div class="form-group">
+            <div class="flex flex-col gap-1.5">
               <label for="cfg-career">Carrera</label>
               <input id="cfg-career" placeholder="Ej: Ingeniería en Sistemas"
                 value="${escapeHtml(state.config?.career || "")}">
             </div>
-            <div class="form-group">
+            <div class="flex flex-col gap-1.5">
               <label for="cfg-color">Color institucional</label>
               <div class="color-picker-row">
                 <input id="cfg-color" type="color" value="${escapeHtml(state.config?.color || "#00317e")}">
@@ -100,7 +100,7 @@ export async function renderSettings() {
                 <span class="color-picker-label" id="cfg-color-label">${escapeHtml(state.config?.color || "#00317e")}</span>
               </div>
             </div>
-            <div class="form-group" style="grid-column:1/-1">
+            <div class="flex flex-col gap-1.5 sm:col-span-2">
               <label for="cfg-website">Sitio web institucional</label>
               <div class="palette-url-row">
                 <input id="cfg-website" type="url" placeholder="https://www.uide.edu.ec/"
@@ -116,7 +116,7 @@ export async function renderSettings() {
             </div>
             <div id="institution-palette" class="institution-palette" style="grid-column:1/-1" aria-live="polite"></div>
           </div>
-          <div class="form-group" style="margin-bottom:16px">
+          <div class="flex flex-col gap-1.5 mb-4">
             <label for="cfg-ecosystem">Ecosistema digital <span class="text-muted">(uno por línea)</span></label>
             <textarea id="cfg-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${escapeHtml(ecosystemToStr(state.config?.ecosystem))}</textarea>
           </div>
@@ -191,28 +191,28 @@ export async function renderSettings() {
           <div id="notebook-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
 
           <!-- Add notebook form -->
-          <div class="glass-pane" style="padding:14px">
+          <div class="rounded-app border border-slate-900/10 bg-white/55 p-3.5 backdrop-blur-xl">
             <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">
               Registrar notebook
             </div>
-            <div class="form-grid" style="margin-bottom:12px">
-              <div class="form-group">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-3">
+              <div class="flex flex-col gap-1.5">
                 <label for="nb-code">Código *</label>
                 <input id="nb-code" placeholder="IFT200">
               </div>
-              <div class="form-group">
+              <div class="flex flex-col gap-1.5">
                 <label for="nb-course-name">Asignatura *</label>
                 <input id="nb-course-name" placeholder="Interacción Persona Computador">
               </div>
-              <div class="form-group">
+              <div class="flex flex-col gap-1.5">
                 <label for="nb-root">Carpeta raíz *</label>
                 <input id="nb-root" placeholder="01 IFT200">
               </div>
-              <div class="form-group">
+              <div class="flex flex-col gap-1.5">
                 <label for="nb-id">Notebook ID <span class="text-muted">(opcional)</span></label>
                 <input id="nb-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="mono">
               </div>
-              <div class="form-group" style="grid-column:1/-1">
+              <div class="flex flex-col gap-1.5 sm:col-span-2">
                 <label for="nb-url">URL de compartir <span class="text-muted">(opcional)</span></label>
                 <input id="nb-url" placeholder="https://notebooklm.google.com/notebook/…">
               </div>
