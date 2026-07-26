@@ -773,7 +773,7 @@ function profileStep() {
         <label class="${FIELD_LABEL}">Institución<input class="${FIELD_INPUT}" id="onb-institution" value="${value("institution")}" placeholder="Universidad Ejemplo"></label>
         <label class="${FIELD_LABEL}">Facultad<input class="${FIELD_INPUT}" id="onb-faculty" value="${value("faculty")}" placeholder="Facultad de Ingeniería"></label>
         <label class="${FIELD_LABEL}">Carrera<input class="${FIELD_INPUT}" id="onb-career" value="${value("career")}" placeholder="Ingeniería de Software"></label>
-        <label class="${FIELD_LABEL}">Color institucional<input class="${FIELD_INPUT} h-9 p-1" id="onb-color" type="color" value="${escapeHtml(config.colorHex || "#00796b")}"></label>
+        <label class="${FIELD_LABEL}">Color institucional<div class="flex items-center gap-2"><input class="${FIELD_INPUT} h-9 p-1" id="onb-color" type="color" value="${escapeHtml(config.colorHex || "#00796b")}"><span id="onb-color-preview" class="color-picker-preview" style="background:${escapeHtml(config.colorHex || "#00796b")}" aria-hidden="true"></span><span id="onb-color-label" class="text-[11px] text-gray-500">${escapeHtml(config.colorHex || "#00796b")}</span></div></label>
       </div>
     </div>
 
@@ -1361,6 +1361,13 @@ async function animateFinalStep() {
 
 function bindStepEvents(current) {
   const root = document.getElementById("onboarding-root");
+  root.querySelector("#onb-color")?.addEventListener("input", event => {
+    if (!/^#[0-9a-fA-F]{6}$/.test(event.target.value)) return;
+    const preview = root.querySelector("#onb-color-preview");
+    const label = root.querySelector("#onb-color-label");
+    if (preview) preview.style.background = event.target.value;
+    if (label) label.textContent = event.target.value;
+  });
   if (current === 2) revealFocusedDependency();
   if (current === 3) {
     root.querySelector("#onb-extract-palette")?.addEventListener("click", () => runOnboardingOperation(
@@ -1609,11 +1616,16 @@ async function performAction(action, current) {
     return advance(current, target);
   }
   if (action === "skip-onboarding") {
-    await goToOnboardingStep(5);
+    const stepResult = await goToOnboardingStep(5);
+    if (!stepResult.success) { toast(stepResult.message, "error"); return; }
     const result = await completeOnboarding();
-    toast("Saltando asistente...", "info", 3000);
-    document.getElementById("onboarding-root")?.remove();
-    window.location.reload();
+    if (result.success) {
+      toast("Saltando asistente...", "info", 3000);
+      document.getElementById("onboarding-root")?.remove();
+      window.location.reload();
+    } else {
+      toast(result.message, "error", 6000);
+    }
     return;
   }
   if (action === "complete") {

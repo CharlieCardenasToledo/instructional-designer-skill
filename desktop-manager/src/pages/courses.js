@@ -226,6 +226,7 @@ function renderModal() {
         </div>
       </div>
       <div class="modal-body">
+        <div id="course-modal-error" class="inline-error" role="alert" hidden></div>
         <div class="form-grid" style="gap:14px">
           <div class="form-group" style="grid-column:1/-1">
             <label for="m-name">Nombre de la asignatura *</label>
@@ -268,10 +269,10 @@ function renderModal() {
     box.querySelector("#m-next").onclick = () => {
       const code = box.querySelector("#m-code").value.trim().toUpperCase();
       const name = box.querySelector("#m-name").value.trim();
-      if (!code) { toast("El código es obligatorio", "error"); return; }
-      if (!name) { toast("El nombre es obligatorio", "error"); return; }
+      if (!code) { showModalError("El código es obligatorio"); return; }
+      if (!name) { showModalError("El nombre es obligatorio"); return; }
       if (state.courses.some(c => c.code.toLowerCase() === code.toLowerCase())) {
-        toast("Ya existe un curso con ese código", "error"); return;
+        showModalError("Ya existe un curso con ese código"); return;
       }
       _modalData.code     = code;
       _modalData.name     = name;
@@ -339,6 +340,12 @@ function renderModal() {
       saveCourse();
     };
   }
+}
+
+function showModalError(message) {
+  const error = document.getElementById("course-modal-error");
+  if (error) { error.textContent = message; error.hidden = false; }
+  toast(message, "error");
 }
 
 async function saveCourse() {

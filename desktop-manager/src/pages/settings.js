@@ -51,6 +51,7 @@ export async function renderSettings() {
             <span class="material-symbols-outlined">tune</span> Preferencias
           </a>
         </div>
+      </div>
 
       <!-- Right panes -->
       <div class="settings-panes">
@@ -94,6 +95,7 @@ export async function renderSettings() {
               <label for="cfg-color">Color institucional</label>
               <div class="color-picker-row">
                 <input id="cfg-color" type="color" value="${escapeHtml(state.config?.color || "#00317e")}">
+                <span class="color-picker-preview" id="cfg-color-preview" style="background:${escapeHtml(state.config?.color || "#00317e")}" aria-hidden="true"></span>
                 <span class="color-picker-label" id="cfg-color-label">${escapeHtml(state.config?.color || "#00317e")}</span>
               </div>
             </div>
@@ -122,6 +124,7 @@ export async function renderSettings() {
               <span class="material-symbols-outlined" style="font-size:15px">save</span> Guardar perfil
             </button>
           </div>
+          <div id="institution-inline-error" class="inline-error" role="alert" hidden></div>
         </section>
 
         <!-- ── Conexiones ── -->
@@ -149,6 +152,7 @@ export async function renderSettings() {
                 </button>
               </div>
             </div>
+            <div id="mcp-inline-error" class="inline-error" role="alert" hidden></div>
 
             <div class="info-box" style="display:flex;gap:8px;align-items:flex-start">
               <span class="material-symbols-outlined" style="font-size:15px;flex-shrink:0;margin-top:1px">info</span>
@@ -222,6 +226,7 @@ export async function renderSettings() {
           <div class="text-muted" style="margin-top:12px;font-size:11.5px">
             El Notebook ID se encuentra en la URL: <code>notebooklm.google.com/notebook/<strong>ID</strong></code>
           </div>
+          <div id="notebooks-inline-error" class="inline-error" role="alert" hidden></div>
         </section>
 
         <!-- ── Environment ── -->
@@ -240,6 +245,7 @@ export async function renderSettings() {
           <div id="deps-content" style="display:flex;flex-direction:column;gap:8px">
             <div style="text-align:center;padding:24px;color:var(--dim)">Cargando…</div>
           </div>
+          <div id="deps-inline-error" class="inline-error" role="alert" hidden></div>
         </section>
 
         <!-- ── Preferencias ── -->
@@ -301,6 +307,8 @@ export async function renderSettings() {
   // ── Institution ───────────────────────────────────────────────────────────
   el.querySelector("#cfg-color")?.addEventListener("input", e => {
     document.getElementById("cfg-color-label").textContent = e.target.value;
+    const preview = document.getElementById("cfg-color-preview");
+    if (/^#[0-9a-fA-F]{6}$/.test(e.target.value) && preview) preview.style.background = e.target.value;
   });
   el.querySelector("#btn-save-institution")?.addEventListener("click", saveInstitution);
   el.querySelector("#btn-extract-palette")?.addEventListener("click", loadInstitutionPalette);
@@ -308,15 +316,18 @@ export async function renderSettings() {
   // ── Conexiones ────────────────────────────────────────────────────────────
   el.querySelectorAll(".mcp-target").forEach(btn => {
     btn.addEventListener("click", async () => {
+      setInlineError("mcp-inline-error", "");
       toast("Conectando…", "loading", 8000);
       try {
         if (btn.dataset.target === "both") {
           const codeResult = await configureMcp("claude-code");
           const desktopResult = await configureMcp("desktop");
           const success = codeResult.success && desktopResult.success;
+          if (!success) setInlineError("mcp-inline-error", `${codeResult.message} / ${desktopResult.message}`);
           toast(success ? "Conectado en proyecto local y app de Claude" : `${codeResult.message} / ${desktopResult.message}`, success ? "success" : "error", 6000);
         } else {
           const result = await configureMcp(btn.dataset.target);
+          if (!result.success) setInlineError("mcp-inline-error", result.message);
           toast(result.message, result.success ? "success" : "error", 6000);
         }
       } catch (e) { toast(`Error: ${e}`, "error"); }
@@ -371,11 +382,12 @@ export async function renderSettings() {
 
 // ── Institution ───────────────────────────────────────────────────────────────
 async function saveInstitution() {
+  setInlineError("institution-inline-error", "");
   const get = id => document.getElementById(id)?.value?.trim() || "";
   const author      = get("cfg-author");
   const institution = get("cfg-institution");
-  if (!author)      { toast("Nombre completo obligatorio", "error"); return; }
-  if (!institution) { toast("Institución obligatoria", "error"); return; }
+  if (!author)      { setInlineError("institution-inline-error", "Nombre completo obligatorio"); return; }
+  if (!institution) { setInlineError("institution-inline-error", "Institución obligatoria"); return; }
 
   const color = document.getElementById("cfg-color")?.value || "#00317e";
   const { r, g, b } = hexToRgb(color);
@@ -408,9 +420,17 @@ async function saveInstitution() {
       Object.assign(state.config, config);
       toast("Configuración guardada", "success", 4000);
     } else {
+      setInlineError("institution-inline-error", result.message);
       toast(result.message, "error");
     }
-  } catch (e) { toast(`Error: ${e}`, "error"); }
+  } catch (e) { setInlineError("institution-inline-error", `Error: ${e}`); toast(`Error: ${e}`, "error"); }
+}
+
+function setInlineError(id, message) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = message || "";
+  el.hidden = !message;
 }
 
 async function loadInstitutionPalette() {
