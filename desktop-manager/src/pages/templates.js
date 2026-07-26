@@ -35,8 +35,14 @@ export async function renderTemplates() {
   // Filter button behavior
   el.querySelectorAll(".tpl-filter-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      el.querySelectorAll(".tpl-filter-btn").forEach(b => b.classList.replace("btn-primary", "btn-secondary"));
-      btn.classList.replace("btn-secondary", "btn-primary");
+      const primary = ui.button.primary.split(" ");
+      const secondary = ui.button.secondary.split(" ");
+      el.querySelectorAll(".tpl-filter-btn").forEach(b => {
+        primary.forEach(cls => b.classList.remove(cls));
+        secondary.forEach(cls => b.classList.add(cls));
+      });
+      secondary.forEach(cls => btn.classList.remove(cls));
+      primary.forEach(cls => btn.classList.add(cls));
       renderBento(btn.dataset.filter);
     });
   });
