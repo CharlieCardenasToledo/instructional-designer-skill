@@ -2,6 +2,7 @@ import { generateSyllabus, pickDirectory } from "../api.js";
 import { escapeHtml } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
+import { ui, cx } from "../uiClasses.js";
 
 let _activeWeek = 0;
 
@@ -83,11 +84,11 @@ export function renderSyllabus() {
           </div>
 
           <div class="week-form-footer">
-            <button class="btn btn-secondary btn-sm" id="syl-discard">Descartar cambios</button>
-            <button class="btn btn-secondary btn-sm" id="syl-save-draft">
+            <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="syl-discard">Descartar cambios</button>
+            <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="syl-save-draft">
               <span class="material-symbols-outlined" style="font-size:14px">save</span> Guardar borrador
             </button>
-            <button class="btn btn-primary btn-sm" id="syl-mark-complete">
+            <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="syl-mark-complete">
               <span class="material-symbols-outlined" style="font-size:14px">check_circle</span> Marcar como completa
             </button>
           </div>
@@ -131,7 +132,7 @@ export function renderSyllabus() {
           <div style="font-size:12.5px;color:var(--muted);text-align:center">
             ${pct < 100 ? "Completa todas las semanas para generar el documento final." : "¡Sílabo completo! Puedes generar el README."}
           </div>
-          <button class="btn ${pct === 100 ? "btn-primary" : "btn-secondary"}" id="syl-generate" ${pct < 100 ? "disabled" : ""} style="width:100%;justify-content:center">
+          <button class="${cx(ui.button.base, pct === 100 ? ui.button.primary : ui.button.secondary, 'w-full')}" id="syl-generate" ${pct < 100 ? "disabled" : ""}>
             <span class="material-symbols-outlined" style="font-size:15px">markdown</span>
             Generar README.md
           </button>

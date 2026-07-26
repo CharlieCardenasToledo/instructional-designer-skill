@@ -1,6 +1,7 @@
 import { listTemplates, getActiveTemplate, setActiveTemplate } from "../api.js";
 import { toast } from "../toast.js";
 import { escapeHtml } from "../dom.js";
+import { ui, cx } from "../uiClasses.js";
 
 let _templates = [];
 let _activeId = "";
@@ -18,9 +19,9 @@ export async function renderTemplates() {
           <p style="font-size:13px;color:var(--muted);margin-top:4px">Elige el formato de tus guías.</p>
         </div>
         <div class="flex flex-wrap gap-2" id="tpl-filter-btns">
-          <button class="btn btn-primary btn-sm tpl-filter-btn" data-filter="all">Todas</button>
-          <button class="btn btn-secondary btn-sm tpl-filter-btn" data-filter="institutional">Institucional</button>
-          <button class="btn btn-secondary btn-sm tpl-filter-btn" data-filter="personal">Personal</button>
+          <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)} tpl-filter-btn" data-filter="all">Todas</button>
+          <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} tpl-filter-btn" data-filter="institutional">Institucional</button>
+          <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} tpl-filter-btn" data-filter="personal">Personal</button>
         </div>
       </div>
       <div id="tpl-bento" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3.5">
@@ -95,7 +96,7 @@ function renderBento(filter) {
           </div>
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn ${featured.id === _activeId ? "btn-secondary" : "btn-primary"} btn-sm tpl-btn" data-tpl-id="${escapeHtml(featured.id)}" style="flex:1;justify-content:center">
+          <button class="${cx(ui.button.base, featured.id === _activeId ? ui.button.secondary : ui.button.primary, ui.button.sm, 'flex-1')} tpl-btn" data-tpl-id="${escapeHtml(featured.id)}">
             ${featured.id === _activeId ? "Activa / Editar" : "Activar plantilla"}
           </button>
         </div>
@@ -114,7 +115,7 @@ function renderBento(filter) {
         <h3 style="font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:5px">${escapeHtml(secondary.name)}</h3>
         <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">${escapeHtml(secondary.description?.slice(0, 100) || "")}</p>
       </div>
-      <button class="btn btn-secondary btn-sm tpl-btn" data-tpl-id="${escapeHtml(secondary.id)}" style="width:100%;justify-content:center">
+      <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'w-full')} tpl-btn" data-tpl-id="${escapeHtml(secondary.id)}">
         ${secondary.id === _activeId ? "Activa" : "Seleccionar"}
       </button>
     </div>` : ""}
@@ -129,7 +130,7 @@ function renderBento(filter) {
       <p style="font-size:12px;color:var(--muted);line-height:1.55;flex:1;margin-bottom:12px">${escapeHtml(t.description || "")}</p>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim)">${t.featured ? "INSTITUCIONAL" : "PERSONAL"}</span>
-        <button class="btn btn-ghost btn-sm tpl-btn" data-tpl-id="${escapeHtml(t.id)}" style="color:var(--teal);padding:4px 10px">
+        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm, 'text-brand px-2.5 py-1')} tpl-btn" data-tpl-id="${escapeHtml(t.id)}">
           ${t.id === _activeId ? "Activa" : "Seleccionar"}
         </button>
       </div>

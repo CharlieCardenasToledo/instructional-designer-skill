@@ -10,6 +10,7 @@ import {
 } from "../api.js";
 import { escapeHtml } from "../dom.js";
 import { state, saveConfig } from "../state.js";
+import { ui, cx } from "../uiClasses.js";
 import { toast } from "../toast.js";
 import { ic, refreshIcons } from "../icons.js";
 
@@ -47,7 +48,7 @@ export async function renderActivate() {
       </div>
       ${step.ok
         ? `<span class="badge badge-green">${ic("check-circle-2", 11)} Listo</span>`
-        : `<button class="btn btn-primary btn-sm" data-run-step="${escapeHtml(step.id)}">${ic("play", 12)} ${escapeHtml(step.action)}</button>`}
+        : `<button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-run-step="${escapeHtml(step.id)}">${ic("play", 12)} ${escapeHtml(step.action)}</button>`}
     </div>`).join("");
 
   container.querySelectorAll("[data-run-step]").forEach(button => {

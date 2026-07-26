@@ -4,6 +4,7 @@ import { state } from "../state.js";
 import { toast } from "../toast.js";
 import { ic, refreshIcons } from "../icons.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
+import { ui, cx } from "../uiClasses.js";
 
 const LARGE_INSTALLS = new Set(["WSL 2", "TeX Live (pdflatex)"]);
 
@@ -67,7 +68,7 @@ function depItem(dep) {
       <div class="list-item-right">
         ${dep.installed
           ? `<span class="badge badge-green">${ic("check-circle-2", 11)} Listo</span>`
-          : `<button class="btn btn-primary btn-sm" data-install-dependency="${escapeHtml(dep.name)}" title="Instalar ${escapeHtml(dep.name)}">${ic("download", 13)} Instalar</button>`}
+          : `<button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-install-dependency="${escapeHtml(dep.name)}" title="Instalar ${escapeHtml(dep.name)}">${ic("download", 13)} Instalar</button>`}
       </div>
     </div>`;
 }
