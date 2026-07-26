@@ -62,7 +62,7 @@ export async function renderActivate() {
     && (status.skill_installed || Boolean(state.config.lastSkillZip))
     && auth.authenticated;
   document.getElementById("activate-status").innerHTML = requiredReady
-    ? `<div class="info-box">${ic("check-circle-2", 14)} <strong>Base preparada.</strong> Reinicia el cliente donde configuraste MCP.</div>`
+    ? `<div class="mb-3.5 rounded-app border border-teal-600/25 bg-teal-600/[0.08] px-3.5 py-2.5 text-xs leading-relaxed text-app-text-2">${ic("check-circle-2", 14)} <strong class="text-teal-700">Base preparada.</strong> Reinicia el cliente donde configuraste MCP.</div>`
     : `<div class="text-muted status-note">${ic("info", 13)} Claude/Cowork usa el ZIP; Claude Code usa la instalación local. Elige solo los destinos que necesites.</div>`;
   refreshIcons();
 }

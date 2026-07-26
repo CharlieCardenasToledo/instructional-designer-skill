@@ -155,7 +155,7 @@ export async function renderSettings() {
             </div>
             <div id="mcp-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
 
-            <div class="info-box flex items-start gap-2">
+            <div class="mb-3.5 flex items-start gap-2 rounded-app border border-teal-600/25 bg-teal-600/[0.08] px-3.5 py-2.5 text-xs leading-relaxed text-app-text-2">
               <span class="material-symbols-outlined mt-px shrink-0 text-[15px]">info</span>
               <span>Combina la conexión de NotebookLM con tu configuración existente y guarda un respaldo automático.</span>
             </div>

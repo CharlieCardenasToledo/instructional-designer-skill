@@ -413,31 +413,6 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
 /* ── Week accordion ───────────────────────────────────────────────────────── */
 /* ── Step items ───────────────────────────────────────────────────────────── */
 /* ── Info / Warn boxes ────────────────────────────────────────────────────── */
-.info-box {
-  background: var(--teal-dim);
-  border: 1px solid var(--teal-border);
-  border-radius: var(--radius);
-  padding: 11px 14px;
-  font-size: 12px;
-  color: var(--text-2);
-  line-height: 1.6;
-  margin-bottom: 14px;
-}
-.info-box strong { color: var(--teal); }
-
-.warn-box {
-  background: var(--red-bg);
-  border: 1px solid var(--red-border);
-  border-radius: var(--radius);
-  padding: 11px 14px;
-  font-size: 12px;
-  color: var(--text-2);
-  line-height: 1.6;
-  margin-bottom: 14px;
-  display: none;
-}
-.warn-box strong { color: var(--red); }
-
 /* ── Spinner ──────────────────────────────────────────────────────────────── */
 .spinner-wrap {
   display: flex;
