@@ -50,7 +50,7 @@ export function renderCourses() {
       <!-- Table -->
       <div class="flex-1 overflow-hidden rounded-xl border border-slate-300/50 bg-white/70">
         <div class="overflow-x-auto">
-        <table class="courses-table min-w-[760px]">
+        <table class="courses-table min-w-[760px] w-full border-collapse text-[13px]">
           <thead>
             <tr>
               <th>Código</th>
