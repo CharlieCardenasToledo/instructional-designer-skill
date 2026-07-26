@@ -5,6 +5,7 @@
   "description": "Gestor visual para el Instructional Designer Skill — configura dependencias, cursos y sílabos desde una interfaz gráfica",
   "scripts": {
     "dev": "vite",
+    "dev:web": "vite --mode mock",
     "build": "vite build",
     "test": "node --test tests/*.test.mjs",
     "tauri:dev": "tauri dev",

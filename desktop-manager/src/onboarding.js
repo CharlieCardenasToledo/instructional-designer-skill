@@ -38,11 +38,7 @@ import geminiLogo from "./assets/gemini-icon.svg";
 import googleGLogo from "./assets/google-g.svg";
 import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 
-// Esquema de 5 pasos (v3 en el backend): colapsa los antiguos 10 pasos
-// agrupando contenido educativo o formularios relacionados en una sola
-// pantalla, para reducir la cantidad de decisiones/pantallas que ve un
-// usuario final antes de poder producir algo (ver migrate_status en
-// onboarding.rs para el mapeo exacto de pasos viejos a nuevos).
+// Esquema de 5 pasos (v3 en el backend; ver migrate_status en onboarding.rs).
 const TOTAL_STEPS = 5;
 const LARGE_DEPENDENCIES = new Set(["Compilador LaTeX"]);
 const STEP_META = [
@@ -146,8 +142,7 @@ const INLINE_ERROR = "max-w-lg mx-auto mt-3 p-3 rounded-lg bg-red-50 border bord
 const DEP_ROW_CHECKING = "border-gray-200";
 const DEP_ROW_READY = "border-gray-900 bg-gray-50";
 const DEP_ROW_MISSING = "border-red-300 bg-red-50";
-// El paso 2 muestra una herramienta a la vez (ver dependenciesStep): una
-// tarjeta grande con su propio mini-stepper, no una cuadrícula compacta.
+// Paso 2: una tarjeta grande por herramienta (ver dependenciesStep), no una cuadrícula.
 const DEP_CARD_BASE = "flex flex-col gap-2.5 p-4 rounded-xl bg-white border transition-colors min-w-0";
 const DEP_CARD_STATUS_BASE = "w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center";
 const LOADING_PALETTE = [
@@ -253,16 +248,9 @@ function renderCurrentStep() {
   syncOnboardingBusyState();
 }
 
-// El paso 2 (herramientas) ya no tiene un único punto: cuando las
-// dependencias terminaron de cargar, ese lugar en la pista se expande a un
-// punto por herramienta (Node, Git, Python, compilador LaTeX), verde si ya está
-// instalada. Es la misma pista de los 5 pasos, no una segunda aparte -así
-// el gusanito puede recorrer de un paso macro a una herramienta y viceversa
-// sin saltos.
-//
-// Cada punto visual (10px o menos) vive dentro de un botón de ~32x32px: el
-// punto pequeño es solo el indicador, el área de clic real es mucho más
-// grande (Ley de Fitts) tanto en mouse como en pantallas táctiles/trackpad.
+// En el paso 2, el punto único se expande a un punto por herramienta (verde
+// si está instalada), sobre la misma pista de 5 pasos. El área de clic de
+// cada punto es más grande que el punto visual (Ley de Fitts).
 function progressDots(current) {
   const maxDone = Number(runtime.status.maxCompletedStep || 0);
   const stepAvailable = step => step <= maxDone + 1;
@@ -306,9 +294,7 @@ function actionButton(label, action, disabled = false, secondary = false, iconHt
   return `<button class="${secondary ? BTN_SECONDARY : BTN_PRIMARY}" data-onboarding-action="${action}" ${disabled ? "disabled" : ""}>${iconHtml}<span>${escapeHtml(label)}</span></button>`;
 }
 
-// Cada paso llama a esto en vez de devolver su propio footer: la barra de
-// navegación (flechas + puntos) vive fija al final de la tarjeta, no dentro
-// del contenido de cada paso.
+// La barra de navegación es fija al final de la tarjeta, no parte del contenido de cada paso.
 let footerConfig = { label: "Continuar", action: "advance", disabled: false };
 function setFooter(label, action = "advance", disabled = false) {
   footerConfig = { label, action, disabled };
@@ -394,9 +380,9 @@ function actionBusyMessage(action, current) {
 
 function loadingStep(step) {
   const messages = {
-    2: "Verificando las herramientas de producción…",
+    2: "Verificando las herramientas…",
     3: "Preparando tu institución, perfil y plantillas…",
-    4: "Comprobando NotebookLM y tu destino de producción…",
+    4: "Comprobando tu sesión de Google y dónde trabajarás…",
     5: "Preparando la prueba final…",
   };
   setFooter("Preparando el siguiente paso", "advance", true);
@@ -500,11 +486,7 @@ async function showPreparedStep(fromStep, destination, { force = false, depFocus
   renderCurrentStep();
 }
 
-// El backend (check_dependencies en course.rs) reporta Node.js, Git, Python
-// y el compilador LaTeX. Git es opcional y no forma parte del flujo
-// obligatorio: mostrarlo aquí solo agrega una decisión extra que el usuario
-// final no necesita tomar. Sigue disponible en Configuración > Entorno para
-// quien sí quiera instalarlo.
+// Git es opcional y no se muestra en el onboarding (solo en Configuración > Entorno).
 function dependencySequence() {
   return runtime.dependencies.filter(dep => dep.required);
 }
@@ -522,11 +504,8 @@ function dependencyCardShell(dep) {
     </div>`;
 }
 
-// Cada herramienta se revisa/instala en su propia tarjeta -un "sub-paso"
-// dentro del paso 2-, en vez de una cuadrícula con todas a la vez. La
-// navegación entre herramientas vive en la barra inferior general (ver
-// progressDots/animateStepTransition/handleAction), no en un stepper nuevo
-// aparte: esta función solo dibuja la tarjeta de la herramienta enfocada.
+// Dibuja solo la tarjeta de la herramienta enfocada; la navegación entre
+// herramientas vive en la barra inferior (ver progressDots/animateStepTransition).
 function dependenciesStep() {
   // Node.js, Python y el compilador LaTeX son obligatorios (required=true
   // desde el backend); Git es opcional y no bloquea el avance.
@@ -686,11 +665,8 @@ async function jumpToDependencyTool(fromStep, toolIndex) {
   await showPreparedStep(fromStep, 2, { depFocusIndex: toolIndex });
 }
 
-// Fusiona lo que antes eran tres pasos separados (explicación, tecnología,
-// marcos pedagógicos) en una sola pantalla de bienvenida: solo se muestran
-// los beneficios concretos por defecto; el detalle técnico y pedagógico
-// queda en secciones plegables ("Ver cómo funciona"/"Ver fundamentos") que
-// no bloquean el avance. Menos que leer antes de poder empezar a configurar.
+// Beneficios concretos por defecto; el detalle técnico/pedagógico queda en
+// secciones plegables que no bloquean el avance.
 function welcomeStep() {
   setFooter("Continuar", "advance", false);
   const feature = (icon, title, desc) => `
@@ -764,9 +740,8 @@ function welcomeStep() {
 const FIELD_INPUT = "bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 transition-colors";
 const FIELD_LABEL = "flex flex-col gap-1.5 text-gray-700 text-xs";
 
-// Fusiona institución + perfil académico + plantilla (antes tres pasos
-// separados) en una sola pantalla con tres secciones apiladas y un único
-// botón de guardado (ver "save-profile-and-template" en performAction).
+// Institución + perfil + plantilla en una pantalla con un único guardado
+// (ver "save-profile-and-template" en performAction).
 function profileStep() {
   const config = state.config;
   const value = key => escapeHtml(config[key] || "");
@@ -834,8 +809,8 @@ function profileStep() {
     </div>
 
     <div class="max-w-lg mx-auto pt-5 border-t border-gray-200">
-      ${sectionHeading(3, "Sistema editorial")}
-      <p class="${CARD_LEAD} !max-w-lg !mb-3">La plantilla define tipografía, bloques pedagógicos, diagramas, bibliografía y reglas de consistencia.</p>
+      ${sectionHeading(3, "Formato del documento")}
+      <p class="${CARD_LEAD} !max-w-lg !mb-3">Elige cómo se verá la guía final.</p>
       <div class="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-3">${templateCards}</div>
     </div>
 
@@ -919,9 +894,8 @@ function bindOnboardingPaletteButtons() {
   });
 }
 
-// Fusiona la sesión de NotebookLM y la elección de destino (antes dos pasos
-// separados) en una sola pantalla: "Continuar al paso final" exige ambas
-// condiciones a la vez (ver advance-target en performAction).
+// Sesión de Google + destino en una pantalla; avanzar exige ambas (ver
+// advance-target en performAction).
 function connectStep() {
   const authenticated = runtime.auth?.authenticated === true;
   const statusCls = authenticated ? "border-gray-900 bg-gray-50" : "border-amber-200 bg-amber-50 hover:border-amber-300";
@@ -982,7 +956,7 @@ function connectStep() {
   return `<section>
     <div class="max-w-lg mx-auto mb-5">
       <div class="flex items-center justify-between gap-2 mb-2">
-        <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400">Evidencia verificable</h3>
+        <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400">Fuentes del curso</h3>
         <img src="${notebookLmWordmark}" alt="NotebookLM" class="h-4 w-auto shrink-0">
       </div>
       <p class="${CARD_LEAD} !max-w-lg !mb-3">No diseña la guía ni reemplaza tu criterio docente: solo contrasta afirmaciones con las fuentes de tu curso.</p>
@@ -998,7 +972,7 @@ function connectStep() {
     </div>
 
     <div class="max-w-lg mx-auto pt-5 border-t border-gray-200">
-      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Dónde producirás tus cursos</h3>
+      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Dónde trabajarás</h3>
       <div class="grid gap-2">
         ${targets.map(t => `
           <label class="flex items-start sm:items-center gap-3 p-3.5 rounded-xl border cursor-pointer ${t.id === selected ? "border-gray-900 bg-gray-50" : "border-gray-200 bg-white"}">
@@ -1082,19 +1056,19 @@ function finalStep() {
         <div id="final-loading-steps" class="flex flex-col gap-1.5 w-full max-w-sm">
           <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="0">
             <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Preparando perfil editorial…</span>
+            <span>Preparando datos…</span>
           </div>
           <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="1">
             <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Verificando motor de producción…</span>
+            <span>Probando herramientas…</span>
           </div>
           <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="2">
             <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Generando contenido de prueba (2 semanas)…</span>
+            <span>Generando ejemplo (2 semanas)…</span>
           </div>
           <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="3">
             <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Compilando PDF de validación…</span>
+            <span>Compilando PDF…</span>
           </div>
         </div>
       </div>
@@ -1106,7 +1080,7 @@ function finalStep() {
     </div>
 
     <div class="max-w-md mx-auto mb-4">
-      <div class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Qué vas a poder generar</div>
+      <div class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Listo para crear</div>
       <div class="grid grid-cols-2 gap-1.5 text-[11px] text-gray-600">
         ${["Guías semanales", "Bibliografía automática", "Casos y ejercicios", "PDF final"].map(item => `
           <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">

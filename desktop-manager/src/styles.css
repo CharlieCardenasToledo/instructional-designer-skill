@@ -17,12 +17,7 @@
    mayor prioridad) siempre puedan sobreescribirlo cuando se usan. */
 @layer base {
 
-/* ══════════════════════════════════════════════════════════════════════════
-   GLASSMORPHISM DESIGN SYSTEM
-   Fondo: capas sólidas desenfocadas, sin degradados
-   Superficies: backdrop-filter: blur() + rgba semi-transparente
-   Texto: blanco con opacidades
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ── Design system: glassmorphism (blur + rgba), sin degradados ── */
 
 :root {
   /* Colores de acento */

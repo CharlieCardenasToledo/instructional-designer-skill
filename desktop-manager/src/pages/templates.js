@@ -16,8 +16,8 @@ export async function renderTemplates() {
     <div class="flex flex-col gap-4">
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.03em">Biblioteca de plantillas</h1>
-          <p style="font-size:13px;color:var(--muted);margin-top:4px">Explora y activa plantillas LaTeX y Markdown para tus cursos.</p>
+          <h1 style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.03em">Plantillas</h1>
+          <p style="font-size:13px;color:var(--muted);margin-top:4px">Elige el formato de tus guías.</p>
         </div>
         <div class="flex flex-wrap gap-2" id="tpl-filter-btns">
           <button class="btn btn-primary btn-sm tpl-filter-btn" data-filter="all">Todas</button>
@@ -99,9 +99,6 @@ function renderBento(filter) {
         <div style="display:flex;gap:8px">
           <button class="btn ${featured.id === _activeId ? "btn-secondary" : "btn-primary"} btn-sm tpl-btn" data-tpl-id="${escapeHtml(featured.id)}" style="flex:1;justify-content:center">
             ${featured.id === _activeId ? "Activa / Editar" : "Activar plantilla"}
-          </button>
-          <button class="btn btn-secondary btn-sm">
-            <span class="material-symbols-outlined" style="font-size:16px">content_copy</span>
           </button>
         </div>
       </div>

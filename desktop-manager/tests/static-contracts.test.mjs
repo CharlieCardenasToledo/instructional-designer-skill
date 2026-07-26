@@ -73,6 +73,16 @@ test('el copy del onboarding no repite jerga técnica ni referencias obsoletas a
   assert.doesNotMatch(source, /"Instalando la skill en Claude Code…"|"Conectando la skill con Claude/);
 });
 
+test('el copy visible no reintroduce jerga técnica ya eliminada por auditoría de UX', async () => {
+  const [onboarding, settings] = await Promise.all([
+    readFile(new URL('src/onboarding.js', root), 'utf8'),
+    readFile(new URL('src/pages/settings.js', root), 'utf8'),
+  ]);
+  const banned = /Sistema editorial|motor de producción|perfil editorial|Zona peligrosa|Instalando skill/;
+  assert.doesNotMatch(onboarding, banned);
+  assert.doesNotMatch(settings, banned);
+});
+
 test('el stepper mueve un gusanito literal sin convertir las flechas en recuadros', async () => {
   const [source, css] = await Promise.all([
     readFile(new URL('src/onboarding.js', root), 'utf8'),

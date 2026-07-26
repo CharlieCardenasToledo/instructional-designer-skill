@@ -274,11 +274,11 @@ export async function renderSettings() {
               </button>
             </div>
             <div style="padding:12px 14px;border:1px solid rgba(186,26,26,0.20);border-radius:9px;background:rgba(186,26,26,0.04)">
-              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Zona peligrosa</div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Reiniciar configuración</div>
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                <div style="font-size:12px;color:var(--muted)">Reinicia el proceso de onboarding desde el principio.</div>
+                <div style="font-size:12px;color:var(--muted)">Perderás el progreso configurado y volverás a empezar desde el primer paso.</div>
                 <button class="btn btn-danger btn-sm" id="btn-reset-onboarding">
-                  <span class="material-symbols-outlined" style="font-size:14px">restart_alt</span> Reiniciar onboarding
+                  <span class="material-symbols-outlined" style="font-size:14px">restart_alt</span> Reiniciar
                 </button>
               </div>
             </div>
@@ -342,7 +342,7 @@ export async function renderSettings() {
   loadSkillPath();
 
   el.querySelector("#btn-install-skill")?.addEventListener("click", async () => {
-    toast("Instalando skill…", "loading", 20000);
+    toast("Instalando en tu proyecto local…", "loading", 20000);
     try {
       const r = await installSkill();
       toast(r.message, r.success ? "success" : "error", 6000);
