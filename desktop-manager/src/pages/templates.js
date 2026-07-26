@@ -93,7 +93,7 @@ function renderBento(filter) {
         <div>
           <div class="mb-2 flex items-start justify-between">
             <span class="rounded bg-brand-soft px-2 py-0.5 text-[10px] font-bold uppercase text-brand">${featured.featured ? "INSTITUCIONAL ESTÁNDAR" : "PLANTILLA"}</span>
-            ${featured.id === _activeId ? `<span class="material-symbols-outlined" style="color:var(--teal);font-size:20px;font-variation-settings:'FILL' 1">check_circle</span>` : ""}
+            ${featured.id === _activeId ? `<span class="material-symbols-outlined text-xl text-brand" style="font-variation-settings:'FILL' 1">check_circle</span>` : ""}
           </div>
           <h3 class="mb-1.5 text-base font-bold text-app-text">${escapeHtml(featured.name)}</h3>
           <p class="mb-3 text-[12.5px] leading-relaxed text-app-muted">${escapeHtml(featured.description || "")}</p>

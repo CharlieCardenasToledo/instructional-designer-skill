@@ -68,8 +68,8 @@ export function renderSyllabus() {
               const label = w?.title ? escapeHtml(w.title.slice(0, 16) + (w.title.length > 16 ? "…" : "")) : `Semana ${i + 1}`;
               const dotClass = st === "complete" ? "week-tab-dot-ok" : (st === "draft" ? "week-tab-dot-active" : "week-tab-dot-miss");
               const tabClass = i === _activeWeek ? "active" : (st === "complete" ? "complete" : (st === "missing" ? "missing" : ""));
-              const icon = i === _activeWeek ? `<span class="material-symbols-outlined" style="font-size:15px">edit</span>` :
-                           (st === "complete" ? `<span class="material-symbols-outlined" style="font-size:15px;color:var(--green)">check_circle</span>` : "");
+              const icon = i === _activeWeek ? `<span class="material-symbols-outlined text-[15px]">edit</span>` :
+                           (st === "complete" ? `<span class="material-symbols-outlined text-[15px] text-green-500">check_circle</span>` : "");
               return `<button class="week-tab ${tabClass}" data-week="${i}">
                 <span class="week-tab-dot ${dotClass}"></span>
                 Sem ${i + 1}: ${label}
@@ -86,10 +86,10 @@ export function renderSyllabus() {
           <div class="week-form-footer">
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="syl-discard">Descartar cambios</button>
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="syl-save-draft">
-              <span class="material-symbols-outlined" style="font-size:14px">save</span> Guardar borrador
+              <span class="material-symbols-outlined text-sm">save</span> Guardar borrador
             </button>
             <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="syl-mark-complete">
-              <span class="material-symbols-outlined" style="font-size:14px">check_circle</span> Marcar como completa
+              <span class="material-symbols-outlined text-sm">check_circle</span> Marcar como completa
             </button>
           </div>
         </div>
@@ -119,7 +119,7 @@ export function renderSyllabus() {
               const colorMap = { complete: "var(--green)", draft: "var(--teal)", missing: "var(--red)" };
               const labelMap = { complete: "Válida", draft: "Borrador", missing: "Vacía" };
               return `<div class="validation-item ${st} cursor-pointer" data-week-jump="${i}">
-                <span class="material-symbols-outlined" style="font-size:18px;color:${colorMap[st]}">${iconMap[st]}</span>
+              <span class="material-symbols-outlined text-lg" style="color:${colorMap[st]}">${iconMap[st]}</span>
                 <span class="validation-label">${name}</span>
                 <span class="validation-state" style="color:${colorMap[st]}">${labelMap[st]}</span>
               </div>`;
@@ -133,7 +133,7 @@ export function renderSyllabus() {
             ${pct < 100 ? "Completa todas las semanas para generar el documento final." : "¡Sílabo completo! Puedes generar el README."}
           </div>
           <button class="${cx(ui.button.base, pct === 100 ? ui.button.primary : ui.button.secondary, 'w-full')}" id="syl-generate" ${pct < 100 ? "disabled" : ""}>
-            <span class="material-symbols-outlined" style="font-size:15px">markdown</span>
+            <span class="material-symbols-outlined text-[15px]">markdown</span>
             Generar README.md
           </button>
         </div>
