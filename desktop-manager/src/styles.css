@@ -996,54 +996,6 @@ code {
 }
 .syllabus-left { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .syllabus-right { display: flex; flex-direction: column; gap: 12px; }
-.week-tabs-bar {
-  display: flex; gap: 6px; overflow-x: auto;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(195,198,213,0.40);
-  background: rgba(249,249,255,0.60);
-  flex-shrink: 0;
-}
-.week-tab {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; border-radius: 8px;
-  font-size: 12.5px; font-weight: 500;
-  border: 1px solid transparent; cursor: pointer;
-  white-space: nowrap; font-family: var(--font);
-  transition: background 0.12s, border-color 0.12s;
-  background: transparent; color: var(--muted);
-}
-.week-tab:hover { background: rgba(195,198,213,0.20); color: var(--text-2); border-color: rgba(195,198,213,0.40); }
-.week-tab.active { background: rgba(0,49,126,0.08); color: var(--teal); border-color: rgba(0,49,126,0.25); font-weight: 600; }
-.week-tab.complete { color: var(--green); }
-.week-tab.missing { color: var(--red); }
-.week-tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-.week-tab-dot-ok { background: var(--green); }
-.week-tab-dot-active { background: var(--teal); }
-.week-tab-dot-miss { background: rgba(186,26,26,0.50); }
-.week-form-panel {
-  flex: 1; overflow-y: auto; padding: 18px;
-  background: rgba(255,255,255,0.60);
-}
-.week-form-footer {
-  display: flex; gap: 8px; justify-content: flex-end;
-  padding: 12px 16px;
-  border-top: 1px solid rgba(195,198,213,0.30);
-  background: rgba(249,249,255,0.50);
-}
-.validation-panel { padding: 14px; display: flex; flex-direction: column; gap: 8px; }
-.validation-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: 8px;
-  font-size: 12.5px;
-  border: 1px solid rgba(195,198,213,0.40);
-  background: rgba(255,255,255,0.60);
-}
-.validation-item.valid   { border-color: rgba(26,127,75,0.25); background: rgba(26,127,75,0.04); }
-.validation-item.draft   { border-color: rgba(0,49,126,0.20);  background: rgba(0,49,126,0.04); }
-.validation-item.missing { border-color: rgba(186,26,26,0.25); background: rgba(186,26,26,0.04); }
-.validation-label { flex: 1; font-weight: 500; color: var(--text); }
-.validation-state { font-size: 11px; font-weight: 700; }
-
 /* ── Settings page ─────────────────────────────────────────────────────────── */
 .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
 .settings-nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }

@@ -61,17 +61,19 @@ export function renderSyllabus() {
         <div class="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-900/10 bg-white/55 backdrop-blur-xl">
 
           <!-- Week tabs -->
-          <div class="week-tabs-bar">
+          <div class="flex shrink-0 gap-1.5 overflow-x-auto border-b border-slate-300/40 bg-slate-50/60 px-3 py-2.5">
             ${Array.from({ length: weekCount }, (_, i) => {
               const st = statuses[i];
               const w = weeksData[i];
               const label = w?.title ? escapeHtml(w.title.slice(0, 16) + (w.title.length > 16 ? "…" : "")) : `Semana ${i + 1}`;
-              const dotClass = st === "complete" ? "week-tab-dot-ok" : (st === "draft" ? "week-tab-dot-active" : "week-tab-dot-miss");
-              const tabClass = i === _activeWeek ? "active" : (st === "complete" ? "complete" : (st === "missing" ? "missing" : ""));
+              const dotClass = st === "complete" ? "bg-green-500" : (st === "draft" ? "bg-teal-600" : "bg-red-600/50");
+              const tabClass = i === _activeWeek
+                ? "border-brand/25 bg-brand/10 font-semibold text-teal-700"
+                : (st === "complete" ? "text-green-600" : (st === "missing" ? "text-red-600" : "text-app-muted"));
               const icon = i === _activeWeek ? `<span class="material-symbols-outlined text-[15px]">edit</span>` :
                            (st === "complete" ? `<span class="material-symbols-outlined text-[15px] text-green-500">check_circle</span>` : "");
-              return `<button class="week-tab ${tabClass}" data-week="${i}">
-                <span class="week-tab-dot ${dotClass}"></span>
+              return `<button class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-3.5 py-1.5 text-[12.5px] font-medium transition-colors hover:border-slate-300/40 hover:bg-slate-300/20 hover:text-slate-700 ${tabClass}" data-week="${i}">
+                <span class="h-[7px] w-[7px] shrink-0 rounded-full ${dotClass}"></span>
                 Sem ${i + 1}: ${label}
                 ${icon}
               </button>`;
@@ -79,11 +81,11 @@ export function renderSyllabus() {
           </div>
 
           <!-- Active week form -->
-          <div class="week-form-panel" id="syl-week-form">
+          <div class="flex-1 overflow-y-auto bg-white/60 p-[18px]" id="syl-week-form">
             ${renderWeekForm(weeksData[_activeWeek], _activeWeek)}
           </div>
 
-          <div class="week-form-footer">
+          <div class="flex justify-end gap-2 border-t border-slate-300/30 bg-slate-50/50 px-4 py-3">
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="syl-discard">Descartar cambios</button>
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="syl-save-draft">
               <span class="material-symbols-outlined text-sm">save</span> Guardar borrador
@@ -106,7 +108,7 @@ export function renderSyllabus() {
               Validación del sílabo
             </div>
           </div>
-          <div class="validation-panel">
+          <div class="flex flex-col gap-2 p-3.5">
             <div class="mb-1 h-1 w-full overflow-hidden rounded-full bg-slate-300/30">
               <div class="h-full bg-brand transition-[width] duration-500" style="width:${pct}%"></div>
             </div>
@@ -116,12 +118,14 @@ export function renderSyllabus() {
               const w = weeksData[i];
               const name = w?.title ? escapeHtml(w.title.slice(0, 20)) : `Semana ${i + 1}`;
               const iconMap = { complete: "check_circle", draft: "pending", missing: "error" };
-              const colorMap = { complete: "var(--green)", draft: "var(--teal)", missing: "var(--red)" };
               const labelMap = { complete: "Válida", draft: "Borrador", missing: "Vacía" };
-              return `<div class="validation-item ${st} cursor-pointer" data-week-jump="${i}">
-              <span class="material-symbols-outlined text-lg" style="color:${colorMap[st]}">${iconMap[st]}</span>
-                <span class="validation-label">${name}</span>
-                <span class="validation-state" style="color:${colorMap[st]}">${labelMap[st]}</span>
+              const stateClass = st === "complete"
+                ? "border-green-700/25 bg-green-700/[0.04] text-green-700"
+                : (st === "draft" ? "border-brand/20 bg-brand/[0.04] text-teal-700" : "border-red-700/25 bg-red-700/[0.04] text-red-700");
+              return `<div class="flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-[12.5px] ${stateClass}" data-week-jump="${i}">
+              <span class="material-symbols-outlined text-lg">${iconMap[st]}</span>
+                <span class="flex-1 font-medium text-app-text">${name}</span>
+                <span class="text-[11px] font-bold">${labelMap[st]}</span>
               </div>`;
             }).join("")}
           </div>
@@ -142,7 +146,7 @@ export function renderSyllabus() {
   `;
 
   // Bind week tab clicks
-  el.querySelectorAll(".week-tab").forEach(btn => {
+  el.querySelectorAll("[data-week]").forEach(btn => {
     btn.addEventListener("click", () => {
       _activeWeek = Number(btn.dataset.week);
       renderSyllabus();
