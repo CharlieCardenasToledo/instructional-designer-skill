@@ -411,36 +411,6 @@ input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
 input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
 
 /* ── Week accordion ───────────────────────────────────────────────────────── */
-.week-item {
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  margin-bottom: 6px;
-  overflow: hidden;
-  background: var(--glass);
-}
-.week-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-  transition: background 0.1s;
-  user-select: none;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  font-family: var(--font);
-  text-align: left;
-}
-.week-header:hover { background: var(--glass-hover); }
-.week-header .chevron { transition: transform 0.2s; color: var(--dim); }
-.week-header.open .chevron { transform: rotate(180deg); }
-.week-body { display: none; padding: 14px; border-top: 1px solid var(--glass-border); }
-.week-body.open { display: block; }
-
 /* ── Step items ───────────────────────────────────────────────────────────── */
 .step-item {
   display: flex;
