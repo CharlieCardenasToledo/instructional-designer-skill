@@ -94,10 +94,10 @@ export async function renderSettings() {
             </div>
             <div class="flex flex-col gap-1.5">
               <label for="cfg-color">Color institucional</label>
-              <div class="color-picker-row">
+              <div class="mt-0.5 flex items-center gap-2.5">
                 <input id="cfg-color" type="color" value="${escapeHtml(state.config?.color || "#00317e")}">
                 <span class="inline-block h-5 w-5 shrink-0 rounded border border-black/20" id="cfg-color-preview" style="background:${escapeHtml(state.config?.color || "#00317e")}" aria-hidden="true"></span>
-                <span class="color-picker-label" id="cfg-color-label">${escapeHtml(state.config?.color || "#00317e")}</span>
+                <span class="font-mono text-[13px] font-semibold text-teal-700" id="cfg-color-label">${escapeHtml(state.config?.color || "#00317e")}</span>
               </div>
             </div>
             <div class="flex flex-col gap-1.5 sm:col-span-2">
