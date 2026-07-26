@@ -946,12 +946,6 @@ code {
 }
 
 } /* fin de @layer base */
-.palette-url-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-}
-
 .institution-palette:empty {
   display: none;
 }

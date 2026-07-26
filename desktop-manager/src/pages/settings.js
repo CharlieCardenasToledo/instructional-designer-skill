@@ -31,7 +31,7 @@ export async function renderSettings() {
       <h2 class="text-[22px] font-extrabold tracking-tight text-app-text">Configuración</h2>
       <p class="mt-1 text-[13px] text-app-muted">Ajustes institucionales, conexiones, notebooks, entorno y preferencias.</p>
     </div>
-    <div class="settings-layout grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-5 items-start">
+    <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-[220px_1fr]">
 
       <!-- Left nav -->
       <div class="sticky top-0 z-10 self-start">
@@ -102,7 +102,7 @@ export async function renderSettings() {
             </div>
             <div class="flex flex-col gap-1.5 sm:col-span-2">
               <label for="cfg-website">Sitio web institucional</label>
-              <div class="palette-url-row">
+              <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                 <input id="cfg-website" type="url" placeholder="https://www.uide.edu.ec/"
                   value="${escapeHtml(state.config?.website || "")}">
                 <button class="${cx(ui.button.base, ui.button.secondary)}" id="btn-extract-palette" type="button">
