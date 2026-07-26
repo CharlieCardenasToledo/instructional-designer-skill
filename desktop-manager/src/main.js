@@ -76,8 +76,8 @@ function renderShell() {
         </div>
         <div class="flex items-center gap-1">
           <div class="flex items-center gap-1">
-            <button class="win-btn inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-slate-900/5" id="app-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
-            <button class="win-btn win-btn--close inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-red-600 hover:text-white" id="app-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
+            <button class="inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-slate-900/5" id="app-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
+            <button class="inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-red-600 hover:text-white" id="app-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
           </div>
         </div>
       </header>

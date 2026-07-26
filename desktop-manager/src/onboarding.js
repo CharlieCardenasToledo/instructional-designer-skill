@@ -209,8 +209,8 @@ function renderCurrentStep() {
   root.innerHTML = `
     ${onboardingAmbientBackground()}
     <div class="absolute top-3 right-3 flex z-10" data-tauri-drag-region>
-      <button class="win-btn" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
-      <button class="win-btn win-btn--close" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
+      <button class="inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-slate-900/5" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
+      <button class="inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-red-600 hover:text-white" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="relative z-[1] w-full max-w-3xl mx-auto h-full flex flex-col p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
       <div class="flex-1 min-h-0 overflow-y-auto pr-2 flex flex-col items-center ${SCROLL_THIN}">

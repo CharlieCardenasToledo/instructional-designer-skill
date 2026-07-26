@@ -113,18 +113,6 @@ body::after {
 
 #app { display: flex; height: 100vh; }
 
-/* ── Controles de ventana (minimizar/cerrar): sin barra propia, viven en la fila existente de cada vista ── */
-.win-btn {
-  width: 26px; height: 26px; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  border: none; border-radius: 6px; background: transparent; cursor: pointer;
-  color: var(--muted);
-  transition: background .12s, color .12s;
-}
-.win-btn .material-symbols-outlined { font-size: 14px; }
-.win-btn:hover { background: rgba(15,23,42,0.08); color: var(--text); }
-.win-btn--close:hover { background: #e81123; color: #fff; }
-
 /* Navegación del onboarding: controles desnudos y un indicador animado entre pasos. */
 .onboarding-nav-arrow {
   width: 32px;
