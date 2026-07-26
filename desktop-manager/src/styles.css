@@ -1013,33 +1013,6 @@ code {
 .settings-pane-title .material-symbols-outlined { font-size: 20px; color: var(--teal); }
 
 /* ── Docs page ─────────────────────────────────────────────────────────────── */
-.docs-layout { display: grid; grid-template-columns: 260px 1fr 220px; gap: 20px; align-items: start; height: 100%; }
-.docs-nav-panel { display: flex; flex-direction: column; gap: 4px; }
-.docs-nav-category { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--dim); padding: 12px 0 4px; }
-.docs-nav-link {
-  display: block; padding: 6px 12px 6px 20px;
-  font-size: 12.5px; color: var(--muted);
-  border-left: 2px solid transparent; text-decoration: none;
-  transition: color 0.10s, border-color 0.10s, background 0.10s;
-  border-radius: 0 6px 6px 0; cursor: pointer;
-}
-.docs-nav-link:hover { color: var(--teal); background: rgba(0,49,126,0.04); }
-.docs-nav-link.active { color: var(--teal); border-color: var(--teal); background: rgba(0,49,126,0.06); font-weight: 600; }
-.docs-article { display: flex; flex-direction: column; gap: 16px; }
-.docs-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-.docs-breadcrumb .material-symbols-outlined { font-size: 15px; }
-.docs-toc { position: sticky; top: 0; }
-.docs-toc-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--dim); margin-bottom: 10px; }
-.docs-toc-link {
-  display: block; padding: 5px 0 5px 14px;
-  font-size: 12px; color: var(--muted);
-  border-left: 2px solid rgba(195,198,213,0.40);
-  text-decoration: none; transition: color 0.10s, border-color 0.10s;
-  cursor: pointer;
-}
-.docs-toc-link:hover { color: var(--teal); border-color: rgba(0,49,126,0.30); }
-.docs-toc-link.active { color: var(--teal); border-color: var(--teal); font-weight: 600; }
-
 /* ── Empty state (table) ───────────────────────────────────────────────────── */
 .inline-error { margin-top: 10px; padding: 9px 12px; border-radius: 7px; color: var(--red); background: var(--red-bg); border: 1px solid var(--red-border); font-size: 12px; }
 .color-picker-preview { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,.18); display: inline-block; flex: 0 0 20px; }
@@ -1050,7 +1023,6 @@ code {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .syllabus-layout { grid-template-columns: 1fr; }
   .settings-layout { grid-template-columns: 1fr; }
-  .docs-layout { grid-template-columns: 1fr; }
 }
 
 } /* fin de @layer base */
