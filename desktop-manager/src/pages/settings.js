@@ -60,8 +60,8 @@ export async function renderSettings() {
 
         <!-- ── Institutional Profile ── -->
         <section class="settings-pane" id="inst-profile">
-          <div class="settings-pane-title">
-            <span class="material-symbols-outlined">domain</span> Perfil institucional
+          <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
+            <span class="material-symbols-outlined text-xl text-teal-600">domain</span> Perfil institucional
           </div>
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
             <div class="flex flex-col gap-1.5 sm:col-span-2">
@@ -130,8 +130,8 @@ export async function renderSettings() {
 
         <!-- ── Conexiones ── -->
         <section class="settings-pane" id="mcp-config">
-          <div class="settings-pane-title">
-            <span class="material-symbols-outlined">hub</span> Conexiones
+          <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
+            <span class="material-symbols-outlined text-xl text-teal-600">hub</span> Conexiones
             <span id="mcp-status-badge" class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-300/50 bg-slate-200/20 px-2.5 py-0.5 text-[11px] font-bold text-app-muted">
               <span class="inline-block h-1.5 w-1.5 rounded-full bg-current"></span> Verificando…
             </span>
@@ -180,8 +180,8 @@ export async function renderSettings() {
 
         <!-- ── Notebooks ── -->
         <section class="settings-pane" id="notebooks-section">
-          <div class="settings-pane-title">
-            <span class="material-symbols-outlined">menu_book</span> Notebooks de NotebookLM
+          <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
+            <span class="material-symbols-outlined text-xl text-teal-600">menu_book</span> Notebooks de NotebookLM
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-save-notebooks">
               <span class="material-symbols-outlined text-sm">save</span> Guardar registro
             </button>
@@ -232,8 +232,8 @@ export async function renderSettings() {
 
         <!-- ── Environment ── -->
         <section class="settings-pane" id="environment">
-          <div class="settings-pane-title">
-            <span class="material-symbols-outlined">terminal</span> Entorno del sistema
+          <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
+            <span class="material-symbols-outlined text-xl text-teal-600">terminal</span> Entorno del sistema
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-refresh-deps">
               <span class="material-symbols-outlined text-sm">refresh</span> Recargar
             </button>
@@ -251,8 +251,8 @@ export async function renderSettings() {
 
         <!-- ── Preferencias ── -->
         <section class="settings-pane" id="app-prefs">
-          <div class="settings-pane-title">
-            <span class="material-symbols-outlined">tune</span> Preferencias
+          <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
+            <span class="material-symbols-outlined text-xl text-teal-600">tune</span> Preferencias
           </div>
 
           <!-- Skill path -->
