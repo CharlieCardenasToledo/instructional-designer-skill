@@ -110,14 +110,14 @@ export async function renderSettings() {
                   Extraer paleta
                 </button>
               </div>
-              <div class="text-muted mt-1.5 text-[11.5px]">
+              <div class="mt-1.5 text-[11.5px] text-app-muted">
                 Analiza el HTML y las hojas de estilo públicas del sitio.
               </div>
             </div>
             <div id="institution-palette" class="hidden rounded-[10px] border border-slate-300/55 bg-white/50 p-3 sm:col-span-2" aria-live="polite"></div>
           </div>
           <div class="flex flex-col gap-1.5 mb-4">
-            <label for="cfg-ecosystem">Ecosistema digital <span class="text-muted">(uno por línea)</span></label>
+            <label for="cfg-ecosystem">Ecosistema digital <span class="text-app-muted">(uno por línea)</span></label>
             <textarea id="cfg-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${escapeHtml(ecosystemToStr(state.config?.ecosystem))}</textarea>
           </div>
           <div class="row-end">
@@ -209,11 +209,11 @@ export async function renderSettings() {
                 <input id="nb-root" placeholder="01 IFT200">
               </div>
               <div class="flex flex-col gap-1.5">
-                <label for="nb-id">Notebook ID <span class="text-muted">(opcional)</span></label>
+                <label for="nb-id">Notebook ID <span class="text-app-muted">(opcional)</span></label>
                 <input id="nb-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="mono">
               </div>
               <div class="flex flex-col gap-1.5 sm:col-span-2">
-                <label for="nb-url">URL de compartir <span class="text-muted">(opcional)</span></label>
+                <label for="nb-url">URL de compartir <span class="text-app-muted">(opcional)</span></label>
                 <input id="nb-url" placeholder="https://notebooklm.google.com/notebook/…">
               </div>
             </div>
@@ -224,7 +224,7 @@ export async function renderSettings() {
             </div>
           </div>
 
-          <div class="text-muted mt-3 text-[11.5px]">
+          <div class="mt-3 text-[11.5px] text-app-muted">
             El Notebook ID se encuentra en la URL: <code>notebooklm.google.com/notebook/<strong>ID</strong></code>
           </div>
           <div id="notebooks-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
@@ -472,7 +472,7 @@ function renderPalette(container, palette) {
   container.innerHTML = `
     <div class="mb-2.5 flex items-baseline justify-between gap-3 text-xs font-bold">
       <span>Colores encontrados</span>
-      <span class="text-muted">Selecciona uno para usarlo como color institucional</span>
+      <span class="text-app-muted">Selecciona uno para usarlo como color institucional</span>
     </div>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-1.5">
       ${palette.map(({ color, occurrences }) => `

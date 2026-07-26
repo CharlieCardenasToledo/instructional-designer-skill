@@ -189,7 +189,7 @@ function renderWeekForm(weekData, weekIndex) {
         </div>
       </div>
       <div class="flex flex-col gap-1.5">
-        <label>Contenido / Temas <span class="text-muted">(uno por línea)</span></label>
+        <label>Contenido / Temas <span class="text-app-muted">(uno por línea)</span></label>
         <textarea id="wf-topics" class="h-20" placeholder="Tema 1&#10;Tema 2">${escapeHtml(w.topics || "")}</textarea>
       </div>
       <div class="flex flex-col gap-1.5">
@@ -204,14 +204,14 @@ function renderWeekForm(weekData, weekIndex) {
         <label>Horas: docencia / práctica / autónomo</label>
         <div class="row">
           <input id="wf-teaching" class="w-[70px]" type="number" min="0" max="40" value="${Number(w.teaching_hours ?? 2)}">
-          <span class="text-muted">/</span>
+          <span class="text-app-muted">/</span>
           <input id="wf-practice" class="w-[70px]" type="number" min="0" max="40" value="${Number(w.practice_hours ?? 1)}">
-          <span class="text-muted">/</span>
+          <span class="text-app-muted">/</span>
           <input id="wf-autonomous" class="w-[70px]" type="number" min="0" max="40" value="${Number(w.autonomous_hours ?? 4)}">
         </div>
       </div>
       <div class="flex flex-col gap-1.5">
-        <label>Actividad calificada <span class="text-muted">(opcional)</span></label>
+        <label>Actividad calificada <span class="text-app-muted">(opcional)</span></label>
         <input id="wf-activity" placeholder="AC-01 — Taller — 10 puntos" value="${escapeHtml(w.graded_activity || "")}">
       </div>
     </div>`;
