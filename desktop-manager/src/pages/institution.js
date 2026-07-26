@@ -115,15 +115,15 @@ function updatePreview() {
         <div class="latex-cover-subtitle">Introducción al curso</div>
         <div class="latex-cover-meta">
           <div><strong>${escapeHtml(author)}</strong>${degree ? `, ${escapeHtml(degree)}` : ""}</div>
-          <div style="color:#888;font-size:11px">Carrera de ${escapeHtml(career)}</div>
-          <div style="color:#888;font-size:11px">${escapeHtml(faculty)} · ${escapeHtml(inst)}</div>
+          <div class="text-[11px] text-slate-500">Carrera de ${escapeHtml(career)}</div>
+          <div class="text-[11px] text-slate-500">${escapeHtml(faculty)} · ${escapeHtml(inst)}</div>
         </div>
       </div>
     </div>
 
-    <div class="latex-block" style="margin-top:12px">
+    <div class="latex-block mt-3">
       <div class="latex-block-header">
-        <span style="font-size:11px;font-weight:700;color:#666">Preámbulo LaTeX generado</span>
+        <span class="text-[11px] font-bold text-slate-600">Preámbulo LaTeX generado</span>
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.xs)}" id="btn-copy-latex" title="Copiar bloque LaTeX">
           <i data-lucide="clipboard-copy" width="12" height="12"></i> Copiar
         </button>
