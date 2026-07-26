@@ -438,8 +438,6 @@ code {
 .text-sm     { font-size: 12px; }
 .text-xs     { font-size: 11px; }
 .mono        { font-family: 'Cascadia Code', 'Consolas', monospace; }
-.hours-input { width: 84px; }
-
 /* ── Page visibility ──────────────────────────────────────────────────────── */
 .page { display: none; }
 .page.active { display: block; }
@@ -449,15 +447,6 @@ code {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.18); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.28); }
-
-/* ── Summary bar ──────────────────────────────────────────────────────────── */
-.summary-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.summary-count {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--teal);
-  text-shadow: 0 0 20px var(--teal-glow);
-}
 
 /* ── Toast ────────────────────────────────────────────────────────────────── */
 #toast {
