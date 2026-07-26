@@ -580,13 +580,13 @@ function renderNotebookList() {
   if (!list) return;
   const notebooks = getNotebooks();
   if (!notebooks.length) {
-    list.innerHTML = `<div class="empty-state" style="padding:16px 0">Sin notebooks registrados aún.</div>`;
+    list.innerHTML = `<div class="empty-state py-4">Sin notebooks registrados aún.</div>`;
     return;
   }
   list.innerHTML = notebooks.map((nb, i) => `
     <div class="list-item">
       <div class="list-item-left">
-        <span class="material-symbols-outlined" style="font-size:18px;color:var(--teal)">menu_book</span>
+        <span class="material-symbols-outlined text-lg text-brand">menu_book</span>
         <div>
           <div class="list-item-label">${escapeHtml(nb.code)} — ${escapeHtml(nb.courseName)}</div>
           <div class="list-item-sub">${escapeHtml(nb.root)}${nb.notebookId ? ` · ID: ${escapeHtml(nb.notebookId.slice(0,8))}…` : ""}</div>
@@ -594,7 +594,7 @@ function renderNotebookList() {
       </div>
       <div class="list-item-right">
         <button class="${cx(ui.button.base, ui.button.danger, ui.button.xs)}" data-nb-delete="${i}" title="Eliminar notebook">
-          <span class="material-symbols-outlined" style="font-size:13px">delete</span>
+          <span class="material-symbols-outlined text-[13px]">delete</span>
         </button>
       </div>
     </div>`).join("");
@@ -684,7 +684,7 @@ async function loadDeps() {
           </div>
         </div>
         <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm, 'ml-auto')}" id="btn-install-all-deps">
-          <span class="material-symbols-outlined" style="font-size:14px">download</span> Instalar herramientas necesarias
+            <span class="material-symbols-outlined text-sm">download</span> Instalar herramientas necesarias
         </button>
       </div>
       ${deps.map(dep => `
@@ -737,7 +737,7 @@ async function loadDeps() {
     });
 
   } catch (e) {
-    container.innerHTML = `<div style="color:var(--red);padding:20px">Error al cargar: ${escapeHtml(String(e))}</div>`;
+    container.innerHTML = `<div class="p-5 text-red-500">Error al cargar: ${escapeHtml(String(e))}</div>`;
   }
 }
 
