@@ -9,6 +9,7 @@ import { escapeHtml } from "../dom.js";
 import { toast } from "../toast.js";
 import { refreshIcons } from "../icons.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
+import { ui, cx } from "../uiClasses.js";
 
 // "Instalar herramientas necesarias" solo cubre lo indispensable para
 // producir el PDF; Git queda fuera aunque aparezca en la lista de abajo.
@@ -104,7 +105,7 @@ export async function renderSettings() {
               <div class="palette-url-row">
                 <input id="cfg-website" type="url" placeholder="https://www.uide.edu.ec/"
                   value="${escapeHtml(state.config?.website || "")}">
-                <button class="btn btn-secondary" id="btn-extract-palette" type="button">
+                <button class="${cx(ui.button.base, ui.button.secondary)}" id="btn-extract-palette" type="button">
                   <span class="material-symbols-outlined" style="font-size:15px">palette</span>
                   Extraer paleta
                 </button>
@@ -120,7 +121,7 @@ export async function renderSettings() {
             <textarea id="cfg-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${escapeHtml(ecosystemToStr(state.config?.ecosystem))}</textarea>
           </div>
           <div class="row-end">
-            <button class="btn btn-primary" id="btn-save-institution">
+            <button class="${cx(ui.button.base, ui.button.primary)}" id="btn-save-institution">
               <span class="material-symbols-outlined" style="font-size:15px">save</span> Guardar perfil
             </button>
           </div>
@@ -141,13 +142,13 @@ export async function renderSettings() {
             <div>
               <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:600">Conectar con:</div>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-secondary btn-sm mcp-target" data-target="claude-code">
+                <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} mcp-target" data-target="claude-code">
                   <span class="material-symbols-outlined" style="font-size:14px">terminal</span> Proyecto local
                 </button>
-                <button class="btn btn-secondary btn-sm mcp-target" data-target="desktop">
+                <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} mcp-target" data-target="desktop">
                   <span class="material-symbols-outlined" style="font-size:14px">group</span> App de Claude
                 </button>
-                <button class="btn btn-primary btn-sm mcp-target" data-target="both">
+                <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)} mcp-target" data-target="both">
                   <span class="material-symbols-outlined" style="font-size:14px">hub</span> Ambos
                 </button>
               </div>
@@ -166,10 +167,10 @@ export async function renderSettings() {
                 <div id="nlm-auth-status" style="font-size:12px;color:var(--muted);margin-top:3px">Verificando…</div>
               </div>
               <div style="display:flex;gap:8px">
-                <button class="btn btn-secondary btn-sm" id="btn-verify-nlm">
+                <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-verify-nlm">
                   <span class="material-symbols-outlined" style="font-size:14px">refresh</span> Verificar
                 </button>
-                <button class="btn btn-primary btn-sm" id="btn-auth-nlm">
+                <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-auth-nlm">
                   <span class="material-symbols-outlined" style="font-size:14px">key</span> Iniciar sesión
                 </button>
               </div>
@@ -181,7 +182,7 @@ export async function renderSettings() {
         <section class="settings-pane" id="notebooks-section">
           <div class="settings-pane-title">
             <span class="material-symbols-outlined">menu_book</span> Notebooks de NotebookLM
-            <button class="btn btn-secondary btn-sm" id="btn-save-notebooks" style="margin-left:auto">
+            <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-save-notebooks">
               <span class="material-symbols-outlined" style="font-size:14px">save</span> Guardar registro
             </button>
           </div>
@@ -217,7 +218,7 @@ export async function renderSettings() {
               </div>
             </div>
             <div class="row-end">
-              <button class="btn btn-primary btn-sm" id="btn-add-notebook">
+              <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-add-notebook">
                 <span class="material-symbols-outlined" style="font-size:14px">add</span> Registrar
               </button>
             </div>
@@ -233,7 +234,7 @@ export async function renderSettings() {
         <section class="settings-pane" id="environment">
           <div class="settings-pane-title">
             <span class="material-symbols-outlined">terminal</span> Entorno del sistema
-            <button class="btn btn-secondary btn-sm" id="btn-refresh-deps" style="margin-left:auto">
+            <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-refresh-deps">
               <span class="material-symbols-outlined" style="font-size:14px">refresh</span> Recargar
             </button>
           </div>
@@ -266,7 +267,7 @@ export async function renderSettings() {
                 <div style="font-size:13px;font-weight:600;color:var(--text)">Instalar en el proyecto local</div>
                 <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Copia los archivos a <code>~/.claude/skills/</code></div>
               </div>
-              <button class="btn btn-primary btn-sm" id="btn-install-skill">
+              <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-install-skill">
                 <span class="material-symbols-outlined" style="font-size:14px">download</span> Instalar
               </button>
             </div>
@@ -275,7 +276,7 @@ export async function renderSettings() {
                 <div style="font-size:13px;font-weight:600;color:var(--text)">Exportar configuración</div>
                 <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Para instalar manualmente en la app de Claude</div>
               </div>
-              <button class="btn btn-secondary btn-sm" id="btn-export-skill">
+              <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-export-skill">
                 <span class="material-symbols-outlined" style="font-size:14px">archive</span> Exportar ZIP
               </button>
             </div>
@@ -283,7 +284,7 @@ export async function renderSettings() {
               <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Reiniciar configuración</div>
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
                 <div style="font-size:12px;color:var(--muted)">Perderás el progreso configurado y volverás a empezar desde el primer paso.</div>
-                <button class="btn btn-danger btn-sm" id="btn-reset-onboarding">
+                <button class="${cx(ui.button.base, ui.button.danger, ui.button.sm)}" id="btn-reset-onboarding">
                   <span class="material-symbols-outlined" style="font-size:14px">restart_alt</span> Reiniciar
                 </button>
               </div>
@@ -592,7 +593,7 @@ function renderNotebookList() {
         </div>
       </div>
       <div class="list-item-right">
-        <button class="btn btn-danger btn-xs" data-nb-delete="${i}" title="Eliminar notebook">
+        <button class="${cx(ui.button.base, ui.button.danger, ui.button.xs)}" data-nb-delete="${i}" title="Eliminar notebook">
           <span class="material-symbols-outlined" style="font-size:13px">delete</span>
         </button>
       </div>
@@ -685,7 +686,7 @@ async function loadDeps() {
             <div class="progress-fill" style="width:${pct}%"></div>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm" id="btn-install-all-deps" style="margin-left:auto">
+        <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm, 'ml-auto')}" id="btn-install-all-deps">
           <span class="material-symbols-outlined" style="font-size:14px">download</span> Instalar herramientas necesarias
         </button>
       </div>
@@ -700,7 +701,7 @@ async function loadDeps() {
           </div>
           <div class="list-item-right">
             ${!dep.installed
-              ? `<button class="btn btn-secondary btn-sm" data-dep-name="${escapeHtml(dep.name)}">Instalar</button>`
+              ? `<button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-dep-name="${escapeHtml(dep.name)}">Instalar</button>`
               : `<span class="badge badge-success">OK</span>`}
           </div>
         </div>`).join("")}`;
