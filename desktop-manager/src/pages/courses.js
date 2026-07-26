@@ -22,16 +22,16 @@ export function renderCourses() {
     <div class="courses-layout">
 
       <!-- Stats -->
-      <div class="stat-grid grid grid-cols-2 gap-3">
-        <div class="stat-card">
-          <div class="stat-card-label">Asignaturas</div>
-          <div class="stat-card-value">${total}</div>
-          <div class="stat-card-sub">Total registradas</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-xl border border-slate-300/50 bg-white/70 p-4 shadow-[0_2px_8px_rgba(0,49,126,0.05)]">
+          <div class="text-[11px] font-semibold uppercase tracking-wider text-app-muted">Asignaturas</div>
+          <div class="my-1 text-[26px] font-extrabold tracking-tight text-teal-700">${total}</div>
+          <div class="text-[11px] text-app-muted">Total registradas</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Pendientes</div>
-          <div class="stat-card-value">${pending}</div>
-          <div class="stat-card-sub">Sin contenido aún</div>
+        <div class="rounded-xl border border-slate-300/50 bg-white/70 p-4 shadow-[0_2px_8px_rgba(0,49,126,0.05)]">
+          <div class="text-[11px] font-semibold uppercase tracking-wider text-app-muted">Pendientes</div>
+          <div class="my-1 text-[26px] font-extrabold tracking-tight text-teal-700">${pending}</div>
+          <div class="text-[11px] text-app-muted">Sin contenido aún</div>
         </div>
       </div>
 
