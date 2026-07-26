@@ -1094,7 +1094,6 @@ code {
   .nav-item:not(.active) .nav-badge { display: none; }
   .nav-item { justify-content: center; }
   .main { min-height: 100vh; }
-  .form-grid,
   .inst-layout,
   .tpl-layout { grid-template-columns: 1fr; }
   .tpl-layout { height: auto; overflow: visible; }
