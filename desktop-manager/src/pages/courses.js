@@ -68,9 +68,18 @@ export function renderCourses() {
         </table>
         </div>
         ${state.courses.length === 0 ? `
-          <div class="table-empty">
-            <span class="material-symbols-outlined">school</span>
-            No hay asignaturas aún. Haz clic en "Nueva asignatura" para comenzar.
+          <div class="table-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center">
+            <div style="width:64px;height:64px;border-radius:50%;background:rgba(0,121,107,0.08);color:var(--teal);display:flex;align-items:center;justify-content:center;margin-bottom:16px;border:1px solid rgba(0,121,107,0.2)">
+              <span class="material-symbols-outlined" style="font-size:32px">school</span>
+            </div>
+            <h3 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Aún no tienes asignaturas</h3>
+            <p style="font-size:13px;color:var(--muted);max-width:380px;margin-bottom:20px;line-height:1.5">
+              Crea tu primera asignatura para estructurar sílabos, contenidos semanales y guías instruccionales en PDF.
+            </p>
+            <button class="btn btn-primary" id="btn-empty-new-course">
+              <span class="material-symbols-outlined" style="font-size:16px">add</span>
+              Nueva asignatura
+            </button>
           </div>` : ""}
         <div class="pagination">
           <span>${filteredCourses().length} de ${total} asignaturas</span>
@@ -92,6 +101,7 @@ export function renderCourses() {
   });
 
   document.getElementById("btn-new-course")?.addEventListener("click", openModal);
+  document.getElementById("btn-empty-new-course")?.addEventListener("click", openModal);
 
   document.getElementById("course-modal")?.addEventListener("click", e => {
     if (e.target.id === "course-modal") closeModal();

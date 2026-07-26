@@ -39,7 +39,7 @@ function renderShell() {
       </div>
 
       <div class="sidebar-cta">
-        <button class="btn btn-primary btn-sm" data-page="courses" style="width:100%;justify-content:center">
+        <button class="btn btn-ghost btn-sm text-xs" data-page="courses" style="width:100%;justify-content:center;border:1px dashed rgba(195,198,213,0.6)">
           <span class="material-symbols-outlined" style="font-size:15px">add</span>
           Nueva asignatura
         </button>

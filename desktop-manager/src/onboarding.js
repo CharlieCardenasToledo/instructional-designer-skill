@@ -298,6 +298,11 @@ function setFooter(label, action = "advance", disabled = false) {
 
 function renderBottomNav(current) {
   const canBack = current > 1;
+  const skipLink = current >= 2
+    ? `<button type="button" class="mt-3 text-[11px] text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline border-0 bg-transparent cursor-pointer transition-colors" data-onboarding-action="skip-onboarding" title="Saltar el asistente de configuración">
+        Saltar configuración y acceder al dashboard →
+      </button>`
+    : "";
   return `<div class="flex flex-col items-center pt-2 flex-shrink-0">
     <div id="onboarding-operation-status" class="h-5 mb-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-gray-500 transition-opacity ${onboardingActionInFlight ? "opacity-100" : "opacity-0"}" role="status" aria-live="polite" aria-atomic="true">
       <span class="material-symbols-outlined text-[13px] animate-spin">progress_activity</span>
@@ -308,8 +313,10 @@ function renderBottomNav(current) {
       <div class="onboarding-progress relative flex items-center gap-1.5">${progressDots(current)}</div>
       <button type="button" class="h-10 pl-4 pr-3 rounded-full bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1 border-0 cursor-pointer" data-onboarding-action="${footerConfig.action}" ${footerConfig.disabled ? "disabled" : ""}><span>${escapeHtml(footerConfig.label)}</span>${ic("chevron-right", 16)}</button>
     </div>
+    ${skipLink}
   </div>`;
 }
+
 
 function syncOnboardingBusyState() {
   const root = document.getElementById("onboarding-root");
@@ -1600,6 +1607,14 @@ async function performAction(action, current) {
     const ready = targetReady(target);
     if (!ready) { document.getElementById("onb-target-message").hidden = false; document.getElementById("onb-target-message").textContent = "Completa las acciones del destino y vuelve a verificar."; return; }
     return advance(current, target);
+  }
+  if (action === "skip-onboarding") {
+    await goToOnboardingStep(5);
+    const result = await completeOnboarding();
+    toast("Saltando asistente...", "info", 3000);
+    document.getElementById("onboarding-root")?.remove();
+    window.location.reload();
+    return;
   }
   if (action === "complete") {
     const result = await completeOnboarding();

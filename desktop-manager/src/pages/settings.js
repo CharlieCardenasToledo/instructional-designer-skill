@@ -33,8 +33,8 @@ export async function renderSettings() {
     <div class="settings-layout grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-5 items-start">
 
       <!-- Left nav -->
-      <div>
-        <div class="glass-pane flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible" style="padding:8px;position:sticky;top:0">
+      <div style="align-self:start;position:sticky;top:0;z-index:10">
+        <div class="glass-pane flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible" style="padding:8px">
           <a class="settings-nav-item active w-auto shrink-0 lg:w-full" data-section="inst-profile" href="#inst-profile">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
@@ -51,10 +51,10 @@ export async function renderSettings() {
             <span class="material-symbols-outlined">tune</span> Preferencias
           </a>
         </div>
-      </div>
 
       <!-- Right panes -->
       <div class="settings-panes">
+
 
         <!-- ── Institutional Profile ── -->
         <section class="settings-pane" id="inst-profile">
