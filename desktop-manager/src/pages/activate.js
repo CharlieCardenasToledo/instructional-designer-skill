@@ -17,7 +17,7 @@ import { ic, refreshIcons } from "../icons.js";
 export async function renderActivate() {
   const container = document.getElementById("activate-steps");
   if (!container) return;
-  container.innerHTML = `<div class="text-muted loading-row">${ic("loader-2")} Verificando estado…</div>`;
+  container.innerHTML = `<div class="py-3 text-xs leading-relaxed text-app-muted">${ic("loader-2")} Verificando estado…</div>`;
   refreshIcons();
 
   let status = {
@@ -63,7 +63,7 @@ export async function renderActivate() {
     && auth.authenticated;
   document.getElementById("activate-status").innerHTML = requiredReady
     ? `<div class="mb-3.5 rounded-app border border-teal-600/25 bg-teal-600/[0.08] px-3.5 py-2.5 text-xs leading-relaxed text-app-text-2">${ic("check-circle-2", 14)} <strong class="text-teal-700">Base preparada.</strong> Reinicia el cliente donde configuraste MCP.</div>`
-    : `<div class="text-muted status-note">${ic("info", 13)} Claude/Cowork usa el ZIP; Claude Code usa la instalación local. Elige solo los destinos que necesites.</div>`;
+    : `<div class="mt-2 text-xs leading-relaxed text-app-muted">${ic("info", 13)} Claude/Cowork usa el ZIP; Claude Code usa la instalación local. Elige solo los destinos que necesites.</div>`;
   refreshIcons();
 }
 

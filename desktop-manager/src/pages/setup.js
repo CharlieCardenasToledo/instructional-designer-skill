@@ -12,7 +12,7 @@ export async function renderSetup() {
   const list = document.getElementById("dep-list");
   if (!list) return;
 
-  list.innerHTML = `<div class="text-muted loading-row">${ic("loader-2")} Verificando dependencias del sistema…</div>`;
+  list.innerHTML = `<div class="py-3 text-xs leading-relaxed text-app-muted">${ic("loader-2")} Verificando dependencias del sistema…</div>`;
   refreshIcons();
 
   try {
