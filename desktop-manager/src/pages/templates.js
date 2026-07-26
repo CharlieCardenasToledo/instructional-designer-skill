@@ -82,11 +82,11 @@ function renderBento(filter) {
     <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-[18px] shadow-glass backdrop-blur-xl col-span-1 md:col-span-2 xl:col-span-8 flex flex-col gap-[18px] sm:flex-row relative overflow-hidden">
       <div class="pointer-events-none absolute inset-0 bg-brand-soft"></div>
       <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg border border-slate-300/50 bg-white sm:w-[45%]">
-        <div style="padding:12px;font-size:10px;color:#374151;line-height:1.5;transform:scale(0.62);transform-origin:top left;width:161%;pointer-events:none">
-          <h1 style="font-weight:700;font-size:14px;margin-bottom:8px;border-bottom:1px solid #e5e7eb;padding-bottom:6px">${escapeHtml(featured.name)}</h1>
-          <p style="margin-bottom:10px;color:#666">${escapeHtml(featured.description?.slice(0, 80) || "")}</p>
-          <h2 style="font-size:12px;font-weight:600;margin-bottom:6px">1. Objetivos del curso</h2>
-          <ul style="padding-left:14px;margin-bottom:8px"><li>Análisis de complejidad</li><li>Estructuras avanzadas</li></ul>
+        <div class="pointer-events-none w-[161%] origin-top-left scale-[.62] p-3 text-[10px] leading-relaxed text-slate-700">
+          <h1 class="mb-2 border-b border-slate-200 pb-1.5 text-sm font-bold">${escapeHtml(featured.name)}</h1>
+          <p class="mb-2.5 text-slate-500">${escapeHtml(featured.description?.slice(0, 80) || "")}</p>
+          <h2 class="mb-1.5 text-xs font-semibold">1. Objetivos del curso</h2>
+          <ul class="mb-2 pl-3.5"><li>Análisis de complejidad</li><li>Estructuras avanzadas</li></ul>
         </div>
       </div>
       <div class="relative flex flex-1 flex-col justify-between">
@@ -113,9 +113,9 @@ function renderBento(filter) {
     ${secondary ? `
     <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 shadow-glass backdrop-blur-xl col-span-1 xl:col-span-4 flex flex-col justify-between">
       <div>
-        <div style="width:100%;aspect-ratio:16/9;border-radius:8px;border:1px solid rgba(195,198,213,0.40);background:white;overflow:hidden;margin-bottom:12px;padding:10px;font-size:10px;color:#374151;line-height:1.5">
-          <div style="font-weight:700;text-align:center;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:8px">${escapeHtml(secondary.name)}</div>
-          <div style="text-align:center;color:#666;font-style:italic;margin-bottom:10px">Docente: …</div>
+        <div class="mb-3 aspect-video w-full overflow-hidden rounded-lg border border-slate-300/40 bg-white p-2.5 text-[10px] leading-relaxed text-slate-700">
+          <div class="mb-2 border-b border-slate-200 pb-1.5 text-center font-bold">${escapeHtml(secondary.name)}</div>
+          <div class="mb-2.5 text-center italic text-slate-500">Docente: …</div>
           <div>${escapeHtml(secondary.description?.slice(0, 60) || "")}</div>
         </div>
         <h3 class="mb-1.5 text-[13.5px] font-bold text-app-text">${escapeHtml(secondary.name)}</h3>
