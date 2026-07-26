@@ -106,15 +106,15 @@ export async function renderSettings() {
                 <input id="cfg-website" type="url" placeholder="https://www.uide.edu.ec/"
                   value="${escapeHtml(state.config?.website || "")}">
                 <button class="${cx(ui.button.base, ui.button.secondary)}" id="btn-extract-palette" type="button">
-                  <span class="material-symbols-outlined" style="font-size:15px">palette</span>
+                  <span class="material-symbols-outlined text-[15px]">palette</span>
                   Extraer paleta
                 </button>
               </div>
-              <div class="text-muted" style="font-size:11.5px;margin-top:6px">
+              <div class="text-muted mt-1.5 text-[11.5px]">
                 Analiza el HTML y las hojas de estilo públicas del sitio.
               </div>
             </div>
-            <div id="institution-palette" class="institution-palette" style="grid-column:1/-1" aria-live="polite"></div>
+            <div id="institution-palette" class="institution-palette sm:col-span-2" aria-live="polite"></div>
           </div>
           <div class="flex flex-col gap-1.5 mb-4">
             <label for="cfg-ecosystem">Ecosistema digital <span class="text-muted">(uno por línea)</span></label>
@@ -122,7 +122,7 @@ export async function renderSettings() {
           </div>
           <div class="row-end">
             <button class="${cx(ui.button.base, ui.button.primary)}" id="btn-save-institution">
-              <span class="material-symbols-outlined" style="font-size:15px">save</span> Guardar perfil
+              <span class="material-symbols-outlined text-[15px]">save</span> Guardar perfil
             </button>
           </div>
           <div id="institution-inline-error" class="inline-error" role="alert" hidden></div>
@@ -143,13 +143,13 @@ export async function renderSettings() {
               <div class="mb-2 text-[11.5px] font-semibold text-app-muted">Conectar con:</div>
               <div class="flex flex-wrap gap-2">
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} mcp-target" data-target="claude-code">
-                  <span class="material-symbols-outlined" style="font-size:14px">terminal</span> Proyecto local
+                  <span class="material-symbols-outlined text-sm">terminal</span> Proyecto local
                 </button>
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} mcp-target" data-target="desktop">
-                  <span class="material-symbols-outlined" style="font-size:14px">group</span> App de Claude
+                  <span class="material-symbols-outlined text-sm">group</span> App de Claude
                 </button>
                 <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)} mcp-target" data-target="both">
-                  <span class="material-symbols-outlined" style="font-size:14px">hub</span> Ambos
+                  <span class="material-symbols-outlined text-sm">hub</span> Ambos
                 </button>
               </div>
             </div>
@@ -168,10 +168,10 @@ export async function renderSettings() {
               </div>
               <div class="flex gap-2">
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-verify-nlm">
-                  <span class="material-symbols-outlined" style="font-size:14px">refresh</span> Verificar
+                  <span class="material-symbols-outlined text-sm">refresh</span> Verificar
                 </button>
                 <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-auth-nlm">
-                  <span class="material-symbols-outlined" style="font-size:14px">key</span> Iniciar sesión
+                  <span class="material-symbols-outlined text-sm">key</span> Iniciar sesión
                 </button>
               </div>
             </div>
@@ -183,7 +183,7 @@ export async function renderSettings() {
           <div class="settings-pane-title">
             <span class="material-symbols-outlined">menu_book</span> Notebooks de NotebookLM
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-save-notebooks">
-              <span class="material-symbols-outlined" style="font-size:14px">save</span> Guardar registro
+              <span class="material-symbols-outlined text-sm">save</span> Guardar registro
             </button>
           </div>
 
@@ -219,7 +219,7 @@ export async function renderSettings() {
             </div>
             <div class="row-end">
               <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-add-notebook">
-                <span class="material-symbols-outlined" style="font-size:14px">add</span> Registrar
+                <span class="material-symbols-outlined text-sm">add</span> Registrar
               </button>
             </div>
           </div>
@@ -235,7 +235,7 @@ export async function renderSettings() {
           <div class="settings-pane-title">
             <span class="material-symbols-outlined">terminal</span> Entorno del sistema
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-refresh-deps">
-              <span class="material-symbols-outlined" style="font-size:14px">refresh</span> Recargar
+              <span class="material-symbols-outlined text-sm">refresh</span> Recargar
             </button>
           </div>
 
@@ -268,7 +268,7 @@ export async function renderSettings() {
                 <div class="mt-0.5 text-[11.5px] text-app-muted">Copia los archivos a <code>~/.claude/skills/</code></div>
               </div>
               <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-install-skill">
-                <span class="material-symbols-outlined" style="font-size:14px">download</span> Instalar
+                <span class="material-symbols-outlined text-sm">download</span> Instalar
               </button>
             </div>
             <div class="flex items-center justify-between rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
@@ -277,15 +277,15 @@ export async function renderSettings() {
                 <div class="mt-0.5 text-[11.5px] text-app-muted">Para instalar manualmente en la app de Claude</div>
               </div>
               <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-export-skill">
-                <span class="material-symbols-outlined" style="font-size:14px">archive</span> Exportar ZIP
+                <span class="material-symbols-outlined text-sm">archive</span> Exportar ZIP
               </button>
             </div>
-            <div style="padding:12px 14px;border:1px solid rgba(186,26,26,0.20);border-radius:9px;background:rgba(186,26,26,0.04)">
-              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px">Reiniciar configuración</div>
-              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                <div style="font-size:12px;color:var(--muted)">Perderás el progreso configurado y volverás a empezar desde el primer paso.</div>
+            <div class="rounded-lg border border-red-200 bg-red-50/40 px-3.5 py-3">
+              <div class="mb-1.5 text-[13px] font-semibold text-app-text">Reiniciar configuración</div>
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="text-xs text-app-muted">Perderás el progreso configurado y volverás a empezar desde el primer paso.</div>
                 <button class="${cx(ui.button.base, ui.button.danger, ui.button.sm)}" id="btn-reset-onboarding">
-                  <span class="material-symbols-outlined" style="font-size:14px">restart_alt</span> Reiniciar
+                  <span class="material-symbols-outlined text-sm">restart_alt</span> Reiniciar
                 </button>
               </div>
             </div>
