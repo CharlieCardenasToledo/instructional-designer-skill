@@ -90,8 +90,8 @@ export function renderCourses() {
     </div>
 
     <!-- Modal -->
-    <div class="modal-overlay hidden" id="course-modal">
-      <div class="modal-box" id="course-modal-box"></div>
+    <div class="fixed inset-0 z-[5000] hidden items-center justify-center bg-slate-900/45 p-6 backdrop-blur-[6px]" id="course-modal">
+      <div class="max-h-[calc(100vh-48px)] w-full max-w-[640px] overflow-y-auto rounded-2xl border border-slate-300/60 bg-white/95 shadow-2xl backdrop-blur-2xl" id="course-modal-box"></div>
     </div>
   `;
 
@@ -215,18 +215,18 @@ function renderModal() {
 
   if (_modalStep === 1) {
     box.innerHTML = `
-      <div class="modal-header">
+      <div class="flex items-center justify-between border-b border-slate-300/40 px-6 pb-3.5 pt-[18px]">
         <div>
-          <div class="modal-title">Nueva asignatura</div>
+          <div class="text-base font-bold text-app-text">Nueva asignatura</div>
           <div class="mt-0.5 text-[11px] text-app-muted">Paso 1 de 2 — Información general</div>
         </div>
-        <div class="modal-steps">
-          <div class="modal-step active">1</div>
-          <div class="modal-step-line"></div>
-          <div class="modal-step">2</div>
+        <div class="flex items-center gap-1.5">
+          <div class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-brand bg-brand text-[11px] font-bold text-white">1</div>
+          <div class="h-px w-6 bg-slate-300/50"></div>
+          <div class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-slate-300/60 text-[11px] font-bold text-app-muted">2</div>
         </div>
       </div>
-      <div class="modal-body">
+      <div class="p-5 px-6">
         <div id="course-modal-error" class="inline-error" role="alert" hidden></div>
         <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5 sm:col-span-2">
@@ -259,7 +259,7 @@ function renderModal() {
           </div>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="flex items-center justify-between rounded-b-2xl border-t border-slate-300/40 bg-slate-100/50 px-6 py-3.5">
         <button class="${cx(ui.button.base, ui.button.secondary)}" id="m-cancel">Cancelar</button>
         <button class="${cx(ui.button.base, ui.button.primary)}" id="m-next">
           Siguiente <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -289,20 +289,20 @@ function renderModal() {
     const weeks = _modalData.weeks;
     const weekFolders = Array.from({ length: Math.min(weeks, 6) }, (_, i) => `/week-${String(i + 1).padStart(2, "0")}/`);
     box.innerHTML = `
-      <div class="modal-header">
+      <div class="flex items-center justify-between border-b border-slate-300/40 px-6 pb-3.5 pt-[18px]">
         <div>
-          <div class="modal-title">Nueva asignatura</div>
+          <div class="text-base font-bold text-app-text">Nueva asignatura</div>
           <div class="mt-0.5 text-[11px] text-app-muted">Paso 2 de 2 — Estructura de carpetas</div>
         </div>
-        <div class="modal-steps">
-          <div class="modal-step done">
+        <div class="flex items-center gap-1.5">
+          <div class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-green-500 bg-green-500 text-[11px] font-bold text-white">
             <span class="material-symbols-outlined text-[13px]">check</span>
           </div>
-          <div class="modal-step-line bg-brand"></div>
-          <div class="modal-step active">2</div>
+          <div class="h-px w-6 bg-brand"></div>
+          <div class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-brand bg-brand text-[11px] font-bold text-white">2</div>
         </div>
       </div>
-      <div class="modal-body">
+      <div class="p-5 px-6">
         <div class="rounded-app border border-slate-900/10 bg-white/55 p-3.5 mb-4 backdrop-blur-xl">
           <div class="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-app-muted">Vista previa de carpetas</div>
           <div class="flex flex-col gap-1.5">
@@ -325,7 +325,7 @@ function renderModal() {
           </div>
         </label>
       </div>
-      <div class="modal-footer">
+      <div class="flex items-center justify-between rounded-b-2xl border-t border-slate-300/40 bg-slate-100/50 px-6 py-3.5">
         <button class="${cx(ui.button.base, ui.button.secondary)}" id="m-back">
           <span class="material-symbols-outlined text-[15px]">arrow_back</span> Atrás
         </button>

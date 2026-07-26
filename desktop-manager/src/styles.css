@@ -989,48 +989,6 @@ code {
 .status-active { background: rgba(26,127,75,0.08); color: var(--green); border: 1px solid rgba(26,127,75,0.25); }
 .status-draft  { background: rgba(0,49,126,0.06);  color: var(--teal);  border: 1px solid rgba(0,49,126,0.18); }
 
-/* ── Modal overlay ─────────────────────────────────────────────────────────── */
-.modal-overlay {
-  position: fixed; inset: 0; z-index: 5000;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(17,28,45,0.45);
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  padding: 24px;
-}
-.modal-overlay.hidden { display: none; }
-.modal-box {
-  width: min(100%, 640px); max-height: calc(100vh - 48px);
-  overflow-y: auto; background: rgba(249,249,255,0.97);
-  border: 1px solid rgba(195,198,213,0.60);
-  border-radius: 16px;
-  box-shadow: 0 24px 80px rgba(0,49,126,0.18);
-  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-}
-.modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 24px 14px;
-  border-bottom: 1px solid rgba(195,198,213,0.40);
-}
-.modal-title { font-size: 16px; font-weight: 700; color: var(--text); }
-.modal-steps { display: flex; align-items: center; gap: 6px; }
-.modal-step {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%;
-  font-size: 11px; font-weight: 700; border: 1.5px solid rgba(195,198,213,0.60);
-  color: var(--muted); background: transparent;
-}
-.modal-step.active { background: var(--teal); border-color: var(--teal); color: #fff; }
-.modal-step.done { background: var(--green); border-color: var(--green); color: #fff; }
-.modal-step-line { width: 24px; height: 1px; background: rgba(195,198,213,0.50); }
-.modal-body { padding: 20px 24px; }
-.modal-footer {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 24px;
-  border-top: 1px solid rgba(195,198,213,0.40);
-  background: rgba(240,243,255,0.50);
-  border-radius: 0 0 16px 16px;
-}
-
 /* ── Syllabus editor ───────────────────────────────────────────────────────── */
 .syllabus-layout {
   display: grid; grid-template-columns: 1fr 300px;
