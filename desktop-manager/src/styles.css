@@ -936,7 +936,6 @@ code {
 .syllabus-left { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .syllabus-right { display: flex; flex-direction: column; gap: 12px; }
 /* ── Settings page ─────────────────────────────────────────────────────────── */
-.settings-nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }
 /* ── Docs page ─────────────────────────────────────────────────────────────── */
 /* ── Empty state (table) ───────────────────────────────────────────────────── */
 
