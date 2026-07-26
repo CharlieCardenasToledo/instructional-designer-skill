@@ -543,7 +543,7 @@ async function loadMcpStatus() {
     badge.style.background = mcpOk ? "rgba(26,127,75,0.08)" : "rgba(186,26,26,0.08)";
     badge.style.color      = mcpOk ? "var(--green)"          : "var(--red)";
     badge.style.border     = mcpOk ? "1px solid rgba(26,127,75,0.20)" : "1px solid rgba(186,26,26,0.20)";
-    badge.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span> ${mcpOk ? "Configurado" : "Sin configurar"}`;
+    badge.innerHTML = `<span class="inline-block h-1.5 w-1.5 rounded-full bg-current"></span> ${mcpOk ? "Configurado" : "Sin configurar"}`;
   } catch {
     badge.textContent = "—";
   }

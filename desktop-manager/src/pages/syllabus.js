@@ -107,8 +107,8 @@ export function renderSyllabus() {
             </div>
           </div>
           <div class="validation-panel">
-            <div style="width:100%;height:4px;background:rgba(195,198,213,0.30);border-radius:99px;overflow:hidden;margin-bottom:4px">
-              <div style="height:100%;background:var(--teal);width:${pct}%;transition:width 0.4s"></div>
+            <div class="mb-1 h-1 w-full overflow-hidden rounded-full bg-slate-300/30">
+              <div class="h-full bg-brand transition-[width] duration-500" style="width:${pct}%"></div>
             </div>
             <div class="mb-2 text-right text-[11.5px] text-app-muted">${pct}% completo (${complete}/${weekCount} semanas)</div>
             ${Array.from({ length: weekCount }, (_, i) => {
@@ -129,7 +129,7 @@ export function renderSyllabus() {
 
         <!-- Action panel -->
         <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 flex flex-col gap-3 shadow-glass backdrop-blur-xl">
-          <div style="font-size:12.5px;color:var(--muted);text-align:center">
+          <div class="text-center text-[12.5px] text-app-muted">
             ${pct < 100 ? "Completa todas las semanas para generar el documento final." : "¡Sílabo completo! Puedes generar el README."}
           </div>
           <button class="${cx(ui.button.base, pct === 100 ? ui.button.primary : ui.button.secondary, 'w-full')}" id="syl-generate" ${pct < 100 ? "disabled" : ""}>
