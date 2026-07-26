@@ -26,7 +26,6 @@ import { escapeHtml } from "./dom.js";
 import { state, saveConfig } from "./state.js";
 import { toast } from "./toast.js";
 import { ic, refreshIcons } from "./icons.js";
-import { renderTemplatePreview } from "./templatePreview.js";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { ThinkingOrb } from "thinking-orbs";
@@ -47,11 +46,11 @@ import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 const TOTAL_STEPS = 5;
 const LARGE_DEPENDENCIES = new Set(["Compilador LaTeX"]);
 const STEP_META = [
-  { title: "Del sílabo a una guía lista para publicar", subtitle: "Genera guías en PDF con tu identidad institucional, a partir de tus propias fuentes.", icon: "graduation-cap" },
-  { title: "Herramientas necesarias", subtitle: "La app instala automáticamente lo que falte.", icon: "terminal" },
-  { title: "Tu institución y tu perfil", subtitle: "Identidad, autoría y sistema editorial de tus publicaciones.", icon: "building-2" },
-  { title: "Conectar Google y Claude", subtitle: "Evidencia verificable y el destino donde producirás tus cursos.", icon: "notebook" },
-  { title: "Prueba de producción", subtitle: "Generamos una muestra para validar el sistema completo.", icon: "check-circle-2" },
+  { title: "Bienvenida", subtitle: "Convierte el sílabo de tu curso en guías semanales en PDF.", icon: "graduation-cap" },
+  { title: "Requisitos", subtitle: "Instalamos automáticamente lo que falte.", icon: "terminal" },
+  { title: "Tu perfil", subtitle: "Institución, autoría y plantilla de tus documentos.", icon: "building-2" },
+  { title: "Conexión", subtitle: "Verifica tu sesión de Google y elige dónde vas a trabajar.", icon: "notebook" },
+  { title: "Prueba final", subtitle: "Generamos un documento de muestra para confirmar que todo funciona.", icon: "check-circle-2" },
 ];
 let runtime = {
   status: null,
@@ -378,10 +377,10 @@ function actionBusyMessage(action, current) {
     "start-auth": "Abriendo el inicio de sesión de Google…",
     "verify-auth": "Verificando la sesión de NotebookLM…",
     "save-profile-and-template": "Guardando tu institución, perfil y plantilla…",
-    "export-zip": "Exportando el archivo de la skill…",
-    "install-local": "Instalando la skill en Claude Code…",
-    "configure-code": "Conectando la skill con Claude Code…",
-    "configure-desktop": "Conectando la skill con Claude Desktop…",
+    "export-zip": "Exportando el archivo…",
+    "install-local": "Instalando en tu proyecto local…",
+    "configure-code": "Conectando tu proyecto local…",
+    "configure-desktop": "Conectando la app de Claude…",
     "advance-target": "Comprobando el destino seleccionado…",
     complete: "Finalizando la configuración…",
   };
@@ -398,7 +397,7 @@ function loadingStep(step) {
     2: "Verificando las herramientas de producción…",
     3: "Preparando tu institución, perfil y plantillas…",
     4: "Comprobando NotebookLM y tu destino de producción…",
-    5: "Preparando la prueba de producción…",
+    5: "Preparando la prueba final…",
   };
   setFooter("Preparando el siguiente paso", "advance", true);
   return `<section class="flex flex-col items-center justify-center py-10" aria-live="polite">
@@ -428,8 +427,8 @@ function stepperDotFor(track, step) {
 }
 
 // El mismo gusanito recorriendo una pista de puntos, pero parametrizado por
-// los elementos concretos: lo reutiliza tanto el stepper de los 10 pasos
-// del onboarding como el mini-stepper de herramientas dentro del paso 4.
+// los elementos concretos: lo reutiliza tanto el stepper de los 5 pasos
+// del onboarding como el mini-stepper de herramientas dentro del paso 2.
 function animateDotWorm(track, origin, destination) {
   if (!track || !origin || !destination || origin === destination || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return Promise.resolve();
@@ -722,11 +721,10 @@ function welcomeStep() {
     </details>`;
 
   return `<section>
-    <p class="${CARD_LEAD} !max-w-xl">Configura una <strong>skill de producción editorial académica</strong> que transforma el sílabo de tu materia en guías semanales coherentes, documentadas y listas para publicar.</p>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto mb-3">
-      ${feature("brain-circuit", "Estructura pedagógica", "Alinea resultados, actividades, evaluación y contenidos en una secuencia autoinstruccional.")}
-      ${feature("quote", "Evidencia académica", "Contrasta afirmaciones y referencias con las fuentes autorizadas para tu curso.")}
-      ${feature("layout-template", "Publicación profesional", "Produce materiales modulares con identidad institucional y salida PDF validada.")}
+      ${feature("brain-circuit", "Convierte tu sílabo", "Sube el sílabo de tu materia y quedará estructurado como guía.")}
+      ${feature("layout-template", "Organiza por semanas", "Cada semana queda con sus temas, actividades y bibliografía.")}
+      ${feature("quote", "Genera el PDF", "Descarga la guía lista para publicar, con tu identidad institucional.")}
     </div>
 
     ${disclosure("Ver cómo funciona el sistema", `
@@ -937,9 +935,9 @@ function connectStep() {
   // título visible pasa de nombres de producto a lenguaje de tarea, para
   // usuario final que no necesita saber qué es "Claude Code" de antemano.
   const targets = [
-    { id: "claude-code",    title: "Trabajar en proyectos locales", icon: "terminal",        desc: "Usa la skill directamente en Claude Code, con archivos y validaciones en tu proyecto." },
-    { id: "claude-cowork",  title: "Usar en la app de Claude",      icon: "desktop_windows",  desc: "Flujo visual en Claude Desktop / Cowork mediante un archivo de skill exportado." },
-    { id: "both",           title: "Usar en ambos lugares",         icon: "devices",          desc: "Combina Claude Code y Claude Desktop." },
+    { id: "claude-code",    title: "Trabajar en proyectos locales", icon: "terminal",        desc: "Trabaja con los archivos de tu proyecto, con validaciones automáticas." },
+    { id: "claude-cowork",  title: "Usar en la app de Claude",      icon: "desktop_windows",  desc: "Flujo visual dentro de la app, sin tocar archivos ni terminal." },
+    { id: "both",           title: "Usar en ambos lugares",         icon: "devices",          desc: "Combina el proyecto local y la app de Claude." },
   ];
 
   // Checklist de pasos para el destino seleccionado
@@ -955,26 +953,26 @@ function connectStep() {
   let actions   = "";
 
   if (selected === "claude-code") {
-    checklist = checkItem("Skill instalada", setup.skill_installed) +
+    checklist = checkItem("Instalado localmente", setup.skill_installed) +
                 checkItem("Proyecto local conectado", setup.mcp_claude_code_configured);
     allReady  = !!(setup.skill_installed && setup.mcp_claude_code_configured);
-    actions   = actionButton("1. Instalar skill", "install-local", setup.skill_installed, true) +
+    actions   = actionButton("1. Instalar", "install-local", setup.skill_installed, true) +
                 actionButton("2. Conectar proyecto local", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true);
 
   } else if (selected === "claude-cowork") {
-    checklist = checkItem("Archivo de la skill exportado", zipOk) +
+    checklist = checkItem("Archivo exportado", zipOk) +
                 checkItem("App de Claude conectada", setup.mcp_desktop_configured);
     allReady  = !!(zipOk && setup.mcp_desktop_configured);
-    actions   = actionButton("1. Exportar archivo de la skill", "export-zip", zipOk, true) +
+    actions   = actionButton("1. Exportar archivo", "export-zip", zipOk, true) +
                 actionButton("2. Conectar app de Claude", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
 
   } else { // both
-    checklist = checkItem("Skill instalada", setup.skill_installed) +
+    checklist = checkItem("Instalado localmente", setup.skill_installed) +
                 checkItem("Proyecto local conectado", setup.mcp_claude_code_configured) +
-                checkItem("Archivo de la skill exportado", zipOk) +
+                checkItem("Archivo exportado", zipOk) +
                 checkItem("App de Claude conectada", setup.mcp_desktop_configured);
     allReady  = !!(setup.skill_installed && setup.mcp_claude_code_configured && zipOk && setup.mcp_desktop_configured);
-    actions   = actionButton("Instalar skill (proyecto local)", "install-local", setup.skill_installed, true) +
+    actions   = actionButton("Instalar (proyecto local)", "install-local", setup.skill_installed, true) +
                 actionButton("Exportar archivo (app de Claude)", "export-zip", zipOk, true) +
                 actionButton("Conectar proyecto local", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true) +
                 actionButton("Conectar app de Claude", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
@@ -1031,21 +1029,21 @@ function finalStep() {
   const targetLabel = { "claude-code": "Trabajar en proyectos locales", "claude-cowork": "Usar en la app de Claude", "both": "Usar en ambos lugares" }[target] || target;
 
   // El checklist de conexión depende del destino elegido: a "claude-cowork"
-  // no le corresponde "Skill instalada" (usa un ZIP exportado, no una
+  // no le corresponde "Instalado localmente" (usa un ZIP exportado, no una
   // instalación local), así que mostrar esa fila ahí sería una X roja falsa.
   const connectionChecks = {
     "claude-code": [
-      { label: "Skill instalada", ok: setup.skill_installed },
+      { label: "Instalado localmente", ok: setup.skill_installed },
       { label: "Proyecto local conectado", ok: setup.mcp_claude_code_configured },
     ],
     "claude-cowork": [
-      { label: "Archivo de skill exportado", ok: Boolean(config.lastSkillZip) },
+      { label: "Archivo exportado", ok: Boolean(config.lastSkillZip) },
       { label: "App de Claude conectada", ok: setup.mcp_desktop_configured },
     ],
     both: [
-      { label: "Skill instalada", ok: setup.skill_installed },
+      { label: "Instalado localmente", ok: setup.skill_installed },
       { label: "Proyecto local conectado", ok: setup.mcp_claude_code_configured },
-      { label: "Archivo de skill exportado", ok: Boolean(config.lastSkillZip) },
+      { label: "Archivo exportado", ok: Boolean(config.lastSkillZip) },
       { label: "App de Claude conectada", ok: setup.mcp_desktop_configured },
     ],
   };
@@ -1073,7 +1071,7 @@ function finalStep() {
           </div>
         </div>
 
-        <div id="final-loading-msg" role="status" aria-live="polite" class="text-[13.5px] font-semibold text-gray-700 text-center">Iniciando prueba de producción…</div>
+        <div id="final-loading-msg" role="status" aria-live="polite" class="text-[13.5px] font-semibold text-gray-700 text-center">Iniciando prueba final…</div>
         <p class="text-[11px] text-gray-400 text-center -mt-2">Generamos un PDF real de prueba; puede tardar hasta un minuto.</p>
 
         <!-- Barra de progreso -->
@@ -1108,9 +1106,9 @@ function finalStep() {
     </div>
 
     <div class="max-w-md mx-auto mb-4">
-      <div class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Capacidades habilitadas</div>
+      <div class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Qué vas a poder generar</div>
       <div class="grid grid-cols-2 gap-1.5 text-[11px] text-gray-600">
-        ${["Guías modulares", "Bibliografía APA/Biber", "Diagramas TikZ", "Casos y ejercicios", "Recortes bibliográficos", "PDF con validación"].map(item => `
+        ${["Guías semanales", "Bibliografía automática", "Casos y ejercicios", "PDF final"].map(item => `
           <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
             ${ic("check", 13)} <span>${item}</span>
           </div>`).join("")}
@@ -1212,7 +1210,7 @@ async function animateFinalStep() {
         if (fillEl) fillEl.style.width = "25%";
       }
       void runOnboardingOperation(
-        "Reintentando la prueba de producción…",
+        "Reintentando la prueba final…",
         animateFinalStep,
       );
     });
@@ -1289,7 +1287,7 @@ async function animateFinalStep() {
 
   // ── 1 / 50 % — localizar skill ──────────────────────────────────────────
   setRow(1, "active");
-  setMsg("Localizando skill instalado…");
+  setMsg("Verificando instalación…");
   let skillPath;
   try {
     skillPath = await getSkillPath();
@@ -1300,10 +1298,10 @@ async function animateFinalStep() {
     setRow(2, "error");
     setRow(3, "error");
     setProgress(25);
-    setMsg("Skill no encontrado");
+    setMsg("No se encontró la instalación");
     showError(
-      "Skill no instalado",
-      "Vuelve al paso de conexión y pulsa 'Instalar skill' antes de continuar.",
+      "No está instalado",
+      "Vuelve al paso de conexión y pulsa 'Instalar' antes de continuar.",
       String(err)
     );
     return;
@@ -1311,7 +1309,7 @@ async function animateFinalStep() {
 
   // ── 2 / 75 % — generar sílabo ───────────────────────────────────────────
   setRow(2, "active");
-  setMsg("Generando sílabo de prueba con la skill…");
+  setMsg("Generando sílabo de prueba…");
   setProgress(55);
 
   // Usar AppData como destino del test (no el directorio del skill, que puede no existir aún)
@@ -1369,7 +1367,7 @@ async function animateFinalStep() {
     setMsg("La generación falló");
     showError(
       "Error al generar el documento",
-      "La skill está instalada pero no pudo crear el archivo. Reintenta o vuelve al paso de conexión para reinstalarla.",
+      "Está instalado pero no pudo crear el archivo. Reintenta o vuelve al paso de conexión para reinstalarlo.",
       String(err)
     );
     return;
@@ -1422,7 +1420,7 @@ function bindStepEvents(current) {
   if (current === 5) {
     setTimeout(() => {
       void runOnboardingOperation(
-        "Ejecutando la prueba de producción…",
+        "Ejecutando la prueba final…",
         animateFinalStep,
       );
     }, 0);

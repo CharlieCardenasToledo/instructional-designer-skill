@@ -28,7 +28,7 @@ export async function renderSettings() {
   el.innerHTML = `
     <div style="margin-bottom:20px">
       <h2 style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.03em">Configuración</h2>
-      <p style="font-size:13px;color:var(--muted);margin-top:4px">Ajustes institucionales, MCP, notebooks, entorno y preferencias.</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:4px">Ajustes institucionales, conexiones, notebooks, entorno y preferencias.</p>
     </div>
     <div class="settings-layout grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-5 items-start">
 
@@ -39,7 +39,7 @@ export async function renderSettings() {
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
           <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="mcp-config" href="#mcp-config">
-            <span class="material-symbols-outlined">hub</span> Configuración MCP
+            <span class="material-symbols-outlined">hub</span> Conexiones
           </a>
           <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="notebooks-section" href="#notebooks-section">
             <span class="material-symbols-outlined">menu_book</span> Notebooks
@@ -124,10 +124,10 @@ export async function renderSettings() {
           </div>
         </section>
 
-        <!-- ── MCP Configuration ── -->
+        <!-- ── Conexiones ── -->
         <section class="settings-pane" id="mcp-config">
           <div class="settings-pane-title">
-            <span class="material-symbols-outlined">hub</span> Configuración MCP
+            <span class="material-symbols-outlined">hub</span> Conexiones
             <span id="mcp-status-badge" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(195,198,213,0.20);color:var(--muted);border:1px solid rgba(195,198,213,0.40)">
               <span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span> Verificando…
             </span>
@@ -136,15 +136,15 @@ export async function renderSettings() {
 
             <!-- Target buttons -->
             <div>
-              <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:600">Configurar MCP para:</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:600">Conectar con:</div>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-secondary btn-sm mcp-target" data-target="claude_code">
-                  <span class="material-symbols-outlined" style="font-size:14px">terminal</span> Claude Code
+                <button class="btn btn-secondary btn-sm mcp-target" data-target="claude-code">
+                  <span class="material-symbols-outlined" style="font-size:14px">terminal</span> Proyecto local
                 </button>
-                <button class="btn btn-secondary btn-sm mcp-target" data-target="cowork">
-                  <span class="material-symbols-outlined" style="font-size:14px">group</span> Cowork
+                <button class="btn btn-secondary btn-sm mcp-target" data-target="desktop">
+                  <span class="material-symbols-outlined" style="font-size:14px">group</span> App de Claude
                 </button>
-                <button class="btn btn-primary btn-sm mcp-target" data-target="all">
+                <button class="btn btn-primary btn-sm mcp-target" data-target="both">
                   <span class="material-symbols-outlined" style="font-size:14px">hub</span> Ambos
                 </button>
               </div>
@@ -152,13 +152,13 @@ export async function renderSettings() {
 
             <div class="info-box" style="display:flex;gap:8px;align-items:flex-start">
               <span class="material-symbols-outlined" style="font-size:15px;flex-shrink:0;margin-top:1px">info</span>
-              <span>Combina la entrada oficial de NotebookLM MCP con tu configuración existente y guarda un respaldo automático.</span>
+              <span>Combina la conexión de NotebookLM con tu configuración existente y guarda un respaldo automático.</span>
             </div>
 
             <!-- NotebookLM Auth row -->
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">Sesión Google (NotebookLM)</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Sesión de Google</div>
                 <div id="nlm-auth-status" style="font-size:12px;color:var(--muted);margin-top:3px">Verificando…</div>
               </div>
               <div style="display:flex;gap:8px">
@@ -242,23 +242,23 @@ export async function renderSettings() {
           </div>
         </section>
 
-        <!-- ── App Preferences ── -->
+        <!-- ── Preferencias ── -->
         <section class="settings-pane" id="app-prefs">
           <div class="settings-pane-title">
-            <span class="material-symbols-outlined">tune</span> Preferencias y skill
+            <span class="material-symbols-outlined">tune</span> Preferencias
           </div>
 
           <!-- Skill path -->
           <div style="margin-bottom:14px;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
-            <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Ruta del skill</div>
+            <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Carpeta de instalación</div>
             <div id="skill-path-val" class="mono" style="font-size:12.5px;color:var(--teal);word-break:break-all">Cargando…</div>
           </div>
 
           <div style="display:flex;flex-direction:column;gap:10px">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">Instalar skill local (Claude Code)</div>
-                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Copia el skill a <code>~/.claude/skills/</code></div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Instalar en el proyecto local</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Copia los archivos a <code>~/.claude/skills/</code></div>
               </div>
               <button class="btn btn-primary btn-sm" id="btn-install-skill">
                 <span class="material-symbols-outlined" style="font-size:14px">download</span> Instalar
@@ -266,7 +266,7 @@ export async function renderSettings() {
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">Exportar skill como ZIP</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text)">Exportar configuración</div>
                 <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Para subir en Customize → Skills</div>
               </div>
               <button class="btn btn-secondary btn-sm" id="btn-export-skill">
@@ -305,13 +305,20 @@ export async function renderSettings() {
   el.querySelector("#btn-save-institution")?.addEventListener("click", saveInstitution);
   el.querySelector("#btn-extract-palette")?.addEventListener("click", loadInstitutionPalette);
 
-  // ── MCP ───────────────────────────────────────────────────────────────────
+  // ── Conexiones ────────────────────────────────────────────────────────────
   el.querySelectorAll(".mcp-target").forEach(btn => {
     btn.addEventListener("click", async () => {
-      toast("Configurando MCP…", "loading", 8000);
+      toast("Conectando…", "loading", 8000);
       try {
-        const result = await configureMcp(btn.dataset.target);
-        toast(result.message, result.success ? "success" : "error", 6000);
+        if (btn.dataset.target === "both") {
+          const codeResult = await configureMcp("claude-code");
+          const desktopResult = await configureMcp("desktop");
+          const success = codeResult.success && desktopResult.success;
+          toast(success ? "Conectado en proyecto local y app de Claude" : `${codeResult.message} / ${desktopResult.message}`, success ? "success" : "error", 6000);
+        } else {
+          const result = await configureMcp(btn.dataset.target);
+          toast(result.message, result.success ? "success" : "error", 6000);
+        }
       } catch (e) { toast(`Error: ${e}`, "error"); }
     });
   });
@@ -616,10 +623,10 @@ async function loadSetupStatus() {
   try {
     const status = await getSetupStatus();
     const items = [
-      { label: "Skill instalado",    ok: status.skill_installed },
-      { label: "MCP configurado",    ok: status.mcp_configured },
+      { label: "Instalado localmente", ok: status.skill_installed },
+      { label: "Conexión lista",       ok: status.mcp_configured },
       { label: "Institución guardada", ok: status.institution_configured },
-      { label: "Autenticación Google", ok: status.notebooklm_authenticated },
+      { label: "Sesión de Google",     ok: status.notebooklm_authenticated },
     ].filter(i => i.label);
 
     bar.innerHTML = `

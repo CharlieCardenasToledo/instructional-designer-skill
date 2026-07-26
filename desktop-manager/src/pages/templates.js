@@ -140,28 +140,11 @@ function renderBento(filter) {
       </div>
     </div>`).join("")}
 
-    <!-- Create blank (4-col) -->
-    <div class="glass-card col-span-1 xl:col-span-4" style="min-height:180px;border:2px dashed rgba(195,198,213,0.60);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:10px;border-radius:12px;transition:border-color 0.15s,background 0.15s" id="tpl-blank">
-      <div style="width:44px;height:44px;border-radius:50%;background:rgba(195,198,213,0.25);display:flex;align-items:center;justify-content:center">
-        <span class="material-symbols-outlined" style="color:var(--teal)">add</span>
-      </div>
-      <div style="font-size:13.5px;font-weight:700;color:var(--text)">Plantilla en blanco</div>
-      <div style="font-size:12px;color:var(--muted);text-align:center">Comienza desde cero o importa un archivo .tex</div>
-    </div>
   `;
 
   // Bind template buttons
   bento.querySelectorAll(".tpl-btn").forEach(btn => {
     btn.addEventListener("click", () => activateTemplate(btn.dataset.tplId));
-  });
-
-  bento.querySelector("#tpl-blank")?.addEventListener("mouseenter", e => {
-    e.currentTarget.style.borderColor = "rgba(0,49,126,0.40)";
-    e.currentTarget.style.background = "rgba(0,49,126,0.03)";
-  });
-  bento.querySelector("#tpl-blank")?.addEventListener("mouseleave", e => {
-    e.currentTarget.style.borderColor = "rgba(195,198,213,0.60)";
-    e.currentTarget.style.background = "transparent";
   });
 }
 

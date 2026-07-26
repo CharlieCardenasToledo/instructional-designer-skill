@@ -51,7 +51,7 @@ export function renderSyllabus() {
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <span style="font-size:11px;color:var(--muted);background:rgba(195,198,213,0.25);padding:4px 10px;border-radius:99px;border:1px solid rgba(195,198,213,0.50)">
-              Autoguardado
+              Guardado manual
             </span>
           </div>
         </div>

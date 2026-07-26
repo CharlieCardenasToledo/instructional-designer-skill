@@ -34,14 +34,14 @@ function renderShell() {
         </div>
         <div class="sidebar-logo-text">
           <h1>AcademiaOS</h1>
-          <span>Claude Skill Architect</span>
+          <span>Diseñador instruccional</span>
         </div>
       </div>
 
       <div class="sidebar-cta">
         <button class="btn btn-primary btn-sm" data-page="courses" style="width:100%;justify-content:center">
           <span class="material-symbols-outlined" style="font-size:15px">add</span>
-          Nueva configuración
+          Nueva asignatura
         </button>
       </div>
 
@@ -52,22 +52,17 @@ function renderShell() {
         <button class="nav-item" data-page="templates" aria-label="Plantillas">
           <span class="material-symbols-outlined">dashboard_customize</span> Plantillas
         </button>
-        <button class="nav-item" data-page="docs" aria-label="Documentación">
-          <span class="material-symbols-outlined">description</span> Documentación
+        <button class="nav-item" data-page="docs" aria-label="Ayuda">
+          <span class="material-symbols-outlined">help</span> Ayuda
         </button>
         <button class="nav-item" data-page="settings" aria-label="Configuración">
           <span class="material-symbols-outlined">settings</span> Configuración
         </button>
       </nav>
 
-      <div class="sidebar-footer" style="flex-direction:column;gap:0;padding:0;border:none">
-        <button class="nav-item" data-page="docs" aria-label="Centro de ayuda" style="width:100%;border-radius:0;padding:10px 20px">
-          <span class="material-symbols-outlined">help</span> Centro de ayuda
-        </button>
-        <div class="sidebar-footer" style="border-top:1px solid rgba(195,198,213,0.25)">
-          <span class="material-symbols-outlined">package_2</span>
-          v10.4 · instructional-designer-skill
-        </div>
+      <div class="sidebar-footer">
+        <span class="material-symbols-outlined">package_2</span>
+        v10.4 · instructional-designer-skill
       </div>
     </aside>
 
@@ -79,17 +74,6 @@ function renderShell() {
           <div class="topbar-sub"></div>
         </div>
         <div class="topbar-right-static">
-          <div class="topbar-status">
-            <div class="topbar-status-dot"></div>
-            <span class="topbar-mcp-label">MCP: Conectado</span>
-            <span class="topbar-version">v10.4</span>
-          </div>
-          <div class="topbar-actions" id="topbar-actions">
-            <button class="btn btn-primary btn-sm" id="btn-deploy">
-              <span class="material-symbols-outlined" style="font-size:14px">rocket_launch</span>
-              Deploy Skill
-            </button>
-          </div>
           <div class="topbar-win-controls">
             <button class="win-btn" id="app-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
             <button class="win-btn win-btn--close" id="app-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
@@ -110,10 +94,7 @@ function renderShell() {
 
 document.addEventListener("click", event => {
   const nav = event.target.closest(".nav-item[data-page], .sidebar-cta button[data-page]");
-  if (nav) { navigate(nav.dataset.page); return; }
-
-  const deploy = event.target.closest("#btn-deploy");
-  if (deploy) { window.deploySkill?.(); return; }
+  if (nav) navigate(nav.dataset.page);
 });
 
 // El onboarding es una página independiente: la app principal (sidebar,

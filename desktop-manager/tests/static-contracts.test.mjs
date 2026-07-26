@@ -44,7 +44,9 @@ test('institución, perfil académico y plantilla viven en un solo paso fusionad
   assert.match(profile, /onb-faculty/);
   assert.match(profile, /onb-career/);
   assert.match(profile, /onb-author/);
-  assert.match(profile, /onb-ecosystem/);
+  // El campo de ecosistema digital se quitó del onboarding por redundante
+  // para la primera configuración; sigue existiendo en Configuración.
+  assert.doesNotMatch(profile, /onb-ecosystem/);
   assert.match(profile, /data-template-id/);
   assert.match(profile, /"save-profile-and-template"/);
   // Un único guardado combinado: ya no existen las acciones separadas.
@@ -53,11 +55,22 @@ test('institución, perfil académico y plantilla viven en un solo paso fusionad
 
 test('el onboarding presenta el flujo de producción editorial aprobado', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
-  assert.match(source, /Del sílabo a una guía lista para publicar/);
   assert.match(source, /Sílabo[\s\S]*Evidencia[\s\S]*Diseño pedagógico[\s\S]*LaTeX[\s\S]*PDF validado/);
   assert.match(source, /No diseña la guía ni reemplaza tu criterio docente/);
-  assert.match(source, /Iniciando prueba de producción/);
-  assert.match(source, /Guías modulares[\s\S]*Bibliografía APA\/Biber[\s\S]*Diagramas TikZ/);
+  assert.match(source, /Iniciando prueba final/);
+  assert.match(source, /Guías semanales[\s\S]*Bibliografía automática[\s\S]*Casos y ejercicios[\s\S]*PDF final/);
+});
+
+test('el copy del onboarding no repite jerga técnica ni referencias obsoletas al esquema de 10 pasos', async () => {
+  const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  // Textos visibles: nada de "skill" expuesto al usuario final fuera de las
+  // llamadas internas a la API (installSkill, getSkillPath, exportSkillZip).
+  const stepMetaStart = source.indexOf('const STEP_META');
+  const stepMetaEnd = source.indexOf('\n];', stepMetaStart);
+  assert.doesNotMatch(source.slice(stepMetaStart, stepMetaEnd), /producción|publicar|sistema completo/i);
+  assert.doesNotMatch(source, /los 10 pasos|10 pasos del onboarding/);
+  assert.doesNotMatch(source, /dentro del paso 4/); // el mini-stepper de herramientas vive en el paso 2
+  assert.doesNotMatch(source, /"Instalando la skill en Claude Code…"|"Conectando la skill con Claude/);
 });
 
 test('el stepper mueve un gusanito literal sin convertir las flechas en recuadros', async () => {
@@ -88,7 +101,7 @@ test('el onboarding bloquea clics repetidos y explica la operación activa', asy
   assert.match(source, /id="onboarding-operation-status"/);
   assert.match(source, /data-disabled-by-operation|disabledByOperation/);
   assert.match(source, /Instalando \$\{name\}[\s\S]*performDependencyInstall/);
-  assert.match(source, /Ejecutando la prueba de producción[\s\S]*animateFinalStep/);
+  assert.match(source, /Ejecutando la prueba final[\s\S]*animateFinalStep/);
 });
 
 test('instalar una dependencia siempre pide autorización explícita antes de tocar el sistema', async () => {
@@ -190,7 +203,7 @@ test('el checklist final depende del destino elegido (no asume Skill instalada s
   const final = source.slice(start, end);
   assert.match(final, /const connectionChecks = \{/);
   assert.match(final, /"claude-cowork":\s*\[/);
-  assert.match(final, /Archivo de skill exportado/);
+  assert.match(final, /Archivo exportado/);
 });
 
 test('el paso de perfil fusionado tiene divisores visuales numerados entre secciones', async () => {
@@ -200,6 +213,23 @@ test('el paso de perfil fusionado tiene divisores visuales numerados entre secci
   const profile = source.slice(start, end);
   assert.match(profile, /function sectionHeading|const sectionHeading/);
   assert.match(profile, /border-t border-gray-200/);
+});
+
+test('los botones de Conexiones en Settings usan los targets que el backend realmente acepta', async () => {
+  const [settings, mcp] = await Promise.all([
+    readFile(new URL('src/pages/settings.js', root), 'utf8'),
+    readFile(new URL('src-tauri/src/mcp.rs', root), 'utf8'),
+  ]);
+  // configure_mcp() en mcp.rs solo reconoce "claude-code" y "desktop"; usar
+  // "claude_code" (guion bajo), "cowork" o "all" hace que el botón siempre
+  // falle con "Destino MCP no reconocido".
+  assert.match(mcp, /"claude-code"\s*=>/);
+  assert.match(mcp, /"desktop"\s*=>/);
+  assert.doesNotMatch(settings, /data-target="claude_code"|data-target="cowork"|data-target="all"/);
+  assert.match(settings, /data-target="claude-code"/);
+  assert.match(settings, /data-target="desktop"/);
+  assert.match(settings, /configureMcp\("claude-code"\)/);
+  assert.match(settings, /configureMcp\("desktop"\)/);
 });
 
 test('el backend evita reescrituras, reinstalaciones y recompilaciones idénticas', async () => {
