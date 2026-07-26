@@ -349,6 +349,7 @@ fn server_configured(path: Result<std::path::PathBuf, String>) -> bool {
                 let value = arg.as_str();
                 value == Some(crate::mcp::NOTEBOOKLM_MCP_PACKAGE)
                     || value == Some("gemini-notebook-mcp@latest")
+                    || value == Some("@charlie.act7/gemini-notebook-mcp@latest")
             })
         })
 }

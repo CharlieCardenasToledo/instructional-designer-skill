@@ -5,18 +5,26 @@
  * Solo se usa cuando Vite corre en modo "mock" (ver vite.config.js). Simula
  * el backend Rust con un estado en memoria para poder navegar el onboarding
  * y las páginas principales de punta a punta.
+ *
+ * BYPASS: añade ?bypass=1 a la URL para saltar el onboarding directamente al
+ * dashboard, útil para auditorías UX/QA visual.
+ * Ejemplo: http://localhost:1421/?bypass=1
  */
 
 function delay(ms = 250) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Si la URL contiene ?bypass=1, arranca con onboarding completado y
+// todos los datos pre-configurados para acceder directo al dashboard.
+const BYPASS = new URLSearchParams(location.search).get("bypass") === "1";
+
 const state = {
   onboarding: {
     version: 3,
-    completed: false,
-    currentStep: 1,
-    maxCompletedStep: 0,
+    completed: BYPASS,
+    currentStep: BYPASS ? 5 : 1,
+    maxCompletedStep: BYPASS ? 5 : 0,
     selectedTarget: "claude-code",
     lastUpdated: Date.now(),
     regressionReason: null,
@@ -25,19 +33,21 @@ const state = {
     { name: "Node.js", installed: true, version: "v20.11.0", required: true, note: "", command: "node -v" },
     { name: "Git", installed: true, version: "2.43.0", required: false, note: "", command: "git --version" },
     { name: "Python", installed: true, version: "3.11.4", required: true, note: "", command: "python --version" },
-    { name: "Compilador LaTeX", installed: false, version: null, required: true, note: "", command: "pdflatex --version" },
+    { name: "Compilador LaTeX", installed: BYPASS, version: BYPASS ? "2024.1 (mock)" : null, required: true, note: "", command: "pdflatex --version" },
   ],
   setup: {
-    skill_installed: false,
-    mcp_configured: false,
-    mcp_desktop_configured: false,
-    mcp_claude_code_configured: false,
-    institution_configured: false,
-    skill_path: "",
-    mcp_config_path: "",
+    skill_installed: BYPASS,
+    mcp_configured: BYPASS,
+    mcp_desktop_configured: BYPASS,
+    mcp_claude_code_configured: BYPASS,
+    institution_configured: BYPASS,
+    skill_path: BYPASS ? "/mock/home/.claude/skills/instructional-designer-skill" : "",
+    mcp_config_path: BYPASS ? "/mock/home/.config/claude/claude_desktop_config.json" : "",
   },
-  auth: { authenticated: false, message: "Sin sesión activa. El skill no podrá consultar NotebookLM." },
-  lastSkillZip: null,
+  auth: BYPASS
+    ? { authenticated: true, message: "Sesión activa — demo@uide.edu.ec" }
+    : { authenticated: false, message: "Sin sesión activa. El skill no podrá consultar NotebookLM." },
+  lastSkillZip: BYPASS ? "/mock/exports/instructional-designer-skill.zip" : null,
   templates: [
     { id: "elegantbook-clasico", name: "ElegantBook Clásico", description: "Portada institucional con bloques pedagógicos numerados y bibliografía APA.", tags: ["Institucional", "Formal"], previewType: "elegantbook-clasico", featured: true, documentClass: "elegantbook" },
     { id: "minimal-mono", name: "Minimalista", description: "Tipografía sobria de una sola columna, ideal para guías breves.", tags: ["Personal", "Simple"], previewType: "minimal", featured: false, documentClass: "minimal" },
@@ -45,7 +55,7 @@ const state = {
     { id: "cuaderno-taller", name: "Cuaderno de Taller", description: "Bloques de actividad destacados para materias prácticas.", tags: ["Personal"], previewType: "cuaderno", featured: false, documentClass: "article" },
   ],
   activeTemplateId: "elegantbook-clasico",
-  institutionConfigured: false,
+  institutionConfigured: BYPASS,
 };
 
 function actionResult(success, message, extra = {}) {
