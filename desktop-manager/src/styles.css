@@ -345,21 +345,6 @@ body::after {
 }
 
 /* ── Progress bar ─────────────────────────────────────────────────────────── */
-.progress-track {
-  height: 6px;
-  background: rgba(255,255,255,0.06);
-  border-radius: 99px;
-  overflow: hidden;
-  border: 1px solid var(--glass-border);
-}
-.progress-fill {
-  height: 100%;
-  border-radius: 99px;
-  background: var(--teal);
-  transition: width 0.4s cubic-bezier(.4,0,.2,1);
-  box-shadow: 0 0 10px var(--teal-glow);
-}
-
 /* ── List items ───────────────────────────────────────────────────────────── */
 /* ── Status dots ──────────────────────────────────────────────────────────── */
 .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -1064,8 +1049,6 @@ code {
 .docs-toc-link.active { color: var(--teal); border-color: var(--teal); font-weight: 600; }
 
 /* ── Empty state (table) ───────────────────────────────────────────────────── */
-.table-empty { padding: 40px; text-align: center; color: var(--dim); }
-.table-empty .material-symbols-outlined { font-size: 36px; margin-bottom: 10px; display: block; }
 .inline-error { margin-top: 10px; padding: 9px 12px; border-radius: 7px; color: var(--red); background: var(--red-bg); border: 1px solid var(--red-border); font-size: 12px; }
 .color-picker-preview { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,.18); display: inline-block; flex: 0 0 20px; }
 

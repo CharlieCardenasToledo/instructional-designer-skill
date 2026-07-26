@@ -69,7 +69,7 @@ export function renderCourses() {
         </table>
         </div>
         ${state.courses.length === 0 ? `
-          <div class="table-empty flex flex-col items-center justify-center p-12 text-center">
+          <div class="flex flex-col items-center justify-center p-12 text-center text-app-muted">
             <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand">
               <span class="material-symbols-outlined text-[32px]">school</span>
             </div>
@@ -122,7 +122,7 @@ function filteredCourses() {
 function renderTableRows() {
   const rows = filteredCourses();
   if (!rows.length) {
-    return `<tr><td colspan="8" class="table-empty p-8 text-center text-slate-400">Sin resultados</td></tr>`;
+    return `<tr><td colspan="8" class="p-8 text-center text-slate-400">Sin resultados</td></tr>`;
   }
   return rows.map((course, i) => {
     const realIndex = state.courses.indexOf(course);
