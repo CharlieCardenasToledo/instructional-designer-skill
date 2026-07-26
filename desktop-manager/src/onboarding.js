@@ -164,9 +164,7 @@ export async function renderOnboarding() {
   <div class="relative z-[1] w-full max-w-3xl mx-auto h-full max-h-screen flex flex-col items-center justify-center gap-4 p-6">
     <div id="loading-orbs"></div>
   </div>`;
-  // thinking-orbs es un componente React aislado (no convertimos el resto de
-  // la app, que sigue siendo JS vanilla): monta su propio root solo dentro de
-  // este contenedor y se desmonta con stopOrbs() igual que el canvas previo.
+  // Monta ThinkingOrb en un root React aislado (el resto de la app es JS vanilla).
   const orbRoot = createRoot(document.getElementById("loading-orbs"));
   orbRoot.render(createElement(ThinkingOrb, { state: "working", size: 64 }));
   const stopOrbs = () => orbRoot.unmount();
@@ -407,9 +405,7 @@ function stepperDotFor(track, step) {
   return track.querySelector(`[data-step-index="${step}"]`);
 }
 
-// El mismo gusanito recorriendo una pista de puntos, pero parametrizado por
-// los elementos concretos: lo reutiliza tanto el stepper de los 5 pasos
-// del onboarding como el mini-stepper de herramientas dentro del paso 2.
+// Anima el indicador entre dos puntos del stepper (paso macro o herramienta).
 function animateDotWorm(track, origin, destination) {
   if (!track || !origin || !destination || origin === destination || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return Promise.resolve();
@@ -532,11 +528,7 @@ function dependenciesStep() {
   </section>`;
 }
 
-// Reemplaza el botón "Instalar" por una pista de puntos con el mismo
-// "gusanito" del stepper superior recorriéndola en bucle: la instalación de
-// una dependencia (winget) no reporta progreso real, así que esto es un
-// indicador indeterminado, no una barra con porcentaje. Se detiene solo
-// cuando el propio performDependencyInstall vuelve a renderizar el paso.
+// Winget no reporta porcentaje; mostramos un indicador indeterminado en bucle.
 const DEP_PROGRESS_DOTS = 6;
 function beginDependencyInstallProgress(row, statusEl, detailEl, installButton) {
   if (statusEl) {
@@ -745,9 +737,6 @@ function profileStep() {
     </button>`;
   }).join("");
 
-  // Encabezado con numeración visible (1/3, 2/3, 3/3) y un borde superior
-  // que separa cada sección: al vivir las tres en una sola pantalla larga,
-  // una división visual clara ayuda más que solo el espaciado vertical.
   const sectionHeading = (index, title) => `
     <div class="flex items-center gap-2 mb-2">
       <span class="flex-shrink-0 w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-bold flex items-center justify-center">${index}</span>

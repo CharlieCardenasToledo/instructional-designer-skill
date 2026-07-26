@@ -1,20 +1,14 @@
-/* Tailwind v4 — instalación oficial "sin Preflight" para integrarlo en un
-   proyecto existente (https://tailwindcss.com/docs/preflight#disabling-preflight):
-   se declara el orden de capas y se omite `preflight.css` a propósito, para
-   no resetear el CSS propio del resto de la app fuera del onboarding. */
+/* Tailwind v4 sin Preflight (a propósito, para no resetear el CSS propio de
+   la app fuera del onboarding): https://tailwindcss.com/docs/preflight#disabling-preflight */
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
-/* Sin Preflight, el atributo HTML `hidden` no tiene ninguna regla propia en
-   nuestras capas — pierde contra utilidades como `.flex`/`.grid` (capa
-   `utilities`, con más prioridad que el estilo por defecto del navegador),
-   dejando visible una caja "oculta". Regla sin capa: gana siempre. */
+/* Sin Preflight, `[hidden]` pierde contra utilidades (capa utilities > default
+   del navegador); regla sin capa para que siempre gane. */
 [hidden] { display: none !important; }
 
-/* Todo el CSS propio de la app (glassmorphism, reset, componentes) vive en
-   layer(base) para que las utilidades de Tailwind (layer(utilities), de
-   mayor prioridad) siempre puedan sobreescribirlo cuando se usan. */
+/* CSS propio en layer(base) para que las utilidades de Tailwind (más prioridad) siempre lo sobreescriban. */
 @layer base {
 
 /* ── Design system: glassmorphism (blur + rgba), sin degradados ── */
@@ -118,8 +112,7 @@ body::after {
 .win-btn:hover { background: rgba(15,23,42,0.08); color: var(--text); }
 .win-btn--close:hover { background: #e81123; color: #fff; }
 
-/* Navegación del onboarding: controles desnudos y un indicador que se estira
-   entre pasos como una gota de tinta editorial. */
+/* Navegación del onboarding: controles desnudos y un indicador animado entre pasos. */
 .onboarding-nav-arrow {
   width: 32px;
   height: 32px;
