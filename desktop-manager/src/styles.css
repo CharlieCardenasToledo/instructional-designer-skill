@@ -936,7 +936,6 @@ code {
 .syllabus-left { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .syllabus-right { display: flex; flex-direction: column; gap: 12px; }
 /* ── Settings page ─────────────────────────────────────────────────────────── */
-.settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 20px; align-items: start; }
 .settings-nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }
 /* ── Docs page ─────────────────────────────────────────────────────────────── */
 /* ── Empty state (table) ───────────────────────────────────────────────────── */
@@ -945,7 +944,6 @@ code {
 /* ── Responsive for new layout ──────────────────────────────────────────────── */
 @media (max-width: 980px) {
   .syllabus-layout { grid-template-columns: 1fr; }
-  .settings-layout { grid-template-columns: 1fr; }
 }
 
 } /* fin de @layer base */
