@@ -27,14 +27,14 @@ export async function renderSettings() {
   if (!el) return;
 
   el.innerHTML = `
-    <div style="margin-bottom:20px">
-      <h2 style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.03em">Configuración</h2>
-      <p style="font-size:13px;color:var(--muted);margin-top:4px">Ajustes institucionales, conexiones, notebooks, entorno y preferencias.</p>
+    <div class="mb-5">
+      <h2 class="text-[22px] font-extrabold tracking-tight text-app-text">Configuración</h2>
+      <p class="mt-1 text-[13px] text-app-muted">Ajustes institucionales, conexiones, notebooks, entorno y preferencias.</p>
     </div>
     <div class="settings-layout grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-5 items-start">
 
       <!-- Left nav -->
-      <div style="align-self:start;position:sticky;top:0;z-index:10">
+      <div class="sticky top-0 z-10 self-start">
         <div class="rounded-app border border-slate-900/10 bg-white/55 p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible backdrop-blur-xl">
           <a class="settings-nav-item active w-auto shrink-0 lg:w-full" data-section="inst-profile" href="#inst-profile">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
@@ -136,12 +136,12 @@ export async function renderSettings() {
               <span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span> Verificando…
             </span>
           </div>
-          <div style="display:flex;flex-direction:column;gap:14px">
+            <div class="flex flex-col gap-3.5">
 
             <!-- Target buttons -->
             <div>
-              <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;font-weight:600">Conectar con:</div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div class="mb-2 text-[11.5px] font-semibold text-app-muted">Conectar con:</div>
+              <div class="flex flex-wrap gap-2">
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} mcp-target" data-target="claude-code">
                   <span class="material-symbols-outlined" style="font-size:14px">terminal</span> Proyecto local
                 </button>
@@ -155,18 +155,18 @@ export async function renderSettings() {
             </div>
             <div id="mcp-inline-error" class="inline-error" role="alert" hidden></div>
 
-            <div class="info-box" style="display:flex;gap:8px;align-items:flex-start">
-              <span class="material-symbols-outlined" style="font-size:15px;flex-shrink:0;margin-top:1px">info</span>
+            <div class="info-box flex items-start gap-2">
+              <span class="material-symbols-outlined mt-px shrink-0 text-[15px]">info</span>
               <span>Combina la conexión de NotebookLM con tu configuración existente y guarda un respaldo automático.</span>
             </div>
 
             <!-- NotebookLM Auth row -->
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
+            <div class="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">Sesión de Google</div>
-                <div id="nlm-auth-status" style="font-size:12px;color:var(--muted);margin-top:3px">Verificando…</div>
+                <div class="text-[13px] font-semibold text-app-text">Sesión de Google</div>
+                <div id="nlm-auth-status" class="mt-0.5 text-xs text-app-muted">Verificando…</div>
               </div>
-              <div style="display:flex;gap:8px">
+              <div class="flex gap-2">
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-verify-nlm">
                   <span class="material-symbols-outlined" style="font-size:14px">refresh</span> Verificar
                 </button>
@@ -188,7 +188,7 @@ export async function renderSettings() {
           </div>
 
           <!-- Notebook list -->
-          <div id="notebook-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
+          <div id="notebook-list" class="mb-3.5 flex flex-col gap-1.5"></div>
 
           <!-- Add notebook form -->
           <div class="rounded-app border border-slate-900/10 bg-white/55 p-3.5 backdrop-blur-xl">
@@ -256,25 +256,25 @@ export async function renderSettings() {
           </div>
 
           <!-- Skill path -->
-          <div style="margin-bottom:14px;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
-            <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Carpeta de instalación</div>
-            <div id="skill-path-val" class="mono" style="font-size:12.5px;color:var(--teal);word-break:break-all">Cargando…</div>
+          <div class="mb-3.5 rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
+            <div class="mb-1.5 text-[11.5px] font-bold uppercase tracking-wider text-app-muted">Carpeta de instalación</div>
+            <div id="skill-path-val" class="mono break-all text-[12.5px] text-brand">Cargando…</div>
           </div>
 
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
+          <div class="flex flex-col gap-2.5">
+            <div class="flex items-center justify-between rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">Instalar en el proyecto local</div>
-                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Copia los archivos a <code>~/.claude/skills/</code></div>
+                <div class="text-[13px] font-semibold text-app-text">Instalar en el proyecto local</div>
+                <div class="mt-0.5 text-[11.5px] text-app-muted">Copia los archivos a <code>~/.claude/skills/</code></div>
               </div>
               <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-install-skill">
                 <span class="material-symbols-outlined" style="font-size:14px">download</span> Instalar
               </button>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
+            <div class="flex items-center justify-between rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
               <div>
-                <div style="font-size:13px;font-weight:600;color:var(--text)">Exportar configuración</div>
-                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Para instalar manualmente en la app de Claude</div>
+                <div class="text-[13px] font-semibold text-app-text">Exportar configuración</div>
+                <div class="mt-0.5 text-[11.5px] text-app-muted">Para instalar manualmente en la app de Claude</div>
               </div>
               <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-export-skill">
                 <span class="material-symbols-outlined" style="font-size:14px">archive</span> Exportar ZIP
