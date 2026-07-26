@@ -946,21 +946,3 @@ code {
 }
 
 } /* fin de @layer base */
-.palette-loading,
-.palette-error {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.palette-error {
-  color: var(--red);
-}
-
-@media (max-width: 720px) {
-  .palette-url-row {
-    grid-template-columns: 1fr;
-  }
-}

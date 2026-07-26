@@ -449,7 +449,7 @@ async function loadInstitutionPalette() {
 
   button.disabled = true;
   container.classList.remove("hidden");
-  container.innerHTML = `<div class="palette-loading"><span class="material-symbols-outlined">progress_activity</span> Analizando sitio y hojas de estilo…</div>`;
+  container.innerHTML = `<div class="flex items-center gap-1.5 text-xs text-app-muted"><span class="material-symbols-outlined">progress_activity</span> Analizando sitio y hojas de estilo…</div>`;
   try {
     const result = await extractSitePalette(url);
     if (!state.config) state.config = {};
@@ -461,7 +461,7 @@ async function loadInstitutionPalette() {
     }
     toast(`Paleta extraída: ${result.colors.length} colores`, "success", 3500);
   } catch (error) {
-    container.innerHTML = `<div class="palette-error">${escapeHtml(String(error))}</div>`;
+    container.innerHTML = `<div class="flex items-center gap-1.5 text-xs text-red-700">${escapeHtml(String(error))}</div>`;
     toast(`No se pudo extraer la paleta: ${error}`, "error", 6000);
   } finally {
     button.disabled = false;
