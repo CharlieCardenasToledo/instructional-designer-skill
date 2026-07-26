@@ -946,22 +946,6 @@ code {
 }
 
 } /* fin de @layer base */
-.palette-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.palette-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 7px;
-}
-
 .palette-swatch {
   display: flex;
   align-items: center;

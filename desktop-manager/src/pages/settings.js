@@ -470,11 +470,11 @@ async function loadInstitutionPalette() {
 
 function renderPalette(container, palette) {
   container.innerHTML = `
-    <div class="palette-heading">
+    <div class="mb-2.5 flex items-baseline justify-between gap-3 text-xs font-bold">
       <span>Colores encontrados</span>
       <span class="text-muted">Selecciona uno para usarlo como color institucional</span>
     </div>
-    <div class="palette-grid">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-1.5">
       ${palette.map(({ color, occurrences }) => `
         <button class="palette-swatch" type="button" data-palette-color="${escapeHtml(color)}"
           title="Usar ${escapeHtml(color)}">
