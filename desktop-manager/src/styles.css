@@ -946,17 +946,6 @@ code {
 }
 
 } /* fin de @layer base */
-.institution-palette:empty {
-  display: none;
-}
-
-.institution-palette {
-  border: 1px solid rgba(195, 198, 213, 0.55);
-  border-radius: 10px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.5);
-}
-
 .palette-heading {
   display: flex;
   align-items: baseline;

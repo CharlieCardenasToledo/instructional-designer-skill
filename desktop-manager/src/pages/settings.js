@@ -114,7 +114,7 @@ export async function renderSettings() {
                 Analiza el HTML y las hojas de estilo públicas del sitio.
               </div>
             </div>
-            <div id="institution-palette" class="institution-palette sm:col-span-2" aria-live="polite"></div>
+            <div id="institution-palette" class="hidden rounded-[10px] border border-slate-300/55 bg-white/50 p-3 sm:col-span-2" aria-live="polite"></div>
           </div>
           <div class="flex flex-col gap-1.5 mb-4">
             <label for="cfg-ecosystem">Ecosistema digital <span class="text-muted">(uno por línea)</span></label>
@@ -448,6 +448,7 @@ async function loadInstitutionPalette() {
   }
 
   button.disabled = true;
+  container.classList.remove("hidden");
   container.innerHTML = `<div class="palette-loading"><span class="material-symbols-outlined">progress_activity</span> Analizando sitio y hojas de estilo…</div>`;
   try {
     const result = await extractSitePalette(url);
