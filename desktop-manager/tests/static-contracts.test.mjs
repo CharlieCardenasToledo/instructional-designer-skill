@@ -287,3 +287,17 @@ test('la ventana sin marco permite minimizar, cerrar y arrastrar', async () => {
   assert.ok(permissions.has('core:window:allow-close'));
   assert.ok(permissions.has('core:window:allow-start-dragging'));
 });
+
+test('la UI compartida usa recetas Tailwind v4 y no reintroduce componentes CSS legacy', async () => {
+  const [css, recipes] = await Promise.all([
+    readFile(new URL('src/styles.css', root), 'utf8'),
+    readFile(new URL('src/uiClasses.js', root), 'utf8'),
+  ]);
+  assert.match(css, /@theme\s*\{/);
+  assert.doesNotMatch(css, /^\.btn(?:-|\s|\{|\:)/m);
+  assert.doesNotMatch(css, /^\.glass-(?:card|pane|input)\b/m);
+  assert.doesNotMatch(css, /^\.form-(?:grid|group)\b/m);
+  assert.match(recipes, /export const ui/);
+  assert.match(recipes, /border-brand bg-brand/);
+  assert.match(recipes, /rounded-app-lg/);
+});
