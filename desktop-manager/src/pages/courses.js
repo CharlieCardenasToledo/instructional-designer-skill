@@ -82,9 +82,9 @@ export function renderCourses() {
               Nueva asignatura
             </button>
           </div>` : ""}
-        <div class="pagination">
+        <div class="flex items-center justify-between border-t border-slate-300/30 px-4 py-2.5 text-[12.5px] text-app-muted">
           <span>${filteredCourses().length} de ${total} asignaturas</span>
-          <div class="pagination-btns"></div>
+          <div class="flex gap-1"></div>
         </div>
       </div>
     </div>
