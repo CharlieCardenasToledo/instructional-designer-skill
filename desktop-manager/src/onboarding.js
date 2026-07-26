@@ -126,9 +126,7 @@ function warmOnboardingData(currentStep) {
   const warm = [];
   if (currentStep < 2) warm.push(prepareOnboardingStep(2));
   if (currentStep < 3) warm.push(prepareOnboardingStep(3));
-  // El destino (setup) se calienta por separado de la sesión de NotebookLM,
-  // aunque ambos vivan en el mismo paso 4: iniciar npx/MCP cuesta varios
-  // segundos y solo aporta información cuando el usuario llega a ese paso.
+  // El destino tarda varios segundos (npx/MCP); se calienta aparte de NotebookLM.
   if (currentStep < 4) warm.push(loadOnce("setup", async () => { runtime.setup = await getSetupStatus(); }));
   void Promise.allSettled(warm);
 }
@@ -400,10 +398,7 @@ function animateStepTransition(fromStep, toStep) {
   return animateDotWorm(track, origin, destination);
 }
 
-// El paso 2 puede no tener un único punto propio (ver progressDots): cuando
-// las herramientas ya están expandidas, su "entrada" es el punto de la
-// herramienta actualmente enfocada (runtime.depFocusIndex, que quien llama
-// ya dejó apuntando al primero o al último según la dirección del viaje).
+// En el paso 2, el punto de entrada es la herramienta enfocada (runtime.depFocusIndex).
 function stepperDotFor(track, step) {
   if (!track) return null;
   if (step === 2 && dependencySequence().length > 0) {
@@ -453,9 +448,7 @@ function animateDotWorm(track, origin, destination) {
 }
 
 async function showPreparedStep(fromStep, destination, { force = false, depFocusIndex } = {}) {
-  // Entrar al paso 2 desde antes empieza en la primera herramienta; entrar
-  // desde después (volviendo del paso 3) empieza en la última -así el
-  // gusanito siempre avanza/retrocede en línea recta por la pista completa.
+  // Entrar al 2 desde antes enfoca la primera herramienta; desde después, la última.
   if (destination === 2 && fromStep !== 2) {
     const sequence = dependencySequence();
     if (sequence.length > 0) {
@@ -532,8 +525,7 @@ function dependenciesStep() {
 
   return `<section>
     <div class="max-w-xl mx-auto mb-3 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-3">
-      <p class="text-xs text-gray-600 leading-relaxed"><strong class="text-gray-900">Node.js</strong> coordina la automatización; <strong class="text-gray-900">Python</strong> procesa recursos; y el <strong class="text-gray-900">compilador LaTeX</strong> genera el PDF.</p>
-      <p class="text-[10.5px] text-gray-400 mt-1.5">Node.js, Python y el compilador LaTeX son obligatorios para poder generar tus guías.</p>
+      <p class="text-xs text-gray-600 leading-relaxed">Estas herramientas permiten generar tus guías en PDF.</p>
     </div>
     <div class="max-w-xl mx-auto">${dependencyCardShell(sequence[focusIndex])}</div>
     ${nextBlocked ? `<div class="${INLINE_ERROR} !max-w-xl">${ic("alert-circle", 14)} ${escapeHtml(blockReason)}</div>` : ""}
@@ -622,17 +614,9 @@ function revealFocusedDependency() {
   if (sequence.length > 0) animateDependencyFocus(sequence[runtime.depFocusIndex]);
 }
 
-// Mueve el foco entre herramientas del paso 2 sin llamar al backend: anima
-// el gusanito sobre la pista general de abajo (los puntos de herramienta
-// viven ahí, no en un stepper aparte) y vuelve a renderizar. La usan tanto
-// los puntos de la pista como las flechas Atrás/Continuar del pie mientras
-// estás dentro del paso 2 (ver handleAction).
+// Mueve el foco entre herramientas del paso 2 sin llamar al backend.
 async function moveDependencyFocus(toIndex) {
-  // Único punto de entrada para moverse entre herramientas (flechas del pie
-  // y puntos de la pista convergen aquí), así que la guardia de reentrancia
-  // vive acá adentro en vez de repetirse en cada llamador: sin esto, un
-  // doble clic durante los ~700ms del gusanito dispara dos animaciones
-  // superpuestas y una de las dos tarjetas nunca revela su estado final.
+  // Guardia de reentrancia: evita animaciones superpuestas con doble clic.
   if (onboardingActionInFlight) return;
   const sequence = dependencySequence();
   const clamped = Math.min(Math.max(toIndex, 0), sequence.length - 1);
@@ -703,17 +687,15 @@ function welcomeStep() {
       ${feature("quote", "Genera el PDF", "Descarga la guía lista para publicar, con tu identidad institucional.")}
     </div>
 
-    ${disclosure("Ver cómo funciona el sistema", `
+    ${disclosure("Ver el recorrido", `
       <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-gray-700 mb-4">
         <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Sílabo</span>
-        ${ic("arrow-right", 14)}
-        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Evidencia</span>
-        ${ic("arrow-right", 14)}
-        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Diseño pedagógico</span>
-        ${ic("arrow-right", 14)}
-        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">LaTeX</span>
-        ${ic("arrow-right", 14)}
-        <span class="rounded-lg border border-gray-900 bg-gray-900 text-white px-3 py-2">PDF validado</span>
+        ${ic("chevron-right", 14)}
+        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Fuentes</span>
+        ${ic("chevron-right", 14)}
+        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Guía</span>
+        ${ic("chevron-right", 14)}
+        <span class="rounded-lg border border-gray-900 bg-gray-900 text-white px-3 py-2">PDF</span>
       </div>
       <div class="flex flex-wrap justify-center gap-4 mb-4">
         ${techCard("Claude", claudeLogo)}

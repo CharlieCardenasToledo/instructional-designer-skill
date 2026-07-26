@@ -1,7 +1,5 @@
 import { listTemplates, getActiveTemplate, setActiveTemplate } from "../api.js";
-import { renderTemplatePreview } from "../templatePreview.js";
 import { toast } from "../toast.js";
-import { state } from "../state.js";
 import { escapeHtml } from "../dom.js";
 
 let _templates = [];

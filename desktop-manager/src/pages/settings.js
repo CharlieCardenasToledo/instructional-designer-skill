@@ -267,7 +267,7 @@ export async function renderSettings() {
             <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid rgba(195,198,213,0.50);border-radius:9px;background:rgba(255,255,255,0.60)">
               <div>
                 <div style="font-size:13px;font-weight:600;color:var(--text)">Exportar configuración</div>
-                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Para subir en Customize → Skills</div>
+                <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Para instalar manualmente en la app de Claude</div>
               </div>
               <button class="btn btn-secondary btn-sm" id="btn-export-skill">
                 <span class="material-symbols-outlined" style="font-size:14px">archive</span> Exportar ZIP

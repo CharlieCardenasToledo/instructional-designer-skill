@@ -9,6 +9,26 @@ test('el sistema visual no declara degradados CSS', async () => {
   assert.doesNotMatch(css, /gradient\s*\(/i);
 });
 
+test('todo ícono usado con ic(name) está registrado en icons.js (si no, Lucide no dibuja nada)', async () => {
+  const icons = await readFile(new URL('src/icons.js', root), 'utf8');
+  const registered = new Set(
+    [...icons.matchAll(/\b([A-Z][a-zA-Z0-9]*)\b/g)].map(m => m[1])
+  );
+  const kebabToPascal = kebab => kebab.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join('');
+
+  const files = ['src/onboarding.js', 'src/main.js', 'src/pages/courses.js', 'src/pages/syllabus.js',
+    'src/pages/templates.js', 'src/pages/settings.js', 'src/pages/docs.js'];
+  const missing = [];
+  for (const file of files) {
+    const source = await readFile(new URL(file, root), 'utf8');
+    for (const match of source.matchAll(/\bic\(\s*["'`]([a-z0-9-]+)["'`]/g)) {
+      const pascal = kebabToPascal(match[1]);
+      if (!registered.has(pascal)) missing.push(`${file}: ic("${match[1]}") -> ${pascal}`);
+    }
+  }
+  assert.deepEqual(missing, []);
+});
+
 test('el onboarding colapsó a cinco pasos y conserva la llamada de finalización', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
   assert.match(source, /TOTAL_STEPS\s*=\s*5/);
@@ -55,7 +75,7 @@ test('institución, perfil académico y plantilla viven en un solo paso fusionad
 
 test('el onboarding presenta el flujo de producción editorial aprobado', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
-  assert.match(source, /Sílabo[\s\S]*Evidencia[\s\S]*Diseño pedagógico[\s\S]*LaTeX[\s\S]*PDF validado/);
+  assert.match(source, /Sílabo[\s\S]*Fuentes[\s\S]*Guía[\s\S]*PDF/);
   assert.match(source, /No diseña la guía ni reemplaza tu criterio docente/);
   assert.match(source, /Iniciando prueba final/);
   assert.match(source, /Guías semanales[\s\S]*Bibliografía automática[\s\S]*Casos y ejercicios[\s\S]*PDF final/);
@@ -183,9 +203,11 @@ test('la barra inferior tiene un botón principal con texto visible y puntos con
   assert.match(dots, /onboarding-progress-dot-hit w-8 h-8/);
 });
 
-test('el paso de herramientas exige Node, Python y compilador LaTeX explícitamente en el flujo', async () => {
+test('el paso de herramientas bloquea el avance nombrando la herramienta faltante', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
-  assert.match(source, /Node\.js, Python y el compilador LaTeX son obligatorios/);
+  const missing = source.indexOf("dep.required && !dep.installed");
+  assert.ok(missing >= 0, 'dependenciesStep debe filtrar herramientas requeridas no instaladas');
+  assert.match(source, /Falta instalar: \$\{missing\.map/);
 });
 
 test('Git no aparece como tarjeta en el onboarding (solo en Configuración > Entorno)', async () => {

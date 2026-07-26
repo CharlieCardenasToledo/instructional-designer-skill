@@ -9,7 +9,7 @@ import { createIcons,
   Info, ChevronDown, AlertTriangle, Play, Package, Notebook,
   GraduationCap, Eye, LayoutTemplate
   ,Network, Save, Check, Quote, ShieldCheck, AlertCircle, Circle, LockKeyhole,
-  Terminal, BrainCircuit, ChevronLeft, ChevronRight, Sparkles,
+  Terminal, BrainCircuit, ChevronLeft, ChevronRight, Sparkles, Palette,
 } from "lucide";
 
 const ICONS = {
@@ -19,7 +19,7 @@ const ICONS = {
   Info, ChevronDown, AlertTriangle, Play, Package, Notebook,
   GraduationCap, Eye, LayoutTemplate,
   Network, Save, Check, Quote, ShieldCheck, AlertCircle, Circle, LockKeyhole,
-  Terminal, BrainCircuit, ChevronLeft, ChevronRight, Sparkles,
+  Terminal, BrainCircuit, ChevronLeft, ChevronRight, Sparkles, Palette,
 };
 
 /** Re-renderiza todos los data-lucide del DOM. Llamar después de cada render dinámico. */
