@@ -36,10 +36,10 @@ export function renderCourses() {
       </div>
 
       <!-- Toolbar -->
-      <div class="courses-toolbar flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-        <div class="courses-search">
-          <span class="material-symbols-outlined">search</span>
-          <input id="courses-search-input" placeholder="Buscar por código o nombre…" value="${escapeHtml(_filter)}">
+      <div class="flex flex-col items-stretch gap-2.5 rounded-[10px] border border-slate-300/50 bg-white/70 px-4 py-3 sm:flex-row sm:items-center">
+        <div class="flex flex-1 items-center gap-2 rounded-lg border border-slate-300/50 bg-slate-50/80 px-3 py-1.5">
+          <span class="material-symbols-outlined text-lg text-app-muted">search</span>
+          <input class="w-full border-0 bg-transparent p-0 text-[13px] text-app-text outline-none" id="courses-search-input" placeholder="Buscar por código o nombre…" value="${escapeHtml(_filter)}">
         </div>
         <button class="${cx(ui.button.base, ui.button.primary, 'sm:shrink-0')}" id="btn-new-course">
           <span class="material-symbols-outlined text-[15px]">add</span>
@@ -48,7 +48,7 @@ export function renderCourses() {
       </div>
 
       <!-- Table -->
-      <div class="courses-table-wrap">
+      <div class="flex-1 overflow-hidden rounded-xl border border-slate-300/50 bg-white/70">
         <div class="overflow-x-auto">
         <table class="courses-table min-w-[760px]">
           <thead>
