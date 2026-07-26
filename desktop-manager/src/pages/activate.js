@@ -43,7 +43,7 @@ export async function renderActivate() {
         ${step.ok ? ic("check-circle-2", 14) : index + 1}
       </div>
       <div class="step-content">
-        <div class="step-label">${escapeHtml(step.label)} ${step.optional ? `<span class="badge">Opcional</span>` : ""}</div>
+        <div class="step-label">${escapeHtml(step.label)} ${step.optional ? `<span class="${ui.badge.muted}">Opcional</span>` : ""}</div>
         <div class="step-detail">${escapeHtml(step.detail)}</div>
       </div>
       ${step.ok
