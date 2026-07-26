@@ -36,19 +36,19 @@ export async function renderSettings() {
       <!-- Left nav -->
       <div class="sticky top-0 z-10 self-start">
         <div class="rounded-app border border-slate-900/10 bg-white/55 p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible backdrop-blur-xl">
-          <a class="settings-nav-item active w-auto shrink-0 lg:w-full" data-section="inst-profile" href="#inst-profile">
+          <a class="settings-nav-item active w-auto shrink-0 rounded-lg border-l-2 border-brand bg-brand/10 px-3 py-2 text-xs font-bold text-teal-700 transition-colors hover:bg-brand/[0.05] lg:w-full" data-section="inst-profile" href="#inst-profile">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
-          <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="mcp-config" href="#mcp-config">
+          <a class="settings-nav-item w-auto shrink-0 rounded-lg border-l-2 border-transparent px-3 py-2 text-xs text-app-muted transition-colors hover:bg-brand/[0.05] hover:text-slate-700 lg:w-full" data-section="mcp-config" href="#mcp-config">
             <span class="material-symbols-outlined">hub</span> Conexiones
           </a>
-          <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="notebooks-section" href="#notebooks-section">
+          <a class="settings-nav-item w-auto shrink-0 rounded-lg border-l-2 border-transparent px-3 py-2 text-xs text-app-muted transition-colors hover:bg-brand/[0.05] hover:text-slate-700 lg:w-full" data-section="notebooks-section" href="#notebooks-section">
             <span class="material-symbols-outlined">menu_book</span> Notebooks
           </a>
-          <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="environment" href="#environment">
+          <a class="settings-nav-item w-auto shrink-0 rounded-lg border-l-2 border-transparent px-3 py-2 text-xs text-app-muted transition-colors hover:bg-brand/[0.05] hover:text-slate-700 lg:w-full" data-section="environment" href="#environment">
             <span class="material-symbols-outlined">terminal</span> Entorno
           </a>
-          <a class="settings-nav-item w-auto shrink-0 lg:w-full" data-section="app-prefs" href="#app-prefs">
+          <a class="settings-nav-item w-auto shrink-0 rounded-lg border-l-2 border-transparent px-3 py-2 text-xs text-app-muted transition-colors hover:bg-brand/[0.05] hover:text-slate-700 lg:w-full" data-section="app-prefs" href="#app-prefs">
             <span class="material-symbols-outlined">tune</span> Preferencias
           </a>
         </div>
@@ -299,8 +299,8 @@ export async function renderSettings() {
   el.querySelectorAll(".settings-nav-item").forEach(a => {
     a.addEventListener("click", e => {
       e.preventDefault();
-      el.querySelectorAll(".settings-nav-item").forEach(x => x.classList.remove("active"));
-      a.classList.add("active");
+      el.querySelectorAll(".settings-nav-item").forEach(x => x.classList.remove("active", "border-brand", "bg-brand/10", "font-bold", "text-teal-700"));
+      a.classList.add("active", "border-brand", "bg-brand/10", "font-bold", "text-teal-700");
       document.getElementById(a.dataset.section)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
