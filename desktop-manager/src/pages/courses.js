@@ -69,12 +69,12 @@ export function renderCourses() {
         </table>
         </div>
         ${state.courses.length === 0 ? `
-          <div class="table-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center">
-            <div style="width:64px;height:64px;border-radius:50%;background:rgba(0,121,107,0.08);color:var(--teal);display:flex;align-items:center;justify-content:center;margin-bottom:16px;border:1px solid rgba(0,121,107,0.2)">
-              <span class="material-symbols-outlined" style="font-size:32px">school</span>
+          <div class="table-empty flex flex-col items-center justify-center p-12 text-center">
+            <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand">
+              <span class="material-symbols-outlined text-[32px]">school</span>
             </div>
-            <h3 style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">Aún no tienes asignaturas</h3>
-            <p style="font-size:13px;color:var(--muted);max-width:380px;margin-bottom:20px;line-height:1.5">
+            <h3 class="mb-1.5 text-base font-bold text-app-text">Aún no tienes asignaturas</h3>
+            <p class="mb-5 max-w-[380px] text-[13px] leading-normal text-app-muted">
               Crea tu primera asignatura para estructurar sílabos, contenidos semanales y guías instruccionales en PDF.
             </p>
             <button class="${cx(ui.button.base, ui.button.primary)}" id="btn-empty-new-course">
@@ -122,22 +122,22 @@ function filteredCourses() {
 function renderTableRows() {
   const rows = filteredCourses();
   if (!rows.length) {
-    return `<tr><td colspan="8" class="table-empty" style="text-align:center;color:var(--dim);padding:30px">Sin resultados</td></tr>`;
+    return `<tr><td colspan="8" class="table-empty p-8 text-center text-slate-400">Sin resultados</td></tr>`;
   }
   return rows.map((course, i) => {
     const realIndex = state.courses.indexOf(course);
     const hasContent = (course.weeks_data || []).some(w => w.title);
     return `
     <tr>
-      <td><span style="font-family:monospace;font-weight:700;color:var(--teal)">${escapeHtml(course.code)}</span></td>
-      <td style="font-weight:600;color:var(--text)">${escapeHtml(course.name)}</td>
-      <td style="color:var(--muted)">${escapeHtml(course.period || "—")}</td>
-      <td style="color:var(--muted)">${escapeHtml(course.semester || "—")}</td>
-      <td style="text-align:center">${Number(course.credits) || 0}</td>
-      <td style="text-align:center">${Number(course.weeks) || 0}</td>
+      <td><span class="font-mono font-bold text-brand">${escapeHtml(course.code)}</span></td>
+      <td class="font-semibold text-app-text">${escapeHtml(course.name)}</td>
+      <td class="text-app-muted">${escapeHtml(course.period || "—")}</td>
+      <td class="text-app-muted">${escapeHtml(course.semester || "—")}</td>
+      <td class="text-center">${Number(course.credits) || 0}</td>
+      <td class="text-center">${Number(course.weeks) || 0}</td>
       <td>
         <span class="status-pill ${hasContent ? "status-active" : "status-draft"}">
-          <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;display:inline-block"></span>
+          <span class="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current"></span>
           ${hasContent ? "Con contenido" : "Borrador"}
         </span>
       </td>
