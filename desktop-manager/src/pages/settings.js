@@ -132,8 +132,8 @@ export async function renderSettings() {
         <section class="settings-pane" id="mcp-config">
           <div class="settings-pane-title">
             <span class="material-symbols-outlined">hub</span> Conexiones
-            <span id="mcp-status-badge" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(195,198,213,0.20);color:var(--muted);border:1px solid rgba(195,198,213,0.40)">
-              <span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span> Verificando…
+            <span id="mcp-status-badge" class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-300/50 bg-slate-200/20 px-2.5 py-0.5 text-[11px] font-bold text-app-muted">
+              <span class="inline-block h-1.5 w-1.5 rounded-full bg-current"></span> Verificando…
             </span>
           </div>
             <div class="flex flex-col gap-3.5">
@@ -192,7 +192,7 @@ export async function renderSettings() {
 
           <!-- Add notebook form -->
           <div class="rounded-app border border-slate-900/10 bg-white/55 p-3.5 backdrop-blur-xl">
-            <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">
+            <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-app-muted">
               Registrar notebook
             </div>
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-3">
@@ -224,7 +224,7 @@ export async function renderSettings() {
             </div>
           </div>
 
-          <div class="text-muted" style="margin-top:12px;font-size:11.5px">
+          <div class="text-muted mt-3 text-[11.5px]">
             El Notebook ID se encuentra en la URL: <code>notebooklm.google.com/notebook/<strong>ID</strong></code>
           </div>
           <div id="notebooks-inline-error" class="inline-error" role="alert" hidden></div>
@@ -240,11 +240,11 @@ export async function renderSettings() {
           </div>
 
           <!-- Setup status summary -->
-          <div id="setup-status-bar" style="margin-bottom:12px"></div>
+          <div id="setup-status-bar" class="mb-3"></div>
 
           <!-- Deps list -->
-          <div id="deps-content" style="display:flex;flex-direction:column;gap:8px">
-            <div style="text-align:center;padding:24px;color:var(--dim)">Cargando…</div>
+          <div id="deps-content" class="flex flex-col gap-2">
+            <div class="p-6 text-center text-slate-400">Cargando…</div>
           </div>
           <div id="deps-inline-error" class="inline-error" role="alert" hidden></div>
         </section>
@@ -651,13 +651,10 @@ async function loadSetupStatus() {
     ].filter(i => i.label);
 
     bar.innerHTML = `
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div class="mb-3 flex flex-wrap gap-2">
         ${items.map(({ label, ok }) => `
-          <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11.5px;font-weight:600;
-            background:${ok ? "rgba(26,127,75,0.08)" : "rgba(186,26,26,0.06)"};
-            color:${ok ? "var(--green)" : "var(--red)"};
-            border:1px solid ${ok ? "rgba(26,127,75,0.20)" : "rgba(186,26,26,0.18)"}">
-            <span class="material-symbols-outlined" style="font-size:14px">${ok ? "check_circle" : "cancel"}</span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold ${ok ? "border-green-200 bg-green-50 text-green-600" : "border-red-200 bg-red-50 text-red-500"}">
+            <span class="material-symbols-outlined text-sm">${ok ? "check_circle" : "cancel"}</span>
             ${escapeHtml(label)}
           </span>`).join("")}
       </div>`;
@@ -669,7 +666,7 @@ async function loadSetupStatus() {
 async function loadDeps() {
   const container = document.getElementById("deps-content");
   if (!container) return;
-  container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--dim)">Cargando…</div>`;
+  container.innerHTML = `<div class="p-6 text-center text-slate-400">Cargando…</div>`;
 
   try {
     const deps  = await checkDependencies();
@@ -678,11 +675,11 @@ async function loadDeps() {
     const pct   = total > 0 ? Math.round((ok / total) * 100) : 0;
 
     container.innerHTML = `
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <span style="font-size:24px;font-weight:800;color:var(--teal)">${ok}</span>
+      <div class="mb-3 flex items-center gap-3">
+        <span class="text-2xl font-extrabold text-brand">${ok}</span>
         <div>
-          <div style="font-size:13px;font-weight:600;color:var(--text)">de ${total} dependencias instaladas</div>
-          <div class="progress-track" style="width:180px;margin-top:5px">
+          <div class="text-[13px] font-semibold text-app-text">de ${total} dependencias instaladas</div>
+          <div class="progress-track mt-1 w-[180px]">
             <div class="progress-fill" style="width:${pct}%"></div>
           </div>
         </div>
@@ -691,7 +688,7 @@ async function loadDeps() {
         </button>
       </div>
       ${deps.map(dep => `
-        <div class="list-item" style="margin-bottom:6px">
+        <div class="list-item mb-1.5">
           <div class="list-item-left">
             <div class="dot ${dep.installed ? "dot-ok" : "dot-err"}"></div>
             <div>
