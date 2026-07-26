@@ -13,7 +13,7 @@ export function renderSyllabus() {
   const course = state.editingCourse !== undefined ? state.courses[state.editingCourse] : null;
   if (!course) {
     el.innerHTML = `
-      <div class="glass-card" style="padding:40px;text-align:center;color:var(--dim)">
+      <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-10 text-center text-app-muted shadow-glass backdrop-blur-xl">
         <span class="material-symbols-outlined" style="font-size:40px;display:block;margin-bottom:12px">description</span>
         <div style="font-size:16px;font-weight:700;color:var(--text-2);margin-bottom:6px">Sin asignatura seleccionada</div>
         <div style="font-size:13px">Selecciona una asignatura en la página de Cursos para editar su sílabo.</div>
@@ -42,7 +42,7 @@ export function renderSyllabus() {
       <div class="syllabus-left">
 
         <!-- Course metadata -->
-        <div class="glass-card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
+        <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 flex items-center justify-between shadow-glass backdrop-blur-xl">
           <div>
             <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:3px">Editando sílabo</div>
             <div style="font-size:17px;font-weight:800;color:var(--text);letter-spacing:-0.02em">${escapeHtml(course.name)} (${escapeHtml(course.code)})</div>
@@ -128,7 +128,7 @@ export function renderSyllabus() {
         </div>
 
         <!-- Action panel -->
-        <div class="glass-card" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 flex flex-col gap-3 shadow-glass backdrop-blur-xl">
           <div style="font-size:12.5px;color:var(--muted);text-align:center">
             ${pct < 100 ? "Completa todas las semanas para generar el documento final." : "¡Sílabo completo! Puedes generar el README."}
           </div>
@@ -174,29 +174,29 @@ function renderWeekForm(weekData, weekIndex) {
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:14px">
-      <div class="form-grid">
-        <div class="form-group">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div class="flex flex-col gap-1.5">
           <label>Título de la semana</label>
           <input id="wf-title" placeholder="Ej: Límites y Continuidad" value="${escapeHtml(w.title || "")}">
         </div>
-        <div class="form-group">
+        <div class="flex flex-col gap-1.5">
           <label>Unidad cubierta</label>
           <input id="wf-unit" placeholder="Ej: Unidad 2" value="${escapeHtml(w.unit || "")}">
         </div>
       </div>
-      <div class="form-group">
+      <div class="flex flex-col gap-1.5">
         <label>Contenido / Temas <span class="text-muted">(uno por línea)</span></label>
         <textarea id="wf-topics" style="height:80px" placeholder="Tema 1&#10;Tema 2">${escapeHtml(w.topics || "")}</textarea>
       </div>
-      <div class="form-group">
+      <div class="flex flex-col gap-1.5">
         <label>Resultados de aprendizaje</label>
         <textarea id="wf-outcomes" style="height:70px" placeholder="Docencia: Analizar…&#10;Práctica: Aplicar…">${escapeHtml(w.outcomes || "")}</textarea>
       </div>
-      <div class="form-group">
+      <div class="flex flex-col gap-1.5">
         <label>Bibliografía / Recursos</label>
         <input id="wf-bibliography" placeholder="Autor (año). Obra. Capítulo." value="${escapeHtml(w.bibliography || "")}">
       </div>
-      <div class="form-group">
+      <div class="flex flex-col gap-1.5">
         <label>Horas: docencia / práctica / autónomo</label>
         <div class="row">
           <input id="wf-teaching" type="number" min="0" max="40" value="${Number(w.teaching_hours ?? 2)}" style="width:70px">
@@ -206,7 +206,7 @@ function renderWeekForm(weekData, weekIndex) {
           <input id="wf-autonomous" type="number" min="0" max="40" value="${Number(w.autonomous_hours ?? 4)}" style="width:70px">
         </div>
       </div>
-      <div class="form-group">
+      <div class="flex flex-col gap-1.5">
         <label>Actividad calificada <span class="text-muted">(opcional)</span></label>
         <input id="wf-activity" placeholder="AC-01 — Taller — 10 puntos" value="${escapeHtml(w.graded_activity || "")}">
       </div>

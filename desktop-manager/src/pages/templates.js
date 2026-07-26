@@ -73,7 +73,7 @@ function renderBento(filter) {
 
   bento.innerHTML = `
     <!-- Featured (8-col) -->
-    <div class="glass-card col-span-1 md:col-span-2 xl:col-span-8 flex flex-col sm:flex-row" style="padding:18px;gap:18px;position:relative;overflow:hidden">
+    <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-[18px] shadow-glass backdrop-blur-xl col-span-1 md:col-span-2 xl:col-span-8 flex flex-col gap-[18px] sm:flex-row relative overflow-hidden">
       <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,49,126,0.04),transparent);pointer-events:none"></div>
       <div class="w-full sm:w-[45%] shrink-0" style="aspect-ratio:4/3;border-radius:8px;border:1px solid rgba(195,198,213,0.50);background:white;overflow:hidden;position:relative">
         <div style="padding:12px;font-size:10px;color:#374151;line-height:1.5;transform:scale(0.62);transform-origin:top left;width:161%;pointer-events:none">
@@ -105,7 +105,7 @@ function renderBento(filter) {
 
     <!-- Secondary (4-col) -->
     ${secondary ? `
-    <div class="glass-card col-span-1 xl:col-span-4" style="padding:16px;display:flex;flex-direction:column;justify-content:space-between">
+    <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 shadow-glass backdrop-blur-xl col-span-1 xl:col-span-4 flex flex-col justify-between">
       <div>
         <div style="width:100%;aspect-ratio:16/9;border-radius:8px;border:1px solid rgba(195,198,213,0.40);background:white;overflow:hidden;margin-bottom:12px;padding:10px;font-size:10px;color:#374151;line-height:1.5">
           <div style="font-weight:700;text-align:center;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:8px">${escapeHtml(secondary.name)}</div>
@@ -122,7 +122,7 @@ function renderBento(filter) {
 
     <!-- Grid items (4-col each) -->
     ${gridItems.map(t => `
-    <div class="glass-card col-span-1 xl:col-span-4" style="padding:16px;display:flex;flex-direction:column">
+    <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 shadow-glass backdrop-blur-xl col-span-1 xl:col-span-4 flex flex-col">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(195,198,213,0.30)">
         <span class="material-symbols-outlined" style="color:var(--teal);font-size:20px">assignment_ind</span>
         <span style="font-size:13px;font-weight:700;color:var(--text)">${escapeHtml(t.name)}</span>

@@ -6,7 +6,7 @@ export function renderDocs() {
 
   el.innerHTML = `
     <div class="max-w-3xl">
-      <div class="glass-card docs-content">
+      <div class="docs-content rounded-app-lg border border-slate-900/10 bg-white/65 shadow-glass backdrop-blur-xl">
         <h1>Ayuda</h1>
         <p style="color:var(--muted);font-size:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(195,198,213,0.30)">
           Lo esencial para dejar la app funcionando y resolver los problemas más comunes.

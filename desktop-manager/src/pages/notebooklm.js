@@ -8,6 +8,7 @@ import { getNotebooks, saveNotebooks } from "../state.js";
 import { toast } from "../toast.js";
 import { ic, refreshIcons } from "../icons.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
+import { ui, cx } from "../uiClasses.js";
 
 export async function renderNotebookLM() {
   renderNotebookList();
@@ -64,7 +65,7 @@ function renderNotebookList() {
               <div class="list-item-sub mono">${escapeHtml(entry.root_path)} · ${escapeHtml(entry.notebook_id || "sin id")}${entry.notebook_url ? " · URL guardada" : ""}</div>
             </div>
           </div>
-          <button class="btn btn-danger btn-xs" data-delete-notebook="${index}" title="Eliminar notebook">
+          <button class="${cx(ui.button.base, ui.button.danger, ui.button.xs)}" data-delete-notebook="${index}" title="Eliminar notebook">
             ${ic("trash-2", 12)}
           </button>
         </div>`).join("")

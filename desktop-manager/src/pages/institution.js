@@ -9,6 +9,7 @@ import { applyInstitutionConfig } from "../api.js";
 import { escapeHtml }         from "../dom.js";
 import { toast }             from "../toast.js";
 import { refreshIcons }      from "../icons.js";
+import { ui, cx } from "../uiClasses.js";
 
 export function renderInstitution() {
   initColorPicker();
@@ -123,7 +124,7 @@ function updatePreview() {
     <div class="latex-block" style="margin-top:12px">
       <div class="latex-block-header">
         <span style="font-size:11px;font-weight:700;color:#666">Preámbulo LaTeX generado</span>
-        <button class="btn btn-ghost btn-xs" id="btn-copy-latex" title="Copiar bloque LaTeX">
+        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.xs)}" id="btn-copy-latex" title="Copiar bloque LaTeX">
           <i data-lucide="clipboard-copy" width="12" height="12"></i> Copiar
         </button>
       </div>
