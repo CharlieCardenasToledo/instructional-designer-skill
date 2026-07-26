@@ -699,7 +699,7 @@ async function loadDeps() {
           <div class="list-item-right">
             ${!dep.installed
               ? `<button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-dep-name="${escapeHtml(dep.name)}">Instalar</button>`
-              : `<span class="badge badge-success">OK</span>`}
+              : `<span class="${ui.badge.success}">OK</span>`}
           </div>
         </div>`).join("")}`;
 

@@ -14,6 +14,12 @@ export const ui = {
     pane: "rounded-app border border-slate-900/10 bg-white/55 backdrop-blur-xl",
     input: "rounded-md border border-slate-300/70 bg-white/60 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15",
   },
+  badge: {
+    base: "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-bold",
+    success: "inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-600",
+    error: "inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-500",
+    muted: "inline-flex items-center gap-1 rounded-full border border-slate-300/50 bg-slate-200/20 px-2 py-0.5 text-[11px] font-bold text-app-muted",
+  },
   form: {
     grid: "grid grid-cols-1 gap-3 sm:grid-cols-2",
     group: "flex flex-col gap-1.5",

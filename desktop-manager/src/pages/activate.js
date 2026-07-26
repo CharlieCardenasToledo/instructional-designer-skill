@@ -47,7 +47,7 @@ export async function renderActivate() {
         <div class="step-detail">${escapeHtml(step.detail)}</div>
       </div>
       ${step.ok
-        ? `<span class="badge badge-green">${ic("check-circle-2", 11)} Listo</span>`
+        ? `<span class="${ui.badge.success}">${ic("check-circle-2", 11)} Listo</span>`
         : `<button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-run-step="${escapeHtml(step.id)}">${ic("play", 12)} ${escapeHtml(step.action)}</button>`}
     </div>`).join("");
 

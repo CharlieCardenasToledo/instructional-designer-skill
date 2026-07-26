@@ -61,13 +61,13 @@ function depItem(dep) {
       <div class="list-item-left">
         <div class="dot ${dep.installed ? "dot-ok" : "dot-err"}"></div>
         <div>
-          <div class="list-item-label">${escapeHtml(dep.name)} <span class="badge">${requirement}</span></div>
+          <div class="list-item-label">${escapeHtml(dep.name)} <span class="${ui.badge.muted}">${requirement}</span></div>
           <div class="list-item-sub">${escapeHtml(version)} · ${escapeHtml(dep.note || "")}</div>
         </div>
       </div>
       <div class="list-item-right">
         ${dep.installed
-          ? `<span class="badge badge-green">${ic("check-circle-2", 11)} Listo</span>`
+          ? `<span class="${ui.badge.success}">${ic("check-circle-2", 11)} Listo</span>`
           : `<button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-install-dependency="${escapeHtml(dep.name)}" title="Instalar ${escapeHtml(dep.name)}">${ic("download", 13)} Instalar</button>`}
       </div>
     </div>`;
