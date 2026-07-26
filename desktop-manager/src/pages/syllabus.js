@@ -14,9 +14,9 @@ export function renderSyllabus() {
   if (!course) {
     el.innerHTML = `
       <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-10 text-center text-app-muted shadow-glass backdrop-blur-xl">
-        <span class="material-symbols-outlined" style="font-size:40px;display:block;margin-bottom:12px">description</span>
-        <div style="font-size:16px;font-weight:700;color:var(--text-2);margin-bottom:6px">Sin asignatura seleccionada</div>
-        <div style="font-size:13px">Selecciona una asignatura en la página de Cursos para editar su sílabo.</div>
+        <span class="material-symbols-outlined mb-3 block text-[40px]">description</span>
+        <div class="mb-1.5 text-base font-bold text-slate-700">Sin asignatura seleccionada</div>
+        <div class="text-[13px]">Selecciona una asignatura en la página de Cursos para editar su sílabo.</div>
       </div>`;
     return;
   }
@@ -44,14 +44,14 @@ export function renderSyllabus() {
         <!-- Course metadata -->
         <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 flex items-center justify-between shadow-glass backdrop-blur-xl">
           <div>
-            <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);margin-bottom:3px">Editando sílabo</div>
-            <div style="font-size:17px;font-weight:800;color:var(--text);letter-spacing:-0.02em">${escapeHtml(course.name)} (${escapeHtml(course.code)})</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">
+            <div class="mb-0.5 text-[10.5px] font-bold uppercase tracking-wider text-brand">Editando sílabo</div>
+            <div class="text-[17px] font-extrabold tracking-tight text-app-text">${escapeHtml(course.name)} (${escapeHtml(course.code)})</div>
+            <div class="mt-0.5 text-xs text-app-muted">
               ${escapeHtml(course.semester || "—")} · ${escapeHtml(course.period || "—")} · ${Number(course.credits) || 0} créditos
             </div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <span style="font-size:11px;color:var(--muted);background:rgba(195,198,213,0.25);padding:4px 10px;border-radius:99px;border:1px solid rgba(195,198,213,0.50)">
+          <div class="flex items-center gap-2">
+            <span class="rounded-full border border-slate-300/50 bg-slate-200/25 px-2.5 py-1 text-[11px] text-app-muted">
               Guardado manual
             </span>
           </div>
@@ -99,10 +99,10 @@ export function renderSyllabus() {
       <div class="syllabus-right">
 
         <!-- Validation panel -->
-        <div class="glass-panel" style="border-radius:12px;overflow:hidden">
-          <div style="padding:14px 16px;border-bottom:1px solid rgba(195,198,213,0.30)">
-            <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--text)">
-              <span class="material-symbols-outlined" style="font-size:18px;color:var(--teal)">checklist</span>
+        <div class="overflow-hidden rounded-xl border border-slate-900/10 bg-white/55 backdrop-blur-xl">
+          <div class="border-b border-slate-300/30 px-4 py-3.5">
+            <div class="flex items-center gap-2 text-sm font-bold text-app-text">
+              <span class="material-symbols-outlined text-lg text-brand">checklist</span>
               Validación del sílabo
             </div>
           </div>
@@ -110,7 +110,7 @@ export function renderSyllabus() {
             <div style="width:100%;height:4px;background:rgba(195,198,213,0.30);border-radius:99px;overflow:hidden;margin-bottom:4px">
               <div style="height:100%;background:var(--teal);width:${pct}%;transition:width 0.4s"></div>
             </div>
-            <div style="font-size:11.5px;color:var(--muted);text-align:right;margin-bottom:8px">${pct}% completo (${complete}/${weekCount} semanas)</div>
+            <div class="mb-2 text-right text-[11.5px] text-app-muted">${pct}% completo (${complete}/${weekCount} semanas)</div>
             ${Array.from({ length: weekCount }, (_, i) => {
               const st = statuses[i];
               const w = weeksData[i];
@@ -118,7 +118,7 @@ export function renderSyllabus() {
               const iconMap = { complete: "check_circle", draft: "pending", missing: "error" };
               const colorMap = { complete: "var(--green)", draft: "var(--teal)", missing: "var(--red)" };
               const labelMap = { complete: "Válida", draft: "Borrador", missing: "Vacía" };
-              return `<div class="validation-item ${st}" data-week-jump="${i}" style="cursor:pointer">
+              return `<div class="validation-item ${st} cursor-pointer" data-week-jump="${i}">
                 <span class="material-symbols-outlined" style="font-size:18px;color:${colorMap[st]}">${iconMap[st]}</span>
                 <span class="validation-label">${name}</span>
                 <span class="validation-state" style="color:${colorMap[st]}">${labelMap[st]}</span>
