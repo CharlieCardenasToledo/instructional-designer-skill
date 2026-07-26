@@ -16,32 +16,21 @@ export function renderCourses() {
   const total   = state.courses.length;
   const active  = state.courses.filter(c => (c.weeks_data || []).some(w => w.title)).length;
   const pending = total - active;
-  const credits = state.courses.reduce((s, c) => s + (Number(c.credits) || 0), 0);
 
   el.innerHTML = `
     <div class="courses-layout">
 
       <!-- Stats -->
-      <div class="stat-grid grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="stat-grid grid grid-cols-2 gap-3">
         <div class="stat-card">
           <div class="stat-card-label">Asignaturas</div>
           <div class="stat-card-value">${total}</div>
           <div class="stat-card-sub">Total registradas</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-label">Con contenido</div>
-          <div class="stat-card-value">${active}</div>
-          <div class="stat-card-sub">Con al menos 1 semana</div>
-        </div>
-        <div class="stat-card">
           <div class="stat-card-label">Pendientes</div>
           <div class="stat-card-value">${pending}</div>
           <div class="stat-card-sub">Sin contenido aún</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Total créditos</div>
-          <div class="stat-card-value">${credits}</div>
-          <div class="stat-card-sub">Suma de créditos</div>
         </div>
       </div>
 
