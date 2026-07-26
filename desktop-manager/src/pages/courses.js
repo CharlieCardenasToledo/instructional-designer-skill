@@ -42,7 +42,7 @@ export function renderCourses() {
           <input id="courses-search-input" placeholder="Buscar por código o nombre…" value="${escapeHtml(_filter)}">
         </div>
         <button class="${cx(ui.button.base, ui.button.primary, 'sm:shrink-0')}" id="btn-new-course">
-          <span class="material-symbols-outlined" style="font-size:15px">add</span>
+          <span class="material-symbols-outlined text-[15px]">add</span>
           Nueva asignatura
         </button>
       </div>
@@ -78,7 +78,7 @@ export function renderCourses() {
               Crea tu primera asignatura para estructurar sílabos, contenidos semanales y guías instruccionales en PDF.
             </p>
             <button class="${cx(ui.button.base, ui.button.primary)}" id="btn-empty-new-course">
-              <span class="material-symbols-outlined" style="font-size:16px">add</span>
+              <span class="material-symbols-outlined text-base">add</span>
               Nueva asignatura
             </button>
           </div>` : ""}
@@ -144,13 +144,13 @@ function renderTableRows() {
       <td>
         <div class="row-actions">
           <button class="row-action-edit" data-course-action="edit" data-index="${realIndex}">
-            <span class="material-symbols-outlined" style="font-size:14px">edit_document</span> Sílabo
+            <span class="material-symbols-outlined text-sm">edit_document</span> Sílabo
           </button>
           <button class="row-action-folders" data-course-action="folders" data-index="${realIndex}">
-            <span class="material-symbols-outlined" style="font-size:14px">create_new_folder</span> Carpetas
+            <span class="material-symbols-outlined text-sm">create_new_folder</span> Carpetas
           </button>
           <button class="row-action-delete" data-course-action="delete" data-index="${realIndex}">
-            <span class="material-symbols-outlined" style="font-size:14px">delete</span>
+            <span class="material-symbols-outlined text-sm">delete</span>
           </button>
         </div>
       </td>
@@ -218,7 +218,7 @@ function renderModal() {
       <div class="modal-header">
         <div>
           <div class="modal-title">Nueva asignatura</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Paso 1 de 2 — Información general</div>
+          <div class="mt-0.5 text-[11px] text-app-muted">Paso 1 de 2 — Información general</div>
         </div>
         <div class="modal-steps">
           <div class="modal-step active">1</div>
@@ -235,7 +235,7 @@ function renderModal() {
           </div>
           <div class="flex flex-col gap-1.5">
             <label for="m-code">Código único *</label>
-            <input id="m-code" placeholder="Ej: IFT200" value="${escapeHtml(_modalData.code)}" style="text-transform:uppercase">
+            <input id="m-code" class="uppercase" placeholder="Ej: IFT200" value="${escapeHtml(_modalData.code)}">
           </div>
           <div class="flex flex-col gap-1.5">
             <label for="m-period">Periodo académico</label>
@@ -255,14 +255,14 @@ function renderModal() {
           </div>
           <div class="flex flex-col gap-1.5 sm:col-span-2">
             <label for="m-desc">Descripción (opcional)</label>
-            <textarea id="m-desc" placeholder="Breve descripción del curso…" style="height:70px">${escapeHtml(_modalData.description)}</textarea>
+            <textarea id="m-desc" class="h-[70px]" placeholder="Breve descripción del curso…">${escapeHtml(_modalData.description)}</textarea>
           </div>
         </div>
       </div>
       <div class="modal-footer">
         <button class="${cx(ui.button.base, ui.button.secondary)}" id="m-cancel">Cancelar</button>
         <button class="${cx(ui.button.base, ui.button.primary)}" id="m-next">
-          Siguiente <span class="material-symbols-outlined" style="font-size:15px">arrow_forward</span>
+          Siguiente <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
         </button>
       </div>`;
 
@@ -292,45 +292,45 @@ function renderModal() {
       <div class="modal-header">
         <div>
           <div class="modal-title">Nueva asignatura</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Paso 2 de 2 — Estructura de carpetas</div>
+          <div class="mt-0.5 text-[11px] text-app-muted">Paso 2 de 2 — Estructura de carpetas</div>
         </div>
         <div class="modal-steps">
           <div class="modal-step done">
-            <span class="material-symbols-outlined" style="font-size:13px">check</span>
+            <span class="material-symbols-outlined text-[13px]">check</span>
           </div>
-          <div class="modal-step-line" style="background:var(--teal)"></div>
+          <div class="modal-step-line bg-brand"></div>
           <div class="modal-step active">2</div>
         </div>
       </div>
       <div class="modal-body">
         <div class="rounded-app border border-slate-900/10 bg-white/55 p-3.5 mb-4 backdrop-blur-xl">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px">Vista previa de carpetas</div>
-          <div style="display:flex;flex-direction:column;gap:5px">
-            <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2);font-weight:600">
-              <span class="material-symbols-outlined" style="font-size:17px;color:var(--teal)">folder_open</span>
+          <div class="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-app-muted">Vista previa de carpetas</div>
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center gap-2 text-[12.5px] font-semibold text-slate-700">
+              <span class="material-symbols-outlined text-[17px] text-brand">folder_open</span>
               /${escapeHtml(_modalData.code)} ${escapeHtml(_modalData.name)}/
             </div>
             ${weekFolders.map(f => `
-              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding-left:20px">
-                <span class="material-symbols-outlined" style="font-size:16px">folder</span> ${escapeHtml(f)}
+              <div class="flex items-center gap-2 pl-5 text-xs text-app-muted">
+                <span class="material-symbols-outlined text-base">folder</span> ${escapeHtml(f)}
               </div>`).join("")}
-            ${weeks > 6 ? `<div style="padding-left:20px;font-size:11.5px;color:var(--dim)">… y ${weeks - 6} carpetas más</div>` : ""}
+            ${weeks > 6 ? `<div class="pl-5 text-[11.5px] text-slate-400">… y ${weeks - 6} carpetas más</div>` : ""}
           </div>
         </div>
-        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
-          <input type="checkbox" id="m-init-readme" ${_modalData.initReadme ? "checked" : ""} style="width:auto;margin-top:2px;accent-color:var(--teal)">
+        <label class="flex cursor-pointer items-start gap-2.5">
+          <input type="checkbox" id="m-init-readme" ${_modalData.initReadme ? "checked" : ""} class="mt-0.5 w-auto accent-brand">
           <div>
-            <div style="font-size:13px;font-weight:600;color:var(--text)">Inicializar con plantilla README canónica</div>
-            <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Pre-popula el README.md raíz con la estructura del sílabo y rúbricas.</div>
+            <div class="text-[13px] font-semibold text-app-text">Inicializar con plantilla README canónica</div>
+            <div class="mt-0.5 text-[11.5px] text-app-muted">Pre-popula el README.md raíz con la estructura del sílabo y rúbricas.</div>
           </div>
         </label>
       </div>
       <div class="modal-footer">
         <button class="${cx(ui.button.base, ui.button.secondary)}" id="m-back">
-          <span class="material-symbols-outlined" style="font-size:15px">arrow_back</span> Atrás
+          <span class="material-symbols-outlined text-[15px]">arrow_back</span> Atrás
         </button>
         <button class="${cx(ui.button.base, ui.button.primary)}" id="m-create">
-          <span class="material-symbols-outlined" style="font-size:15px">create_new_folder</span>
+          <span class="material-symbols-outlined text-[15px]">create_new_folder</span>
           Crear asignatura
         </button>
       </div>`;
