@@ -476,12 +476,12 @@ function renderPalette(container, palette) {
     </div>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-1.5">
       ${palette.map(({ color, occurrences }) => `
-        <button class="palette-swatch" type="button" data-palette-color="${escapeHtml(color)}"
+        <button class="palette-swatch flex min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-slate-300/65 bg-white/70 p-1.5 text-left text-app-text transition-colors hover:border-teal-600 hover:shadow-[0_0_0_2px_rgba(0,121,107,0.1)]" type="button" data-palette-color="${escapeHtml(color)}"
           title="Usar ${escapeHtml(color)}">
-          <span class="palette-swatch-color" style="background:${escapeHtml(color)}"></span>
-          <span class="palette-swatch-meta">
-            <code>${escapeHtml(color)}</code>
-            <small>${occurrences} ${occurrences === 1 ? "aparición" : "apariciones"}</small>
+          <span class="inline-block h-[31px] w-[31px] shrink-0 rounded-[7px] border border-black/15" style="background:${escapeHtml(color)}"></span>
+          <span class="flex min-w-0 flex-col">
+            <code class="overflow-hidden text-ellipsis whitespace-nowrap text-[10.5px]">${escapeHtml(color)}</code>
+            <small class="text-[10px] text-app-muted">${occurrences} ${occurrences === 1 ? "aparición" : "apariciones"}</small>
           </span>
         </button>`).join("")}
     </div>`;
@@ -500,8 +500,8 @@ function renderPalette(container, palette) {
       if (!state.config) state.config = {};
       state.config.color = hex;
       saveLocalConfig();
-      container.querySelectorAll(".palette-swatch").forEach(item => item.classList.remove("selected"));
-      button.classList.add("selected");
+      container.querySelectorAll(".palette-swatch").forEach(item => item.classList.remove("selected", "border-teal-600", "shadow-[0_0_0_2px_rgba(0,121,107,0.1)]"));
+      button.classList.add("selected", "border-teal-600", "shadow-[0_0_0_2px_rgba(0,121,107,0.1)]");
       toast(`Color institucional actualizado a ${hex}`, "success", 2500);
     });
   });
