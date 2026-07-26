@@ -28,7 +28,7 @@ async function updateAuthStatus() {
   } catch (error) {
     auth.message = String(error);
   }
-  dot.className = `dot ${auth.authenticated ? "dot-ok" : "dot-err"}`;
+  dot.className = `h-2 w-2 shrink-0 rounded-full ${auth.authenticated ? "bg-green-500 shadow-[0_0_0_3px_var(--green-bg),0_0_8px_rgba(74,222,128,0.4)]" : "bg-red-500 shadow-[0_0_0_3px_var(--red-bg),0_0_8px_rgba(248,113,113,0.4)]"}`;
   text.textContent = auth.message;
   const warning = document.getElementById("auth-warning");
   if (warning) warning.style.display = auth.authenticated ? "none" : "flex";
@@ -59,7 +59,7 @@ function renderNotebookList() {
     ? entries.map((entry, index) => `
         <div class="${ui.list.item}">
           <div class="${ui.list.left}">
-            <div class="dot dot-ok"></div>
+            <div class="h-2 w-2 shrink-0 rounded-full bg-green-500 shadow-[0_0_0_3px_var(--green-bg),0_0_8px_rgba(74,222,128,0.4)]"></div>
             <div>
               <div class="${ui.list.label}">${escapeHtml(entry.course_code)} — ${escapeHtml(entry.course_name)}</div>
               <div class="${ui.list.sub} mono">${escapeHtml(entry.root_path)} · ${escapeHtml(entry.notebook_id || "sin id")}${entry.notebook_url ? " · URL guardada" : ""}</div>

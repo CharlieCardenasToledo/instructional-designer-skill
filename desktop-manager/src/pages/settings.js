@@ -691,7 +691,7 @@ async function loadDeps() {
       ${deps.map(dep => `
         <div class="${ui.list.item} mb-1.5">
           <div class="${ui.list.left}">
-            <div class="dot ${dep.installed ? "dot-ok" : "dot-err"}"></div>
+            <div class="h-2 w-2 shrink-0 rounded-full ${dep.installed ? "bg-green-500 shadow-[0_0_0_3px_var(--green-bg),0_0_8px_rgba(74,222,128,0.4)]" : "bg-red-500 shadow-[0_0_0_3px_var(--red-bg),0_0_8px_rgba(248,113,113,0.4)]"}"></div>
             <div>
               <div class="${ui.list.label}">${escapeHtml(dep.name)}</div>
               <div class="${ui.list.sub}">${escapeHtml(dep.version || (dep.installed ? "Instalado" : "No instalado"))}</div>
