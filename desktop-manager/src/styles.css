@@ -534,71 +534,6 @@ body::after {
 
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
 
-/* ── Buttons ──────────────────────────────────────────────────────────────── */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: var(--radius);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: var(--font);
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
-  text-decoration: none;
-  white-space: nowrap;
-  user-select: none;
-}
-.btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-.btn[aria-busy="true"] { cursor: wait; position: relative; }
-.btn[aria-busy="true"]::after { content:""; width:12px; height:12px; margin-left:8px; display:inline-block; vertical-align:-2px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.btn svg { flex-shrink: 0; }
-
-.btn-primary {
-  background: #111827;
-  color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 0 20px var(--teal-glow), inset 0 1px 0 rgba(255,255,255,0.2);
-}
-.btn-primary:hover:not(:disabled) {
-  background: #273449;
-  color: #ffffff;
-  box-shadow: 0 0 30px var(--teal-glow);
-}
-
-.btn-secondary {
-  background: var(--glass);
-  color: var(--text-2);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: var(--blur-sm);
-  -webkit-backdrop-filter: var(--blur-sm);
-}
-.btn-secondary:hover:not(:disabled) {
-  background: var(--glass-hover);
-  border-color: var(--glass-border-strong);
-}
-
-.btn-danger {
-  background: var(--red-bg);
-  color: var(--red);
-  border: 1px solid var(--red-border);
-}
-.btn-danger:hover:not(:disabled) { background: rgba(248,113,113,0.2); }
-
-.btn-ghost {
-  background: transparent;
-  color: var(--muted);
-  padding: 6px 8px;
-}
-.btn-ghost:hover:not(:disabled) { background: var(--glass); color: var(--text-2); }
-
-.btn-sm { padding: 5px 10px; font-size: 12px; }
-.btn-xs { padding: 3px 8px; font-size: 11px; }
-
 /* ── Badges ───────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
@@ -645,11 +580,6 @@ body::after {
 .alert-error { background: var(--red-bg);   border: 1px solid var(--red-border);  color: var(--red); }
 
 /* ── Forms ────────────────────────────────────────────────────────────────── */
-.form-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.form-grid-1 { grid-template-columns: 1fr; }
-.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-.form-group  { display: flex; flex-direction: column; gap: 5px; }
-
 label {
   font-size: 12px;
   font-weight: 600;
