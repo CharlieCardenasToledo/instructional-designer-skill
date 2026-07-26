@@ -4,6 +4,7 @@ import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
 import { navigate } from "../router.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
+import { ui, cx } from "../uiClasses.js";
 
 let _filter = "";
 let _modalStep = 0;
@@ -40,7 +41,7 @@ export function renderCourses() {
           <span class="material-symbols-outlined">search</span>
           <input id="courses-search-input" placeholder="Buscar por código o nombre…" value="${escapeHtml(_filter)}">
         </div>
-        <button class="btn btn-primary sm:shrink-0" id="btn-new-course">
+        <button class="${cx(ui.button.base, ui.button.primary, 'sm:shrink-0')}" id="btn-new-course">
           <span class="material-symbols-outlined" style="font-size:15px">add</span>
           Nueva asignatura
         </button>
@@ -76,7 +77,7 @@ export function renderCourses() {
             <p style="font-size:13px;color:var(--muted);max-width:380px;margin-bottom:20px;line-height:1.5">
               Crea tu primera asignatura para estructurar sílabos, contenidos semanales y guías instruccionales en PDF.
             </p>
-            <button class="btn btn-primary" id="btn-empty-new-course">
+            <button class="${cx(ui.button.base, ui.button.primary)}" id="btn-empty-new-course">
               <span class="material-symbols-outlined" style="font-size:16px">add</span>
               Nueva asignatura
             </button>
@@ -259,8 +260,8 @@ function renderModal() {
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="m-cancel">Cancelar</button>
-        <button class="btn btn-primary" id="m-next">
+        <button class="${cx(ui.button.base, ui.button.secondary)}" id="m-cancel">Cancelar</button>
+        <button class="${cx(ui.button.base, ui.button.primary)}" id="m-next">
           Siguiente <span class="material-symbols-outlined" style="font-size:15px">arrow_forward</span>
         </button>
       </div>`;
@@ -325,10 +326,10 @@ function renderModal() {
         </label>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="m-back">
+        <button class="${cx(ui.button.base, ui.button.secondary)}" id="m-back">
           <span class="material-symbols-outlined" style="font-size:15px">arrow_back</span> Atrás
         </button>
-        <button class="btn btn-primary" id="m-create">
+        <button class="${cx(ui.button.base, ui.button.primary)}" id="m-create">
           <span class="material-symbols-outlined" style="font-size:15px">create_new_folder</span>
           Crear asignatura
         </button>

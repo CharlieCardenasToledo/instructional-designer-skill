@@ -4,6 +4,19 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
 
+@theme {
+  --font-sans: Inter, "Segoe UI", system-ui, sans-serif;
+  --color-brand: #0f766e;
+  --color-brand-hover: #115e59;
+  --color-brand-soft: rgba(15, 118, 110, 0.08);
+  --color-app-bg: #eef2f4;
+  --color-app-text: #111827;
+  --color-app-muted: #6b7280;
+  --radius-app: 10px;
+  --radius-app-lg: 14px;
+  --shadow-glass: 0 12px 34px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
 /* Sin Preflight, `[hidden]` pierde contra utilidades (capa utilities > default
    del navegador); regla sin capa para que siempre gane. */
 [hidden] { display: none !important; }

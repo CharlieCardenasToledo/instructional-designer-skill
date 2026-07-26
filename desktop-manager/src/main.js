@@ -16,6 +16,7 @@ import { toast }              from "./toast.js";
 import { getOnboardingStatus } from "./api.js";
 import { renderOnboarding }  from "./onboarding.js";
 import { getCurrentWindow }  from "@tauri-apps/api/window";
+import { ui, cx } from "./uiClasses.js";
 
 registerPage("courses",   renderCourses);
 registerPage("syllabus",  renderSyllabus);
@@ -39,7 +40,7 @@ function renderShell() {
       </div>
 
       <div class="sidebar-cta">
-        <button class="btn btn-ghost btn-sm text-xs" data-page="courses" style="width:100%;justify-content:center;border:1px dashed rgba(195,198,213,0.6)">
+        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm, ui.button.xs, 'w-full border-dashed border-slate-300/60')}" data-page="courses">
           <span class="material-symbols-outlined" style="font-size:15px">add</span>
           Nueva asignatura
         </button>
