@@ -57,15 +57,15 @@ function depItem(dep) {
   const version = dep.version || (dep.installed ? "Instalado" : "No encontrado");
   const requirement = dep.required ? "Requerido" : "Opcional";
   return `
-    <div class="list-item">
-      <div class="list-item-left">
+    <div class="${ui.list.item}">
+      <div class="${ui.list.left}">
         <div class="dot ${dep.installed ? "dot-ok" : "dot-err"}"></div>
         <div>
-          <div class="list-item-label">${escapeHtml(dep.name)} <span class="${ui.badge.muted}">${requirement}</span></div>
-          <div class="list-item-sub">${escapeHtml(version)} · ${escapeHtml(dep.note || "")}</div>
+          <div class="${ui.list.label}">${escapeHtml(dep.name)} <span class="${ui.badge.muted}">${requirement}</span></div>
+          <div class="${ui.list.sub}">${escapeHtml(version)} · ${escapeHtml(dep.note || "")}</div>
         </div>
       </div>
-      <div class="list-item-right">
+      <div class="${ui.list.right}">
         ${dep.installed
           ? `<span class="${ui.badge.success}">${ic("check-circle-2", 11)} Listo</span>`
           : `<button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-install-dependency="${escapeHtml(dep.name)}" title="Instalar ${escapeHtml(dep.name)}">${ic("download", 13)} Instalar</button>`}

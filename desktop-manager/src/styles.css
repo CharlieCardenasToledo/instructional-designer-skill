@@ -390,29 +390,6 @@ body::after {
 }
 
 /* ── List items ───────────────────────────────────────────────────────────── */
-.item-list { display: flex; flex-direction: column; gap: 8px; }
-
-.list-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 14px;
-  border-radius: var(--radius);
-  border: 1px solid var(--glass-border);
-  background: var(--glass);
-  backdrop-filter: var(--blur-sm);
-  -webkit-backdrop-filter: var(--blur-sm);
-  transition: border-color 0.12s, background 0.12s;
-}
-.list-item:hover {
-  border-color: var(--glass-border-strong);
-  background: var(--glass-hover);
-}
-.list-item-left  { display: flex; align-items: center; gap: 12px; }
-.list-item-label { font-size: 13px; font-weight: 600; color: var(--text); }
-.list-item-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.list-item-right { display: flex; gap: 6px; align-items: center; }
-
 /* ── Status dots ──────────────────────────────────────────────────────────── */
 .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .dot-ok      { background: var(--green);  box-shadow: 0 0 0 3px var(--green-bg), 0 0 8px rgba(74,222,128,0.4); }
@@ -982,10 +959,8 @@ code {
   .tpl-gallery,
   .tpl-preview-panel { height: auto; max-height: none; }
   .inst-preview-col { order: -1; }
-  .card-header,
-  .list-item { align-items: flex-start; gap: 10px; }
+  .card-header { align-items: flex-start; gap: 10px; }
   .card-header { flex-direction: column; }
-  .list-item-right { flex-wrap: wrap; justify-content: flex-end; }
 }
 
 /* ── Final onboarding step ─────────────────────────────────────────────────── */

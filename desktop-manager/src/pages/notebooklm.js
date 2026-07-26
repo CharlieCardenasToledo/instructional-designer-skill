@@ -57,12 +57,12 @@ function renderNotebookList() {
 
   list.innerHTML = entries.length
     ? entries.map((entry, index) => `
-        <div class="list-item">
-          <div class="list-item-left">
+        <div class="${ui.list.item}">
+          <div class="${ui.list.left}">
             <div class="dot dot-ok"></div>
             <div>
-              <div class="list-item-label">${escapeHtml(entry.course_code)} — ${escapeHtml(entry.course_name)}</div>
-              <div class="list-item-sub mono">${escapeHtml(entry.root_path)} · ${escapeHtml(entry.notebook_id || "sin id")}${entry.notebook_url ? " · URL guardada" : ""}</div>
+              <div class="${ui.list.label}">${escapeHtml(entry.course_code)} — ${escapeHtml(entry.course_name)}</div>
+              <div class="${ui.list.sub} mono">${escapeHtml(entry.root_path)} · ${escapeHtml(entry.notebook_id || "sin id")}${entry.notebook_url ? " · URL guardada" : ""}</div>
             </div>
           </div>
           <button class="${cx(ui.button.base, ui.button.danger, ui.button.xs)}" data-delete-notebook="${index}" title="Eliminar notebook">

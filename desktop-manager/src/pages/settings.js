@@ -584,15 +584,15 @@ function renderNotebookList() {
     return;
   }
   list.innerHTML = notebooks.map((nb, i) => `
-    <div class="list-item">
-      <div class="list-item-left">
+    <div class="${ui.list.item}">
+      <div class="${ui.list.left}">
         <span class="material-symbols-outlined text-lg text-brand">menu_book</span>
         <div>
-          <div class="list-item-label">${escapeHtml(nb.code)} — ${escapeHtml(nb.courseName)}</div>
-          <div class="list-item-sub">${escapeHtml(nb.root)}${nb.notebookId ? ` · ID: ${escapeHtml(nb.notebookId.slice(0,8))}…` : ""}</div>
+          <div class="${ui.list.label}">${escapeHtml(nb.code)} — ${escapeHtml(nb.courseName)}</div>
+          <div class="${ui.list.sub}">${escapeHtml(nb.root)}${nb.notebookId ? ` · ID: ${escapeHtml(nb.notebookId.slice(0,8))}…` : ""}</div>
         </div>
       </div>
-      <div class="list-item-right">
+      <div class="${ui.list.right}">
         <button class="${cx(ui.button.base, ui.button.danger, ui.button.xs)}" data-nb-delete="${i}" title="Eliminar notebook">
           <span class="material-symbols-outlined text-[13px]">delete</span>
         </button>
@@ -688,15 +688,15 @@ async function loadDeps() {
         </button>
       </div>
       ${deps.map(dep => `
-        <div class="list-item mb-1.5">
-          <div class="list-item-left">
+        <div class="${ui.list.item} mb-1.5">
+          <div class="${ui.list.left}">
             <div class="dot ${dep.installed ? "dot-ok" : "dot-err"}"></div>
             <div>
-              <div class="list-item-label">${escapeHtml(dep.name)}</div>
-              <div class="list-item-sub">${escapeHtml(dep.version || (dep.installed ? "Instalado" : "No instalado"))}</div>
+              <div class="${ui.list.label}">${escapeHtml(dep.name)}</div>
+              <div class="${ui.list.sub}">${escapeHtml(dep.version || (dep.installed ? "Instalado" : "No instalado"))}</div>
             </div>
           </div>
-          <div class="list-item-right">
+          <div class="${ui.list.right}">
             ${!dep.installed
               ? `<button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-dep-name="${escapeHtml(dep.name)}">Instalar</button>`
               : `<span class="${ui.badge.success}">OK</span>`}

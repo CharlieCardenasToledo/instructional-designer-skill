@@ -20,6 +20,13 @@ export const ui = {
     error: "inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-500",
     muted: "inline-flex items-center gap-1 rounded-full border border-slate-300/50 bg-slate-200/20 px-2 py-0.5 text-[11px] font-bold text-app-muted",
   },
+  list: {
+    item: "flex items-center justify-between rounded-lg border border-slate-300/50 bg-white/60 px-3 py-2",
+    left: "flex items-center gap-3",
+    label: "text-[13px] font-semibold text-app-text",
+    sub: "mt-px text-[11px] text-app-muted",
+    right: "flex items-center gap-1.5",
+  },
   form: {
     grid: "grid grid-cols-1 gap-3 sm:grid-cols-2",
     group: "flex flex-col gap-1.5",
