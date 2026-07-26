@@ -412,36 +412,6 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
 
 /* ── Week accordion ───────────────────────────────────────────────────────── */
 /* ── Step items ───────────────────────────────────────────────────────────── */
-.step-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: var(--radius);
-  border: 1px solid var(--glass-border);
-  background: var(--glass);
-  backdrop-filter: var(--blur-sm);
-  -webkit-backdrop-filter: var(--blur-sm);
-  margin-bottom: 8px;
-}
-.step-num {
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700;
-  flex-shrink: 0;
-  background: var(--glass);
-  border: 2px solid var(--glass-border);
-  color: var(--dim);
-}
-.step-num.done   { background: var(--green-bg);  border-color: var(--green);  color: var(--green);
-                   box-shadow: 0 0 10px rgba(74,222,128,0.3); }
-.step-num.active { background: var(--teal-dim);  border-color: var(--teal);   color: var(--teal);
-                   box-shadow: 0 0 10px var(--teal-glow); }
-.step-content { flex: 1; }
-.step-label  { font-size: 13px; font-weight: 600; color: var(--text); }
-.step-detail { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'Cascadia Code', 'Consolas', monospace; }
-
 /* ── Info / Warn boxes ────────────────────────────────────────────────────── */
 .info-box {
   background: var(--teal-dim);

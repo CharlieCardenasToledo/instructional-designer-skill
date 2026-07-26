@@ -38,13 +38,13 @@ export async function renderActivate() {
   const steps = buildSteps(status, auth);
   const completed = steps.filter(step => step.ok).length;
   container.innerHTML = steps.map((step, index) => `
-    <div class="step-item">
-      <div class="step-num ${step.ok ? "done" : ""}">
+    <div class="mb-2 flex items-center gap-3.5 rounded-app border border-slate-900/10 bg-white/55 p-3 backdrop-blur-sm">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold ${step.ok ? "border-green-600 bg-green-700/[0.08] text-green-700 shadow-[0_0_10px_rgba(74,222,128,0.3)]" : "border-slate-300/50 bg-white/55 text-slate-400"}">
         ${step.ok ? ic("check-circle-2", 14) : index + 1}
       </div>
-      <div class="step-content">
-        <div class="step-label">${escapeHtml(step.label)} ${step.optional ? `<span class="${ui.badge.muted}">Opcional</span>` : ""}</div>
-        <div class="step-detail">${escapeHtml(step.detail)}</div>
+      <div class="flex-1">
+        <div class="text-[13px] font-semibold text-app-text">${escapeHtml(step.label)} ${step.optional ? `<span class="${ui.badge.muted}">Opcional</span>` : ""}</div>
+        <div class="mt-0.5 font-mono text-[11px] text-app-muted">${escapeHtml(step.detail)}</div>
       </div>
       ${step.ok
         ? `<span class="${ui.badge.success}">${ic("check-circle-2", 11)} Listo</span>`
