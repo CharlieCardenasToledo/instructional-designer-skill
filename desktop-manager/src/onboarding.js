@@ -773,7 +773,7 @@ function profileStep() {
         <label class="${FIELD_LABEL}">Institución<input class="${FIELD_INPUT}" id="onb-institution" value="${value("institution")}" placeholder="Universidad Ejemplo"></label>
         <label class="${FIELD_LABEL}">Facultad<input class="${FIELD_INPUT}" id="onb-faculty" value="${value("faculty")}" placeholder="Facultad de Ingeniería"></label>
         <label class="${FIELD_LABEL}">Carrera<input class="${FIELD_INPUT}" id="onb-career" value="${value("career")}" placeholder="Ingeniería de Software"></label>
-        <label class="${FIELD_LABEL}">Color institucional<div class="flex items-center gap-2"><input class="${FIELD_INPUT} h-9 p-1" id="onb-color" type="color" value="${escapeHtml(config.colorHex || "#00796b")}"><span id="onb-color-preview" class="color-picker-preview" style="background:${escapeHtml(config.colorHex || "#00796b")}" aria-hidden="true"></span><span id="onb-color-label" class="text-[11px] text-gray-500">${escapeHtml(config.colorHex || "#00796b")}</span></div></label>
+        <label class="${FIELD_LABEL}">Color institucional<div class="flex items-center gap-2"><input class="${FIELD_INPUT} h-9 p-1" id="onb-color" type="color" value="${escapeHtml(config.colorHex || "#00796b")}"><span id="onb-color-preview" class="inline-block h-5 w-5 shrink-0 rounded border border-black/20" style="background:${escapeHtml(config.colorHex || "#00796b")}" aria-hidden="true"></span><span id="onb-color-label" class="text-[11px] text-gray-500">${escapeHtml(config.colorHex || "#00796b")}</span></div></label>
       </div>
     </div>
 

@@ -96,7 +96,7 @@ export async function renderSettings() {
               <label for="cfg-color">Color institucional</label>
               <div class="color-picker-row">
                 <input id="cfg-color" type="color" value="${escapeHtml(state.config?.color || "#00317e")}">
-                <span class="color-picker-preview" id="cfg-color-preview" style="background:${escapeHtml(state.config?.color || "#00317e")}" aria-hidden="true"></span>
+                <span class="inline-block h-5 w-5 shrink-0 rounded border border-black/20" id="cfg-color-preview" style="background:${escapeHtml(state.config?.color || "#00317e")}" aria-hidden="true"></span>
                 <span class="color-picker-label" id="cfg-color-label">${escapeHtml(state.config?.color || "#00317e")}</span>
               </div>
             </div>
