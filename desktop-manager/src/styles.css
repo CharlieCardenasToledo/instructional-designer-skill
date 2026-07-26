@@ -438,7 +438,6 @@ code {
 .text-sm     { font-size: 12px; }
 .text-xs     { font-size: 11px; }
 .mono        { font-family: 'Cascadia Code', 'Consolas', monospace; }
-.empty-state { padding: 24px 0; text-align: center; color: var(--dim); font-size: 13px; }
 .loading-row { padding: 12px 0; }
 .status-note { margin-top: 8px; }
 .hours-input { width: 84px; }

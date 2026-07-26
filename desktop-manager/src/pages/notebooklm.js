@@ -69,7 +69,7 @@ function renderNotebookList() {
             ${ic("trash-2", 12)}
           </button>
         </div>`).join("")
-    : `<div class="empty-state">${ic("notebook", 18)}<br>No hay notebooks registrados aún.</div>`;
+    : `<div class="py-6 text-center text-[13px] text-slate-400">${ic("notebook", 18)}<br>No hay notebooks registrados aún.</div>`;
 
   list.querySelectorAll("[data-delete-notebook]").forEach(button => {
     button.addEventListener("click", () => {

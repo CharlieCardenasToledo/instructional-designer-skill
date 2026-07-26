@@ -581,7 +581,7 @@ function renderNotebookList() {
   if (!list) return;
   const notebooks = getNotebooks();
   if (!notebooks.length) {
-    list.innerHTML = `<div class="empty-state py-4">Sin notebooks registrados aún.</div>`;
+    list.innerHTML = `<div class="py-4 text-center text-[13px] text-slate-400">Sin notebooks registrados aún.</div>`;
     return;
   }
   list.innerHTML = notebooks.map((nb, i) => `
