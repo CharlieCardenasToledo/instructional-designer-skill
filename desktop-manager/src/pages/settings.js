@@ -36,19 +36,19 @@ export async function renderSettings() {
       <!-- Left nav -->
       <div class="sticky top-0 z-10 self-start">
         <div class="${cx(ui.liquid.group, 'flex gap-1 overflow-x-auto p-1 lg:flex-col lg:overflow-visible')}">
-          <a class="settings-nav-item active w-auto shrink-0 rounded-lg border-l-2 border-brand bg-brand/10 px-3 py-2 text-xs font-bold text-teal-700 transition-colors hover:bg-brand/[0.05] lg:w-full" data-section="inst-profile" href="#inst-profile">
+          <a class="${cx(ui.settingsNav.item, ui.settingsNav.active)}" data-settings-nav data-section="inst-profile" href="#inst-profile">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
-          <a class="settings-nav-item w-auto shrink-0 rounded-lg border-l-2 border-transparent px-3 py-2 text-xs text-app-muted transition-colors hover:bg-brand/[0.05] hover:text-slate-700 lg:w-full" data-section="mcp-config" href="#mcp-config">
+          <a class="${ui.settingsNav.item}" data-settings-nav data-section="mcp-config" href="#mcp-config">
             <span class="material-symbols-outlined">hub</span> Conexiones
           </a>
-          <a class="settings-nav-item w-auto shrink-0 rounded-lg border-l-2 border-transparent px-3 py-2 text-xs text-app-muted transition-colors hover:bg-brand/[0.05] hover:text-slate-700 lg:w-full" data-section="notebooks-section" href="#notebooks-section">
+          <a class="${ui.settingsNav.item}" data-settings-nav data-section="notebooks-section" href="#notebooks-section">
             <span class="material-symbols-outlined">menu_book</span> Notebooks
           </a>
-          <a class="settings-nav-item w-auto shrink-0 rounded-lg border-l-2 border-transparent px-3 py-2 text-xs text-app-muted transition-colors hover:bg-brand/[0.05] hover:text-slate-700 lg:w-full" data-section="environment" href="#environment">
+          <a class="${ui.settingsNav.item}" data-settings-nav data-section="environment" href="#environment">
             <span class="material-symbols-outlined">terminal</span> Entorno
           </a>
-          <a class="settings-nav-item w-auto shrink-0 rounded-lg border-l-2 border-transparent px-3 py-2 text-xs text-app-muted transition-colors hover:bg-brand/[0.05] hover:text-slate-700 lg:w-full" data-section="app-prefs" href="#app-prefs">
+          <a class="${ui.settingsNav.item}" data-settings-nav data-section="app-prefs" href="#app-prefs">
             <span class="material-symbols-outlined">tune</span> Preferencias
           </a>
         </div>
@@ -59,7 +59,7 @@ export async function renderSettings() {
 
 
         <!-- ── Institutional Profile ── -->
-        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="inst-profile">
+        <section class="${cx(ui.surface.card, 'p-5')}" id="inst-profile">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">domain</span> Perfil institucional
           </div>
@@ -114,13 +114,13 @@ export async function renderSettings() {
                 Analiza el HTML y las hojas de estilo públicas del sitio.
               </div>
             </div>
-            <div id="institution-palette" class="hidden rounded-[10px] border border-slate-300/55 bg-white/50 p-3 sm:col-span-2" aria-live="polite"></div>
+            <div id="institution-palette" class="hidden rounded-[10px] border border-slate-300/55 bg-white p-3 sm:col-span-2" aria-live="polite"></div>
           </div>
           <div class="flex flex-col gap-1.5 mb-4">
             <label for="cfg-ecosystem">Ecosistema digital <span class="text-app-muted">(uno por línea)</span></label>
             <textarea id="cfg-ecosystem" placeholder="Canvas LMS&#10;Sistema académico">${escapeHtml(ecosystemToStr(state.config?.ecosystem))}</textarea>
           </div>
-          <div class="row-end">
+          <div class="flex items-center justify-end gap-2">
             <button class="${cx(ui.button.base, ui.button.primary)}" id="btn-save-institution">
               <span class="material-symbols-outlined text-[15px]">save</span> Guardar perfil
             </button>
@@ -129,7 +129,7 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Conexiones ── -->
-        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="mcp-config">
+        <section class="${cx(ui.surface.card, 'p-5')}" id="mcp-config">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">hub</span> Conexiones
             <span id="mcp-status-badge" class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-300/50 bg-slate-200/20 px-2.5 py-0.5 text-[11px] font-bold text-app-muted">
@@ -179,7 +179,7 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Notebooks ── -->
-        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="notebooks-section">
+        <section class="${cx(ui.surface.card, 'p-5')}" id="notebooks-section">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">menu_book</span> Notebooks de NotebookLM
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-save-notebooks">
@@ -217,7 +217,7 @@ export async function renderSettings() {
                 <input id="nb-url" placeholder="https://notebooklm.google.com/notebook/…">
               </div>
             </div>
-            <div class="row-end">
+            <div class="flex items-center justify-end gap-2">
               <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-add-notebook">
                 <span class="material-symbols-outlined text-sm">add</span> Registrar
               </button>
@@ -231,7 +231,7 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Environment ── -->
-        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="environment">
+        <section class="${cx(ui.surface.card, 'p-5')}" id="environment">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">terminal</span> Entorno del sistema
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-refresh-deps">
@@ -250,7 +250,7 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Preferencias ── -->
-        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="app-prefs">
+        <section class="${cx(ui.surface.card, 'p-5')}" id="app-prefs">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">tune</span> Preferencias
           </div>
@@ -296,11 +296,13 @@ export async function renderSettings() {
     </div>`;
 
   // ── Bind section nav ──────────────────────────────────────────────────────
-  el.querySelectorAll(".settings-nav-item").forEach(a => {
+  el.querySelectorAll("[data-settings-nav]").forEach(a => {
     a.addEventListener("click", e => {
       e.preventDefault();
-      el.querySelectorAll(".settings-nav-item").forEach(x => x.classList.remove("active", "border-brand", "bg-brand/10", "font-bold", "text-teal-700"));
-      a.classList.add("active", "border-brand", "bg-brand/10", "font-bold", "text-teal-700");
+      el.querySelectorAll("[data-settings-nav]").forEach(x => {
+        x.className = ui.settingsNav.item;
+      });
+      a.className = cx(ui.settingsNav.item, ui.settingsNav.active);
       document.getElementById(a.dataset.section)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });

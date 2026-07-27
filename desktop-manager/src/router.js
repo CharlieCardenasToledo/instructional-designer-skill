@@ -4,6 +4,7 @@
  */
 import { state }        from "./state.js";
 import { refreshIcons } from "./icons.js";
+import { ui, cx } from "./uiClasses.js";
 
 /** Registro de páginas — añadir una página nueva aquí es suficiente (OCP). */
 const PAGE_REGISTRY = {
@@ -32,19 +33,19 @@ export function navigate(page) {
   state.page = page;
 
   // Gestalt: resaltar solo el ítem activo en sidebar (consistencia visual)
-  document.querySelectorAll(".nav-item").forEach(el =>
-    el.classList.toggle("active", el.dataset.page === page)
-  );
+  document.querySelectorAll("[data-nav-item]").forEach(el => {
+    el.className = cx(ui.nav.item, el.dataset.page === page && ui.nav.active);
+  });
 
   // Mostrar la página correcta, ocultar el resto
-  document.querySelectorAll(".page").forEach(el =>
-    el.classList.toggle("active", el.id === `p-${page}`)
-  );
+  document.querySelectorAll("main section[id^='p-']").forEach(el => {
+    el.hidden = el.id !== `p-${page}`;
+  });
 
   // Actualizar topbar
   const { title, sub } = PAGE_REGISTRY[page];
-  const h2  = document.querySelector(".topbar-left h2");
-  const sub_ = document.querySelector(".topbar-sub");
+  const h2 = document.getElementById("topbar-title");
+  const sub_ = document.getElementById("topbar-sub");
   if (h2)   h2.textContent   = title;
   if (sub_) sub_.textContent = sub;
 

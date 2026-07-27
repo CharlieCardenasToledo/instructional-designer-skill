@@ -4,9 +4,10 @@ import { readFile } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
 
-test('el sistema visual no declara degradados CSS', async () => {
+test('el único degradado CSS es el highlight refractivo del control Liquid', async () => {
   const css = await readFile(new URL('src/styles.css', root), 'utf8');
-  assert.doesNotMatch(css, /gradient\s*\(/i);
+  assert.match(css, /\.liquid-control::before\s*\{[\s\S]*linear-gradient\s*\(/i);
+  assert.equal((css.match(/gradient\s*\(/gi) || []).length, 1);
 });
 
 test('todo ícono usado con ic(name) está registrado en icons.js (si no, Lucide no dibuja nada)', async () => {
@@ -299,7 +300,40 @@ test('la UI compartida usa recetas Tailwind v4 y no reintroduce componentes CSS 
   assert.doesNotMatch(css, /^\.btn(?:-|\s|\{|\:)/m);
   assert.doesNotMatch(css, /^\.glass-(?:card|pane|input)\b/m);
   assert.doesNotMatch(css, /^\.form-(?:grid|group)\b/m);
+  assert.doesNotMatch(css, /^\.(?:nav-item|nav-badge|courses-table|status-pill|syllabus-layout|tpl-layout|lp-|latex-)/m);
+  assert.match(css, /prefers-reduced-transparency/);
+  assert.match(css, /prefers-reduced-motion/);
   assert.match(recipes, /export const ui/);
-  assert.match(recipes, /border-brand bg-brand/);
-  assert.match(recipes, /rounded-app-lg/);
+  assert.match(recipes, /backdrop-blur-2xl/);
+  assert.match(recipes, /backdrop-saturate-150/);
+  assert.match(recipes, /surface:\s*\{/);
+});
+
+test('Liquid Glass aparece solo en controles y el contenido principal permanece opaco', async () => {
+  const files = ['main.js', 'pages/courses.js', 'pages/settings.js', 'pages/syllabus.js', 'pages/templates.js', 'pages/docs.js', 'pages/institution.js', 'templatePreview.js'];
+  const pageSources = (await Promise.all(files.map(file => readFile(new URL(`src/${file}`, root), 'utf8')))).join('\n');
+  assert.doesNotMatch(pageSources, /(?:card|table)[^"`]*backdrop-blur/i);
+  assert.doesNotMatch(pageSources, /panel[^"`]*backdrop-blur/i);
+  assert.doesNotMatch(pageSources, /glass-(?:card|pane|input)/);
+  assert.match(pageSources, /bg-white/);
+});
+
+test('Liquid Glass tiene fallbacks completos de accesibilidad', async () => {
+  const css = await readFile(new URL('src/styles.css', root), 'utf8');
+  assert.match(css, /prefers-reduced-transparency/);
+  assert.match(css, /backdrop-filter:\s*none/);
+  assert.match(css, /\.liquid-control::before,[\s\S]*display:\s*none\s*!important/);
+  assert.match(css, /prefers-reduced-motion/);
+});
+
+test('router y topbar usan atributos e IDs estables, no clases legacy', async () => {
+  const [router, main] = await Promise.all([
+    readFile(new URL('src/router.js', root), 'utf8'),
+    readFile(new URL('src/main.js', root), 'utf8'),
+  ]);
+  assert.doesNotMatch(router, /querySelectorAll\(["']\.nav-item/);
+  assert.match(router, /data-nav-item/);
+  assert.match(main, /id="topbar-title"/);
+  assert.match(main, /id="topbar-sub"/);
+  assert.match(router, /getElementById\("topbar-title"\)/);
 });

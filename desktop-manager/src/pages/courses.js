@@ -19,7 +19,7 @@ export function renderCourses() {
   const pending = total - active;
 
   el.innerHTML = `
-    <div class="courses-layout">
+    <div class="${ui.layout.stack}">
 
       <!-- Stats -->
       <div class="grid grid-cols-2 gap-3">
@@ -48,19 +48,19 @@ export function renderCourses() {
       </div>
 
       <!-- Table -->
-      <div class="flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="${cx(ui.surface.tableWrap, 'flex-1')}">
         <div class="overflow-x-auto">
-        <table class="courses-table min-w-[760px] w-full border-collapse text-[13px]">
+        <table class="${ui.table.base}">
           <thead>
-            <tr>
-              <th>Código</th>
-              <th>Asignatura</th>
-              <th>Periodo</th>
-              <th>Semestre</th>
-              <th>Créditos</th>
-              <th>Semanas</th>
-              <th>Estado</th>
-              <th></th>
+            <tr class="${ui.table.headRow}">
+              <th class="${ui.table.th}">Código</th>
+              <th class="${ui.table.th}">Asignatura</th>
+              <th class="${ui.table.th}">Periodo</th>
+              <th class="${ui.table.th}">Semestre</th>
+              <th class="${cx(ui.table.th, 'text-center')}">Créditos</th>
+              <th class="${cx(ui.table.th, 'text-center')}">Semanas</th>
+              <th class="${ui.table.th}">Estado</th>
+              <th class="${ui.table.th}"></th>
             </tr>
           </thead>
           <tbody id="courses-tbody">
@@ -128,21 +128,21 @@ function renderTableRows() {
     const realIndex = state.courses.indexOf(course);
     const hasContent = (course.weeks_data || []).some(w => w.title);
     return `
-    <tr>
-      <td><span class="font-mono font-bold text-brand">${escapeHtml(course.code)}</span></td>
-      <td class="font-semibold text-app-text">${escapeHtml(course.name)}</td>
-      <td class="text-app-muted">${escapeHtml(course.period || "—")}</td>
-      <td class="text-app-muted">${escapeHtml(course.semester || "—")}</td>
-      <td class="text-center">${Number(course.credits) || 0}</td>
-      <td class="text-center">${Number(course.weeks) || 0}</td>
-      <td>
-        <span class="status-pill ${hasContent ? "status-active" : "status-draft"}">
+    <tr class="${ui.table.row}">
+      <td class="${ui.table.td}"><span class="font-mono font-bold text-brand">${escapeHtml(course.code)}</span></td>
+      <td class="${cx(ui.table.td, 'font-semibold text-app-text')}">${escapeHtml(course.name)}</td>
+      <td class="${cx(ui.table.td, 'text-app-muted')}">${escapeHtml(course.period || "—")}</td>
+      <td class="${cx(ui.table.td, 'text-app-muted')}">${escapeHtml(course.semester || "—")}</td>
+      <td class="${cx(ui.table.td, 'text-center')}">${Number(course.credits) || 0}</td>
+      <td class="${cx(ui.table.td, 'text-center')}">${Number(course.weeks) || 0}</td>
+      <td class="${ui.table.td}">
+        <span class="${cx(ui.status.pill, hasContent ? ui.status.active : ui.status.draft)}">
           <span class="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current"></span>
           ${hasContent ? "Con contenido" : "Borrador"}
         </span>
       </td>
-      <td>
-        <div class="${cx(ui.liquid.group, 'row-actions gap-1 p-1')}">
+      <td class="${ui.table.td}">
+        <div class="${cx(ui.liquid.group, 'flex items-center gap-1 p-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100')}">
           <button class="${cx(ui.button.base, ui.button.ghost, ui.button.xs, 'row-action-edit')}" data-course-action="edit" data-index="${realIndex}">
             <span class="material-symbols-outlined text-sm">edit_document</span> Sílabo
           </button>

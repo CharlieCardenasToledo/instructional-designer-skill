@@ -47,16 +47,16 @@ function renderShell() {
       </div>
 
       <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-        <button class="nav-item liquid-control flex w-full items-center gap-2.5 rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-white/70 hover:text-slate-800" data-page="courses" aria-label="Cursos">
+        <button class="${ui.nav.item}" data-nav-item data-page="courses" aria-label="Cursos">
           <span class="material-symbols-outlined">school</span> Cursos
         </button>
-        <button class="nav-item liquid-control flex w-full items-center gap-2.5 rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-white/70 hover:text-slate-800" data-page="templates" aria-label="Plantillas">
+        <button class="${ui.nav.item}" data-nav-item data-page="templates" aria-label="Plantillas">
           <span class="material-symbols-outlined">dashboard_customize</span> Plantillas
         </button>
-        <button class="nav-item liquid-control flex w-full items-center gap-2.5 rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-white/70 hover:text-slate-800" data-page="docs" aria-label="Ayuda">
+        <button class="${ui.nav.item}" data-nav-item data-page="docs" aria-label="Ayuda">
           <span class="material-symbols-outlined">help</span> Ayuda
         </button>
-        <button class="nav-item liquid-control flex w-full items-center gap-2.5 rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-white/70 hover:text-slate-800" data-page="settings" aria-label="Configuración">
+        <button class="${ui.nav.item}" data-nav-item data-page="settings" aria-label="Configuración">
           <span class="material-symbols-outlined">settings</span> Configuración
         </button>
       </nav>
@@ -68,33 +68,33 @@ function renderShell() {
     </aside>
 
     <!-- MAIN -->
-    <main class="flex min-w-0 flex-1 flex-col overflow-hidden" role="main">
+    <main class="${ui.layout.appMain}" role="main">
       <header class="${cx(ui.liquid.control, 'mx-4 mt-3 flex h-[48px] shrink-0 items-center justify-between px-5')}" data-tauri-drag-region>
         <div>
-          <h2 class="text-[14px] font-bold text-slate-800">Instructional Design Studio</h2>
-          <div class="text-[11px] text-slate-500"></div>
+          <h2 id="topbar-title" class="text-sm font-bold text-slate-800">Instructional Design Studio</h2>
+          <div id="topbar-sub" class="text-[11px] text-slate-500"></div>
         </div>
         <div class="flex items-center gap-1">
           <div class="flex items-center gap-1">
-            <button class="inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-slate-900/5" id="app-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
-            <button class="inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-red-600 hover:text-white" id="app-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
+            <button class="${ui.windowControl.base}" id="app-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
+            <button class="${cx(ui.windowControl.base, ui.windowControl.close)}" id="app-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
           </div>
         </div>
       </header>
 
-      <div class="min-h-0 flex-1 overflow-y-auto p-5">
-        <section id="p-courses"   class="page" aria-label="Cursos"></section>
-        <section id="p-syllabus"  class="page" aria-label="Editor de sílabo"></section>
-        <section id="p-templates" class="page" aria-label="Plantillas"></section>
-        <section id="p-settings"  class="page" aria-label="Configuración"></section>
-        <section id="p-docs"      class="page" aria-label="Documentación"></section>
+      <div class="${ui.surface.page}">
+        <section id="p-courses" hidden aria-label="Cursos"></section>
+        <section id="p-syllabus" hidden aria-label="Editor de sílabo"></section>
+        <section id="p-templates" hidden aria-label="Plantillas"></section>
+        <section id="p-settings" hidden aria-label="Configuración"></section>
+        <section id="p-docs" hidden aria-label="Documentación"></section>
       </div>
     </main>
   `;
 }
 
 document.addEventListener("click", event => {
-  const nav = event.target.closest(".nav-item[data-page], .sidebar-cta button[data-page]");
+  const nav = event.target.closest("[data-nav-item][data-page], .sidebar-cta button[data-page]");
   if (nav) navigate(nav.dataset.page);
 });
 

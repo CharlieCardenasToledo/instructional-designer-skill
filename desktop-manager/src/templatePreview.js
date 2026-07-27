@@ -22,6 +22,31 @@ const LOREM = {
 
 const TOPICS = ["Fundamentos conceptuales del dominio", "Estructura y componentes del sistema", "Metodologías de análisis y diseño", "Aplicación práctica y casos de uso"];
 const OUTCOMES = ["Identificar y clasificar los componentes principales", "Aplicar las metodologías estudiadas en casos prácticos", "Evaluar críticamente las soluciones propuestas"];
+const PREVIEW = {
+  page: "overflow-hidden rounded-sm bg-white font-serif text-[11px] shadow-[0_4px_24px_rgba(0,0,0,.5)]",
+  cover: "pb-1",
+  stripe: "px-5 py-2.5 text-[9px] font-extrabold uppercase tracking-[.12em]",
+  coverBody: "px-5 pb-4 pt-[18px]",
+  coverTitle: "mb-1 text-[22px] font-extrabold leading-[1.15]",
+  coverSubtitle: "mb-4 text-[13px] text-[#666]",
+  divider: "mb-3.5 h-0.5 w-10 rounded-sm",
+  coverMeta: "border-t border-slate-200 pt-3 text-[11px] leading-[1.8] text-[#555]",
+  inner: "px-5 py-4",
+  header: "mb-3.5 flex justify-between border-b pb-1.5 text-[9px] text-[#666]",
+  chapter: "mb-3",
+  chapterNum: "mb-1 text-[9px] font-bold uppercase tracking-[.1em]",
+  chapterTitle: "pl-2.5 text-base font-bold leading-tight",
+  block: "my-2.5 rounded px-3 py-2.5",
+  blockTitle: "mb-1.5 text-[9px] font-extrabold uppercase tracking-[.08em]",
+  blockBody: "text-[10px] leading-[1.6]",
+  sectionTitle: "mb-1 mt-3 text-xs font-bold text-[#1a1a1a]",
+  paragraph: "mb-2 text-justify text-[10px] leading-[1.65] text-[#333]",
+  topicRow: "mb-1 flex items-baseline gap-1.5 text-[10px]",
+  dot: "mt-0.5 inline-block h-[5px] w-[5px] shrink-0 rounded-full",
+  meta: "mt-1 text-[9px] text-[#888]",
+  bibliography: "mb-2.5 font-mono text-[10px] leading-[1.6] text-[#555]",
+  footer: "mt-3 flex justify-between border-t pt-2 text-[9px] text-[#888]",
+};
 
 /**
  * Renderiza el preview HTML de una plantilla dado su tipo y la config institucional.
@@ -54,18 +79,18 @@ function previewElegantbookClasico(hex, textOnPrimary, author, degree, career, i
   const border = hexAlpha(hex, 0.4);
 
   return `
-  <div class="lp-page lp-elegantbook">
+  <div class="${PREVIEW.page}">
 
     <!-- Portada -->
-    <div class="lp-cover" style="border-top:4px solid ${hex}">
-      <div class="lp-cover-stripe" style="background:${hex};color:${textOnPrimary}">
+    <div class="${PREVIEW.cover}" style="border-top:4px solid ${hex}">
+      <div class="${PREVIEW.stripe}" style="background:${hex};color:${textOnPrimary}">
         GUÍA DE CLASE · SEMANA ${week}
       </div>
-      <div class="lp-cover-body">
-        <div class="lp-cover-title" style="color:${hex}">Semana ${week}</div>
-        <div class="lp-cover-subtitle">Fundamentos y Aplicaciones</div>
-        <div class="lp-cover-divider" style="background:${hex}"></div>
-        <div class="lp-cover-meta">
+      <div class="${PREVIEW.coverBody}">
+        <div class="${PREVIEW.coverTitle}" style="color:${hex}">Semana ${week}</div>
+        <div class="${PREVIEW.coverSubtitle}">Fundamentos y Aplicaciones</div>
+        <div class="${PREVIEW.divider}" style="background:${hex}"></div>
+        <div class="${PREVIEW.coverMeta}">
           <div style="font-weight:700">${author}, ${degree}</div>
           <div style="color:#666;font-size:10px">Carrera de ${career}</div>
           <div style="color:#666;font-size:10px">${inst}</div>
@@ -74,73 +99,73 @@ function previewElegantbookClasico(hex, textOnPrimary, author, degree, career, i
     </div>
 
     <!-- Página interior -->
-    <div class="lp-inner">
-      <div class="lp-header" style="color:${hex};border-bottom-color:${border}">
+    <div class="${PREVIEW.inner}">
+      <div class="${PREVIEW.header}" style="color:${hex};border-bottom-color:${border}">
         <span>Elaborado por: ${author}, ${degree}</span>
         <span>Carrera: ${career}</span>
       </div>
 
       <!-- Capítulo -->
-      <div class="lp-chapter">
-        <div class="lp-chapter-num" style="color:${hex}">Capítulo 1</div>
-        <div class="lp-chapter-title" style="border-left:3px solid ${hex}">
+      <div class="${PREVIEW.chapter}">
+        <div class="${PREVIEW.chapterNum}" style="color:${hex}">Capítulo 1</div>
+        <div class="${PREVIEW.chapterTitle}" style="border-left:3px solid ${hex}">
           Fundamentos Conceptuales
         </div>
       </div>
 
       <!-- Bloque softblock -->
-      <div class="lp-block" style="background:${dim};border-left:3px solid ${hex}">
-        <div class="lp-block-title" style="color:${hex}">Orientación · Semana ${week}</div>
-        <div class="lp-block-body">
-          <div class="lp-topic-row">
-            <span class="lp-dot" style="background:${hex}"></span>
+      <div class="${PREVIEW.block}" style="background:${dim};border-left:3px solid ${hex}">
+        <div class="${PREVIEW.blockTitle}" style="color:${hex}">Orientación · Semana ${week}</div>
+        <div class="${PREVIEW.blockBody}">
+          <div class="${PREVIEW.topicRow}">
+            <span class="${PREVIEW.dot}" style="background:${hex}"></span>
             <span>Tema 1: ${TOPICS[0]}</span>
           </div>
-          <div class="lp-topic-row">
-            <span class="lp-dot" style="background:${hex}"></span>
+          <div class="${PREVIEW.topicRow}">
+            <span class="${PREVIEW.dot}" style="background:${hex}"></span>
             <span>Tema 2: ${TOPICS[1]}</span>
           </div>
-          <div class="lp-meta-row">
+          <div class="${PREVIEW.meta}">
             <span>4h docencia · 8h autónomo</span>
           </div>
         </div>
       </div>
 
       <!-- Texto de cuerpo -->
-      <div class="lp-section-title">1.1 Marco Teórico</div>
-      <div class="lp-paragraph">${LOREM.intro}</div>
+      <div class="${PREVIEW.sectionTitle}">1.1 Marco Teórico</div>
+      <div class="${PREVIEW.paragraph}">${LOREM.intro}</div>
 
       <!-- Bloque accentblock (con color primario) -->
-      <div class="lp-block" style="background:${hex};color:${textOnPrimary}">
-        <div class="lp-block-title" style="color:${textOnPrimary};opacity:.8">Análisis Técnico</div>
-        <div class="lp-block-body" style="color:${textOnPrimary}">
+      <div class="${PREVIEW.block}" style="background:${hex};color:${textOnPrimary}">
+        <div class="${PREVIEW.blockTitle}" style="color:${textOnPrimary};opacity:.8">Análisis Técnico</div>
+        <div class="${PREVIEW.blockBody}" style="color:${textOnPrimary}">
           ${LOREM.body1}
         </div>
       </div>
 
       <!-- Más texto -->
-      <div class="lp-paragraph">${LOREM.body2}</div>
+      <div class="${PREVIEW.paragraph}">${LOREM.body2}</div>
 
       <!-- Bloque mintblock -->
-      <div class="lp-block" style="background:#e8f7f0;border-left:3px solid #12b76a">
-        <div class="lp-block-title" style="color:#16a34a">Guía Práctica</div>
-        <div class="lp-block-body">
-          <div class="lp-topic-row"><span class="lp-dot" style="background:#12b76a"></span><span>${OUTCOMES[0]}</span></div>
-          <div class="lp-topic-row"><span class="lp-dot" style="background:#12b76a"></span><span>${OUTCOMES[1]}</span></div>
+      <div class="${PREVIEW.block}" style="background:#e8f7f0;border-left:3px solid #12b76a">
+        <div class="${PREVIEW.blockTitle}" style="color:#16a34a">Guía Práctica</div>
+        <div class="${PREVIEW.blockBody}">
+          <div class="${PREVIEW.topicRow}"><span class="${PREVIEW.dot}" style="background:#12b76a"></span><span>${OUTCOMES[0]}</span></div>
+          <div class="${PREVIEW.topicRow}"><span class="${PREVIEW.dot}" style="background:#12b76a"></span><span>${OUTCOMES[1]}</span></div>
         </div>
       </div>
 
       <!-- Bloque sandblock -->
-      <div class="lp-block" style="background:#fdf5e6;border-left:3px solid #f79009">
-        <div class="lp-block-title" style="color:#b45309">Actividad Calificada · 20%</div>
-        <div class="lp-block-body">${LOREM.activity}</div>
+      <div class="${PREVIEW.block}" style="background:#fdf5e6;border-left:3px solid #f79009">
+        <div class="${PREVIEW.blockTitle}" style="color:#b45309">Actividad Calificada · 20%</div>
+        <div class="${PREVIEW.blockBody}">${LOREM.activity}</div>
       </div>
 
       <!-- Bibliografía -->
-      <div class="lp-section-title">Bibliografía</div>
-      <div class="lp-bib">${LOREM.bibliography}</div>
+      <div class="${PREVIEW.sectionTitle}">Bibliografía</div>
+      <div class="${PREVIEW.bibliography}">${LOREM.bibliography}</div>
 
-      <div class="lp-footer" style="border-top-color:${border}">
+      <div class="${PREVIEW.footer}" style="border-top-color:${border}">
         <span style="color:${hex}">${inst}</span>
         <span style="color:#999">Pág. 1</span>
       </div>
@@ -151,10 +176,10 @@ function previewElegantbookClasico(hex, textOnPrimary, author, degree, career, i
 // ── ElegantBook Minimalista ───────────────────────────────────────────────
 function previewMinimalista(hex, textOnPrimary, author, degree, career, inst, week) {
   return `
-  <div class="lp-page lp-minimal">
+  <div class="${PREVIEW.page}">
 
     <!-- Portada minimalista -->
-    <div class="lp-cover lp-cover-minimal">
+    <div class="border-b border-slate-200 bg-[#fafafa] p-5">
       <div style="border-bottom:2px solid ${hex};padding-bottom:10px;margin-bottom:12px">
         <div style="font-size:18px;font-weight:300;letter-spacing:.05em;color:#1a1a1a">Semana ${week}</div>
         <div style="font-size:12px;color:#666;margin-top:4px">Fundamentos y Aplicaciones</div>
@@ -170,8 +195,8 @@ function previewMinimalista(hex, textOnPrimary, author, degree, career, inst, we
     </div>
 
     <!-- Interior minimalista -->
-    <div class="lp-inner">
-      <div class="lp-header" style="color:#555;border-bottom-color:#e5e7eb">
+    <div class="${PREVIEW.inner}">
+      <div class="${PREVIEW.header}" style="color:#555;border-bottom-color:#e5e7eb">
         <span>${author}, ${degree}</span>
         <span>${career}</span>
       </div>
@@ -186,7 +211,7 @@ function previewMinimalista(hex, textOnPrimary, author, degree, career, inst, we
         <div style="font-size:11px;font-style:italic;color:#333">${LOREM.intro.slice(0, 140)}…</div>
       </div>
 
-      <div class="lp-paragraph">${LOREM.body1}</div>
+      <div class="${PREVIEW.paragraph}">${LOREM.body1}</div>
 
       <!-- Cita académica -->
       <div style="border:1px solid #e5e7eb;border-radius:4px;padding:8px 12px;margin:8px 0;background:white">
@@ -200,10 +225,10 @@ function previewMinimalista(hex, textOnPrimary, author, degree, career, inst, we
         <div style="font-size:10px;color:#333">${LOREM.activity.slice(0, 160)}…</div>
       </div>
 
-      <div class="lp-section-title" style="color:#555">Referencias bibliográficas</div>
-      <div class="lp-bib">${LOREM.bibliography}</div>
+      <div class="${PREVIEW.sectionTitle}" style="color:#555">Referencias bibliográficas</div>
+      <div class="${PREVIEW.bibliography}">${LOREM.bibliography}</div>
 
-      <div class="lp-footer" style="border-top-color:#e5e7eb">
+      <div class="${PREVIEW.footer}" style="border-top-color:#e5e7eb">
         <span style="color:#555">${inst}</span>
         <span style="color:#aaa">Pág. 1</span>
       </div>
@@ -214,10 +239,10 @@ function previewMinimalista(hex, textOnPrimary, author, degree, career, inst, we
 // ── Nota Técnica IEEE ─────────────────────────────────────────────────────
 function previewNotaTecnica(hex, textOnPrimary, author, degree, career, inst, week) {
   return `
-  <div class="lp-page lp-ieee">
+  <div class="${PREVIEW.page}">
 
     <!-- Cabecera IEEE -->
-    <div class="lp-cover lp-cover-ieee">
+    <div class="border-b-2 border-[#1a1a1a] bg-slate-50 px-5 py-4">
       <div style="text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:10px">
         <div style="font-size:15px;font-weight:700;color:#1a1a1a;font-family:serif">Fundamentos y Aplicaciones</div>
         <div style="font-size:10px;color:#444;margin-top:4px;font-style:italic">Nota Técnica · Semana ${week}</div>
@@ -234,7 +259,7 @@ function previewNotaTecnica(hex, textOnPrimary, author, degree, career, inst, we
     <!-- Dos columnas IEEE -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:0">
       <div>
-        <div class="lp-section-title" style="color:#1a1a1a;font-family:serif;border-bottom:1px solid #333;padding-bottom:3px">I. Introducción</div>
+        <div class="${PREVIEW.sectionTitle}" style="color:#1a1a1a;font-family:serif;border-bottom:1px solid #333;padding-bottom:3px">I. Introducción</div>
         <div style="font-size:10px;line-height:1.6;color:#333;text-indent:1em;text-align:justify">${LOREM.body1}</div>
 
         <!-- Teorema -->
@@ -243,12 +268,12 @@ function previewNotaTecnica(hex, textOnPrimary, author, degree, career, inst, we
           <div style="font-size:10px;font-style:italic;color:#333;margin-top:3px">${LOREM.body2.slice(0, 100)}…</div>
         </div>
 
-        <div class="lp-section-title" style="color:#1a1a1a;font-family:serif;border-bottom:1px solid #333;padding-bottom:3px">II. Metodología</div>
+        <div class="${PREVIEW.sectionTitle}" style="color:#1a1a1a;font-family:serif;border-bottom:1px solid #333;padding-bottom:3px">II. Metodología</div>
         <div style="font-size:10px;line-height:1.6;color:#333;text-indent:1em;text-align:justify">${LOREM.body2.slice(0, 180)}…</div>
       </div>
 
       <div>
-        <div class="lp-section-title" style="color:#1a1a1a;font-family:serif;border-bottom:1px solid #333;padding-bottom:3px">III. Resultados</div>
+        <div class="${PREVIEW.sectionTitle}" style="color:#1a1a1a;font-family:serif;border-bottom:1px solid #333;padding-bottom:3px">III. Resultados</div>
         <div style="font-size:10px;line-height:1.6;color:#333;text-indent:1em;text-align:justify">${LOREM.body1.slice(100)}…</div>
 
         <!-- Algoritmo -->
@@ -261,12 +286,12 @@ function previewNotaTecnica(hex, textOnPrimary, author, degree, career, inst, we
           <div>5: return resultado</div>
         </div>
 
-        <div class="lp-section-title" style="color:#1a1a1a;font-family:serif;border-bottom:1px solid #333;padding-bottom:3px">IV. Referencias</div>
+        <div class="${PREVIEW.sectionTitle}" style="color:#1a1a1a;font-family:serif;border-bottom:1px solid #333;padding-bottom:3px">IV. Referencias</div>
         <div style="font-size:9px;color:#333;line-height:1.6">[1] ${LOREM.bibliography.slice(0, 100)}…</div>
       </div>
     </div>
 
-    <div class="lp-footer" style="border-top-color:#333;margin-top:8px">
+    <div class="${PREVIEW.footer}" style="border-top-color:#333;margin-top:8px">
       <span style="color:#333">${inst}</span>
       <span style="color:#999">Nota Técnica · Pág. 1</span>
     </div>

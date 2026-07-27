@@ -106,14 +106,14 @@ function updatePreview() {
 \\definecolor{main}{RGB}{${r},${g},${b}}`;
 
   preview.innerHTML = `
-    <div class="latex-cover" style="border-top:4px solid ${hex}">
-      <div class="latex-cover-stripe" style="background:${hex};color:${textOnColor}">
+    <div class="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white text-[#1a1a1a] shadow-sm" style="border-top:4px solid ${hex}">
+      <div class="px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-[.12em]" style="background:${hex};color:${textOnColor}">
         GUÍA DE CLASE
       </div>
-      <div class="latex-cover-body">
-        <div class="latex-cover-title" style="color:${hex}">Semana 01</div>
-        <div class="latex-cover-subtitle">Introducción al curso</div>
-        <div class="latex-cover-meta">
+      <div class="p-3.5">
+        <div class="mb-1 text-lg font-extrabold leading-tight" style="color:${hex}">Semana 01</div>
+        <div class="mb-3 text-xs text-[#666]">Introducción al curso</div>
+        <div class="mb-2.5 border-t border-slate-200 pt-2.5 text-xs leading-[1.8] text-[#555]">
           <div><strong>${escapeHtml(author)}</strong>${degree ? `, ${escapeHtml(degree)}` : ""}</div>
           <div class="text-[11px] text-slate-500">Carrera de ${escapeHtml(career)}</div>
           <div class="text-[11px] text-slate-500">${escapeHtml(faculty)} · ${escapeHtml(inst)}</div>
@@ -121,14 +121,14 @@ function updatePreview() {
       </div>
     </div>
 
-    <div class="latex-block mt-3">
-      <div class="latex-block-header">
+    <div class="mt-3 overflow-hidden rounded-md border border-slate-200 bg-white text-[#1a1a1a]">
+      <div class="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2">
         <span class="text-[11px] font-bold text-slate-600">Preámbulo LaTeX generado</span>
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.xs)}" id="btn-copy-latex" title="Copiar bloque LaTeX">
           <i data-lucide="clipboard-copy" width="12" height="12"></i> Copiar
         </button>
       </div>
-      <pre class="latex-pre"><code>${escapeHtml(latexBlock)}</code></pre>
+      <pre class="m-0 overflow-x-auto bg-transparent p-3 font-mono text-[11px] leading-[1.7] text-slate-700 whitespace-pre"><code>${escapeHtml(latexBlock)}</code></pre>
     </div>`;
 
   document.getElementById("btn-copy-latex")?.addEventListener("click", copyLatexConfig);

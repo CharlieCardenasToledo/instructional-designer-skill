@@ -36,10 +36,10 @@ export function renderSyllabus() {
   const pct = weekCount > 0 ? Math.round((complete / weekCount) * 100) : 0;
 
   el.innerHTML = `
-    <div class="syllabus-layout grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3.5 items-start">
+    <div class="${ui.layout.twoCol}">
 
       <!-- Left column -->
-      <div class="syllabus-left">
+      <div class="flex min-h-0 flex-col gap-3">
 
         <!-- Course metadata -->
         <div class="flex items-center justify-between rounded-app-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -85,7 +85,7 @@ export function renderSyllabus() {
             ${renderWeekForm(weeksData[_activeWeek], _activeWeek)}
           </div>
 
-          <div class="flex justify-end gap-2 border-t border-slate-300/30 bg-slate-50/50 px-4 py-3">
+          <div class="flex justify-end gap-2 border-t border-slate-300/30 bg-slate-50 px-4 py-3">
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="syl-discard">Descartar cambios</button>
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="syl-save-draft">
               <span class="material-symbols-outlined text-sm">save</span> Guardar borrador
@@ -98,7 +98,7 @@ export function renderSyllabus() {
       </div>
 
       <!-- Right column -->
-      <div class="syllabus-right">
+      <div class="flex flex-col gap-3">
 
         <!-- Validation panel -->
         <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -202,7 +202,7 @@ function renderWeekForm(weekData, weekIndex) {
       </div>
       <div class="flex flex-col gap-1.5">
         <label>Horas: docencia / práctica / autónomo</label>
-        <div class="row">
+        <div class="flex items-center gap-2">
           <input id="wf-teaching" class="w-[70px]" type="number" min="0" max="40" value="${Number(w.teaching_hours ?? 2)}">
           <span class="text-app-muted">/</span>
           <input id="wf-practice" class="w-[70px]" type="number" min="0" max="40" value="${Number(w.practice_hours ?? 1)}">
