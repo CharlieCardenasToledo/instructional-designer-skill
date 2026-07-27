@@ -29,3 +29,6 @@ propuesta de mitigación si la tienes.
 
 Revisa los ZIP antes de compartirlos y conserva secretos fuera del
 repositorio.
+
+La respuesta específica ante uso indebido de firmas se encuentra en
+[CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md).

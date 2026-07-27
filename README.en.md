@@ -242,6 +242,21 @@ configured by the user. Website palette extraction and dependency
 installation also require network access. An exported ZIP may contain
 institution settings and notebook references; inspect it before sharing.
 
+See the complete [privacy policy](PRIVACY.md).
+
+## Code signing policy
+
+The Windows installers in the current release are unsigned. The project is
+preparing its application to the SignPath Foundation open-source program.
+After approval, only artifacts built, verified, and approved through GitHub
+Actions will be described as signed.
+
+Free code signing provided by [SignPath.io](https://signpath.io/), certificate
+by [SignPath Foundation](https://signpath.org/).
+
+See the [code signing policy](CODE_SIGNING_POLICY.md) and
+[application status](docs/signpath-application.md).
+
 ## Additional documentation
 
 - [Application technical guide](app/desktop/README.md)
@@ -250,6 +265,8 @@ institution settings and notebook references; inspect it before sharing.
 - [Release process](docs/releasing.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
+- [Privacy policy](PRIVACY.md)
+- [Code signing policy](CODE_SIGNING_POLICY.md)
 - [Version history](CHANGELOG.md)
 - [MIT License](LICENSE)
 

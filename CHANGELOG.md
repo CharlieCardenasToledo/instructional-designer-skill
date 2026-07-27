@@ -17,6 +17,8 @@ y versionado semántico.
 - Reescritas las guías públicas, técnicas y de integración con Claude.
 - Sustituidas las plantillas Markdown de issues por formularios YAML.
 - Normalizada la dependencia NotebookLM MCP verificada.
+- Preparada la política, privacidad y automatización condicional requeridas
+  para solicitar firma gratuita mediante SignPath Foundation.
 
 ## 10.4.0 — 2026-07-27
 

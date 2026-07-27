@@ -242,6 +242,21 @@ dependencias también requiere conexión. Un ZIP exportado puede incluir la
 configuración institucional y las referencias de notebooks; revísalo antes de
 compartirlo.
 
+Consulta la [política de privacidad completa](PRIVACY.md).
+
+## Code signing policy
+
+Los instaladores Windows de la release actual no están firmados. El proyecto
+está preparando su incorporación al programa open source de SignPath
+Foundation. Después de la aprobación, solo se publicarán como firmados los
+artifacts construidos, verificados y aprobados mediante GitHub Actions.
+
+Free code signing provided by [SignPath.io](https://signpath.io/), certificate
+by [SignPath Foundation](https://signpath.org/).
+
+Consulta la [política de firma](CODE_SIGNING_POLICY.md) y el
+[estado de la solicitud](docs/signpath-application.md).
+
 ## Documentación adicional
 
 - [Manual técnico de la aplicación](app/desktop/README.md)
@@ -250,6 +265,8 @@ compartirlo.
 - [Proceso de publicación](docs/releasing.md)
 - [Cómo contribuir](CONTRIBUTING.md)
 - [Política de seguridad](SECURITY.md)
+- [Política de privacidad](PRIVACY.md)
+- [Política de firma](CODE_SIGNING_POLICY.md)
 - [Historial de versiones](CHANGELOG.md)
 - [Licencia MIT](LICENSE)
 

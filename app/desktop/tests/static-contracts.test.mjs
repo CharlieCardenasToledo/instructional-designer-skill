@@ -28,6 +28,21 @@ test('la arquitectura separa la app de escritorio y el paquete instalable de la 
   }
 });
 
+test('la firma SignPath solo publica artifacts verificados cuando está activada', async () => {
+  const workflow = await readFile(
+    new URL('.github/workflows/release-windows.yml', repositoryRoot),
+    'utf8',
+  );
+  assert.match(workflow, /id:\s*upload-unsigned-artifact/);
+  assert.match(workflow, /signpath\/github-action-submit-signing-request@v2/);
+  assert.match(workflow, /vars\.SIGNPATH_ENABLED == 'true'/);
+  assert.match(workflow, /Get-AuthenticodeSignature/);
+  assert.match(workflow, /signature\.Status -ne 'Valid'/);
+  assert.match(workflow, /Publish signed GitHub Release assets/);
+  assert.match(workflow, /Publish unsigned GitHub Release assets/);
+  assert.match(workflow, /Windows artifacts in this release are not digitally signed/);
+});
+
 test('la configuración institucional generada coincide con el esquema público', async () => {
   const [configSource, schemaText, exampleText] = await Promise.all([
     readFile(new URL('src-tauri/src/config.rs', root), 'utf8'),

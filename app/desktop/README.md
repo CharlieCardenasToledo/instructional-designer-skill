@@ -135,7 +135,9 @@ Los workflows se encuentran en `.github/workflows/`:
 
 Ambos ejecutan `npm ci`, tests y `tauri:build`. Los tags `v*` publican assets
 en GitHub Releases; `workflow_dispatch` conserva solamente artifacts de la
-ejecución.
+ejecución. El workflow Windows contiene una integración condicional con
+SignPath. Permanece desactivada hasta que la fundación apruebe el proyecto y
+se configuren las variables y el secreto correspondientes.
 
 Consulta [docs/releasing.md](../../docs/releasing.md) antes de publicar.
 
