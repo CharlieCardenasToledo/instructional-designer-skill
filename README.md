@@ -7,6 +7,44 @@
 > **Claude Code skill** for evidence-based, self-paced instructional design.  
 > Creates weekly LaTeX guides, self-instructional modules, and aligned assessments for higher education — with NotebookLM MCP integration.
 
+## Objetivo del proyecto
+
+Este repositorio reúne una solución completa para producir material instruccional de calidad:
+
+- **Instructional Designer Manager**, una aplicación de escritorio que instala y configura el entorno.
+- **`instructional-designer-skill`**, el motor editorial que genera guías, sílabos y evaluaciones con criterios pedagógicos y bibliográficos explícitos.
+
+La aplicación es la puerta de entrada para docentes que no quieren configurar manualmente Node.js, Python, LaTeX, NotebookLM MCP y la estructura de carpetas. Después del onboarding, el usuario puede crear cursos, generar sílabos y dejar lista la configuración para que Claude Code produzca las guías semanales.
+
+```text
+Descargar el instalador
+        ↓
+Completar onboarding y configurar la institución
+        ↓
+Conectar NotebookLM y elegir el destino de la skill
+        ↓
+Crear el curso y generar el sílabo
+        ↓
+Usar Claude Code + instructional-designer-skill
+        ↓
+Obtener guías LaTeX, actividades y evaluaciones alineadas
+```
+
+### Qué incluye la aplicación
+
+- Verificación e instalación asistida de dependencias.
+- Configuración institucional y de plantillas LaTeX.
+- Configuración de NotebookLM MCP.
+- Creación de estructuras de cursos y sílabos.
+- Gestión de plantillas y exportación de la skill.
+- Instaladores nativos para Windows y macOS publicados en GitHub Releases.
+
+### Descargas
+
+Los instaladores se publican en la página de [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases). Windows ofrece `.exe` (NSIS) y `.msi`; macOS ofrece `.dmg` y `.app.tar.gz` cuando el workflow de release termina correctamente.
+
+La instalación manual de la skill continúa disponible para usuarios técnicos; el instalador gráfico solo simplifica el proceso y no cambia el flujo editorial descrito en este README.
+
 [![Version](https://img.shields.io/badge/version-10.4-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Category](https://img.shields.io/badge/category-pedagogy--design-green.svg)]()

@@ -1,5 +1,14 @@
 # Instructional Designer Manager
 
+La aplicación de escritorio es el instalador y centro de configuración del
+`instructional-designer-skill`. Su propósito es que un docente pueda pasar de
+un equipo sin configurar a un entorno listo para crear cursos, sílabos y guías
+instruccionales sin editar manualmente archivos de configuración.
+
+El flujo completo es: instalar → completar onboarding → configurar institución
+y NotebookLM → crear el curso → usar la skill desde Claude Code para producir
+el material pedagógico.
+
 App de escritorio (Tauri) para configurar e instalar el Instructional Designer Skill sin necesidad de conocimientos técnicos.
 
 ## Qué hace
