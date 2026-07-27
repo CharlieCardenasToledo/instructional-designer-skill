@@ -2,7 +2,7 @@
 
 Esta guía explica cómo configurar y usar el **instructional-designer-skill** desde **Claude Desktop** (app de escritorio) y desde **Claude Cowork** — la interfaz de escritorio orientada a tareas con archivos locales.
 
-> Para la versión CLI, consulta el [README principal](../README.es.md).
+> Para la visión general del producto, consulta el [README principal](../README.md).
 
 ---
 
@@ -334,4 +334,4 @@ Repositorio compartido del curso (fuente de verdad)
 - [Gestión de proyectos compartidos en Claude](https://support.claude.com/en/articles/13455879-use-claude-cowork-on-team-and-enterprise-plans)
 - [Documentación de Claude Code Skills](https://code.claude.com/docs/en/skills)
 - [Configuración de NotebookLM MCP](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp)
-- [README principal del skill](../README.es.md)
+- [README principal del proyecto](../README.md)
