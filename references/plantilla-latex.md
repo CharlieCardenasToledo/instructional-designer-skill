@@ -42,13 +42,14 @@ Este archivo es el orquestador del documento. **Nunca contiene contenido didáct
 \usepackage{pifont}
 \usepackage{hyperref}
 \usepackage{float}
+\addbibresource{reference.bib}
 ```
 
 > **Nota:** `tcolorbox` (usado por los entornos de bloque), `fancyhdr` (cabeceras) y `xcolor` no se cargan aquí porque `elegantbook.cls` ya los carga internamente. No agregarlos al preamble: duplicarlos puede producir warnings de opciones en conflicto.
 
 ### Metadatos institucionales ElegantBook
 
-> ⚙️ **CONFIGURE**: Reemplaza los valores entre corchetes con los datos de tu institución y asignatura.
+Leer `config/institution.json` y el `README.md` del curso. Sustituir los marcadores al generar el archivo; no editar esta referencia para guardar datos personales.
 
 ```latex
 \renewcommand{\spanishchaptername}{Unidad}
@@ -63,7 +64,7 @@ Este archivo es el orquestador del documento. **Nunca contiene contenido didáct
 \bioinfo{Asignatura}{[CÓDIGO]\\[Nombre de la asignatura]}
 \extrainfo{[Facultad o Escuela]\\[Nombre de tu institución]}
 
-\logo{figure/logo-institution.png}
+\logo{figure/logo-institution.png} % Omitir si branding.logoPath está vacío.
 % \cover{figure/cover.png}   % Descomentar SOLO si latex/figure/cover.png existe.
                              % Si el archivo no existe, dejar comentado para
                              % evitar error de compilación.
@@ -71,7 +72,7 @@ Este archivo es el orquestador del documento. **Nunca contiene contenido didáct
 
 ### Paleta de colores institucional
 
-> ⚙️ **CONFIGURE**: Los valores `RGB` de `weekaccent`, `structurecolor` y `main` son el color primario de tu institución. Los demás colores de bloque pueden mantenerse o ajustarse según tu paleta. El ejemplo usa verde `RGB{0,121,107}` como color de acento.
+Convertir `branding.primaryColor` de `config/institution.json` a RGB. Si no existe configuración, solicitar el color antes de generar una guía final.
 
 ```latex
 \definecolor{weekaccent}{RGB}{0,121,107}      % ⚙️ Color primario institucional
@@ -206,9 +207,11 @@ desde la perspectiva de la ingeniería. No usar listas. Máximo 3 párrafos.
 \coursemeta{Tiempo estimado: X horas de estudio y práctica.}
 
 \vspace{0.8em}
-{\small \textbf{Internacionalización (ASU):} Este contenido se alinea con el
-\textit{Module X: Nombre del Módulo} de Arizona State University.
-\hfill \includegraphics[height=0.4cm]{figure/logo-asu.png}}
+% Integración opcional. Incluir solo cuando integrations.partnerName,
+% partnerModule y partnerLogoPath estén configurados.
+{\small \textbf{Internacionalización:} Este contenido se alinea con
+\textit{Nombre del módulo} de Nombre del socio.
+\hfill \includegraphics[height=0.4cm]{figure/logo-partner.png}}
 \end{softblock}
 ```
 
@@ -216,7 +219,7 @@ desde la perspectiva de la ingeniería. No usar listas. Máximo 3 párrafos.
 - `\editorialtitle` recibe dos argumentos: nombre de la asignatura y subtítulo descriptivo del tema específico.
 - `\conceptline` contiene un principio técnico, no una frase motivacional.
 - El `softblock` describe **qué** se aprende y **por qué** importa. No anticipa el contenido, no lista RA ni temas de las secciones.
-- La línea ASU va siempre al final del `softblock`, alineada a la derecha con `\hfill`.
+- La línea de internacionalización es opcional. Omitirla por completo cuando no exista una integración configurada.
 
 ---
 
@@ -279,7 +282,7 @@ recuperar activamente el concepto central sin releer la sección.]
 Cada bloque cumple una función cognitiva específica. No usar como decoración. **Solo un bloque de cada tipo por sección**, salvo necesidad técnica justificada.
 
 ### `softblock` — Orientación y contexto
-Metadatos académicos, tiempo estimado, descripción de la semana, alineación ASU. Solo en `01-introduccion.tex`.
+Metadatos académicos, tiempo estimado, descripción de la semana y alineación institucional opcional. Solo en `01-introduccion.tex`.
 ```latex
 \begin{softblock}
 Texto de orientación general o metadatos académicos.

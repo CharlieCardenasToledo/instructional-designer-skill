@@ -1,0 +1,15 @@
+interface:
+  display_name: "Instructional Designer UIDE"
+  short_description: "Crea guías académicas verificables y accesibles"
+  brand_color: "#0f766e"
+  default_prompt: "Usa $instructional-designer-uide para diseñar una guía semanal autoinstruccional."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "notebooklm"
+      description: "Consulta bibliografía y fuentes del curso mediante NotebookLM MCP 2.0."
+      transport: "stdio"
+
+policy:
+  allow_implicit_invocation: true

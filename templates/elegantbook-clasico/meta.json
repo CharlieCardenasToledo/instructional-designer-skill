@@ -1,0 +1,24 @@
+{
+  "id": "elegantbook-clasico",
+  "name": "ElegantBook Clásico",
+  "description": "Guías académicas con diseño elegante, cinco tipos de bloques de color (orientación, análisis, práctica, advertencia, error) y secciones numeradas. Ideal para materias técnicas con alto contenido conceptual.",
+  "documentClass": "elegantbook",
+  "version": "4.5",
+  "tags": ["ElegantBook", "Colorido", "Técnico", "Bloques"],
+  "previewType": "elegantbook-clasico",
+  "featured": true,
+  "blocks": {
+    "softblock":   { "title": "Orientación",    "color": "#e8f4f1" },
+    "accentblock": { "title": "Análisis",        "color": "primary" },
+    "mintblock":   { "title": "Práctica",        "color": "#e8f7f0" },
+    "sandblock":   { "title": "Advertencia",     "color": "#fdf5e6" },
+    "roseblock":   { "title": "Error crítico",   "color": "#fdf0f0" }
+  },
+  "pageOptions": {
+    "lang": "es",
+    "citestyle": "apa",
+    "bibstyle": "apa",
+    "fontSize": "11pt",
+    "side": "oneside"
+  }
+}

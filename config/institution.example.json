@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "institution": {
+    "name": "Universidad Ejemplo",
+    "faculty": "Facultad de Ingeniería",
+    "career": "Ingeniería de Software",
+    "author": "Ana López",
+    "degree": "Mgtr."
+  },
+  "branding": {
+    "primaryColor": "#00796B",
+    "logoPath": "figure/logo-institution.png"
+  },
+  "digitalEcosystem": [
+    "LMS institucional",
+    "Sistema académico",
+    "Servicio de identidad"
+  ],
+  "integrations": {
+    "partnerName": "",
+    "partnerModule": "",
+    "partnerLogoPath": ""
+  },
+  "activeTemplate": "elegantbook-clasico",
+  "options": {
+    "evidenceMode": "notebooklm-preferred",
+    "includeGradedActivities": false
+  }
+}

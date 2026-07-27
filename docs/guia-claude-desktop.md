@@ -45,7 +45,7 @@ Claude ofrece tres formas distintas de trabajo. Esta tabla te ayuda a elegir:
 
 - Cuenta Claude con plan **Pro**, **Team** o **Enterprise**
 - Claude Desktop instalado ([descargar aquí](https://claude.ai/download))
-- NotebookLM MCP configurado (ver [instrucciones oficiales](https://github.com/PleasePrompto/notebooklm-mcp))
+- NotebookLM MCP configurado (ver [instrucciones oficiales](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp))
 
 ### 2.2 Crear un Proyecto
 
@@ -84,14 +84,14 @@ Los Projects no cargan automáticamente `SKILL.md`, pero puedes pegar las instru
 Para que NotebookLM MCP funcione en Claude Desktop (no solo en Claude Code CLI):
 
 1. Abre la configuración de Claude Desktop: **Configuración → Servidores MCP**
-2. Agrega la entrada del servidor `notebooklm-mcp`:
+2. Agrega la entrada del servidor `gemini-notebook-mcp`:
 
 ```json
 {
   "mcpServers": {
     "notebooklm": {
       "command": "npx",
-      "args": ["-y", "notebooklm-mcp"],
+      "args": ["-y", "gemini-notebook-mcp"],
       "env": {}
     }
   }
@@ -333,5 +333,5 @@ Repositorio compartido del curso (fuente de verdad)
 - [Documentación oficial de Claude Cowork](https://support.claude.com/en/articles/13345190-get-started-with-claude-cowork)
 - [Gestión de proyectos compartidos en Claude](https://support.claude.com/en/articles/13455879-use-claude-cowork-on-team-and-enterprise-plans)
 - [Documentación de Claude Code Skills](https://code.claude.com/docs/en/skills)
-- [Configuración de NotebookLM MCP](https://github.com/PleasePrompto/notebooklm-mcp)
+- [Configuración de NotebookLM MCP](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp)
 - [README principal del skill](../README.es.md)

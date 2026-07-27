@@ -17,15 +17,15 @@ Cuando la figura pedagógica representa una interfaz de usuario real (app móvil
 | Diagrama de proceso con componentes de sistema | TikZ |
 | Mock-up de app bancaria, portal académico, servicio digital | HTML + PNG |
 
-### Stack tecnológico obligatorio
+### Stack tecnológico recomendado
 
-- **Framework:** Tailwind CSS via CDN — `<script src="https://cdn.tailwindcss.com"></script>`
+- **Framework:** HTML y CSS autosuficientes. Tailwind CSS vía CDN es opcional para prototipos rápidos.
 - **Config de colores personalizados:** bloque `<script>tailwind.config = { ... }</script>` en el `<head>`
 - **Fuente:** `fontFamily: { sans: ['Segoe UI', 'Arial', 'sans-serif'] }` en el config
 
-### Branding local — Banco de Loja (app de referencia para HCI)
+### Branding institucional
 
-La app de referencia para ejemplos de banca móvil en Loja es **Banco de Loja** (`bancodeloja.fin.ec`, app iOS/Android disponible).
+Leer `config/institution.json`. Usar el color primario y los servicios del ecosistema configurado. El siguiente bloque de Banco de Loja es solo un ejemplo de banca móvil; no asumir que aplica a otros cursos o instituciones.
 
 ```js
 tailwind.config = {

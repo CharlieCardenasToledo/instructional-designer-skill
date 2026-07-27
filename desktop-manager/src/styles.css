@@ -1,0 +1,571 @@
+/* Tailwind v4 sin Preflight (a propósito, para no resetear el CSS propio de
+   la app fuera del onboarding): https://tailwindcss.com/docs/preflight#disabling-preflight */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --font-sans: Inter, "Segoe UI", system-ui, sans-serif;
+  --color-brand: #0f766e;
+  --color-brand-hover: #115e59;
+  --color-brand-soft: rgba(15, 118, 110, 0.08);
+  --color-app-bg: #eef2f4;
+  --color-app-text: #111827;
+  --color-app-muted: #6b7280;
+  --color-surface: #f8fafc;
+  --color-surface-raised: #ffffff;
+  --color-control-tint: rgba(255, 255, 255, 0.58);
+  --color-control-tint-strong: rgba(255, 255, 255, 0.76);
+  --color-control-border: rgba(255, 255, 255, 0.48);
+  --color-control-edge: rgba(255, 255, 255, 0.82);
+  --color-control-shadow: rgba(15, 23, 42, 0.18);
+  --radius-app: 10px;
+  --radius-app-lg: 14px;
+  --radius-capsule: 999px;
+  --shadow-surface: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-control: 0 8px 28px rgba(15, 23, 42, 0.16);
+  --shadow-control-dark: 0 8px 28px rgba(0, 0, 0, 0.28);
+}
+
+/* Sin Preflight, `[hidden]` pierde contra utilidades (capa utilities > default
+   del navegador); regla sin capa para que siempre gane. */
+[hidden] { display: none !important; }
+
+/* CSS propio en layer(base) para que las utilidades de Tailwind (más prioridad) siempre lo sobreescriban. */
+@layer base {
+
+/* ── Design system: contenido sólido + Liquid Glass en controles ── */
+
+:root {
+  /* Colores de acento */
+  --teal:        #0f766e;
+  --teal-hover:  #115e59;
+  --teal-glow:   rgba(15,118,110,0.18);
+  --teal-border: rgba(15,118,110,0.28);
+  --teal-dim:    rgba(15,118,110,0.08);
+
+  /* Texto */
+  --text:   #111827;
+  --text-2: #374151;
+  --muted:  #6b7280;
+  --dim:    #9ca3af;
+
+  /* Superficies sólidas y estados */
+  --surface-raised: #ffffff;
+  --surface-hover: #f8fafc;
+  --surface-border: rgba(15,23,42,0.10);
+  --surface-border-strong: rgba(15,23,42,0.20);
+  --control-active: rgba(15,118,110,0.08);
+
+  /* Estados */
+  --green:      #4ade80;
+  --green-bg:   rgba(74,222,128,0.12);
+  --green-border: rgba(74,222,128,0.3);
+  --red:        #f87171;
+  --red-bg:     rgba(248,113,113,0.12);
+  --red-border: rgba(248,113,113,0.3);
+  --yellow:     #fbbf24;
+  --yellow-bg:  rgba(251,191,36,0.12);
+
+  /* Sombras */
+  --shadow-sm:    0 2px 8px rgba(15,23,42,0.08);
+
+  --font:   'Segoe UI', system-ui, -apple-system, sans-serif;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --titlebar-h: 34px;
+}
+
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text);
+  background: #eef2f4;
+  overflow: hidden;
+  height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Capas ambientales sólidas: crean profundidad para el vidrio sin degradados. */
+body::before {
+  content: '';
+  position: fixed;
+  width: 42vw;
+  height: 42vw;
+  left: -16vw;
+  top: -18vw;
+  border-radius: 50%;
+  background: rgba(13,148,136,0.16);
+  filter: blur(90px);
+  z-index: -1;
+  pointer-events: none;
+}
+body::after {
+  content: '';
+  position: fixed;
+  width: 38vw;
+  height: 38vw;
+  right: -15vw;
+  bottom: -17vw;
+  border-radius: 50%;
+  background: rgba(79,70,229,0.10);
+  filter: blur(100px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+#app { display: flex; height: 100vh; }
+
+/* Navegación del onboarding: controles desnudos y un indicador animado entre pasos. */
+.onboarding-nav-arrow {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 0;
+  outline: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color .18s ease, transform .18s ease, opacity .18s ease;
+}
+.onboarding-nav-arrow:hover:not(:disabled) {
+  background: transparent;
+  color: #111827;
+}
+.onboarding-nav-arrow--back:hover:not(:disabled) { transform: translateX(-2px); }
+.onboarding-nav-arrow--next:hover:not(:disabled) { transform: translateX(2px); }
+.onboarding-nav-arrow:focus-visible {
+  outline: 2px solid #111827;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.onboarding-nav-arrow:disabled {
+  opacity: .28;
+  cursor: default;
+}
+.onboarding-progress {
+  isolation: isolate;
+}
+.onboarding-progress-dot {
+  position: relative;
+  z-index: 1;
+}
+.onboarding-progress-worm {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  width: 28px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  will-change: left, transform;
+}
+.onboarding-progress-worm--backward {
+  flex-direction: row-reverse;
+}
+.onboarding-worm-segment {
+  width: 8px;
+  height: 8px;
+  margin-left: -2px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(21, 128, 61, .22);
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 1px 1px rgba(17, 24, 39, .12);
+  animation: onboarding-worm-walk .32s ease-in-out infinite alternate;
+}
+.onboarding-worm-segment:first-child {
+  margin-left: 0;
+}
+.onboarding-progress-worm--backward .onboarding-worm-segment:first-child {
+  margin-left: -2px;
+}
+.onboarding-progress-worm--backward .onboarding-worm-segment:last-child {
+  margin-left: 0;
+}
+.onboarding-worm-segment:nth-child(2) {
+  background: #16a34a;
+  animation-delay: -.08s;
+}
+.onboarding-worm-segment:nth-child(3) {
+  background: #15803d;
+  animation-delay: -.16s;
+}
+.onboarding-worm-segment--tail {
+  width: 6px;
+  height: 6px;
+  background: #4ade80;
+}
+.onboarding-worm-segment--head {
+  position: relative;
+  width: 11px;
+  height: 11px;
+  z-index: 1;
+  background: #166534;
+  animation-delay: -.24s;
+}
+.onboarding-worm-segment--head::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 0 #fff;
+}
+.onboarding-progress-worm--backward .onboarding-worm-segment--head::before {
+  right: auto;
+  left: 2px;
+}
+@keyframes onboarding-worm-walk {
+  from { transform: translateY(2px) rotate(-4deg); }
+  to { transform: translateY(-2px) rotate(4deg); }
+}
+
+/* Pista de progreso de "Instalar dependencia": el mismo gusanito del
+   stepper, pero en bucle indeterminado (winget no reporta % real). */
+.dep-progress-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 14px;
+  isolation: isolate;
+}
+.dep-progress-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
+  animation: dep-progress-dot-eat 1.8s ease-in-out infinite;
+}
+.dep-progress-dot:nth-child(2) { animation-delay: .12s; }
+.dep-progress-dot:nth-child(3) { animation-delay: .24s; }
+.dep-progress-dot:nth-child(4) { animation-delay: .36s; }
+.dep-progress-dot:nth-child(5) { animation-delay: .48s; }
+.dep-progress-dot:nth-child(6) { animation-delay: .6s; }
+@keyframes dep-progress-dot-eat {
+  0%, 100% { background: #e5e7eb; transform: scale(1); }
+  15% { background: #16a34a; transform: scale(1.4); }
+  30% { background: #bbf7d0; transform: scale(1); }
+}
+.dep-progress-worm {
+  position: absolute;
+  z-index: 2;
+  left: -24px;
+  top: 50%;
+  width: 24px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transform: translateY(-50%);
+  animation: dep-progress-worm-slide 1.8s linear infinite;
+}
+@keyframes dep-progress-worm-slide {
+  0% { left: -24px; opacity: 0; }
+  8% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-nav-arrow,
+  .onboarding-progress-dot,
+  .onboarding-worm-segment,
+  .dep-progress-dot,
+  .dep-progress-worm {
+    transition: none;
+    animation: none;
+  }
+}
+
+
+/* ── Progress bar ─────────────────────────────────────────────────────────── */
+/* ── List items ───────────────────────────────────────────────────────────── */
+/* ── Status dots ──────────────────────────────────────────────────────────── */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* ── Forms ────────────────────────────────────────────────────────────────── */
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--text);
+  background: #ffffff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.liquid-control::before,
+.liquid-control::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.liquid-control::before {
+  z-index: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.55), rgba(255,255,255,.12) 38%, rgba(255,255,255,.04) 62%, rgba(255,255,255,.32));
+  opacity: .55;
+}
+
+.liquid-control::after {
+  z-index: 1;
+  inset: 1px;
+  border: 1px solid rgba(255,255,255,.52);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.9), inset 0 -1px 1px rgba(15,23,42,.16), 0 1px 0 rgba(255,255,255,.24);
+}
+
+.liquid-control > * {
+  position: relative;
+  z-index: 2;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-control {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border-color: rgba(15,23,42,.14) !important;
+    box-shadow: 0 2px 8px rgba(15,23,42,.08) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  .liquid-control::before,
+  .liquid-control::after {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+input[type="checkbox"], input[type="radio"] {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: var(--teal);
+}
+input::placeholder, textarea::placeholder { color: var(--dim); }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--teal-border);
+  box-shadow: 0 0 0 3px var(--teal-dim), 0 0 12px var(--teal-glow);
+}
+
+:where(button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid rgba(94,234,212,0.75);
+  outline-offset: 2px;
+}
+input:disabled { opacity: 0.4; cursor: not-allowed; }
+textarea { resize: vertical; min-height: 76px; line-height: 1.5; }
+
+/* Fix select option visibility en fondo oscuro */
+select option { background: #ffffff; color: #111827; }
+
+/* ── Color picker ─────────────────────────────────────────────────────────── */
+
+input[type="color"] {
+  width: 44px;
+  height: 36px;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  padding: 3px;
+  cursor: pointer;
+  background: var(--surface-raised);
+  flex-shrink: 0;
+}
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+
+/* ── Week accordion ───────────────────────────────────────────────────────── */
+/* ── Step items ───────────────────────────────────────────────────────────── */
+/* ── Info / Warn boxes ────────────────────────────────────────────────────── */
+/* ── Spinner ──────────────────────────────────────────────────────────────── */
+/* ── Divider ──────────────────────────────────────────────────────────────── */
+hr { border: none; border-top: 1px solid var(--surface-border); margin: 14px 0; }
+
+/* ── Code ─────────────────────────────────────────────────────────────────── */
+code {
+  font-family: 'Cascadia Code', 'Consolas', monospace;
+  font-size: 11px;
+  background: rgba(45,212,191,0.08);
+  border: 1px solid var(--teal-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--teal);
+}
+
+/* ── Utility ──────────────────────────────────────────────────────────────── */
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.18); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.28); }
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  padding: 11px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 9999;
+  max-width: 360px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.18s, transform 0.18s;
+  pointer-events: none;
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+}
+#toast.show    { opacity: 1; transform: translateY(0); }
+#toast.success { background: rgba(20,60,40,0.85); border: 1px solid var(--green-border); color: var(--green); }
+#toast.error   { background: rgba(60,20,20,0.85); border: 1px solid var(--red-border);   color: var(--red); }
+#toast.info    { background: rgba(10,40,50,0.85); border: 1px solid var(--teal-border);  color: var(--teal); }
+#toast.loading { background: rgba(40,30,10,0.85); border: 1px solid rgba(251,191,36,0.3); color: var(--yellow); }
+
+/* ── Preview portada LaTeX (en inst-preview-col) ─────────────────────────── */
+/* ── Onboarding: réplica del diseño de Meetily, construida con utilidades
+   Tailwind directamente en el marcado (ver onboarding.js). Lo único que no
+   se puede expresar como utilidad es el keyframe de la animación de entrada. ── */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Fondo ambiental del onboarding. Comparte la paleta con el loader, pero la
+   mantiene desenfocada y lejos del centro para no competir con el contenido. */
+.onboarding-ambient {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  isolation: isolate;
+}
+.onboarding-blob {
+  position: absolute;
+  width: clamp(320px, 48vw, 640px);
+  aspect-ratio: 1;
+  border-radius: 43% 57% 62% 38% / 52% 44% 56% 48%;
+  background: var(--blob-color);
+  filter: blur(84px);
+  opacity: 0.105;
+  mix-blend-mode: multiply;
+  will-change: transform, border-radius;
+}
+.onboarding-blob--1 {
+  top: -31%;
+  left: -13%;
+  animation: onboarding-blob-drift-a 28s ease-in-out infinite alternate;
+}
+.onboarding-blob--2 {
+  top: -27%;
+  right: -18%;
+  opacity: 0.085;
+  animation: onboarding-blob-drift-b 33s ease-in-out -9s infinite alternate;
+}
+.onboarding-blob--3 {
+  right: -12%;
+  bottom: -34%;
+  opacity: 0.09;
+  animation: onboarding-blob-drift-a 31s ease-in-out -15s infinite alternate-reverse;
+}
+.onboarding-blob--4 {
+  bottom: -37%;
+  left: -17%;
+  opacity: 0.08;
+  animation: onboarding-blob-drift-b 36s ease-in-out -21s infinite alternate-reverse;
+}
+@keyframes onboarding-blob-drift-a {
+  0%   { transform: translate3d(-2%, -1%, 0) scale(0.94) rotate(-4deg); }
+  50%  { border-radius: 57% 43% 38% 62% / 44% 56% 46% 54%; }
+  100% { transform: translate3d(15%, 10%, 0) scale(1.08) rotate(7deg); }
+}
+@keyframes onboarding-blob-drift-b {
+  0%   { transform: translate3d(2%, -4%, 0) scale(1.05) rotate(5deg); }
+  55%  { border-radius: 36% 64% 54% 46% / 60% 39% 61% 40%; }
+  100% { transform: translate3d(-13%, 13%, 0) scale(0.92) rotate(-6deg); }
+}
+
+
+@media (max-width: 980px) {
+  .sidebar { width: 196px; }
+  .content { padding: 16px; }
+}
+
+@media (max-width: 760px) {
+  body { overflow: auto; }
+  #app { min-height: 100vh; height: auto; }
+}
+
+/* ── Final onboarding step ─────────────────────────────────────────────────── */
+.final-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--dim);
+  padding: 5px 0;
+  transition: color 0.25s;
+}
+.final-check-row .material-symbols-outlined {
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: color 0.25s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Settings page ─────────────────────────────────────────────────────────── */
+/* ── Docs page ─────────────────────────────────────────────────────────────── */
+/* ── Empty state (table) ───────────────────────────────────────────────────── */
+
+/* ── Pagination ─────────────────────────────────────────────────────────────── */
+
+} /* fin de @layer base */

@@ -244,8 +244,7 @@ function validateIntroduction(filePath) {
         { pattern: /\\editorialtitle\{/, name: "\\editorialtitle{...}{...}" },
         { pattern: /\\conceptline\{/, name: "\\conceptline{...}" },
         { pattern: /\\coursemeta\{/, name: "\\coursemeta{...}" },
-        { pattern: /\\begin\{softblock\}/, name: "entorno softblock" },
-        { pattern: /figure\/logo-asu\.png/, name: "alineación ASU (logo-asu.png)" }
+        { pattern: /\\begin\{softblock\}/, name: "entorno softblock" }
     ];
     
     checks.forEach(check => {

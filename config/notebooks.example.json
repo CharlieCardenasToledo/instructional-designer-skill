@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "courses": [
+    {
+      "courseCode": "IFT200",
+      "courseName": "Interacción Persona Computador",
+      "rootPath": "01 IFT200",
+      "notebookId": "",
+      "notebookUrl": "https://notebooklm.google.com/notebook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+    }
+  ]
+}

@@ -1,300 +1,181 @@
 ---
 name: instructional-designer-skill
-description: "Use this skill when designing, writing, editing, or validating academic/pedagogical courses, weekly guides in LaTeX, self-instructional modules, rubrics, or assessments, especially following UDL 3.0, Backward Design, or Quality Matters (QM) standards."
-version: "10.3"
-author: Charlie Cárdenas Toledo
-license: MIT
-tags:
-  - instructional-design
-  - latex
-  - education
-  - notebooklm
-  - udl
-  - backward-design
-  - quality-matters
+description: Diseña, redacta, edita y valida cursos, guías semanales LaTeX, módulos autoinstruccionales, rúbricas y evaluaciones de educación superior con UDL 3.0, Backward Design, Quality Matters y evidencia verificable mediante NotebookLM.
 ---
 
-# SKILL: Evidence-Based Self-Paced Instructional Design
+# Diseño instruccional autoinstruccional basado en evidencia
 
-## Propósito
+## Objetivo
 
-Este skill guía al modelo para producir guías didácticas semanales en LaTeX con un estándar de calidad consistente, estructura modular y estética institucional configurable. El resultado debe ser un conjunto de archivos `.tex` modulares listos para compilar, con paleta de colores institucional, diagramas TikZ semánticos y contenido autoinstruccional.
+Producir materiales académicos autosuficientes, accesibles y alineados. Priorizar la trazabilidad entre sílabo, resultados, práctica, evaluación y fuentes. Generar guías LaTeX modulares cuando el entregable solicitado sea una guía semanal.
 
-> ⚙️ **Configuración inicial requerida.** Antes de usar esta skill por primera vez, completa los valores marcados con `⚙️ CONFIGURE` en `references/bibliografia.md` (tabla de notebooks de NotebookLM) y en `references/plantilla-latex.md` (metadatos institucionales). Sin esa configuración, la skill funcionará pero no podrá consultar tu base de conocimiento bibliográfica ni generar metadatos correctos.
+## Cargar contexto bajo demanda
 
-## Referencias por Tarea (leer bajo demanda)
+Leer únicamente las referencias necesarias para la tarea. Leer siempre `references/checklist.md` antes de cerrar.
 
-Este archivo contiene el flujo de trabajo y las reglas editoriales. El detalle técnico vive en `references/`; leer **solo** el archivo que la tarea requiera:
-
-| Si la tarea implica... | Leer |
+| Necesidad | Archivo |
 |---|---|
-| Crear/editar el preamble, la introducción, secciones de teoría, estudio de caso, bloques o tablas | [references/plantilla-latex.md](references/plantilla-latex.md) |
-| Diagramas TikZ, modelos ER (Chen), exportar figuras como PNG | [references/figuras-tikz.md](references/figuras-tikz.md) |
-| Mock-ups de interfaz (HCI): HTML Tailwind, captura con Puppeteer | [references/figuras-html.md](references/figuras-html.md) |
-| Redactar contenido con citas, resolver fuentes, NotebookLM, sección de referencias | [references/bibliografia.md](references/bibliografia.md) |
-| Compilar la guía, rutas WSL, scripts auxiliares (`latex-validator`, `legacy-manager`, `pdf_cutter`) | [references/compilacion-wsl.md](references/compilacion-wsl.md) |
-| Verificación final antes de entregar (SIEMPRE al cerrar la tarea) | [references/checklist.md](references/checklist.md) |
+| Configuración institucional, notebooks y plantilla activa | `references/configuracion.md` |
+| Contrato del `README.md` canónico del curso | `references/esquema-silabo.md` |
+| Preamble, macros, bloques y estructura LaTeX | `references/plantilla-latex.md` |
+| Citas, `reference.bib` y NotebookLM MCP | `references/bibliografia.md` |
+| Figuras TikZ y notación Chen | `references/figuras-tikz.md` |
+| Mock-ups HTML y captura PNG | `references/figuras-html.md` |
+| Compilación y scripts auxiliares | `references/compilacion-wsl.md` |
+| Validación final obligatoria | `references/checklist.md` |
 
----
+Si `config/institution.json` existe, leerlo antes de redactar. Si `config/notebooks.json` existe, usarlo para resolver el notebook del curso. No editar archivos de `references/` para guardar datos del usuario.
 
-## Flujo de Arranque — Lectura del Sílabo y Creación desde Cero
+## Flujo de trabajo
 
-Este flujo es obligatorio cada vez que se genera o edita una guía semanal, independientemente de si la carpeta ya existe.
+### 1. Resolver curso, semana y configuración
 
-### Paso 0: Verificar configuración institucional (primera vez)
+1. Identificar la carpeta del curso y el número de semana solicitado.
+2. Leer el `README.md` de la raíz del curso. Tratarlo como sílabo canónico.
+3. Validar su estructura con `references/esquema-silabo.md`.
+4. Leer `config/institution.json` si está disponible.
+5. Resolver `activeTemplate` y leer `templates/<activeTemplate>/template.md`.
+6. Pedir únicamente datos ausentes que cambien materialmente el resultado.
 
-Antes de cualquier otra acción, leer `references/plantilla-latex.md` y verificar si aún existen valores placeholder (texto entre corchetes como `[Tu nombre completo con grado académico]`, `[Nombre de la carrera]`, `[Nombre de tu institución]`, o valores RGB de ejemplo como `RGB{0,121,107}`).
+No solicitar información que el sílabo o la configuración ya proporcionan.
 
-**Si se detectan placeholders sin reemplazar**, solicitar al usuario los siguientes datos antes de continuar:
+### 2. Verificar evidencia
 
-1. **Nombre completo del autor con grado académico** (ej. `Mgtr. Ana López, Ing.`)
-2. **Nombre de la carrera** (ej. `Ingeniería en Sistemas`)
-3. **Facultad o Escuela** (ej. `Facultad de Tecnología`)
-4. **Nombre de la institución** (ej. `Universidad Nacional Ejemplo`)
-5. **Color institucional primario en RGB** — tres valores separados por coma (ej. `0,121,107`). Si el usuario no sabe el valor exacto, sugerir que consulte el manual de identidad visual de su institución o la hoja de estilos del sitio web oficial.
-6. **Ecosistema digital institucional** — sistemas y procesos que los estudiantes reconocen como propios de su contexto. Ejemplos de categorías a completar: LMS (Canvas, Moodle u otro), sistemas de pagos y becas, autenticación e identidad, servicios administrativos. El usuario puede proporcionar nombres específicos de sus sistemas.
+Usar este orden:
 
-Con los datos recibidos, actualizar en `references/plantilla-latex.md`:
-- Los metadatos de `\author{}`, `\institute{}`, `\extrainfo{}` con nombre, carrera e institución reales.
-- Los tres valores RGB de `weekaccent`, `structurecolor` y `main` con el color institucional.
-- La sección **Anclaje Institucional** en `SKILL.md` con el ecosistema digital proporcionado.
+1. `README.md` del curso.
+2. Recortes en `bibliografia/recortes_por_semana/semana-XX/`.
+3. Fuentes locales verificables en `bibliografia/`.
+4. NotebookLM MCP del curso.
 
-Confirmar al usuario que la configuración quedó guardada y que no se volverá a pedir en sesiones futuras.
+NotebookLM es el método preferido para contrastar la cobertura bibliográfica:
 
-**Si no se detectan placeholders**, omitir este paso por completo y continuar al Paso 1.
+1. Llamar `get_health`.
+2. Si `authenticated` es falso, llamar `setup_auth` y volver a verificar. La autenticación puede abrir Chrome y permanecer disponible hasta 10 minutos.
+3. Si la sesión guardada es inválida, usar `re_auth` y volver a verificar.
+4. Resolver el notebook desde `config/notebooks.json`. Usar `select_notebook`, `search_notebooks` o `list_notebooks`.
+5. Antes de `add_notebook`, solicitar confirmación explícita al usuario.
+6. Consultar con `ask_question` y `source_format: "footnotes"`.
+7. Reutilizar el `session_id` en consultas relacionadas.
+8. Conservar la procedencia devuelta por el servidor para verificar las citas.
 
-### Paso 1: Leer el sílabo canónico
+Si NotebookLM no está disponible, continuar solo cuando las fuentes locales permitan verificar las afirmaciones. Si tampoco existe evidencia local suficiente, detener el párrafo afectado y pedir la fuente o una respuesta manual de NotebookLM. Nunca inventar autores, años, páginas, citas o resultados.
 
-**Antes de generar cualquier contenido**, leer el archivo `README.md` en la raíz de la carpeta del curso. Este archivo es la fuente canónica del sílabo: contiene temas, resultados de aprendizaje, actividades calificadas y bibliografía por semana. Las carpetas raíz por asignatura están en la tabla de Registros de NotebookLM (`references/bibliografia.md`).
+### 3. Extraer el contrato semanal
 
-**Ruta:**
-```
-[CARPETA_RAIZ_CURSO]/README.md
-```
+Mapear los campos canónicos:
 
-Ejemplo: `01 MI_ASIGNATURA_001/README.md`
-
-No pedir al usuario datos que ya estén en el README. Si el README no existe, solicitarlo explícitamente antes de continuar.
-
-### Paso 2: Consultar NotebookLM del curso (OBLIGATORIO)
-
-Este paso no es opcional ni un fallback: se ejecuta en **todo** arranque, aunque existan fuentes locales. La consulta valida que el contenido planeado coincida con la bibliografía indexada del curso.
-
-1. Llamar a `mcp__notebooklm__get_health`. Si `authenticated: true`, continuar al punto 3.
-2. Si `authenticated: false`, **intentar autenticar antes de rendirse**:
-   - Llamar a `mcp__notebooklm__setup_auth` (recupera cookies guardadas o abre navegador para login, hasta 10 min) y re-verificar con `get_health`.
-   - Si sigue fallando, llamar a `mcp__notebooklm__re_auth` (fuerza sesión limpia) y re-verificar.
-   - Solo si ambos fallan, emitir el bloque del **Flujo manual** (ver `references/bibliografia.md`) y no continuar hasta recibir la respuesta del usuario.
-3. Identificar el notebook del curso con la tabla de Registros de NotebookLM (`references/bibliografia.md`). En orden de preferencia:
-   - Si el `notebook_id` está en la tabla: llamar a `mcp__notebooklm__select_notebook` con ese id (activa el notebook como defecto; las llamadas siguientes omiten `notebook_id`).
-   - Si el id no se reconoce: llamar a `mcp__notebooklm__search_notebooks` con el nombre del curso para localizarlo.
-   - Si no aparece: la tabla incluye la URL de compartir; usarla con `mcp__notebooklm__add_notebook` para re-registrar, o pasarla como `notebook_url` directamente en `ask_question`.
-4. Llamar a `mcp__notebooklm__ask_question` con `source_format: "footnotes"`, preguntando por los capítulos y secciones que el README asigna a la semana: conceptos centrales, definiciones formales y ejemplos del texto. Guardar el `session_id` devuelto y reutilizarlo en todas las consultas sucesivas de la misma sesión.
-5. Usar la respuesta (con fuentes citadas en footnotes) para contrastar el plan de secciones y respaldar las citas junto con las fuentes locales (recortes y PDFs en `bibliografia/`).
-
-### Paso 3: Extraer los datos de la semana solicitada
-
-Mapear los campos del README a los elementos LaTeX correspondientes:
-
-| Campo en `README.md` | Uso en la guía LaTeX |
+| Campo del sílabo | Uso |
 |---|---|
-| `**Asignatura:**` (encabezado del README) | `\bioinfo{Asignatura}{CÓDIGO\\Nombre}` y primer argumento de `\editorialtitle{}{}` |
-| `**Periodo académico ordinario:**` | `\date{Periodo académico ordinario\\Mes–Mes AAAA}` |
-| `**Unidad:**` de la semana | `\coursemeta{Unidad X · Semana XX · Tema central}` en `01-introduccion.tex` |
-| `**Tema / contenido semanal:**` — bullets de primer nivel | Un archivo `.tex` de teoría por cada bullet (ver Paso 5) |
-| `[ASU CÓDIGO]: Module X: Nombre` | Línea ASU al final del `softblock` de `01-introduccion.tex` |
-| `**Horas:** Autónomo: X` | `\coursemeta{Tiempo estimado: X horas de estudio y práctica.}` |
-| `**Resultado de aprendizaje:**` — componente de docencia | Orienta el párrafo del `softblock` de introducción. No copiar como lista; redactar en prosa autoinstruccional. |
-| `**Herramienta de aprendizaje:**` — referencias bibliográficas | Entradas `\bibitem` en `NN-bibliografia.tex`. Los ítems no bibliográficos (herramientas, laboratorios) se ignoran en la bibliografía. |
-| `**Actividades calificadas:**` — códigos y pesos | Sección de actividades en `YY-aplicacion.tex`, con código, nombre y puntaje. |
+| `**Asignatura:**` | Metadatos y apertura editorial |
+| `**Periodo académico ordinario:**` | Fecha del documento |
+| `### Semana XX — ...` | Semana y tema |
+| `**Unidad:**` | `\coursemeta` |
+| `**Tema / contenido semanal:**` | Una sección teórica por viñeta principal |
+| `**Resultado de aprendizaje:**` | Orientación, práctica y alineación |
+| `**Herramienta de aprendizaje:**` | Fuentes y recursos |
+| `**Horas:**` | Tiempo estimado |
+| `**Actividades calificadas:**` | Alineación evaluativa |
 
-**Regla:** Los tres componentes de `**Resultado de aprendizaje:**` (docencia, práctica, autónomo) no se listan ni se enumeran en la guía. Informan el argumento técnico de la introducción y los cierres de sección, pero el documento no los menciona explícitamente.
+No copiar los resultados como una lista decorativa. Usarlos para decidir evidencia, práctica y evaluación.
 
-### Paso 4: Verificar y crear la estructura de carpetas
+### 4. Proponer el plan antes de escribir
 
-Verificar si existe la carpeta de la semana:
+Mostrar:
 
-```
-[CARPETA_RAIZ_CURSO]/semanas/semana-XX/
-```
+- semana y tema;
+- archivos planeados;
+- resultado de aprendizaje;
+- evidencia identificada;
+- plantilla activa;
+- dependencias o datos faltantes.
 
-**Si la carpeta no existe**, crear el scaffolding completo antes de escribir cualquier `.tex`:
+Esperar confirmación cuando el plan implique crear una guía completa o reestructurar una existente.
 
-```
-semanas/
-  semana-XX/
-    latex/
-      sections/
-      figure/
-```
+### 5. Crear o reutilizar la estructura
 
-**Regla de plantilla de facto:** Antes de escribir el preamble, localizar la semana compilada más reciente **del mismo curso** (la que tenga PDF generado y estructura `sections/`) y calcar su archivo principal, cambiando solo los metadatos de la semana. Esa semana refleja la convención vigente del curso (clase compartida, paquetes extra como `siunitx`, footer con logo). Solo si el curso no tiene ninguna semana previa compilada, usar el patrón de `references/plantilla-latex.md` como base.
+Usar:
 
-Luego verificar la presencia de los archivos obligatorios:
-
-| Archivo | Fuente si no existe |
-|---|---|
-| Clase elegantbook | **Primero** verificar si existe `[CURSO]/semanas/_shared/latex/elegantbook.cls`: en ese caso el documentclass la referencia como `../../_shared/latex/elegantbook` y NO se copia localmente. Si no existe la carpeta compartida, copiar `elegantbook.cls` a `latex/` desde otra semana compilada del mismo curso o desde la fuente oficial. |
-| `latex/figure/logo-institution.png` | Copiar desde la semana más reciente del mismo curso o proveer el logo de tu institución |
-| `latex/figure/logo-partner.png` (opcional) | Copiar desde la semana más reciente del mismo curso si aplica |
-
-Si alguno de estos archivos no está disponible localmente, notificarlo al usuario con la ruta exacta que falta antes de continuar.
-
-### Paso 5: Determinar el número de secciones de teoría
-
-El número de secciones de teoría surge **directamente** de los bullets de `**Tema / contenido semanal:**` en el README. Cada bullet de primer nivel es una sección de teoría. No crear secciones de relleno.
-
-**Ejemplo:** Si el README lista 3 bullets de tema para la semana, la secuencia de archivos es:
-
-```
-sections/
-  01-introduccion.tex
-  02-[slug-tema-1].tex
-  03-[slug-tema-2].tex
-  04-[slug-tema-3].tex
-  05-escenario.tex
-  06-aplicacion.tex
-  07-bibliografia.tex
+```text
+semanas/semana-XX/latex/
+├── guia-semanaXX.tex
+├── reference.bib
+├── figure/
+└── sections/
 ```
 
-El slug del nombre de archivo es kebab-case del tema principal del bullet (sin artículos ni preposiciones).
+Si existe una semana compilada reciente del mismo curso, reutilizar sus convenciones compatibles. No sobrescribir contenido existente sin copia recuperable. Para una reestructuración completa, usar `scripts/legacy-manager.js`.
 
-**Regla de numeración:** La numeración es estrictamente secuencial. La bibliografía siempre es el último archivo y toma el número siguiente al de aplicación (en el ejemplo, `07-`). No existe un número fijo reservado para la bibliografía.
+La secuencia canónica es:
 
-### Paso 6: Confirmar el plan al usuario
+```text
+01-introduccion.tex
+02-[tema-1].tex
+03-[tema-2].tex
+...
+NN-escenario.tex
+NN-aplicacion.tex
+NN-bibliografia.tex
+```
 
-Antes de generar los archivos, mostrar al usuario:
-- Semana y tema derivados del README.
-- Lista de secciones `.tex` planeadas (con nombre de archivo y título de sección).
-- Fuentes bibliográficas identificadas.
-- Si falta algún dato, solicitarlo aquí.
+Mantener numeración secuencial. Colocar el escenario después de toda la teoría y la bibliografía al final.
 
----
+### 6. Redactar con alineación
 
-## Entradas Mínimas Requeridas
+Aplicar Backward Design:
 
-La mayoría de los datos necesarios se obtienen automáticamente del `README.md` del curso (ver **Flujo de Arranque**). El usuario solo debe proporcionar:
+1. Precisar qué desempeño demuestra el resultado.
+2. Determinar evidencia observable.
+3. Diseñar práctica guiada y recuperación.
+4. Redactar teoría suficiente para ejecutar esa práctica.
 
-- **Curso y número de semana** — para localizar la carpeta y el bloque correcto del README.
-- **Nombre de la carrera** — no siempre está en el README; confirmar con el usuario si no aparece.
-- Cualquier dato ausente o incompleto en el README que el usuario quiera especificar (p. ej., una cita adicional, un enfoque particular del tema).
+La aplicación incluye recuperación y transferencia no calificadas. Incluir actividades calificadas solo cuando `options.includeGradedActivities` sea `true` o el usuario lo solicite. En ese caso, conservar código, nombre y ponderación del sílabo.
 
-**No solicitar** al usuario información que ya esté en el README: unidad, tema, RA, bibliografía, actividades calificadas, módulo ASU o período académico.
+Aplicar UDL 3.0:
 
-## Salidas Esperadas
+- ofrecer representación textual y visual cuando aporte comprensión;
+- explicar el propósito y el criterio de éxito;
+- reducir barreras de lenguaje y navegación;
+- permitir alternativas de acción o expresión cuando el formato lo admita.
 
-- `guia-semanaXX.tex` — archivo principal listo para compilar con la secuencia de 3 pasadas (ver `references/compilacion-wsl.md`).
-- `reference.bib` — **obligatorio**. La clase `elegantbook` con `citestyle=apa,bibstyle=apa` invoca biber, que busca este archivo por nombre exacto. Sin él, biber falla y las citas `\parencite{}`/`\textcite{}` no se resuelven.
-- Archivos `.tex` modulares en `latex/sections/`.
-- Diagramas TikZ embebidos en los archivos de sección correspondientes.
-- Archivos HTML en `latex/figure/` (si la guía incluye figuras de interfaz UI).
-- PNG capturados desde los HTML (ejecutar `node screenshot.mjs` antes de compilar LaTeX).
-- Reporte de cambios (si la tarea es edición quirúrgica de archivos existentes).
+Aplicar Quality Matters:
 
-> **Nota sobre `cover.png`:** Si la portada ElegantBook es necesaria, añadir una imagen en `latex/figure/cover.png` y descomentar `\cover{figure/cover.png}` en el main file. Si el archivo no existe, dejar la línea comentada para evitar error de compilación.
+- hacer visibles instrucciones, materiales y criterios;
+- mantener alineación entre resultado, actividad y evaluación;
+- evitar recursos sin función pedagógica.
 
----
+## Reglas editoriales
 
-## Decisiones por Defecto
+- Escribir en registro académico directo, causal y autoinstruccional.
+- Evitar “Querido estudiante”, “A continuación veremos”, “Es importante destacar”, “Recuerda que”, “La regla de oro” y “En resumen”.
+- Evitar metáforas no técnicas y los incisos entre rayas.
+- Preferir oraciones de hasta 20 palabras. Dividir las que superen 35.
+- Usar un término técnico canónico de forma consistente.
+- Marcar solo su primera aparición con `\keyterm{}`.
+- Conectar el primer párrafo de cada sección con la necesidad creada por la anterior.
+- Usar una figura o una tabla comparativa por sección, no ambas, salvo justificación explícita.
+- Mencionar cada figura con `Figura~\ref{...}` en el párrafo previo.
+- Usar los macros y bloques de la plantilla activa; no sustituirlos por formato LaTeX genérico.
 
-| Decisión | Valor por defecto |
-|---|---|
-| Ruta de trabajo | `[CURSO]/semanas/semana-[XX]/latex/` |
-| Clase elegantbook | Local en `latex/elegantbook.cls` |
-| Color de acento semanal | `weekaccent` = ⚙️ configurar en `references/plantilla-latex.md` con el color institucional |
-| Estrategia pedagógica | Teoría con activación inline → estudio de caso síntesis → aplicación |
-| Posición del escenario | Después de toda la teoría, antes de aplicación |
-| Evaluación | Integrada en `YY-aplicacion.tex` salvo indicación explícita |
-| Diagramas TikZ | Solo si reducen carga cognitiva o clarifican una relación estructural |
-| Citas sin fuente disponible | Ejecutar el workflow de la Política de Evidencia (`references/bibliografia.md`). Nunca inventar; nunca entregar con `[Pendiente de Verificación]`. |
-| Numeración de bibliografía | Secuencial: siempre el último archivo, número siguiente al de aplicación |
-| Compilación | 3 pasadas via WSL: `pdflatex → biber → pdflatex → pdflatex` |
+## Bibliografía
 
----
+Usar `biblatex` con `reference.bib` como única fuente bibliográfica:
 
-## Macrosecuencia Académica (Estructura LTI Canónica)
+- `\textcite{}` cuando el autor sea sujeto gramatical;
+- `\parencite{}` para respaldo parentético;
+- `\printbibliography` en la última sección;
+- una entrada BibLaTeX por cada clave citada.
 
-El orden de `\input` en el archivo principal define el flujo pedagógico. El nombre del archivo no determina su posición.
+No mezclar `thebibliography` o `\bibitem` con `biblatex`.
 
-| Posición en el flujo | Archivo `sections/` | Función |
-|---|---|---|
-| 1 | `01-introduccion.tex` | Apertura editorial, contexto, alineación ASU. Sin RA ni listas de objetivos. |
-| 2 … N | `02-[tema].tex`, `03-[tema].tex`, … | Desarrollo teórico. Cada archivo aborda una distinción, patrón o concepto. Activación inline mediante `accentblock`. |
-| N+1 | `XX-escenario.tex` | Estudio de caso síntesis: los conceptos de la semana aplicados al ecosistema institucional configurado en el Paso 0. Siempre **después** de toda la teoría. |
-| N+2 | `YY-aplicacion.tex` | Preguntas de recuperación (retrieval practice) y guía de transferencia profesional. Sin actividades calificadas. |
-| N+3 | `NN-bibliografia.tex` | Referencias. Numeración secuencial (ver Paso 5). |
+## Integraciones opcionales
 
-> **Regla:** El estudio de caso va siempre **después de la teoría**, nunca antes. La activación del problema técnico ocurre **inline** dentro de cada sección de teoría mediante `accentblock`. No crear archivos de relleno para completar una numeración fija.
+Tratar logos, socios, módulos internacionales y ecosistemas institucionales como opcionales. Incluirlos solo si la configuración los define. No exigir ASU, Banco de Loja ni otra institución específica en una instalación genérica.
 
-Los patrones canónicos de cada archivo (introducción, teoría, escenario, bloques, tablas) están en `references/plantilla-latex.md`.
+## Cierre obligatorio
 
----
-
-## Vocabulario de Macros Editoriales (OBLIGATORIO)
-
-Estos macros son parte de la plantilla institucional. El modelo **debe usarlos en lugar de equivalentes LaTeX genéricos**.
-
-| Macro | Función | Posición habitual |
-|---|---|---|
-| `\guidesection{Título}` | Encabezado de sección dentro del capítulo | Primera línea de cada archivo `.tex` (excepto `01-introduccion.tex`) |
-| `\editorialtitle{Asignatura}{Subtítulo descriptivo}` | Bloque de apertura editorial visual | Solo en `01-introduccion.tex`, tras `\guidesection` |
-| `\conceptline{\enquote{Cita o principio central}}` | Línea destacada con cita o aforismo técnico | Inmediatamente después de `\editorialtitle` |
-| `\coursemeta{Texto de metadatos}` | Metadato de unidad/semana o tiempo estimado | Después de `\conceptline` y dentro del `softblock` |
-| `\iconidea` | Ícono de idea/activación (`\ding{72}`) | Inicio del título interno en `accentblock` y `mintblock` con título |
-| `\iconcheck` | Ícono de verificación (`\ding{51}`) | Listas de criterios o checklists dentro del documento |
-| `\enquote{texto}` | Comillas tipográficas | Citas cortas integradas en el texto |
-| `\keyterm{término}` | Señalización de término técnico clave (bold + color weekaccent). Primera y única ocurrencia del término en la guía. Implementa el Signaling Principle de Mayer (ver R2). | Primera ocurrencia de cada término técnico central. |
-
----
-
-## Firma Editorial: Tono y Restricciones de Escritura
-
-### Tono académico técnico
-El registro es directo, causal y autosuficiente. El estudiante no necesita al docente para entender el material.
-
-- **Preferir causalidad técnica:** "La separación de responsabilidades favorece...", "El cumplimiento de estos principios garantiza...", "La necesidad de escalamiento independiente justifica el despliegue de...".
-- **PROHIBIDO — muletillas de IA:** "Querido estudiante", "A continuación veremos", "Es importante destacar", "Recuerda que", "La regla de oro", "En resumen".
-- **PROHIBIDO — metáforas no técnicas:** "Bajo la lupa", "El corazón del sistema", "Como si fuera una caja negra". Las transiciones deben surgir de la lógica del argumento técnico.
-- **PROHIBIDO — rayas dobles como inciso:** No usar el patrón `---frase---` ni `—frase—` (inciso entre rayas, en cualquiera de sus formas Unicode o LaTeX) dentro de una oración. Si la aclaración es breve, usar paréntesis `(frase)`. Si es extensa, romper en dos oraciones con conector causal explícito.
-
-### Longitud de oraciones — R1 (Flesch-Kincaid / USU Engineering Writing Center)
-- **Máximo ~20 palabras por oración** en texto corrido. Las oraciones que superan 35 palabras deben partirse en dos proposiciones con conector causal explícito.
-- Incorrecto: *"El middleware es una capa de software que reside entre las aplicaciones y los sistemas operativos locales y su función es ofrecer servicios comunes y abstraer la heterogeneidad del hardware, sistemas operativos y redes."*
-- Correcto: *"El middleware reside entre las aplicaciones y los sistemas operativos locales. Su función es absorber la heterogeneidad del hardware, las redes y los sistemas operativos, y exponer una interfaz uniforme a los componentes que lo utilizan."*
-
-### Consistencia terminológica — R2
-- El término técnico canónico se define en el `accentblock` de la sección que lo introduce y se usa **sin variación** hasta el cierre de la guía. No usar sinónimos decorativos (*"capa de abstracción"*, *"capa de integración"*, *"integrador de contratos"* para el mismo concepto).
-- La primera ocurrencia del término en la guía usa `\keyterm{término}`. A partir de ahí, texto normal o `\textbf{}` solo si el contexto lo exige.
-
-### Conectores de interleaving entre secciones — P4 (Spacing/Interleaving research)
-- El primer párrafo de cada sección de teoría (excepto la primera) debe establecer **cómo la sección anterior crea la necesidad de la actual**. Esta referencia cruzada narrativa implementa el interleaving en material escrito y mejora la retención a largo plazo.
-- Incorrecto: comenzar la sección de middleware con *"El middleware es una capa de software..."* sin conectar con la sección de sistemas distribuidos.
-- Correcto: *"La heterogeneidad entre nodos de un sistema distribuido hace que el contrato directo entre aplicaciones sea inviable. El middleware existe precisamente para absorber esa heterogeneidad..."*
-
-### Densidad óptima por sección
-- 2 a 4 párrafos conceptuales por sección. Preferir párrafos de 2-3 oraciones sobre párrafos de 4-5.
-- **Una figura TikZ OR una tabla comparativa** por sección — nunca ambas en la misma sección (Coherence Principle, Mayer, effect size 0.86). Si ambas son necesarias, una va a la sección siguiente.
-- Preferir una tabla comparativa a una lista larga cuando se contrastan 3 o más entidades.
-
----
-
-## Anclaje Institucional
-
-> ⚙️ **CONFIGURE**: Reemplaza los ejemplos de abajo con los sistemas digitales reales de tu institución. El estudio de caso debe usar procesos y nombres que tus estudiantes reconozcan como propios de su contexto laboral o académico.
-
-El estudio de caso y los ejemplos en las secciones de teoría deben usar el ecosistema digital de **tu institución**. Ejemplos de categorías típicas:
-- **Registro y pagos:** integración de sistemas, pasarelas, becas, cálculo de aranceles.
-- **LMS / Aulas Virtuales:** Canvas, Moodle, reportes académicos, integración con sistemas externos.
-- **Autenticación y seguridad:** gestión de identidad, sesiones, datos institucionales.
-- **Servicios administrativos:** gestión de horarios, asistencia, reportes de gestión académica.
-
-El escenario institucional no es decorativo: debe plantear el problema técnico de la semana de manera específica y verosímil, con nombres de sistemas o procesos reales de **tu institución**.
-
----
-
-## Cierre de Tarea
-
-Dos verificaciones obligatorias antes de entregar, sin excepciones (aplican tanto a generación desde cero como a ediciones quirúrgicas):
-
-1. **Recortes bibliográficos de la semana.** Verificar que exista `[CURSO]/bibliografia/recortes_por_semana/semana-XX/` con el recorte PDF de cada fuente citada en la guía (las páginas exactas que respaldan el contenido). Si falta alguno, cortarlo desde el libro fuente en `bibliografia/` usando `scripts/pdf_cutter_template.py` o PyMuPDF directo. Convención de nombre: `Autor_Año_CapX_SecYY-ZZ_ppNNN-MMM.pdf` (ej. `Elmasri_2016_Cap4_Sec44-47_pp120-135.pdf`). La guía no se entrega sin sus recortes.
-2. **Checklist completo.** Ejecutar `references/checklist.md` punto por punto.
+1. Ejecutar `node scripts/latex-linter.js <guia.tex>`.
+2. Compilar con `node scripts/latex-validator.js <guia.tex>` cuando el entorno lo permita.
+3. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
+4. Ejecutar `references/checklist.md` punto por punto.
+5. Informar archivos creados, validaciones ejecutadas y limitaciones reales.
