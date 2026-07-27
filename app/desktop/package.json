@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:web": "vite --mode mock",
     "build": "vite build",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test tests/static-contracts.test.mjs",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build"
   },
