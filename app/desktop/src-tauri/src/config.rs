@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::sync::Mutex;
 
-static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../templates");
+static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/templates");
 const DEFAULT_TEMPLATE: &str = "elegantbook-clasico";
 const EMBEDDED_TEMPLATE_IDS: &[&str] = &[
     "elegantbook-clasico",

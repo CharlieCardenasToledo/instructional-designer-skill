@@ -60,8 +60,8 @@ npm run tauri:build
 
 ## Estructura
 
-```
-desktop-manager/
+```text
+app/desktop/
 ├── index.html              ← Punto de entrada HTML
 ├── vite.config.js          ← Configuración de Vite
 ├── package.json

@@ -1,0 +1,32 @@
+{
+  "name": "instructional-designer-skill",
+  "version": "10.3.0",
+  "description": "Claude Code skill for evidence-based self-paced instructional design with LaTeX + NotebookLM",
+  "license": "MIT",
+  "author": "Charlie Cárdenas Toledo <charlie.act7@gmail.com>",
+  "homepage": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "lint": "node scripts/latex-linter.js",
+    "validate": "node scripts/latex-validator.js",
+    "archive": "node scripts/legacy-manager.js"
+  },
+  "keywords": [
+    "instructional-design",
+    "latex",
+    "education",
+    "notebooklm",
+    "udl",
+    "backward-design",
+    "quality-matters",
+    "claude-code",
+    "mcp",
+    "higher-education"
+  ]
+}

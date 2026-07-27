@@ -30,8 +30,8 @@ if ($Install) {
     Write-Host 'Reabre la terminal para actualizar PATH y vuelve a ejecutar el verificador.' -ForegroundColor Green
 }
 
-if (Test-Path (Join-Path $PSScriptRoot 'desktop-manager')) {
-    Write-Host "El instalador de escritorio está en $PSScriptRoot\desktop-manager" -ForegroundColor Gray
+if (Test-Path (Join-Path $PSScriptRoot 'app\desktop')) {
+    Write-Host "El instalador de escritorio está en $PSScriptRoot\app\desktop" -ForegroundColor Gray
     Write-Host 'Ejecuta npm install y npm run tauri:dev solo para desarrollo.' -ForegroundColor Gray
 }
 

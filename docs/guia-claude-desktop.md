@@ -58,7 +58,7 @@ Claude ofrece tres formas distintas de trabajo. Esta tabla te ayuda a elegir:
 Los Projects no cargan automáticamente `SKILL.md`, pero puedes pegar las instrucciones como **Project Instructions**:
 
 1. Abre tu proyecto → haz clic en **"Editar instrucciones del proyecto"**
-2. Copia el contenido de `SKILL.md` desde este repositorio (el cuerpo, sin el frontmatter YAML)
+2. Copia el contenido de `skill/SKILL.md` desde este repositorio (el cuerpo, sin el frontmatter YAML)
 3. Pégalo en el campo de instrucciones (límite: 8 000 caracteres)
 
 > **Tip**: Si el contenido supera el límite, incluye solo el **Flujo de arranque** y los **bloques de referencia más usados**. El resto lo puedes subir como archivos de conocimiento.
@@ -66,7 +66,7 @@ Los Projects no cargan automáticamente `SKILL.md`, pero puedes pegar las instru
 ### 2.4 Agregar archivos de conocimiento
 
 1. En el proyecto → sección **"Conocimiento"** → **"Añadir archivos"**
-2. Sube estos archivos de la carpeta `references/`:
+2. Sube estos archivos de la carpeta `skill/references/`:
 
    | Archivo | Propósito |
    |---|---|

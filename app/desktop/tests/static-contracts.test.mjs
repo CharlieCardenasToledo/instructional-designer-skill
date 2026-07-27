@@ -3,6 +3,30 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
+const repositoryRoot = new URL('../../../', import.meta.url);
+
+test('la arquitectura separa la app de escritorio y el paquete instalable de la skill', async () => {
+  const [payload, config, windowsWorkflow, macosWorkflow] = await Promise.all([
+    readFile(new URL('app/desktop/src-tauri/src/payload.rs', repositoryRoot), 'utf8'),
+    readFile(new URL('app/desktop/src-tauri/src/config.rs', repositoryRoot), 'utf8'),
+    readFile(new URL('.github/workflows/release-windows.yml', repositoryRoot), 'utf8'),
+    readFile(new URL('.github/workflows/release-macos.yml', repositoryRoot), 'utf8'),
+  ]);
+
+  assert.match(payload, /skill\/SKILL\.md/);
+  assert.match(payload, /skill\/requirements\.txt/);
+  assert.match(payload, /skill\/references/);
+  assert.match(payload, /skill\/scripts/);
+  assert.match(payload, /skill\/templates/);
+  assert.match(payload, /skill\/config/);
+  assert.match(config, /skill\/templates/);
+  assert.match(windowsWorkflow, /working-directory:\s*app\/desktop/);
+  assert.match(macosWorkflow, /working-directory:\s*app\/desktop/);
+
+  for (const source of [payload, config, windowsWorkflow, macosWorkflow]) {
+    assert.doesNotMatch(source, /desktop-manager/);
+  }
+});
 
 test('el único degradado CSS es el highlight refractivo del control Liquid', async () => {
   const css = await readFile(new URL('src/styles.css', root), 'utf8');
