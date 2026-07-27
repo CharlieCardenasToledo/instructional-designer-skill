@@ -1,5 +1,9 @@
 # Instructional Designer
 
+<p align="right">
+  <a href="README.en.md">🇺🇸 English</a>
+</p>
+
 Aplicación de escritorio y skill para transformar un sílabo universitario en
 una estructura de curso y en guías semanales listas para publicar.
 
