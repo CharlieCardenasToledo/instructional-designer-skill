@@ -210,8 +210,8 @@ function renderCurrentStep() {
   root.innerHTML = `
     ${onboardingAmbientBackground()}
     <div class="absolute top-3 right-3 flex z-10" data-tauri-drag-region>
-      <button class="inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-slate-900/5" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
-      <button class="inline-flex h-7 w-8 items-center justify-center rounded text-slate-500 hover:bg-red-600 hover:text-white" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
+      <button class="${ui.windowControl.base}" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
+      <button class="${cx(ui.windowControl.base, ui.windowControl.close)}" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
     </div>
     <div class="relative z-[1] w-full max-w-3xl mx-auto h-full flex flex-col p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
       <div class="flex-1 min-h-0 overflow-y-auto pr-2 flex flex-col items-center ${SCROLL_THIN}">
@@ -1085,6 +1085,7 @@ function finalStep() {
 }
 
 async function animateFinalStep() {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const checkRows = document.querySelectorAll(".final-check-row");
   const msgEl     = document.getElementById("final-loading-msg");
   const fillEl    = document.getElementById("gen-progress-fill");
@@ -1098,11 +1099,11 @@ async function animateFinalStep() {
     const row  = checkRows[i];
     const icon = row.querySelector(".material-symbols-outlined");
     row.style.opacity = "1";
-    row.style.transition = "opacity .3s, color .3s";
+    row.style.transition = reduceMotion ? "none" : "opacity .3s, color .3s";
     if (rowState === "active") {
       row.style.color  = "#111827";
       icon.textContent = "sync";
-      icon.style.animation = "spin .7s linear infinite";
+      icon.style.animation = reduceMotion ? "none" : "spin .7s linear infinite";
     } else if (rowState === "done") {
       row.style.color  = "#16a34a";
       icon.textContent = "check_circle";
@@ -1117,11 +1118,11 @@ async function animateFinalStep() {
   function setMsg(msg) {
     if (!msgEl) return;
     msgEl.style.opacity = "0";
-    msgEl.style.transition = "opacity .2s";
+    msgEl.style.transition = reduceMotion ? "none" : "opacity .2s";
     setTimeout(() => {
       msgEl.textContent = msg;
       msgEl.style.opacity = "1";
-    }, 150);
+    }, reduceMotion ? 0 : 150);
   }
 
   function showError(title, detail, errStr) {
@@ -1147,8 +1148,9 @@ async function animateFinalStep() {
     if (wrapEl) {
       wrapEl.style.display = "block";
       wrapEl.style.opacity = "0";
-      wrapEl.style.transition = "opacity .35s";
-      requestAnimationFrame(() => { wrapEl.style.opacity = "1"; });
+      wrapEl.style.transition = reduceMotion ? "none" : "opacity .35s";
+      if (reduceMotion) wrapEl.style.opacity = "1";
+      else requestAnimationFrame(() => { wrapEl.style.opacity = "1"; });
     }
     document.getElementById("btn-retry-gen")?.addEventListener("click", () => {
       if (wrapEl) wrapEl.style.display = "none";

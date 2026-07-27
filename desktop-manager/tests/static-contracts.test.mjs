@@ -324,6 +324,8 @@ test('Liquid Glass tiene fallbacks completos de accesibilidad', async () => {
   assert.match(css, /backdrop-filter:\s*none/);
   assert.match(css, /\.liquid-control::before,[\s\S]*display:\s*none\s*!important/);
   assert.match(css, /prefers-reduced-motion/);
+  const onboarding = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  assert.match(onboarding, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/);
 });
 
 test('router y topbar usan atributos e IDs estables, no clases legacy', async () => {
