@@ -1,335 +1,229 @@
-# instructional-designer-skill
+# Instructional Designer
 
-<p align="right">
-  <a href="README.es.md">🇪🇸 Leer en Español</a>
-</p>
+Aplicación de escritorio y skill para transformar un sílabo universitario en
+una estructura de curso y en guías semanales listas para publicar.
 
-> **Claude Code skill** for evidence-based, self-paced instructional design.  
-> Creates weekly LaTeX guides, self-instructional modules, and aligned assessments for higher education — with NotebookLM MCP integration.
+[![Version](https://img.shields.io/badge/version-10.4-00796b.svg)](CHANGELOG.md)
+[![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
+[![macOS](https://img.shields.io/badge/macOS-DMG-111827.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)
 
-## Objetivo del proyecto
+## El objetivo
 
-Este repositorio reúne una solución completa para producir material instruccional de calidad:
+Preparar un entorno de diseño instruccional suele exigir instalar herramientas,
+editar archivos de configuración, conectar NotebookLM y organizar manualmente
+cada curso. Este proyecto reúne ese proceso en un solo producto:
 
-- **Instructional Designer Manager**, una aplicación de escritorio que instala y configura el entorno.
-- **`instructional-designer-skill`**, el motor editorial que genera guías, sílabos y evaluaciones con criterios pedagógicos y bibliográficos explícitos.
+- **Instructional Designer Manager** instala y configura el entorno mediante
+  una interfaz gráfica.
+- **`instructional-designer-skill`** guía a Claude Code para producir sílabos,
+  guías LaTeX, actividades y evaluaciones con criterios pedagógicos verificables.
 
-La aplicación es la puerta de entrada para docentes que no quieren configurar manualmente Node.js, Python, LaTeX, NotebookLM MCP y la estructura de carpetas. Después del onboarding, el usuario puede crear cursos, generar sílabos y dejar lista la configuración para que Claude Code produzca las guías semanales.
+La aplicación no sustituye a la skill. Es su instalador, configurador y centro
+de gestión. La skill sigue siendo el motor que interpreta el curso y produce el
+material académico.
 
 ```text
-Descargar el instalador
-        ↓
-Completar onboarding y configurar la institución
-        ↓
-Conectar NotebookLM y elegir el destino de la skill
-        ↓
-Crear el curso y generar el sílabo
-        ↓
-Usar Claude Code + instructional-designer-skill
-        ↓
-Obtener guías LaTeX, actividades y evaluaciones alineadas
+Descargar e instalar la aplicación
+                ↓
+Configurar institución, herramientas y NotebookLM
+                ↓
+Crear la asignatura y estructurar el sílabo
+                ↓
+Instalar o exportar la skill
+                ↓
+Trabajar con Claude Code
+                ↓
+Generar y validar las guías semanales en PDF
 ```
 
-### Qué incluye la aplicación
+## Recorrido por la aplicación
 
-- Verificación e instalación asistida de dependencias.
-- Configuración institucional y de plantillas LaTeX.
-- Configuración de NotebookLM MCP.
-- Creación de estructuras de cursos y sílabos.
-- Gestión de plantillas y exportación de la skill.
-- Instaladores nativos para Windows y macOS publicados en GitHub Releases.
+### 1. Configuración guiada
 
-### Descargas
+El onboarding explica el resultado esperado y verifica cada requisito antes de
+habilitar el panel principal.
 
-Los instaladores se publican en la página de [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases). Windows ofrece `.exe` (NSIS) y `.msi`; macOS ofrece `.dmg` y `.app.tar.gz` cuando el workflow de release termina correctamente.
+![Onboarding del Instructional Designer Manager](docs/images/desktop-manager/onboarding.png)
 
-La instalación manual de la skill continúa disponible para usuarios técnicos; el instalador gráfico solo simplifica el proceso y no cambia el flujo editorial descrito en este README.
+### 2. Gestión de asignaturas
 
-[![Version](https://img.shields.io/badge/version-10.4-blue.svg)](CHANGELOG.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Category](https://img.shields.io/badge/category-pedagogy--design-green.svg)]()
-[![Frameworks](https://img.shields.io/badge/frameworks-UDL%203.0%20%7C%20Backward%20Design%20%7C%20QM%207th%20Ed-purple.svg)]()
+Desde el panel se crean asignaturas, se genera su estructura de carpetas y se
+mantiene el estado de producción de cada curso.
 
-<p align="center">
-  <img src="docs/images/preview.png" alt="Instructional Designer Skill — notebook with equations, diagrams and pedagogical schemas" width="100%">
-</p>
+![Panel de asignaturas](docs/images/desktop-manager/dashboard.png)
 
----
+### 3. Identidad institucional
 
-## What This Skill Does
+La aplicación conserva el nombre del docente, la institución, la carrera y la
+paleta visual que utilizarán los documentos.
 
-This skill guides Claude Code to produce **weekly self-instructional guides in LaTeX** at a consistent quality standard. Each guide is a set of modular `.tex` files, ready to compile, with:
+![Configuración institucional](docs/images/desktop-manager/settings.png)
 
-- Institutional color palette via the **ElegantBook** LaTeX class
-- Semantic **TikZ diagrams** that reduce cognitive load
-- **APA 7th ed.** bibliography with `biblatex` + `biber`
-- **NotebookLM MCP** integration for bibliographic validation at every session start
-- Five pedagogical block environments (`softblock`, `accentblock`, `mintblock`, `sandblock`, `roseblock`)
-- Evidence-based writing rules (Flesch-Kincaid, Mayer's Multimedia Principles, Spacing/Interleaving research)
+### 4. Plantillas editoriales
 
-**14+ months** of real classroom use across multiple courses, refined through iterative feedback from actual guide production cycles.
+Cada curso puede utilizar una plantilla institucional, minimalista, técnica o
+orientada a talleres.
 
----
+![Selector de plantillas LaTeX](docs/images/desktop-manager/templates.png)
 
-## Pedagogical Frameworks
+## Qué resuelve la aplicación
 
-| Framework | Role |
-|---|---|
-| **UDL 3.0** (CAST, 2024) | Multiple means of representation, engagement, action & expression |
-| **Backward Design** (Wiggins & McTighe) | Learning outcomes first, then assessment, then content |
-| **Quality Matters 7th Ed.** | Alignment of outcomes, activities, and materials |
-| **WCAG 2.2** | Accessibility in digital and printed materials |
-| **Mayer's Multimedia Principles** | Coherence, Signaling, Spatial Contiguity, Segmenting |
-| **Spacing / Interleaving Research** | Explicit cross-section narrative connectors |
+- Comprueba Node.js, Python, Git y un compilador LaTeX.
+- Solicita autorización antes de instalar una dependencia.
+- Configura los datos institucionales y la identidad visual.
+- Conecta NotebookLM MCP sin sobrescribir otras configuraciones.
+- Instala la skill para Claude Code o la exporta para otros destinos.
+- Crea la estructura canónica de una asignatura.
+- Convierte el contenido semanal del sílabo en un `README.md` estructurado.
+- Permite seleccionar y previsualizar plantillas LaTeX.
+- Mantiene toda la información y los procesos en el equipo del usuario.
 
----
+## Qué produce la skill
 
-## Prerequisites
+Una vez instalada, la skill guía la creación de:
 
-| Requirement | Details |
-|---|---|
-| **Claude Code** | [docs.anthropic.com/claude-code](https://docs.anthropic.com/en/docs/claude-code/overview) |
-| **NotebookLM MCP** | [CharlieCardenasToledo/gemini-notebook-mcp](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp) — recommended, with a verified local fallback |
-| **TeX Live** (via WSL on Windows) | `pdflatex` + `biber` — install in WSL/Debian: `sudo apt install texlive-full` |
-| **ElegantBook class** | Included in your course repository or available at [ElegantBook releases](https://github.com/ElegantLaTeX/ElegantBook/releases) |
-| **Node.js** | For `latex-validator.js` and `legacy-manager.js` scripts |
-| **Python 3 + PyMuPDF** | For `pdf_cutter_template.py`: `pip install pymupdf` |
-| **WSL** (Windows only) | Windows Subsystem for Linux — required for LaTeX compilation on Windows |
+- guías semanales modulares en LaTeX;
+- resultados, actividades y evaluaciones alineados;
+- diagramas semánticos con TikZ;
+- bibliografía en APA 7 mediante `biblatex` y `biber`;
+- secciones de recuperación, transferencia y aplicación profesional;
+- documentos validados antes de la compilación final.
 
-> **NotebookLM Knowledge Base**: Before using this skill, upload your course bibliography (PDFs of textbooks, articles, technical documentation) to a NotebookLM notebook. The skill queries this knowledge base at every session start to validate bibliographic content. Without sources in NotebookLM, Step 2 of the startup flow will return empty responses.
+El flujo editorial aplica UDL 3.0, Backward Design, Quality Matters 7, WCAG
+2.2, los principios multimedia de Mayer y prácticas de espaciado e
+intercalado.
 
----
+## Instalación
 
-## Installation
+### Opción recomendada: aplicación de escritorio
 
-### Option A — Direct download (no Git required)
+1. Abre la página de
+   [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest).
+2. Descarga el instalador correspondiente:
+   - Windows: `.exe` o `.msi`.
+   - macOS: `.dmg`.
+3. Instala la aplicación y completa el onboarding.
+4. Elige si quieres instalar la skill localmente o exportarla.
 
-1. Go to [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
-2. Download `instructional-designer-skill-v10.3.0.zip` (or Source code ZIP)
-3. Unzip into the Claude skills folder:
-   - **Windows:** `%USERPROFILE%\.claude\skills\instructional-designer-skill\`
-   - **macOS / Linux:** `~/.claude/skills/instructional-designer-skill/`
+> Los instaladores de macOS sin firma pueden activar una advertencia de
+> Gatekeeper. La firma y notarización requieren credenciales de Apple y se
+> aplican durante el workflow de publicación cuando esos secretos están
+> configurados.
 
-### Option B — Automated installer for Windows (recommended)
+### Opción avanzada: instalación manual
 
-On Windows, the desktop onboarding checks each dependency and asks before installing it. `setup.ps1 -Install` only prepares Node.js and Git through `winget`; WSL and TeX Live remain optional:
-
-1. Download the ZIP from [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
-2. Unzip and run `setup.ps1`:
-   - Right-click `setup.ps1` → **Run with PowerShell**
-   - Accept Administrator privileges when prompted
-3. Open the desktop app and complete its sequential onboarding; the dashboard stays locked until Node.js, institution, template, NotebookLM and the selected target are verified.
-
-### Option C — Clone with Git (for technical users)
+Esta ruta está pensada para desarrollo o para usuarios que prefieren gestionar
+la skill directamente.
 
 ```bash
-# macOS / Linux
-git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
-  ~/.claude/skills/instructional-designer-skill
-
-# Windows (PowerShell)
-git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill `
-  "$env:USERPROFILE\.claude\skills\instructional-designer-skill"
+git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill.git
 ```
 
-> **After installation**, Claude Code detects the skill automatically — no restart needed if the `~/.claude/skills/` directory already existed.
+Después, copia o enlaza el repositorio dentro de:
 
-### Usage
-
-Once installed, you can invoke the skill in two ways inside Claude Code:
-
-- **Automatic**: Claude loads it when your request matches the `description` (e.g. "Create the week 3 guide for my database course")
-- **Manual slash command**: type `/instructional-designer-skill` in the chat
-
-
-### 2. Configure your institution (required)
-
-Open these files and fill in the `⚙️ CONFIGURE` markers:
-
-**`references/bibliografia.md`** — NotebookLM registry:
-```markdown
-| MY_COURSE_001 — Course Name | `01 MY_COURSE_001/` | `your-notebook-id` | https://notebooklm.google.com/notebook/... |
+```text
+Windows: %USERPROFILE%\.claude\skills\instructional-designer-skill
+macOS:   ~/.claude/skills/instructional-designer-skill
+Linux:   ~/.claude/skills/instructional-designer-skill
 ```
 
-**`references/plantilla-latex.md`** — institutional metadata:
-```latex
-\author{Your Full Name, Degree}
-\extrainfo{Your Faculty\\Your Institution Name}
-\logo{figure/logo-institution.png}
-\definecolor{weekaccent}{RGB}{R,G,B}  % Your institution's primary color
+## Uso
+
+Cuando la skill ya está instalada, Claude Code puede activarla automáticamente
+al reconocer una petición compatible:
+
+```text
+Crea la guía de la semana 3 para Bases de Datos.
+Genera el módulo autoinstruccional de la unidad 2.
+Estructura el sílabo y sus actividades por semana.
+Valida y compila la guía en PDF.
 ```
 
-### 3. Set up NotebookLM MCP
+También puede invocarse explícitamente como
+`/instructional-designer-skill`.
 
-Follow the [gemini-notebook-mcp setup guide](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp) to authenticate and configure the MCP server in Claude Code.
+## Flujo editorial
 
-### 4. Prepare your course repository structure
+1. Leer el `README.md` canónico del curso.
+2. Identificar temas, resultados, actividades y bibliografía de la semana.
+3. Consultar las fuentes disponibles mediante NotebookLM MCP.
+4. Proponer la estructura de secciones y confirmar datos faltantes.
+5. Generar archivos LaTeX modulares.
+6. Ejecutar las reglas editoriales y de accesibilidad.
+7. Compilar y revisar el PDF.
 
-```
-01 MY_COURSE_001/
-├── README.md              ← Canonical syllabus (topics, learning outcomes, bibliography by week)
-├── bibliografia/
-│   ├── *.pdf              ← Source textbooks
-│   └── recortes_por_semana/
-│       └── semana-XX/     ← PDF excerpts cited in each guide
-└── semanas/
-    ├── _shared/
-    │   └── latex/
-    │       └── elegantbook.cls
-    └── semana-XX/
-        └── latex/
-            ├── sections/
-            └── figure/
-```
+La estructura resultante mantiene una secuencia predecible:
 
----
-
-## How It Works
-
-### Startup Flow (every session)
-
-```
-1. Read course README.md  →  extract week data (topics, LOs, bibliography, activities)
-2. Authenticate NotebookLM MCP  →  query the course notebook for bibliographic validation
-3. Extract week fields  →  map README fields to LaTeX elements
-4. Verify/create folder structure  →  scaffold semana-XX/latex/sections/
-5. Determine theory sections  →  one file per bullet in "Tema / contenido semanal"
-6. Confirm plan with user  →  section list, sources, missing data
+```text
+semanas/semana-XX/latex/
+├── guia-semana-XX.tex
+├── sections/
+│   ├── 01-introduccion.tex
+│   ├── 02-tema-principal.tex
+│   ├── 03-tema-relacionado.tex
+│   ├── 04-escenario.tex
+│   ├── 05-aplicacion.tex
+│   └── 06-bibliografia.tex
+└── figure/
 ```
 
-### Document Structure
+## Desarrollo de la aplicación
 
-```
-sections/
-  01-introduccion.tex       ← Editorial opening, ASU alignment, no LO lists
-  02-[topic-1].tex          ← Theory: one concept/pattern per file
-  03-[topic-2].tex          ← Theory: cross-section interleaving connector
-  ...
-  N+1-escenario.tex         ← Synthesis case study (always after ALL theory)
-  N+2-aplicacion.tex        ← Retrieval practice + professional transfer
-  N+3-bibliografia.tex      ← References (always last, sequential numbering)
+La aplicación utiliza Tauri 2, Rust, Vite y Tailwind CSS 4.
+
+```bash
+cd desktop-manager
+npm ci
+npm test
+npm run tauri:dev
 ```
 
-### CLI Scripts
+Para generar instaladores localmente:
 
-| Script | Usage |
-|---|---|
-| `latex-linter.js` | Performs static analysis checking for sentence length (R1), forbidden AI tropes, invalid LaTeX syntax, placeholder presence, and signaling consistency (R2). |
-| `latex-validator.js` | Executes `latex-linter.js` first, then performs the full 3-pass LaTeX compilation sequence via WSL (`pdflatex → biber → pdflatex → pdflatex`) and captures HTML screenshots if applicable. |
-| `legacy-manager.js` | Archives current week content to a timestamped subfolder under `legacy/` (e.g. `legacy/archive_YYYY-MM-DD_HH-MM-SS`) to prevent collisions before restructuring. |
-| `pdf_cutter_template.py` | Extracts page ranges from source PDFs into `bibliografia/recortes_por_semana/semana-XX/`. |
-
-Replace `[SKILL_PATH]` with the path where you cloned the skill:
-- macOS/Linux: `~/.claude/skills/instructional-designer-skill`
-- Windows: `$env:USERPROFILE\.claude\skills\instructional-designer-skill`
-
-```powershell
-# Run the style linter on a LaTeX guide
-node [SKILL_PATH]/scripts/latex-linter.js "01 MY_COURSE/semanas/semana-03/latex/guia-semana-03.tex"
-
-# Compile a guide (runs the linter first, then runs full 3-pass sequence)
-node [SKILL_PATH]/scripts/latex-validator.js "01 MY_COURSE/semanas/semana-03/latex/guia-semana-03.tex"
-
-# Archive a week to a timestamped folder before restructuring
-node [SKILL_PATH]/scripts/legacy-manager.js "01 MY_COURSE/semanas/semana-03"
-
-# Cut bibliography excerpts (edit cuts[] array first)
-pip install -r [SKILL_PATH]/requirements.txt   # first time only
-python [SKILL_PATH]/scripts/pdf_cutter_template.py
+```bash
+npm run tauri:build
 ```
 
----
+Tauri produce los artefactos de cada plataforma dentro de
+`desktop-manager/src-tauri/target/release/bundle/`.
 
-## Using with Claude Desktop and CoWork
+## Publicación automatizada
 
-For step-by-step instructions on using this skill from **Claude Desktop** (Projects) or **Claude Cowork** — including MCP setup, team sharing, and the full production workflow — see the dedicated guide:
+Los workflows de GitHub Actions ejecutan tests antes de construir:
 
-📄 **[docs/guia-claude-desktop.md](docs/guia-claude-desktop.md)**
+- `release-windows.yml`: genera NSIS `.exe` y Windows Installer `.msi`.
+- `release-macos.yml`: genera `.dmg` y el paquete de la aplicación.
 
----
+Al crear un tag `v*`, los artefactos se adjuntan a la GitHub Release
+correspondiente. Ambos workflows también pueden ejecutarse manualmente.
 
-## Trigger Examples
+## Estructura del repositorio
 
-The skill activates automatically when you mention:
-
-```
-"Create the week 3 guide for MY_COURSE_001"
-"Generate the self-instructional module for unit 2, week 5"
-"Write the weekly guide for the topic of database normalization"
-"Add a TikZ diagram to semana-04/sections/03-normalization.tex"
-```
-
----
-
-## Skill Configuration Reference
-
-| Setting | Location | Default |
-|---|---|---|
-| Institution name & campus | `SKILL.md` frontmatter | `YOUR_INSTITUTION_NAME` |
-| NotebookLM notebook registry | `references/bibliografia.md` | Empty template |
-| Author name & institutional metadata | `references/plantilla-latex.md` | Configurable placeholders |
-| Institutional color (RGB) | `references/plantilla-latex.md` | `RGB{0,121,107}` (example) |
-| Week accent color | `weekaccent` in preamble | Same as institutional color |
-| Institutional digital ecosystem | `SKILL.md` — "Anclaje Institucional" | Generic categories |
-
----
-
-## Repository Structure
-
-```
+```text
 instructional-designer-skill/
-├── SKILL.md                    ← Skill definition (frontmatter + full workflow)
-├── README.md                   ← This file
-├── CHANGELOG.md                ← Version history
-├── LICENSE                     ← MIT
-├── references/
-│   ├── plantilla-latex.md      ← LaTeX preamble, blocks, canonical patterns
-│   ├── figuras-tikz.md         ← TikZ diagrams, ER models (Chen notation)
-│   ├── figuras-html.md         ← HTML UI mockups + Puppeteer PNG capture
-│   ├── bibliografia.md         ← Citation policy, NotebookLM workflow, registry
-│   ├── compilacion-wsl.md      ← WSL compilation guide + script docs
-│   └── checklist.md            ← 75-point final verification checklist
-└── scripts/
-    ├── latex-validator.js      ← Full compilation sequence (Node.js)
-    ├── legacy-manager.js       ← Week archiving utility (Node.js)
-    └── pdf_cutter_template.py  ← Bibliography excerpt cutter (Python + PyMuPDF)
+├── desktop-manager/        Aplicación Tauri y frontend
+├── SKILL.md                Flujo principal de la skill
+├── agents/                 Configuración para otros agentes
+├── templates/              Plantillas editoriales LaTeX
+├── references/             Reglas pedagógicas, visuales y bibliográficas
+├── scripts/                Linter, compilación y utilidades
+├── config/                 Esquemas de configuración
+└── docs/                   Guías y capturas de la aplicación
 ```
 
----
+## Privacidad
 
-## Writing Standards Enforced by This Skill
+La aplicación no incorpora telemetría ni envía el contenido de los cursos a
+un servidor propio. Las operaciones de archivos, validación y compilación se
+realizan localmente. Las consultas a NotebookLM utilizan la instancia MCP
+configurada por el usuario.
 
-The skill enforces evidence-based writing rules in every generated guide:
+## Documentación adicional
 
-- **R1 — Sentence length** (Flesch-Kincaid / USU Engineering Writing Center): max ~20 words per sentence in running text; sentences over 35 words must be split with an explicit causal connector.
-- **R2 — Terminological consistency**: each technical term is defined once with `\keyterm{}` and used without variation throughout the guide (no decorative synonyms).
-- **P4 — Interleaving** (Spacing research): the first paragraph of each theory section (except the first) explicitly connects to the previous section — establishing *why* the current section is needed.
-- **D1 — Coherence Principle** (Mayer): one TikZ figure OR one comparative table per section — never both.
-- **D2 — Spatial Contiguity** (Mayer): every figure is mentioned by `\ref{}` in the paragraph immediately preceding it.
+- [Manual técnico de la aplicación](desktop-manager/README.md)
+- [Uso con Claude Desktop y Cowork](docs/guia-claude-desktop.md)
+- [Historial de versiones](CHANGELOG.md)
+- [Licencia MIT](LICENSE)
 
----
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for the full version history.
-
-**v10.3** — NotebookLM MCP full integration (`re_auth`, `select_notebook`, `search_notebooks`, `source_format: "footnotes"`)  
-**v10.1** — Progressive disclosure architecture: compact SKILL.md + 6 reference files  
-**v10.0** — Previous monolithic version (~1,160 lines)
-
----
-
-## Privacy Policy
-
-This plugin runs **entirely locally** on your computer. It does not collect, track, store, or transmit any personal data, telemetry, or codebase context to third-party servers.
-
-- **NotebookLM Queries**: All queries sent to NotebookLM are routed through your own configured NotebookLM MCP server instance. The plugin does not intercept, log, or forward these requests.
-- **Local Scripts**: All validation and utility scripts run locally on your machine (or within your local WSL environment) and do not connect to external APIs.
-
----
-
-## License
-
-MIT © 2026 — See [LICENSE](LICENSE) for details.
-
-Contributions welcome. If you adapt this skill for your institution, consider opening a PR with your configuration example.
+MIT © 2026 Charlie Cárdenas Toledo.

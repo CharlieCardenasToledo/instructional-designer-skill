@@ -28,13 +28,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: instructional-designer-manager-macos
-          path: |
-            desktop-manager/src-tauri/target/release/bundle/dmg/*.dmg
-            desktop-manager/src-tauri/target/release/bundle/macos/*.app.tar.gz
+          path: desktop-manager/src-tauri/target/release/bundle/dmg/*.dmg
       - name: Publish GitHub Release assets
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            desktop-manager/src-tauri/target/release/bundle/dmg/*.dmg
-            desktop-manager/src-tauri/target/release/bundle/macos/*.app.tar.gz
+          files: desktop-manager/src-tauri/target/release/bundle/dmg/*.dmg
