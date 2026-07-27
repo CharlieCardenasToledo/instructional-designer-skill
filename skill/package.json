@@ -1,6 +1,6 @@
 {
   "name": "instructional-designer-skill",
-  "version": "10.3.0",
+  "version": "10.4.0",
   "description": "Claude Code skill for evidence-based self-paced instructional design with LaTeX + NotebookLM",
   "license": "MIT",
   "author": "Charlie Cárdenas Toledo <charlie.act7@gmail.com>",
