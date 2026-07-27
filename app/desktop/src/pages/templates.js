@@ -50,6 +50,8 @@ export async function renderTemplates() {
   try {
     [_templates, _activeId] = await Promise.all([listTemplates(), getActiveTemplate()]);
     _selectedId = _activeId;
+    const filters = document.getElementById("tpl-filter-btns");
+    if (filters && _templates.length <= 1) filters.hidden = true;
     renderBento("all");
   } catch (e) {
     document.getElementById("tpl-bento").innerHTML = `

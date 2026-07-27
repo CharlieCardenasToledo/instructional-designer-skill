@@ -141,7 +141,8 @@ Todos los archivos van en `latex/figure/`.
 
 ## Captura de Screenshots HTML → PNG
 
-Los archivos HTML se convierten a PNG mediante Puppeteer con el Chrome instalado en el sistema. No se descarga un Chromium adicional.
+Los archivos HTML se convierten a PNG mediante Puppeteer Core y un Chrome o
+Chromium ya instalado. El script no descarga un navegador.
 
 ### Prerrequisitos
 
@@ -150,7 +151,7 @@ Los archivos HTML se convierten a PNG mediante Puppeteer con el Chrome instalado
 npm install puppeteer-core --save-dev
 ```
 
-Chrome en el sistema: `C:\Program Files\Google\Chrome\Application\chrome.exe`
+Define `CHROME_PATH` si Chrome no está en una ubicación habitual.
 
 ### Script estándar (`screenshot.mjs`)
 
@@ -160,9 +161,16 @@ Crear este archivo en `latex/figure/` y adaptarlo a la lista de pantallas del cu
 import puppeteer from 'puppeteer-core';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const CANDIDATES = process.platform === 'win32'
+  ? ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe']
+  : process.platform === 'darwin'
+    ? ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
+    : ['/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
+const CHROME = process.env.CHROME_PATH || CANDIDATES.find(existsSync);
+if (!CHROME) throw new Error('Define CHROME_PATH con la ruta de Chrome o Chromium.');
 
 const SCREENS = [
   { file: 'vista-a.html', out: 'vista-a.png', width: 390 },
@@ -198,10 +206,12 @@ console.log('Todos los PNG generados.');
 ### Ejecución
 
 ```powershell
-# Desde la carpeta latex/figure/ del curso (Windows PowerShell)
+# Desde la carpeta latex/figure/ del curso
 node screenshot.mjs
 ```
 
 Los PNG se generan en la misma carpeta `figure/` y quedan listos para que LaTeX los incluya.
 
-**Nota:** El script usa `waitUntil: 'networkidle0'` para esperar que Tailwind CDN cargue completamente antes de capturar. Si el sistema no tiene acceso a internet, Tailwind no renderizará y los PNG saldrán sin estilos.
+**Nota:** El ejemplo carga Tailwind desde CDN y por tanto necesita red. Para un
+flujo offline, compila previamente el CSS y enlaza un archivo local antes de
+capturar.

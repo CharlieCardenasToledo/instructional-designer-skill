@@ -1,337 +1,188 @@
-# Guía de uso con Claude Desktop y CoWork
+# Usar Instructional Designer con Claude
 
-Esta guía explica cómo configurar y usar el **instructional-designer-skill** desde **Claude Desktop** (app de escritorio) y desde **Claude Cowork** — la interfaz de escritorio orientada a tareas con archivos locales.
+Esta guía separa las cuatro superficies de Claude que pueden intervenir en el
+flujo. No son equivalentes y la forma de instalar la skill cambia en cada una.
 
-> Para la visión general del producto, consulta el [README principal](../README.md).
+## Elegir la modalidad
 
----
+| Modalidad | Instalación | Uso recomendado |
+|---|---|---|
+| Claude Code | Carpeta local en `~/.claude/skills/` | Crear y compilar archivos dentro de un curso local |
+| Claude Skills | Subir un ZIP en `Customize → Skills` | Usar el método pedagógico en chats compatibles |
+| Claude Projects | Agregar instrucciones y conocimiento al proyecto | Mantener contexto estable; no sustituye la instalación de la skill |
+| Cowork | Usar una skill cargada y una carpeta autorizada | Tareas de archivos desde la aplicación de escritorio, sujeto a sus límites actuales |
 
-## Tabla de contenidos
+Consulta la documentación oficial de
+[Skills](https://support.claude.com/en/articles/12512180-use-skills-in-claude),
+[Projects](https://support.claude.com/en/articles/9517075-what-are-projects),
+[Claude Code](https://code.claude.com/docs/en/slash-commands) y
+[Cowork](https://support.claude.com/en/articles/14116274-organize-your-tasks-with-projects-in-claude-cowork)
+para confirmar disponibilidad según tu plan y plataforma.
 
-1. [¿Qué superficie usar?](#1-qué-superficie-usar)
-2. [Configuración en Claude Desktop (Projects)](#2-configuración-en-claude-desktop-projects)
-3. [Configuración en Claude Cowork](#3-configuración-en-claude-cowork)
-4. [Flujo de trabajo paso a paso](#4-flujo-de-trabajo-paso-a-paso)
-5. [Compartir con tu equipo (Team / Enterprise)](#5-compartir-con-tu-equipo)
-6. [Limitaciones y diferencias con Claude Code CLI](#6-limitaciones-y-diferencias)
+## Antes de instalar
 
----
+La generación completa de guías requiere:
 
-## 1. ¿Qué superficie usar?
+- Node.js compatible con la aplicación;
+- Python;
+- un compilador LaTeX;
+- NotebookLM MCP cuando se necesite consultar bibliografía remota.
 
-Claude ofrece tres formas distintas de trabajo. Esta tabla te ayuda a elegir:
+La aplicación comprueba estos requisitos. En Windows puede iniciar
+instalaciones con `winget` después de pedir confirmación. En macOS y Linux
+muestra los comandos que deben ejecutarse manualmente.
 
-| Característica | Claude Code CLI | Claude Desktop (Projects) | Claude Cowork |
-|---|---|---|---|
-| **Edita archivos locales** | ✅ Sí | ❌ No | ✅ Sí (acceso a carpeta) |
-| **Ejecuta scripts Node/Python** | ✅ Sí | ❌ No | ✅ Sí (VM aislada) |
-| **Compila LaTeX (WSL)** | ✅ Sí | ❌ No | ⚠️ Solo con WSL configurado |
-| **Compartir con equipo** | ❌ No | ✅ Sí (Team/Enterprise) | ⚠️ Solo artefactos en vivo |
-| **NotebookLM MCP** | ✅ Sí | ✅ Sí (si MCP configurado) | ✅ Sí (si MCP configurado) |
-| **Carga automática de skills** | ✅ `~/.claude/skills/` | ⚠️ Requiere copiar instrucciones | ✅ `~/.claude/skills/` |
-| **Plataforma** | Windows/Mac/Linux | Navegador + Desktop | Desktop (+ web/mobile beta) |
+## Opción 1: Claude Code
 
-**Recomendación general:**
+Es la modalidad recomendada para trabajar directamente con las carpetas del
+curso, ejecutar validadores y compilar LaTeX.
 
-- Usa **Claude Code CLI** para el flujo de producción completo (edición, compilación, validación).
-- Usa **Claude Cowork** para tareas de escritura y revisión con acceso a tus archivos, sin compilación.
-- Usa **Claude Desktop Projects** para coordinar con colegas o compartir instrucciones del skill.
+### Instalación desde la aplicación
 
----
+1. Completa el onboarding.
+2. Configura la institución y NotebookLM.
+3. Abre la sección de activación.
+4. Selecciona la instalación local para Claude Code.
+5. Reinicia Claude Code si ya estaba abierto.
 
-## 2. Configuración en Claude Desktop (Projects)
+La app instala el payload en:
 
-### 2.1 Requisitos
+```text
+Windows: %USERPROFILE%\.claude\skills\instructional-designer-skill
+macOS:   ~/.claude/skills/instructional-designer-skill
+Linux:   ~/.claude/skills/instructional-designer-skill
+```
 
-- Cuenta Claude con plan **Pro**, **Team** o **Enterprise**
-- Claude Desktop instalado ([descargar aquí](https://claude.ai/download))
-- NotebookLM MCP configurado (ver [instrucciones oficiales](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp))
+### Instalación manual
 
-### 2.2 Crear un Proyecto
+Clona el repositorio y copia **el contenido de `skill/`**, no la raíz del
+monorepo, a la ruta anterior. `SKILL.md` debe quedar directamente dentro de
+`instructional-designer-skill/`.
 
-1. Abre **Claude Desktop** o ve a [claude.ai](https://claude.ai)
-2. En el panel lateral, haz clic en **"Proyectos"** → **"Nuevo proyecto"**
-3. Asigna un nombre descriptivo, por ejemplo: `Diseño Instruccional — IFT200`
+La estructura mínima es:
 
-### 2.3 Agregar las instrucciones del skill al Proyecto
+```text
+instructional-designer-skill/
+├── SKILL.md
+├── config/
+├── references/
+├── scripts/
+└── templates/
+```
 
-Los Projects no cargan automáticamente `SKILL.md`, pero puedes pegar las instrucciones como **Project Instructions**:
+Claude Code puede activar la skill por contexto o mediante:
 
-1. Abre tu proyecto → haz clic en **"Editar instrucciones del proyecto"**
-2. Copia el contenido de `skill/SKILL.md` desde este repositorio (el cuerpo, sin el frontmatter YAML)
-3. Pégalo en el campo de instrucciones (límite: 8 000 caracteres)
+```text
+/instructional-designer-skill
+```
 
-> **Tip**: Si el contenido supera el límite, incluye solo el **Flujo de arranque** y los **bloques de referencia más usados**. El resto lo puedes subir como archivos de conocimiento.
+Abre Claude Code en la carpeta de la asignatura y pide, por ejemplo:
 
-### 2.4 Agregar archivos de conocimiento
+```text
+Crea la guía de la semana 03 usando el README del curso como sílabo canónico.
+```
 
-1. En el proyecto → sección **"Conocimiento"** → **"Añadir archivos"**
-2. Sube estos archivos de la carpeta `skill/references/`:
+## Opción 2: Claude Skills mediante ZIP
 
-   | Archivo | Propósito |
-   |---|---|
-   | `plantilla-latex.md` | Preámbulo ElegantBook y bloques pedagógicos |
-   | `figuras-tikz.md` | Patrones TikZ y notación Chen |
-   | `figuras-html.md` | Maquetas HTML + Puppeteer |
-   | `bibliografia.md` | Política de citas y flujo NotebookLM |
-   | `compilacion-wsl.md` | Referencia de comandos de compilación |
-   | `checklist.md` | Lista de verificación de 75 puntos |
+1. En la app, selecciona **Exportar skill**.
+2. Elige una carpeta de destino.
+3. En Claude, abre `Customize → Skills`.
+4. Sube el ZIP generado.
+5. Activa la skill en un chat compatible.
 
-3. También puedes subir el **README.md de tu curso** como archivo de contexto permanente.
+No descargues un supuesto ZIP de la GitHub Release: las releases actuales
+publican los instaladores de escritorio. El ZIP de la skill se genera desde la
+app con tu configuración.
 
-### 2.5 Configurar el MCP de NotebookLM en Claude Desktop
+> El ZIP puede contener `institution.json` y `notebooks.json` reales. Revísalo
+> antes de compartirlo o subirlo a una cuenta distinta.
 
-Para que NotebookLM MCP funcione en Claude Desktop (no solo en Claude Code CLI):
+## Opción 3: Claude Projects
 
-1. Abre la configuración de Claude Desktop: **Configuración → Servidores MCP**
-2. Agrega la entrada del servidor `gemini-notebook-mcp`:
+Projects sirve para conservar instrucciones, archivos de conocimiento y
+conversaciones relacionadas. No convierte automáticamente el contenido pegado
+en una skill ni registra `/instructional-designer-skill`.
+
+Úsalo para:
+
+- adjuntar el sílabo o documentación institucional;
+- mantener instrucciones específicas de una asignatura;
+- conservar contexto entre conversaciones.
+
+Para ejecutar el flujo completo con archivos locales y scripts, utiliza Claude
+Code o una modalidad de Cowork que permita autorizar la carpeta necesaria.
+
+## Opción 4: Cowork
+
+Cowork puede trabajar con carpetas autorizadas y skills disponibles en Claude,
+pero su arquitectura y capacidades cambian con rapidez. Actualmente sus
+proyectos son locales a la aplicación y no admiten compartir el proyecto con
+otras personas.
+
+No asumas que Cowork:
+
+- descubre automáticamente `~/.claude/skills`;
+- puede acceder a WSL;
+- comparte un proyecto entre miembros de un equipo;
+- compila LaTeX con las dependencias del equipo local.
+
+Autoriza únicamente la carpeta del curso y verifica el resultado antes de
+sobrescribir archivos existentes. La
+[arquitectura oficial de Cowork](https://support.claude.com/en/articles/14479288-claude-cowork-architecture-overview)
+describe el modelo de ejecución vigente.
+
+## Configurar NotebookLM MCP
+
+La aplicación preserva otros servidores MCP y agrega `notebooklm` con la
+versión que este proyecto ha verificado:
 
 ```json
 {
   "mcpServers": {
     "notebooklm": {
       "command": "npx",
-      "args": ["-y", "gemini-notebook-mcp"],
-      "env": {}
+      "args": ["-y", "@charlie.act7/gemini-notebook-mcp@2.0.0"]
     }
   }
 }
 ```
 
-3. Guarda y reinicia Claude Desktop
-4. Verifica la conexión escribiendo en el chat:
-   ```
-   /instructional-designer-skill
-   ```
-   Claude debería confirmar que NotebookLM MCP está disponible.
+La autenticación puede abrir un navegador. Las consultas salen del equipo y
+se procesan mediante los servicios de Google/NotebookLM.
 
-### 2.6 Invocar el skill desde Claude Desktop
+## Actualizaciones
 
-Una vez configurado el proyecto, el skill se activa de dos formas:
+La app preserva `institution.json` y `notebooks.json` al actualizar una
+instalación local. Aun así, conserva una copia de seguridad antes de realizar
+cambios importantes. Cuando exportes otro ZIP, vuelve a revisar los datos que
+incluye.
 
-**Automático** — cuando tu mensaje coincide con el skill:
-```
-Crea la guía de la semana 4 para el curso IFT200
-```
+## Solución de problemas
 
-**Manual** — escribiendo el comando en el chat:
-```
-/instructional-designer-skill
-```
+### Claude Code no detecta la skill
 
----
+- Confirma que `SKILL.md` está directamente dentro de la carpeta de la skill.
+- Confirma que la carpeta se llama `instructional-designer-skill`.
+- Reinicia Claude Code.
 
-## 3. Configuración en Claude Cowork
+### NotebookLM no autentica
 
-Claude Cowork es la app de escritorio orientada a **tareas con acceso a archivos locales** y ejecución de código. Es la superficie más cercana al comportamiento del CLI.
+- Comprueba Node.js y `npx`.
+- Ejecuta la autenticación desde la app.
+- Si la sesión guardada caducó, usa la opción de reautenticación.
 
-### 3.1 Requisitos
+### La guía no compila
 
-- Claude Desktop instalado (Cowork está integrado)
-- Plan **Pro**, **Team** o **Enterprise**
-- Skill instalado en `~/.claude/skills/instructional-designer-skill/`
+- Ejecuta primero `node scripts/latex-linter.js <guia.tex>`.
+- Revisa los requisitos de `skill/references/compilacion.md`.
+- En Windows, el validador completo de la skill requiere WSL 2 y TeX Live.
+- En macOS y Linux utiliza `pdflatex` y `biber` nativos.
 
-### 3.2 Instalar el skill para Cowork
+## Alcance de privacidad
 
-**Opción recomendada — Sin Git (descarga ZIP):**
+Los archivos y la compilación son locales. Requieren red:
 
-1. Ve a [Releases del skill](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest)
-2. Descarga el ZIP → descomprímelo en:
-   - **Windows:** `%USERPROFILE%\.claude\skills\instructional-designer-skill\`
-   - **macOS/Linux:** `~/.claude/skills/instructional-designer-skill/`
-
-**Opción avanzada — Instalador automático Windows:**
-
-1. Descarga el ZIP del release
-2. Ejecuta `setup.ps1` con clic derecho → *Ejecutar con PowerShell* (como Administrador)
-3. El script instala Git, Node.js, Python, WSL y TeX Live automáticamente
-
-**Opción técnica — Clonar con Git:**
-
-```powershell
-# Windows (PowerShell)
-git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill `
-  "$env:USERPROFILE\.claude\skills\instructional-designer-skill"
-```
-
-```bash
-# macOS / Linux
-git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill \
-  ~/.claude/skills/instructional-designer-skill
-```
-
-> Cowork lee automáticamente la carpeta `~/.claude/skills/`. No se necesita configuración adicional para que detecte el skill.
-
-### 3.3 Crear un proyecto Cowork
-
-1. Abre **Claude Desktop**
-2. Selecciona **"Cowork"** en el selector de modo (esquina superior izquierda)
-3. Haz clic en **"Nuevo proyecto Cowork"**
-4. Selecciona la **carpeta raíz** del curso cuando se solicite:
-   ```
-   D:\Proyectos\01 IFT200\
-   ```
-
-Claude Cowork tendrá acceso de lectura y escritura a esa carpeta y sus subcarpetas.
-
-### 3.4 Verificar el skill en Cowork
-
-En el chat del proyecto Cowork, escribe:
-
-```
-/instructional-designer-skill
-```
-
-Si el skill está correctamente instalado, Claude cargará el flujo de arranque y comenzará con el Paso 0 (verificar configuración institucional).
-
-### 3.5 Configurar NotebookLM MCP en Cowork
-
-Cowork comparte la configuración MCP con Claude Desktop. Si ya configuraste el MCP en el paso 2.5, funcionará automáticamente en Cowork.
-
-Para verificar:
-```
-Ejecuta el Paso 2 del flujo de arranque y consulta el notebook del curso IFT200
-```
-
-### 3.6 Usar el /skill-creator para personalizar
-
-Cowork incluye un asistente interactivo para crear o adaptar skills:
-
-```
-/skill-creator
-```
-
-Claude te hará preguntas sobre lo que quieres que haga el skill, escribirá un borrador y lo guardará automáticamente en `~/.claude/skills/`.
-
----
-
-## 4. Flujo de trabajo paso a paso
-
-### Ejemplo completo: Crear la guía de la Semana 5
-
-#### En Claude Cowork (recomendado para producción):
-
-**1. Abrir el proyecto Cowork con la carpeta del curso**
-
-**2. Invocar el skill:**
-```
-/instructional-designer-skill
-Crea la guía de la semana 5 del curso IFT200
-```
-
-**3. El skill ejecuta el flujo de arranque automáticamente:**
-```
-Paso 0 ✓ — Configuración institucional verificada
-Paso 1 ✓ — README.md del curso leído
-         Semana 5: Normalización (1NF, 2NF, 3NF)
-         RA: El estudiante aplicará formas normales...
-Paso 2 ✓ — NotebookLM consultado
-         Fuente encontrada: Silberschatz (2020), Cap. 8, pp. 301-320
-Paso 3 ✓ — Campos mapeados a LaTeX
-Paso 4 ✓ — Estructura de carpetas creada
-Paso 5 ✓ — Secciones identificadas: 3 secciones de teoría
-Paso 6   — Plan confirmado ¿Continuar?
-```
-
-**4. Confirmar y generar:**
-```
-Sí, continúa con la generación
-```
-
-Claude genera los archivos `.tex` directamente en tu carpeta local.
-
-**5. Validar la guía:**
-```
-Ejecuta el linter y el validador de compilación en la guía de la semana 5
-```
-
-Cowork ejecutará:
-```
-node ~/.claude/skills/instructional-designer-skill/scripts/latex-linter.js ...
-node ~/.claude/skills/instructional-designer-skill/scripts/latex-validator.js ...
-```
-
-#### En Claude Desktop Projects (para colaboración):
-
-El flujo es idéntico al anterior, pero **Claude no puede editar archivos locales directamente**. En su lugar:
-
-- Claude genera el contenido LaTeX como **artefactos en el chat**
-- Tú copias el contenido a tus archivos `.tex` locales
-- Los miembros del equipo pueden ver los artefactos en tiempo real (plan Team/Enterprise)
-
----
-
-## 5. Compartir con tu equipo
-
-### 5.1 Compartir un Proyecto (claude.ai Projects — Team/Enterprise)
-
-1. Abre el proyecto → **"Gestionar miembros"**
-2. Haz clic en **"Agregar miembros"**
-3. Ingresa el correo del colega
-4. Asigna el nivel de permiso:
-   - **"Puede usar"**: Ve el proyecto y chatea, no puede editar instrucciones
-   - **"Puede editar"**: Modifica instrucciones, sube archivos, agrega miembros
-
-Los miembros del equipo verán el mismo skill configurado y los mismos archivos de conocimiento, garantizando consistencia en la producción de guías.
-
-### 5.2 Plantilla de instrucciones para compartir
-
-Si tu equipo usa el skill, crea un documento de configuración compartido:
-
-```markdown
-# Configuración del Instructional Designer Skill — [Tu Institución]
-
-## Datos institucionales
-- Autor: [Nombre Completo], [Grado Académico]
-- Institución: [Nombre de la institución]
-- Facultad: [Nombre de la facultad]
-- Color institucional (RGB): [R], [G], [B]
-
-## Cursos activos y notebooks
-| Curso | Notebook ID |
-|---|---|
-| [Sigla] — [Nombre] | [id del notebook] |
-
-## Ubicación de archivos del skill
-- Windows: `%USERPROFILE%\.claude\skills\instructional-designer-skill\`
-- macOS/Linux: `~/.claude/skills/instructional-designer-skill/`
-```
-
-### 5.3 CoWork — Compartir artefactos en vivo
-
-En proyectos Cowork con plan Team/Enterprise, puedes compartir **artefactos en vivo** (fragmentos de código, documentos generados) con tu organización directamente desde Cowork. Los archivos locales NO se comparten automáticamente — solo los artefactos generados en el chat.
-
----
-
-## 6. Limitaciones y diferencias
-
-| Característica | Claude Code CLI | Claude Cowork | Claude Desktop Projects |
-|---|---|---|---|
-| **Linter LaTeX** (`latex-linter.js`) | ✅ Automático | ✅ Bajo petición | ❌ No disponible |
-| **Compilación WSL** (`latex-validator.js`) | ✅ Automático | ✅ Si WSL disponible | ❌ No disponible |
-| **Archivado** (`legacy-manager.js`) | ✅ Automático | ✅ Bajo petición | ❌ No disponible |
-| **Extracción PDF** (`pdf_cutter_template.py`) | ✅ Automático | ✅ Bajo petición | ❌ No disponible |
-| **Edición directa de `.tex`** | ✅ Sí | ✅ Sí | ❌ Solo artefactos |
-| **Detección automática de skill** | ✅ Sí | ✅ Sí | ⚠️ Requiere pegar instrucciones |
-| **NotebookLM MCP** | ✅ Sí | ✅ Sí | ✅ Si MCP configurado |
-| **Compartir con equipo** | ❌ No | ⚠️ Solo artefactos | ✅ Sí (Team/Enterprise) |
-
-### Flujo híbrido recomendado para equipos
-
-```
-Claude Desktop Projects (coordinación y revisión pedagógica)
-        ↕  compartir instrucciones y estándares
-Claude Code CLI / Cowork (producción individual de cada docente)
-        ↕  sincronizar via git
-Repositorio compartido del curso (fuente de verdad)
-```
-
----
-
-## Recursos adicionales
-
-- [Documentación oficial de Claude Cowork](https://support.claude.com/en/articles/13345190-get-started-with-claude-cowork)
-- [Gestión de proyectos compartidos en Claude](https://support.claude.com/en/articles/13455879-use-claude-cowork-on-team-and-enterprise-plans)
-- [Documentación de Claude Code Skills](https://code.claude.com/docs/en/skills)
-- [Configuración de NotebookLM MCP](https://github.com/CharlieCardenasToledo/gemini-notebook-mcp)
-- [README principal del proyecto](../README.md)
+- autenticación y consultas de NotebookLM;
+- extracción de una paleta desde un sitio institucional;
+- instalación o descarga de dependencias;
+- subida de una skill a Claude.

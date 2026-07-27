@@ -160,7 +160,7 @@ pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
         },
         "branding": {
             "primaryColor": format!("#{:02X}{:02X}{:02X}", config.color_r, config.color_g, config.color_b),
-            "logoPath": "figure/logo-institution.png"
+            "logoPath": ""
         },
         "digitalEcosystem": ecosystem,
         "integrations": {

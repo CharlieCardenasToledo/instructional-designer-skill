@@ -1,0 +1,64 @@
+name: Reportar un error
+description: Informa un fallo reproducible de la app, la skill o los instaladores.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área afectada
+      options:
+        - Aplicación de escritorio
+        - Onboarding o dependencias
+        - Instalador de Windows
+        - Instalador de macOS
+        - Skill y generación de guías
+        - NotebookLM MCP
+        - LaTeX o compilación
+        - Documentación
+        - GitHub Actions o releases
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión
+      placeholder: "App 1.0.0 / release v10.4.0 / commit"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Sistema y arquitectura
+      placeholder: "Windows 11 x64, macOS 15 arm64..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pasos para reproducir
+      placeholder: "1. Abrí…\n2. Seleccioné…\n3. Ocurrió…"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Resultado observado y logs
+      description: Elimina tokens, URLs privadas, ids de notebooks y datos personales.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Verificación
+      options:
+        - label: Confirmo que eliminé información privada del reporte.
+          required: true
+        - label: Busqué un issue existente sobre el mismo problema.
+          required: true

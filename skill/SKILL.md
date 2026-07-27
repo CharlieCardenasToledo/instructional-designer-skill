@@ -21,7 +21,7 @@ Leer únicamente las referencias necesarias para la tarea. Leer siempre `referen
 | Citas, `reference.bib` y NotebookLM MCP | `references/bibliografia.md` |
 | Figuras TikZ y notación Chen | `references/figuras-tikz.md` |
 | Mock-ups HTML y captura PNG | `references/figuras-html.md` |
-| Compilación y scripts auxiliares | `references/compilacion-wsl.md` |
+| Compilación y scripts auxiliares | `references/compilacion.md` |
 | Validación final obligatoria | `references/checklist.md` |
 
 Si `config/institution.json` existe, leerlo antes de redactar. Si `config/notebooks.json` existe, usarlo para resolver el notebook del curso. No editar archivos de `references/` para guardar datos del usuario.
@@ -98,7 +98,7 @@ Usar:
 
 ```text
 semanas/semana-XX/latex/
-├── guia-semanaXX.tex
+├── guia-semana-XX.tex
 ├── reference.bib
 ├── figure/
 └── sections/
@@ -129,7 +129,7 @@ Aplicar Backward Design:
 3. Diseñar práctica guiada y recuperación.
 4. Redactar teoría suficiente para ejecutar esa práctica.
 
-La aplicación incluye recuperación y transferencia no calificadas. Incluir actividades calificadas solo cuando `options.includeGradedActivities` sea `true` o el usuario lo solicite. En ese caso, conservar código, nombre y ponderación del sílabo.
+La guía incluye recuperación y transferencia no calificadas. Incluir actividades calificadas solo cuando `options.includeGradedActivities` sea `true` o el usuario lo solicite. En ese caso, conservar código, nombre y ponderación del sílabo.
 
 Aplicar UDL 3.0:
 

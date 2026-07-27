@@ -1,0 +1,40 @@
+name: Proponer una mejora
+description: Sugiere una capacidad o mejora concreta para la app o la skill.
+title: "[Mejora]: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options:
+        - Aplicación de escritorio
+        - Skill y flujo pedagógico
+        - Plantillas LaTeX
+        - NotebookLM MCP
+        - Instaladores y releases
+        - Documentación
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema que resolvería
+      description: Describe la necesidad, no solo la interfaz deseada.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solución propuesta
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas consideradas
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterio de aceptación
+      placeholder: "Se considera terminado cuando…"

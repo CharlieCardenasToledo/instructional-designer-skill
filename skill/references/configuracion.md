@@ -20,6 +20,7 @@ Campos principales:
   "schemaVersion": 1,
   "institution": {
     "name": "Universidad Ejemplo",
+    "website": "https://www.ejemplo.edu/",
     "faculty": "Facultad de Ingeniería",
     "career": "Ingeniería de Software",
     "author": "Ana López",
@@ -27,7 +28,7 @@ Campos principales:
   },
   "branding": {
     "primaryColor": "#00796B",
-    "logoPath": "figure/logo-institution.png"
+    "logoPath": ""
   },
   "digitalEcosystem": ["Canvas LMS", "Sistema académico"],
   "integrations": {
@@ -62,7 +63,7 @@ Convertir `branding.primaryColor` hexadecimal a RGB cuando se genere LaTeX. Si n
 }
 ```
 
-Los ids pertenecen a la biblioteca local de `gemini-notebook-mcp`. Si un id deja de existir, buscar por nombre. Antes de registrar una URL con `add_notebook`, pedir confirmación.
+Los ids pertenecen a la biblioteca del servidor `@charlie.act7/gemini-notebook-mcp@2.0.0`. Si un id deja de existir, buscar por nombre. Antes de registrar una URL con `add_notebook`, pedir confirmación.
 
 ## Plantilla activa
 

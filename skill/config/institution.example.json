@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "institution": {
     "name": "Universidad Ejemplo",
+    "website": "https://www.ejemplo.edu/",
     "faculty": "Facultad de Ingeniería",
     "career": "Ingeniería de Software",
     "author": "Ana López",
@@ -9,7 +10,7 @@
   },
   "branding": {
     "primaryColor": "#00796B",
-    "logoPath": "figure/logo-institution.png"
+    "logoPath": ""
   },
   "digitalEcosystem": [
     "LMS institucional",

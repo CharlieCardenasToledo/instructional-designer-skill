@@ -1,36 +1,50 @@
-# Compilación LaTeX multiplataforma y Scripts Auxiliares
+# Compilación LaTeX y scripts auxiliares
 
 Referencia de la skill `instructional-designer-skill`. Leer cuando haya que compilar una guía, exportar figuras o usar los scripts de la carpeta `scripts/`.
 
----
+## Comportamiento por plataforma
 
-## Compilación LaTeX via WSL
+`scripts/latex-validator.js` ejecuta primero el linter y después cuatro pasos:
+`pdflatex`, `biber`, `pdflatex` y `pdflatex`.
 
-En Windows, WSL 2 con TeX Live es la opción recomendada para aislar la toolchain. En macOS/Linux también puedes usar `pdflatex` y `biber` instalados localmente. El validador detecta el sistema operativo y solo usa WSL cuando es necesario.
+- En Windows, el script requiere WSL 2 y TeX Live dentro de WSL.
+- En macOS y Linux, utiliza `pdflatex` y `biber` instalados localmente.
+- La aplicación de escritorio tiene además una previsualización rápida con el
+  compilador LaTeX nativo; no sustituye la validación completa de la skill.
 
-### Secuencia completa (3 pasadas)
+## Secuencia manual en Windows
 
 ```bash
-# Sustituye [RUTA_WSL_CURSO] por la ruta WSL de la carpeta latex de tu semana.
+# Sustituye [RUTA_WSL_LATEX] por la ruta WSL de la carpeta latex de tu semana.
 # Ejemplo: /mnt/d/MisCursos/01_ASIGNATURA/semanas/semana-XX/latex
-wsl bash -c "cd '/[RUTA_WSL_CURSO]/semanas/semana-XX/latex' && \\
+wsl bash -lc "cd '/mnt/d/MisCursos/01_ASIGNATURA/semanas/semana-XX/latex' && \\
   pdflatex -interaction=nonstopmode guia-semana-XX.tex && \\
   biber guia-semana-XX && \\
   pdflatex -interaction=nonstopmode guia-semana-XX.tex && \\
   pdflatex -interaction=nonstopmode guia-semana-XX.tex 2>&1 | tail -5"
 ```
 
-### Flujo completo cuando hay figuras HTML
+## Secuencia manual en macOS o Linux
+
+```bash
+cd "/ruta/al/curso/semanas/semana-XX/latex"
+pdflatex -interaction=nonstopmode guia-semana-XX.tex
+biber guia-semana-XX
+pdflatex -interaction=nonstopmode guia-semana-XX.tex
+pdflatex -interaction=nonstopmode guia-semana-XX.tex
+```
+
+## Flujo cuando hay figuras HTML
 
 1. Editar o crear archivos HTML en `latex/figure/` (ver `figuras-html.md`)
 2. Capturar PNGs: `node screenshot.mjs` (desde `latex/figure/` en PowerShell)
-3. Compilar LaTeX: secuencia de 3 pasadas via WSL
+3. Compilar LaTeX con el validador o la secuencia de la plataforma.
 4. Verificar en el log que todos los PNG fueron cargados:
    ```bash
    wsl bash -c "grep -E 'figure/.*\.png' '.../guia-semana-XX.log' | head -20"
    ```
 
-### Reglas de rutas y comillas WSL (única fuente de verdad)
+## Rutas y comillas en WSL
 
 | Windows | WSL |
 |---|---|
@@ -42,19 +56,21 @@ wsl bash -c "cd '/[RUTA_WSL_CURSO]/semanas/semana-XX/latex' && \\
 
 ---
 
-## Scripts Auxiliares (`scripts/`)
+## Scripts auxiliares (`scripts/`)
 
 ### `latex-validator.js` — compilación completa de una guía
 
-Ejecuta la secuencia completa de 3 pasadas (pdflatex → biber → pdflatex → pdflatex) via WSL sobre un archivo `.tex`. Si detecta `figure/screenshot.mjs` junto a la guía, captura primero los PNG de las figuras HTML (flujo completo en un solo comando). Usar rutas absolutas al invocarlo.
+Ejecuta el linter y la secuencia completa de compilación sobre un archivo
+`.tex`. En Windows usa WSL; en macOS y Linux usa la instalación nativa. Si
+detecta `figure/screenshot.mjs`, captura primero las figuras HTML.
 
 ```powershell
 node [RUTA_SKILL]/scripts/latex-validator.js "[CURSO]/semanas/semana-XX/latex/guia-semana-XX.tex"
 ```
 
-> ⚙️ Reemplaza `[RUTA_SKILL]` con la ruta donde instalaste la skill (ej. `.claude/skills/instructional-designer-skill` o `.agents/skills/instructional-designer-skill`).
+Reemplaza `[RUTA_SKILL]` con la ruta donde instalaste la skill.
 
-Equivale al comando WSL de arriba; útil como atajo. Si solo se necesita una pasada rápida sin citas, usar el comando WSL manual con una sola invocación de `pdflatex`.
+La validación completa es la ruta recomendada antes de entregar una guía.
 
 ### `legacy-manager.js` — archivar contenido antes de reestructurar
 

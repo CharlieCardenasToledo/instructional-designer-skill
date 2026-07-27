@@ -1,5 +1,23 @@
 # Changelog — instructional-designer-skill
 
+Este archivo sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
+y versionado semántico.
+
+## Sin publicar
+
+### Corregido
+
+- Unificados los contratos de documentación, configuración y nombres de
+  archivos entre la aplicación y la skill.
+- Corregidos el sitio web institucional, el comportamiento sin logotipo y los
+  metadatos de invocación de la skill.
+
+### Cambiado
+
+- Reescritas las guías públicas, técnicas y de integración con Claude.
+- Sustituidas las plantillas Markdown de issues por formularios YAML.
+- Normalizada la dependencia NotebookLM MCP verificada.
+
 ## 10.4.0 — 2026-07-27
 
 - Incorporada **Instructional Designer Manager 1.0.0**, aplicación de
@@ -23,14 +41,14 @@
 - README: aclarado `[SKILL_PATH]` con rutas concretas por OS; agregado `pip install` previo al script Python.
 - CHANGELOG: corregido titulo (era `instructional-designer-uide`, debe ser `instructional-designer-skill`).
 
-## 10.3 — 2026-06-16
+## 10.3.0 — 2026-06-16
 
 - Integración completa con notebooklm-mcp (roomi-fields/notebooklm-mcp).
 - Paso 2 del Flujo de Arranque: se agrega `re_auth` como segundo intento de autenticación (antes del Flujo manual); se usa `select_notebook` para activar el notebook por defecto y evitar repetir `notebook_id`; se agrega `search_notebooks` como alternativa a `list_notebooks` cuando el id no está en la tabla.
 - `ask_question`: ahora se solicita `source_format: "footnotes"` en todas las consultas de respaldo bibliográfico para obtener fuentes citadas al pie.
 - `references/bibliografia.md`: mismos cambios en Paso A/B/C del workflow; se agrega Paso E opcional con `add_source` para ingestar URLs y texto plano nuevos al notebook del curso.
 
-## 10.2 — 2026-06-10
+## 10.2.0 — 2026-06-10
 
 - Validada con generación real (IFT200 Semana 07: compilación exitosa, validación NotebookLM contra Elmasri 7.ª ed.).
 - Paso 2 del Flujo de Arranque: consulta a NotebookLM obligatoria en todo arranque; ante `authenticated: false`, intentar `setup_auth` antes del flujo manual.
@@ -39,7 +57,7 @@
 - Tabla de Registros NotebookLM: columna de URL de compartir (IFT200 registrada) y nota de recuperación ante biblioteca local vacía.
 - `latex-validator.js`: ejecuta `figure/screenshot.mjs` automáticamente si existe, antes de compilar.
 
-## 10.1 — 2026-06-10
+## 10.1.0 — 2026-06-10
 
 - Reestructuración con disclosure progresivo: SKILL.md compacto (~260 líneas) + 6 archivos en `references/` (plantilla-latex, figuras-tikz, figuras-html, bibliografia, compilacion-wsl, checklist).
 - Resueltas contradicciones internas: política única sobre `[Pendiente de Verificación]` (prohibida como salida), numeración de bibliografía estrictamente secuencial, `\cover{}` comentado por defecto.
@@ -47,6 +65,6 @@
 - Checklist ampliado: figuras HTML, `\cover{}`, numeración secuencial.
 - Fusionado el contenido único del antiguo `.claude/commands/instructional-designer-uide.md` (Recursos Visuales HTML, Captura de Screenshots, Compilación WSL, Paso de confirmación de plan).
 
-## 10.0 — versión previa
+## 10.0.0 — versión previa
 
 - Versión monolítica del SKILL.md (~1.160 líneas) con flujo de arranque, plantilla ElegantBook, gramática de bloques, TikZ/ER Chen, citas APA y workflow NotebookLM como fallback.

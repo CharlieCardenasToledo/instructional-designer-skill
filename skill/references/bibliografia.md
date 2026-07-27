@@ -21,10 +21,10 @@ NotebookLM contrasta la cobertura y facilita localizar fuentes. No sustituye la 
 
 ## NotebookLM MCP 2.0
 
-El servidor oficial del proyecto se ejecuta con:
+La aplicación y esta skill usan la versión verificada:
 
 ```text
-npx gemini-notebook-mcp@latest
+npx -y @charlie.act7/gemini-notebook-mcp@2.0.0
 ```
 
 Flujo:

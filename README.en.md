@@ -7,7 +7,7 @@
 Desktop application and skill for turning a university syllabus into a
 structured course and publication-ready weekly learning guides.
 
-[![Version](https://img.shields.io/badge/version-10.4-00796b.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-10.4.0-00796b.svg)](CHANGELOG.md)
 [![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![macOS](https://img.shields.io/badge/macOS-DMG-111827.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)
@@ -54,8 +54,9 @@ before the main dashboard becomes available.
 
 ### 2. Course management
 
-The dashboard creates courses, generates their folder structure, and tracks
-the production status of each subject.
+The dashboard registers courses and creates their folder structure. It shows a
+local `Draft` or `With content` summary based on saved weekly data; it is not
+an editorial production tracker.
 
 ![Course dashboard](docs/images/app/dashboard.png)
 
@@ -66,24 +67,26 @@ visual palette used by generated documents.
 
 ![Institution settings](docs/images/app/settings.png)
 
-### 4. Editorial templates
+### 4. Editorial template
 
-Each course can use an institutional, minimal, technical, or workshop-oriented
-LaTeX template.
+The current release includes `ElegantBook Clásico`, a technical LaTeX template
+whose primary color follows the institution settings. The architecture can
+support additional templates in future releases.
 
 ![LaTeX template selector](docs/images/app/templates.png)
 
 ## What the application handles
 
 - Checks Node.js, Python, Git, and a LaTeX compiler.
-- Requests permission before installing a dependency.
+- On Windows, requests permission before starting an installation through
+  `winget`; on macOS and Linux it provides manual instructions.
 - Configures institutional metadata and visual identity.
 - Connects NotebookLM MCP without overwriting other MCP configuration.
 - Installs the skill for Claude Code or exports it for other targets.
 - Creates the canonical course structure.
 - Converts weekly syllabus content into a structured `README.md`.
-- Selects and previews LaTeX templates.
-- Keeps course information and processing on the user's computer.
+- Activates and previews the included LaTeX template.
+- Keeps course data, configuration, files, and compilation local.
 
 ## What the skill produces
 
@@ -117,9 +120,9 @@ You can also browse the
 After installing the application, complete the onboarding and choose whether
 to install the skill locally or export it.
 
-> An unsigned macOS build may trigger a Gatekeeper warning. Signing and
-> notarization require Apple credentials and are applied during the release
-> workflow when the corresponding secrets are configured.
+> The current DMG is not signed or notarized and may trigger a Gatekeeper
+> warning. Signing requires Apple credentials and is not yet part of the
+> public workflow.
 
 ### Advanced: manual installation
 
@@ -138,9 +141,10 @@ macOS:   ~/.claude/skills/instructional-designer-skill
 Linux:   ~/.claude/skills/instructional-designer-skill
 ```
 
-The installed directory must contain `SKILL.md`, `agents/`, `config/`,
-`references/`, `scripts/`, and `templates/` directly at its root. The `app/`
-directory is not part of the skill and should not be copied.
+The installed directory must contain `SKILL.md`, `config/`, `references/`,
+`scripts/`, and `templates/` directly at its root. `agents/` and
+`.claude-plugin/` are repository metadata and are not required by Claude Code
+at runtime. The `app/` directory should not be copied.
 
 ## Usage
 
@@ -209,7 +213,8 @@ The GitHub Actions workflows run tests before packaging:
 - `release-macos.yml` generates a `.dmg`.
 
 When a `v*` tag is created, the artifacts are attached to the corresponding
-GitHub Release. Both workflows can also be triggered manually.
+GitHub Release. A manual run validates the build and retains workflow
+artifacts, but does not publish a Release.
 
 ## Repository structure
 
@@ -230,14 +235,21 @@ instructional-designer-skill/
 
 ## Privacy
 
-The application includes no telemetry and does not send course content to a
+The application includes no telemetry and does not send courses to a
 project-owned server. File operations, validation, and compilation run
-locally. NotebookLM queries use the MCP instance configured by the user.
+locally. NotebookLM queries are sent to Google services through the MCP
+configured by the user. Website palette extraction and dependency
+installation also require network access. An exported ZIP may contain
+institution settings and notebook references; inspect it before sharing.
 
 ## Additional documentation
 
 - [Application technical guide](app/desktop/README.md)
-- [Using the project with Claude Desktop and Cowork](docs/guia-claude-desktop.md)
+- [Using the project with Claude Code, Claude Skills, Projects, and Cowork](docs/guia-claude-desktop.md)
+- [Architecture](docs/architecture.md)
+- [Release process](docs/releasing.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
 - [Version history](CHANGELOG.md)
 - [MIT License](LICENSE)
 

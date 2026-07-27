@@ -42,7 +42,7 @@ Los diagramas **deben usar exclusivamente** estas variables semánticas. No usar
 
 **PROHIBIDO:** Numerar figuras manualmente. El contador de LaTeX lo gestiona automáticamente.
 
-## Referencias cruzadas a figuras — D2 (Spatial Contiguity, Mayer, effect size 1.10)
+## Referencias cruzadas a figuras — contigüidad espacial
 
 El párrafo que precede a una figura **debe terminar con referencia cruzada explícita**. Esto ancla el diagrama al argumento en el momento correcto y reduce la carga cognitiva de navegación.
 
@@ -128,7 +128,7 @@ Crear `latex/figures-png/fig-NOMBRE.tex` con:
 \end{document}
 ```
 
-Compilación y exportación (las reglas de rutas y comillas WSL están en `compilacion-wsl.md`):
+Compilación y exportación (consulta `compilacion.md`):
 
 ```bash
 wsl bash -c "cd '/mnt/d/Ruta/latex/figures-png' && pdflatex -interaction=nonstopmode fig-NOMBRE.tex"

@@ -1,0 +1,42 @@
+name: Solicitar compatibilidad institucional
+description: Propón datos, branding o convenciones para una institución.
+title: "[Institución]: "
+labels: ["enhancement"]
+body:
+  - type: input
+    id: institution
+    attributes:
+      label: Institución
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Alcance solicitado
+      options:
+        - Metadatos y branding
+        - Convenciones del sílabo
+        - Plantilla LaTeX
+        - Documentación del ecosistema digital
+        - Otra compatibilidad
+    validations:
+      required: true
+  - type: textarea
+    id: rules
+    attributes:
+      label: Reglas o requisitos verificables
+      description: No incluyas credenciales, ids privados ni información de estudiantes.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Referencias públicas
+      description: Enlaces a manuales de marca, formatos o normativa aplicable.
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Privacidad
+      options:
+        - label: Confirmo que la solicitud no contiene datos personales ni secretos.
+          required: true

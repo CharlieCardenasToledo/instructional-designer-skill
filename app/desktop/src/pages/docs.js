@@ -13,7 +13,7 @@ export function renderDocs() {
         </p>
 
         <h2>Requisitos</h2>
-        <p>Necesitas Node.js, Python y un compilador LaTeX instalados. Revisa su estado en <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="environment">Configuración → Entorno</button>; desde ahí puedes instalar lo que falte con un clic.</p>
+        <p>Necesitas Node.js, Python y un compilador LaTeX instalados. Revisa su estado en <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="environment">Configuración → Entorno</button>. En Windows la app puede iniciar la instalación con tu confirmación; en macOS y Linux muestra los comandos recomendados para completarla manualmente.</p>
 
         <h2>Conexión</h2>
         <p>Para usar NotebookLM y elegir dónde trabajar (proyecto local, app de Claude, o ambos), ve a <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="mcp-config">Configuración → Conexiones</button>.</p>
@@ -24,6 +24,9 @@ export function renderDocs() {
             <p class="m-0 text-[12.5px] text-slate-700">Completa tu perfil institucional en <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 underline hover:text-teal-700 inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="inst-profile">Configuración → Perfil institucional</button>: esos datos se incrustan automáticamente en cada documento generado.</p>
           </div>
         </div>
+
+        <h2>Instalar o exportar la skill</h2>
+        <p>Para Claude Code, instala la skill en tu carpeta local desde la app. Para Claude en la web o escritorio, exporta el ZIP y súbelo desde <strong>Customize → Skills</strong>. El ZIP puede incluir tu configuración institucional y las referencias de tus notebooks; revísalo antes de compartirlo.</p>
 
         <h2>Solución de problemas</h2>
         <p><strong>Un botón de conexión falla:</strong> vuelve a <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="mcp-config">Configuración → Conexiones</button> y pulsa "Verificar". Si el problema persiste, cierra sesión de Google y vuelve a iniciarla.</p>

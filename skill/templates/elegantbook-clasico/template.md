@@ -37,8 +37,9 @@ logo ni ecosistema: esos datos se leen desde `config/institution.json`.
 \mainmatter
 \input{sections/01-introduccion}
 \input{sections/02-desarrollo}
-\input{sections/03-aplicacion}
-\input{sections/04-referencias}
+\input{sections/03-escenario}
+\input{sections/04-aplicacion}
+\input{sections/05-bibliografia}
 \end{document}
 ```
 
@@ -48,9 +49,10 @@ logo ni ecosistema: esos datos se leen desde `config/institution.json`.
    previos, tiempo estimado y ruta de estudio dentro de `softblock`.
 2. Secciones de teoría: cada concepto debe incluir explicación, ejemplo,
    contraste o decisión y una actividad breve.
-3. `03-aplicacion.tex`: escenario o estudio de caso con un problema concreto,
-   criterios de decisión y evidencia esperada.
-4. `04-referencias.tex`: `\printbibliography[heading=bibintoc]`.
+3. `NN-escenario.tex`: estudio de caso con un problema concreto y criterios de
+   decisión, después de toda la teoría.
+4. `NN-aplicacion.tex`: práctica guiada, transferencia y evidencia esperada.
+5. `NN-bibliografia.tex`: `\printbibliography[heading=bibintoc]`.
 
 ## Gramática visual de bloques
 

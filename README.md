@@ -7,7 +7,7 @@
 Aplicación de escritorio y skill para transformar un sílabo universitario en
 una estructura de curso y en guías semanales listas para publicar.
 
-[![Version](https://img.shields.io/badge/version-10.4-00796b.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-10.4.0-00796b.svg)](CHANGELOG.md)
 [![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![macOS](https://img.shields.io/badge/macOS-DMG-111827.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)
@@ -52,8 +52,9 @@ habilitar el panel principal.
 
 ### 2. Gestión de asignaturas
 
-Desde el panel se crean asignaturas, se genera su estructura de carpetas y se
-mantiene el estado de producción de cada curso.
+Desde el panel se registran asignaturas y se crea su estructura de carpetas. El
+panel muestra un resumen local —`Borrador` o `Con contenido`— a partir de los
+datos semanales guardados; no sustituye un sistema de seguimiento editorial.
 
 ![Panel de asignaturas](docs/images/app/dashboard.png)
 
@@ -64,24 +65,26 @@ paleta visual que utilizarán los documentos.
 
 ![Configuración institucional](docs/images/app/settings.png)
 
-### 4. Plantillas editoriales
+### 4. Plantilla editorial
 
-Cada curso puede utilizar una plantilla institucional, minimalista, técnica o
-orientada a talleres.
+La versión actual incluye `ElegantBook Clásico`, una plantilla LaTeX técnica
+que adapta su color a la identidad institucional. La arquitectura admite
+incorporar más plantillas en versiones futuras.
 
 ![Selector de plantillas LaTeX](docs/images/app/templates.png)
 
 ## Qué resuelve la aplicación
 
 - Comprueba Node.js, Python, Git y un compilador LaTeX.
-- Solicita autorización antes de instalar una dependencia.
+- En Windows, solicita autorización antes de iniciar una instalación con
+  `winget`; en macOS y Linux muestra instrucciones manuales.
 - Configura los datos institucionales y la identidad visual.
 - Conecta NotebookLM MCP sin sobrescribir otras configuraciones.
 - Instala la skill para Claude Code o la exporta para otros destinos.
 - Crea la estructura canónica de una asignatura.
 - Convierte el contenido semanal del sílabo en un `README.md` estructurado.
-- Permite seleccionar y previsualizar plantillas LaTeX.
-- Mantiene toda la información y los procesos en el equipo del usuario.
+- Permite activar y previsualizar la plantilla LaTeX incluida.
+- Mantiene localmente cursos, configuraciones, archivos y compilación.
 
 ## Qué produce la skill
 
@@ -115,10 +118,9 @@ También puedes consultar la
 Después de instalar la aplicación, completa el onboarding y elige si quieres
 instalar la skill localmente o exportarla.
 
-> Los instaladores de macOS sin firma pueden activar una advertencia de
-> Gatekeeper. La firma y notarización requieren credenciales de Apple y se
-> aplican durante el workflow de publicación cuando esos secretos están
-> configurados.
+> El DMG actual no está firmado ni notarizado y puede activar una advertencia
+> de Gatekeeper. La firma requiere credenciales de Apple y todavía no forma
+> parte del workflow público.
 
 ### Opción avanzada: instalación manual
 
@@ -137,9 +139,10 @@ macOS:   ~/.claude/skills/instructional-designer-skill
 Linux:   ~/.claude/skills/instructional-designer-skill
 ```
 
-La carpeta instalada debe contener `SKILL.md`, `agents/`, `config/`,
-`references/`, `scripts/` y `templates/` directamente en su raíz. La carpeta
-`app/` no forma parte de la skill y no debe copiarse.
+La carpeta instalada debe contener `SKILL.md`, `config/`, `references/`,
+`scripts/` y `templates/` directamente en su raíz. `agents/` y
+`.claude-plugin/` son metadatos del repositorio y no son necesarios para
+ejecutar la skill en Claude Code. La carpeta `app/` no debe copiarse.
 
 ## Uso
 
@@ -209,7 +212,8 @@ Los workflows de GitHub Actions ejecutan tests antes de construir:
 - `release-macos.yml`: genera `.dmg` y el paquete de la aplicación.
 
 Al crear un tag `v*`, los artefactos se adjuntan a la GitHub Release
-correspondiente. Ambos workflows también pueden ejecutarse manualmente.
+correspondiente. Una ejecución manual valida la compilación y conserva sus
+artefactos en GitHub Actions, pero no publica una Release.
 
 ## Estructura del repositorio
 
@@ -230,15 +234,22 @@ instructional-designer-skill/
 
 ## Privacidad
 
-La aplicación no incorpora telemetría ni envía el contenido de los cursos a
-un servidor propio. Las operaciones de archivos, validación y compilación se
-realizan localmente. Las consultas a NotebookLM utilizan la instancia MCP
-configurada por el usuario.
+La aplicación no incorpora telemetría ni envía cursos a un servidor del
+proyecto. Los archivos, la validación y la compilación se procesan localmente.
+Las consultas a NotebookLM se envían a los servicios de Google mediante el MCP
+configurado por el usuario. Extraer una paleta desde un sitio web e instalar
+dependencias también requiere conexión. Un ZIP exportado puede incluir la
+configuración institucional y las referencias de notebooks; revísalo antes de
+compartirlo.
 
 ## Documentación adicional
 
 - [Manual técnico de la aplicación](app/desktop/README.md)
-- [Uso con Claude Desktop y Cowork](docs/guia-claude-desktop.md)
+- [Uso con Claude Code, Claude Skills, Projects y Cowork](docs/guia-claude-desktop.md)
+- [Arquitectura](docs/architecture.md)
+- [Proceso de publicación](docs/releasing.md)
+- [Cómo contribuir](CONTRIBUTING.md)
+- [Política de seguridad](SECURITY.md)
 - [Historial de versiones](CHANGELOG.md)
 - [Licencia MIT](LICENSE)
 

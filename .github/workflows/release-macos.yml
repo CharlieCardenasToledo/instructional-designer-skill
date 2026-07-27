@@ -23,6 +23,8 @@ jobs:
           cache-dependency-path: app/desktop/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
       - run: npm ci
+      - run: npm run docs:check
+        working-directory: .
       - run: npm test
       - run: npm run tauri:build
       - uses: actions/upload-artifact@v4

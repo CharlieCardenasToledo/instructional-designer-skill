@@ -28,6 +28,21 @@ test('la arquitectura separa la app de escritorio y el paquete instalable de la 
   }
 });
 
+test('la configuración institucional generada coincide con el esquema público', async () => {
+  const [configSource, schemaText, exampleText] = await Promise.all([
+    readFile(new URL('src-tauri/src/config.rs', root), 'utf8'),
+    readFile(new URL('skill/config/institution.schema.json', repositoryRoot), 'utf8'),
+    readFile(new URL('skill/config/institution.example.json', repositoryRoot), 'utf8'),
+  ]);
+  const schema = JSON.parse(schemaText);
+  const example = JSON.parse(exampleText);
+  assert.ok(schema.properties.institution.properties.website);
+  assert.ok(schema.properties.institution.required.includes('website'));
+  assert.equal(example.branding.logoPath, '');
+  assert.match(configSource, /"website": clean\(&config\.website\)/);
+  assert.match(configSource, /"logoPath": ""/);
+});
+
 test('el único degradado CSS es el highlight refractivo del control Liquid', async () => {
   const css = await readFile(new URL('src/styles.css', root), 'utf8');
   assert.match(css, /\.liquid-control::before\s*\{[\s\S]*linear-gradient\s*\(/i);

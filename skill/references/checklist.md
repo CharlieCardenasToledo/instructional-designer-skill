@@ -7,11 +7,11 @@ Referencia de la skill `instructional-designer-skill`. Ejecutar esta verificaci�
 - [ ] La evidencia fue resuelta en el orden definido. NotebookLM se consultó cuando estaba disponible o se documentó la fuente local equivalente.
 - [ ] Los datos de la semana (temas, RA, bibliografía, actividades) se extrajeron del README, no se solicitaron al usuario.
 
-**Archivo principal (`guia-semanaXX.tex`)**
+**Archivo principal (`guia-semana-XX.tex`)**
 - [ ] Clase `elegantbook` con opciones `lang=es,color=blue,citestyle=apa,bibstyle=apa`.
-- [ ] Paleta de 13 colores institucionales definida (weekaccent…slateline + structurecolor, main, second).
-- [ ] Los 5 entornos (`softblock`, `accentblock`, `mintblock`, `sandblock`, `roseblock`) definidos.
-- [ ] Macros `\iconidea`, `\iconcheck`, `\editorialtitle`, `\conceptline`, `\coursemeta`, `\guidesection` definidos.
+- [ ] La paleta, los bloques y las macros proceden de la plantilla activa; no se redefinieron sin necesidad.
+- [ ] Los entornos usados (`softblock`, `accentblock`, `mintblock`, `sandblock`, `roseblock`) existen en el preámbulo.
+- [ ] Las macros usadas (`\iconidea`, `\iconcheck`, `\editorialtitle`, `\conceptline`, `\coursemeta`, `\guidesection`) existen en el preámbulo.
 - [ ] `\newcolumntype{Y}` definido.
 - [ ] `\frontmatter`, cabecera con `\fancyhead`, `\fancypagestyle{plain}`, `\mainmatter` presentes.
 - [ ] `\cover{}` comentado salvo que `latex/figure/cover.png` exista.
@@ -49,7 +49,7 @@ Referencia de la skill `instructional-designer-skill`. Ejecutar esta verificaci�
 - [ ] El `sandblock` de cierre contiene un juicio técnico deducible del contenido precedente.
 - [ ] `roseblock` solo cuando hay una mala práctica o error con impacto operativo severo. Usa los cuatro campos: Supuesto incorrecto → Consecuencia operativa → Mecanismo causal → Respuesta de ingeniería.
 - [ ] `roseblock` con `[title={\textbf{Nombre}}]` cuando identifica una falacia o mala práctica nombrable.
-- [ ] Las secciones con 3+ conceptos nuevos incluyen una pregunta de retrieval practice en `sandblock` al cierre (P1, opcional).
+- [ ] Cuando una sección introduce tres o más conceptos, se evaluó si una pregunta de recuperación mejora el aprendizaje.
 
 **Figuras y tablas**
 - [ ] Las figuras usan `\begin{figure}[H]`, `\caption{}` y `\label{fig:...}`.
@@ -57,7 +57,7 @@ Referencia de la skill `instructional-designer-skill`. Ejecutar esta verificaci�
 - [ ] Los diagramas TikZ usan exclusivamente variables semánticas de la paleta.
 - [ ] Los estilos TikZ locales se definen dentro de `\tikzset{...}` al inicio del `tikzpicture`.
 - [ ] Las tablas comparativas usan `tabularx` + `booktabs`. PROHIBIDO `\hline`.
-- [ ] Cada sección tiene figura TikZ OR tabla comparativa, nunca ambas (D1/Coherence Principle).
+- [ ] Cada sección usa como máximo una figura o una tabla, salvo justificación pedagógica explícita.
 
 **Figuras HTML (solo si la guía las incluye)**
 - [ ] Cada vista de interfaz es un archivo HTML separado en `latex/figure/`, con contenedor raíz `w-[390px]` y sin carcasa de teléfono.
@@ -71,4 +71,9 @@ Referencia de la skill `instructional-designer-skill`. Ejecutar esta verificaci�
 - [ ] No se inventaron referencias. Toda fuente pasó por el workflow de la Política de Evidencia (`bibliografia.md`); el documento NO contiene etiquetas `[Pendiente de Verificación]`.
 - [ ] La bibliografía usa `\printbibliography` y no mezcla `thebibliography` o `\bibitem`.
 - [ ] El archivo `reference.bib` existe en `latex/` con una entrada BibLaTeX por cada clave citada.
-- [ ] Los recortes PDF de la semana existen en `bibliografia/recortes_por_semana/semana-XX/` para cada fuente citada (convención `Autor_Año_CapX_SecYY-ZZ_ppNNN-MMM.pdf`). Si faltaban, fueron cortados desde el libro fuente.
+- [ ] Cuando la fuente original es un PDF local, existe un recorte trazable en `bibliografia/recortes_por_semana/semana-XX/`. Para fuentes no PDF se conservó una referencia verificable equivalente.
+
+**Validación automática y manual**
+- [ ] `latex-linter.js` terminó sin errores.
+- [ ] `latex-validator.js` compiló la guía, o se documentó por qué no pudo ejecutarse.
+- [ ] Las reglas editoriales, pedagógicas y de evidencia no cubiertas por los scripts se revisaron manualmente.

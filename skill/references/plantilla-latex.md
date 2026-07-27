@@ -2,11 +2,21 @@
 
 Referencia de la skill `instructional-designer-skill`. Leer cuando la tarea implique crear o editar el archivo principal, la introducción, secciones de teoría, el estudio de caso o tablas comparativas.
 
----
+## Índice
 
-## Plantilla Principal: `guia-semanaXX.tex`
+- Plantilla principal y preámbulo
+- Cabecera y secuencia de archivos
+- Introducción y secciones de teoría
+- Gramática visual de bloques
+- Estudio de caso y aplicación
+- Tablas y bibliografía
 
-Este archivo es el orquestador del documento. **Nunca contiene contenido didáctico**: solo preamble, definiciones y secuencia de `\input`. El patrón base es la primera semana compilada del curso; sin embargo, **la semana compilada más reciente del mismo curso manda** sobre este documento si difieren (ver Regla de plantilla de facto en SKILL.md). Adiciones específicas de curso ya observadas: clase compartida en `semanas/_shared/latex/`, paquete `siunitx` con separadores en español, y `\fancyfoot` con logo institucional y número de página.
+## Plantilla principal: `guia-semana-XX.tex`
+
+Este archivo orquesta el documento y no contiene desarrollo didáctico: solo
+configuración, portada y secuencia de `\input`. La plantilla activa es la
+fuente canónica. Una semana anterior puede aportar convenciones compatibles,
+pero nunca reemplazar el contrato ni perpetuar errores antiguos.
 
 ### Clase de documento y opciones
 
@@ -270,7 +280,8 @@ recuperar activamente el concepto central sin releer la sección.]
 ```
 
 **Reglas:**
-- `\coursemeta{Conceptos clave:}` va siempre en la segunda línea, justo debajo de `\guidesection{}`.
+- `\coursemeta{Conceptos clave:}` puede ir debajo de `\guidesection{}` cuando
+  ayuda a anticipar el contenido; no debe repetirse como decoración.
 - El `accentblock` activa el problema o principio **antes** del desarrollo.
 - El cierre es `mintblock` cuando la sección entrega una guía de aplicación; es `sandblock` cuando entrega un juicio técnico o trade-off.
 - La pregunta de retrieval practice es opcional pero recomendada en secciones con 3+ conceptos nuevos.
@@ -382,7 +393,7 @@ operativo institucional. Máximo 2 oraciones.
 - Los bullets conectan cada concepto de la semana con una aplicación específica e identificable del ecosistema institucional configurado.
 - Los ejemplos no repiten los ya usados en las secciones de teoría — deben ser casos nuevos o extensiones del mismo escenario con datos distintos.
 - No usar `\begin{figure}` salvo que un diagrama sea indispensable para el análisis.
-- El archivo puede llamarse `XX-escenario.tex` o `XX-estudio-de-caso.tex`.
+- El archivo se llama `NN-escenario.tex`.
 
 ---
 

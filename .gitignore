@@ -47,7 +47,6 @@ Thumbs.db
 .rtfm/
 
 # Private configuration (DO NOT COMMIT)
-# If you store your personal bibliografia.md with real notebook IDs
-# outside the skill folder, keep it out of version control.
-# The file in references/bibliografia.md should only contain the
-# empty template included in this repository.
+# Keep personal institution.json and notebooks.json files outside the
+# tracked skill/config directory. The repository only contains examples
+# and schemas; exported skill ZIP files may contain the user's real data.

@@ -10,9 +10,15 @@
     "institution": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "faculty", "career", "author", "degree"],
+      "required": ["name", "website", "faculty", "career", "author", "degree"],
       "properties": {
         "name": { "type": "string", "minLength": 1 },
+        "website": {
+          "anyOf": [
+            { "const": "" },
+            { "type": "string", "format": "uri" }
+          ]
+        },
         "faculty": { "type": "string", "minLength": 1 },
         "career": { "type": "string", "minLength": 1 },
         "author": { "type": "string", "minLength": 1 },
