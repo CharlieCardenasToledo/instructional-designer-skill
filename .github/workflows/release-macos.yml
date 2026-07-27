@@ -13,14 +13,14 @@ jobs:
     runs-on: macos-latest
     defaults:
       run:
-        working-directory: desktop-manager
+        working-directory: app/desktop
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: desktop-manager/package-lock.json
+          cache-dependency-path: app/desktop/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
       - run: npm ci
       - run: npm test
@@ -28,9 +28,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: instructional-designer-manager-macos
-          path: desktop-manager/src-tauri/target/release/bundle/dmg/*.dmg
+          path: app/desktop/src-tauri/target/release/bundle/dmg/*.dmg
       - name: Publish GitHub Release assets
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: desktop-manager/src-tauri/target/release/bundle/dmg/*.dmg
+          files: app/desktop/src-tauri/target/release/bundle/dmg/*.dmg

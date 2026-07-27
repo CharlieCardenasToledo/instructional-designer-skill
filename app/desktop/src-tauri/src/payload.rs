@@ -8,13 +8,13 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use zip::write::SimpleFileOptions;
 
-const SKILL_MD: &[u8] = include_bytes!("../../../SKILL.md");
-const LICENSE: &[u8] = include_bytes!("../../../LICENSE");
-const REQUIREMENTS: &[u8] = include_bytes!("../../../requirements.txt");
-static REFERENCES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../references");
-static SCRIPTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../scripts");
-static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../templates");
-static CONFIG: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../config");
+const SKILL_MD: &[u8] = include_bytes!("../../../../skill/SKILL.md");
+const LICENSE: &[u8] = include_bytes!("../../../../LICENSE");
+const REQUIREMENTS: &[u8] = include_bytes!("../../../../skill/requirements.txt");
+static REFERENCES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/references");
+static SCRIPTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/scripts");
+static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/templates");
+static CONFIG: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/config");
 static PAYLOAD_OPERATION: Mutex<()> = Mutex::new(());
 
 fn write_embedded_dir(dir: &Dir<'_>, target: &Path) -> Result<(), String> {

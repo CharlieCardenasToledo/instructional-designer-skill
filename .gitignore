@@ -28,8 +28,8 @@ env/
 
 # Node.js
 node_modules/
-desktop-manager/dist/
-desktop-manager/src-tauri/target/
+app/desktop/dist/
+app/desktop/src-tauri/target/
 
 # OS artifacts
 .DS_Store

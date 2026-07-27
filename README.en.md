@@ -50,28 +50,28 @@ Generate and validate weekly PDF guides
 The onboarding explains the expected outcome and verifies every requirement
 before the main dashboard becomes available.
 
-![Instructional Designer Manager onboarding](docs/images/desktop-manager/onboarding.png)
+![Instructional Designer Manager onboarding](docs/images/app/onboarding.png)
 
 ### 2. Course management
 
 The dashboard creates courses, generates their folder structure, and tracks
 the production status of each subject.
 
-![Course dashboard](docs/images/desktop-manager/dashboard.png)
+![Course dashboard](docs/images/app/dashboard.png)
 
 ### 3. Institutional identity
 
 The application stores the instructor, institution, academic program, and
 visual palette used by generated documents.
 
-![Institution settings](docs/images/desktop-manager/settings.png)
+![Institution settings](docs/images/app/settings.png)
 
 ### 4. Editorial templates
 
 Each course can use an institutional, minimal, technical, or workshop-oriented
 LaTeX template.
 
-![LaTeX template selector](docs/images/desktop-manager/templates.png)
+![LaTeX template selector](docs/images/app/templates.png)
 
 ## What the application handles
 
@@ -125,13 +125,17 @@ directly.
 git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill.git
 ```
 
-Copy or link the repository into:
+Copy or link **the contents of `skill/`** into:
 
 ```text
 Windows: %USERPROFILE%\.claude\skills\instructional-designer-skill
 macOS:   ~/.claude/skills/instructional-designer-skill
 Linux:   ~/.claude/skills/instructional-designer-skill
 ```
+
+The installed directory must contain `SKILL.md`, `agents/`, `config/`,
+`references/`, `scripts/`, and `templates/` directly at its root. The `app/`
+directory is not part of the skill and should not be copied.
 
 ## Usage
 
@@ -177,7 +181,7 @@ semanas/semana-XX/latex/
 The application uses Tauri 2, Rust, Vite, and Tailwind CSS 4.
 
 ```bash
-cd desktop-manager
+cd app/desktop
 npm ci
 npm test
 npm run tauri:dev
@@ -190,7 +194,7 @@ npm run tauri:build
 ```
 
 Tauri writes platform artifacts to
-`desktop-manager/src-tauri/target/release/bundle/`.
+`app/desktop/src-tauri/target/release/bundle/`.
 
 ## Automated releases
 
@@ -206,14 +210,17 @@ GitHub Release. Both workflows can also be triggered manually.
 
 ```text
 instructional-designer-skill/
-├── desktop-manager/        Tauri application and frontend
-├── SKILL.md                Main skill workflow
-├── agents/                 Configuration for other agents
-├── templates/              LaTeX editorial templates
-├── references/             Pedagogical, visual, and bibliography rules
-├── scripts/                Linter, compilation, and utility scripts
-├── config/                 Configuration schemas
-└── docs/                   Guides and application screenshots
+├── app/
+│   └── desktop/            Tauri application and frontend
+├── skill/                  Installable skill package
+│   ├── SKILL.md            Main workflow
+│   ├── agents/             Configuration for other agents
+│   ├── config/             Configuration schemas
+│   ├── references/         Pedagogical and editorial rules
+│   ├── scripts/            Linters, validators, and utilities
+│   └── templates/          LaTeX editorial templates
+├── docs/                   Guides and application screenshots
+└── .github/workflows/      Installer build automation
 ```
 
 ## Privacy
@@ -224,7 +231,7 @@ locally. NotebookLM queries use the MCP instance configured by the user.
 
 ## Additional documentation
 
-- [Application technical guide](desktop-manager/README.md)
+- [Application technical guide](app/desktop/README.md)
 - [Using the project with Claude Desktop and Cowork](docs/guia-claude-desktop.md)
 - [Version history](CHANGELOG.md)
 - [MIT License](LICENSE)

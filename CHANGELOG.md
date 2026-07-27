@@ -1,5 +1,20 @@
 # Changelog — instructional-designer-skill
 
+## 10.4.0 — 2026-07-27
+
+- Incorporada **Instructional Designer Manager 1.0.0**, aplicación de
+  escritorio para configurar dependencias, institución, NotebookLM, cursos y
+  la instalación o exportación de la skill.
+- Reorganizado el repositorio como monorepo: `app/desktop/` contiene la
+  aplicación Tauri y `skill/` contiene exclusivamente el paquete instalable.
+- Añadidos workflows de GitHub Actions para generar instaladores NSIS/MSI en
+  Windows y DMG en macOS al publicar un tag.
+- Renovados los README en español e inglés con objetivo del producto,
+  recorrido visual, capturas Full HD, instalación y arquitectura.
+- Aplicado Liquid Glass únicamente a la capa flotante de controles, con
+  contenido opaco, estados de foco y alternativas para reducir transparencia
+  y movimiento.
+
 ## 10.3.1 — 2026-07-17
 
 - Agregado `package.json` con engines, scripts npm y metadatos del paquete.

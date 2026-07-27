@@ -48,28 +48,28 @@ Generar y validar las guías semanales en PDF
 El onboarding explica el resultado esperado y verifica cada requisito antes de
 habilitar el panel principal.
 
-![Onboarding del Instructional Designer Manager](docs/images/desktop-manager/onboarding.png)
+![Onboarding del Instructional Designer Manager](docs/images/app/onboarding.png)
 
 ### 2. Gestión de asignaturas
 
 Desde el panel se crean asignaturas, se genera su estructura de carpetas y se
 mantiene el estado de producción de cada curso.
 
-![Panel de asignaturas](docs/images/desktop-manager/dashboard.png)
+![Panel de asignaturas](docs/images/app/dashboard.png)
 
 ### 3. Identidad institucional
 
 La aplicación conserva el nombre del docente, la institución, la carrera y la
 paleta visual que utilizarán los documentos.
 
-![Configuración institucional](docs/images/desktop-manager/settings.png)
+![Configuración institucional](docs/images/app/settings.png)
 
 ### 4. Plantillas editoriales
 
 Cada curso puede utilizar una plantilla institucional, minimalista, técnica o
 orientada a talleres.
 
-![Selector de plantillas LaTeX](docs/images/desktop-manager/templates.png)
+![Selector de plantillas LaTeX](docs/images/app/templates.png)
 
 ## Qué resuelve la aplicación
 
@@ -124,13 +124,17 @@ la skill directamente.
 git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill.git
 ```
 
-Después, copia o enlaza el repositorio dentro de:
+Después, copia o enlaza **el contenido de `skill/`** dentro de:
 
 ```text
 Windows: %USERPROFILE%\.claude\skills\instructional-designer-skill
 macOS:   ~/.claude/skills/instructional-designer-skill
 Linux:   ~/.claude/skills/instructional-designer-skill
 ```
+
+La carpeta instalada debe contener `SKILL.md`, `agents/`, `config/`,
+`references/`, `scripts/` y `templates/` directamente en su raíz. La carpeta
+`app/` no forma parte de la skill y no debe copiarse.
 
 ## Uso
 
@@ -177,7 +181,7 @@ semanas/semana-XX/latex/
 La aplicación utiliza Tauri 2, Rust, Vite y Tailwind CSS 4.
 
 ```bash
-cd desktop-manager
+cd app/desktop
 npm ci
 npm test
 npm run tauri:dev
@@ -190,7 +194,7 @@ npm run tauri:build
 ```
 
 Tauri produce los artefactos de cada plataforma dentro de
-`desktop-manager/src-tauri/target/release/bundle/`.
+`app/desktop/src-tauri/target/release/bundle/`.
 
 ## Publicación automatizada
 
@@ -206,14 +210,17 @@ correspondiente. Ambos workflows también pueden ejecutarse manualmente.
 
 ```text
 instructional-designer-skill/
-├── desktop-manager/        Aplicación Tauri y frontend
-├── SKILL.md                Flujo principal de la skill
-├── agents/                 Configuración para otros agentes
-├── templates/              Plantillas editoriales LaTeX
-├── references/             Reglas pedagógicas, visuales y bibliográficas
-├── scripts/                Linter, compilación y utilidades
-├── config/                 Esquemas de configuración
-└── docs/                   Guías y capturas de la aplicación
+├── app/
+│   └── desktop/            Aplicación Tauri y frontend
+├── skill/                  Paquete instalable de la skill
+│   ├── SKILL.md            Flujo principal
+│   ├── agents/             Configuración para otros agentes
+│   ├── config/             Esquemas de configuración
+│   ├── references/         Reglas pedagógicas y editoriales
+│   ├── scripts/            Linter, validadores y utilidades
+│   └── templates/          Plantillas editoriales LaTeX
+├── docs/                   Guías y capturas de la aplicación
+└── .github/workflows/      Construcción de instaladores
 ```
 
 ## Privacidad
@@ -225,7 +232,7 @@ configurada por el usuario.
 
 ## Documentación adicional
 
-- [Manual técnico de la aplicación](desktop-manager/README.md)
+- [Manual técnico de la aplicación](app/desktop/README.md)
 - [Uso con Claude Desktop y Cowork](docs/guia-claude-desktop.md)
 - [Historial de versiones](CHANGELOG.md)
 - [Licencia MIT](LICENSE)
