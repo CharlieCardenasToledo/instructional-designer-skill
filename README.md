@@ -102,13 +102,18 @@ intercalado.
 
 ### Opción recomendada: aplicación de escritorio
 
-1. Abre la página de
-   [Releases](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest).
-2. Descarga el instalador correspondiente:
-   - Windows: `.exe` o `.msi`.
-   - macOS: `.dmg`.
-3. Instala la aplicación y completa el onboarding.
-4. Elige si quieres instalar la skill localmente o exportarla.
+Descargas directas de la versión 10.4.0:
+
+| Sistema | Instalador | Descarga |
+|---|---|---|
+| Windows 10/11 x64 | NSIS `.exe` — recomendado | [Descargar EXE](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_x64-setup.exe) |
+| Windows 10/11 x64 | Windows Installer `.msi` | [Descargar MSI](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_x64_en-US.msi) |
+| macOS Apple Silicon | Imagen de disco `.dmg` | [Descargar DMG](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_aarch64.dmg) |
+
+También puedes consultar la
+[release más reciente](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest).
+Después de instalar la aplicación, completa el onboarding y elige si quieres
+instalar la skill localmente o exportarla.
 
 > Los instaladores de macOS sin firma pueden activar una advertencia de
 > Gatekeeper. La firma y notarización requieren credenciales de Apple y se

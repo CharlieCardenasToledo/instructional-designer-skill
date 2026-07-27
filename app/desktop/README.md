@@ -26,18 +26,20 @@ App de escritorio (Tauri) para configurar e instalar el Instructional Designer S
 |---|---|
 | Shell de la app | **Tauri 2** (Rust) |
 | Frontend | HTML + CSS + JS vanilla (sin framework) |
-| Empaquetado | `tauri build` → `.exe` y `.msi` para Windows |
+| Empaquetado | `tauri build` → `.exe`, `.msi` y `.dmg` nativos |
 | Instalación de deps | `winget` (Windows Package Manager, incluido en Win 10/11) |
 
 ## Instalador generado
 
-```
-dist/
-├── instructional-designer-manager_0.1.0_x64-setup.exe   ← instalador NSIS
-└── instructional-designer-manager_0.1.0_x64_en-US.msi   ← instalador MSI
+```text
+src-tauri/target/release/bundle/
+├── nsis/Instructional Designer Manager_1.0.0_x64-setup.exe
+├── msi/Instructional Designer Manager_1.0.0_x64_en-US.msi
+└── dmg/Instructional Designer Manager_1.0.0_aarch64.dmg
 ```
 
-Tamaño estimado del instalador: **~8 MB** (usa WebView2 del sistema, no incluye Chromium).
+Los instaladores actuales ocupan entre **2,4 y 3,3 MB**. La aplicación utiliza
+el motor web del sistema y no incorpora Chromium.
 
 ## Desarrollo local
 

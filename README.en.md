@@ -104,13 +104,18 @@ practices.
 
 ### Recommended: desktop application
 
-1. Open the
-   [latest release](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest).
-2. Download the installer for your platform:
-   - Windows: `.exe` or `.msi`.
-   - macOS: `.dmg`.
-3. Install the application and complete the onboarding.
-4. Choose whether to install the skill locally or export it.
+Direct downloads for version 10.4.0:
+
+| Platform | Installer | Download |
+|---|---|---|
+| Windows 10/11 x64 | NSIS `.exe` — recommended | [Download EXE](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_x64-setup.exe) |
+| Windows 10/11 x64 | Windows Installer `.msi` | [Download MSI](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_x64_en-US.msi) |
+| Apple Silicon macOS | `.dmg` disk image | [Download DMG](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_aarch64.dmg) |
+
+You can also browse the
+[latest release](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest).
+After installing the application, complete the onboarding and choose whether
+to install the skill locally or export it.
 
 > An unsigned macOS build may trigger a Gatekeeper warning. Signing and
 > notarization require Apple credentials and are applied during the release
