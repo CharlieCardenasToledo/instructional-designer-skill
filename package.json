@@ -2,10 +2,6 @@
   "name": "instructional-designer",
   "private": true,
   "version": "1.0.0",
-  "workspaces": [
-    "app/desktop",
-    "skill"
-  ],
   "scripts": {
     "test": "npm --prefix app/desktop test",
     "build": "npm --prefix app/desktop run build",
