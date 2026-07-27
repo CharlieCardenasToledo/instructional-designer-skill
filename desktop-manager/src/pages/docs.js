@@ -6,7 +6,7 @@ export function renderDocs() {
 
   el.innerHTML = `
     <div class="max-w-3xl">
-      <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-6 text-[13.5px] leading-[1.7] shadow-glass backdrop-blur-xl [&_h1]:mb-2 [&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h2]:mb-2.5 [&_h2]:mt-6 [&_h2]:text-[17px] [&_h2]:font-bold [&_p]:mb-3 [&_p]:text-app-text-2">
+      <div class="rounded-app-lg border border-slate-200 bg-white p-6 text-[13.5px] leading-[1.7] shadow-sm [&_h1]:mb-2 [&_h1]:text-2xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h2]:mb-2.5 [&_h2]:mt-6 [&_h2]:text-[17px] [&_h2]:font-bold [&_p]:mb-3 [&_p]:text-app-text-2">
         <h1 class="text-app-text">Ayuda</h1>
         <p class="mb-5 border-b border-slate-300/30 pb-4 text-sm text-app-muted">
           Lo esencial para dejar la app funcionando y resolver los problemas más comunes.

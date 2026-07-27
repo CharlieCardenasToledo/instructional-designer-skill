@@ -37,6 +37,7 @@ import latexLogo from "./assets/latex-logo.svg";
 import geminiLogo from "./assets/gemini-icon.svg";
 import googleGLogo from "./assets/google-g.svg";
 import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
+import { ui, cx } from "./uiClasses.js";
 
 // Esquema de 5 pasos (v3 en el backend; ver migrate_status en onboarding.rs).
 const TOTAL_STEPS = 5;
@@ -131,8 +132,8 @@ function warmOnboardingData(currentStep) {
   void Promise.allSettled(warm);
 }
 
-const BTN_PRIMARY = "w-full h-11 rounded-md bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 border-0 cursor-pointer";
-const BTN_SECONDARY = "h-9 px-4 rounded-md bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 cursor-pointer";
+const BTN_PRIMARY = cx(ui.button.base, ui.button.primary, "h-11 w-full cursor-pointer px-4");
+const BTN_SECONDARY = cx(ui.button.base, ui.button.secondary, "h-9 cursor-pointer px-4");
 const SCROLL_THIN = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden";
 const CARD_LEAD = "max-w-md mx-auto mb-5 text-center text-gray-600 text-sm leading-relaxed";
 const CALLOUT = "flex gap-2.5 items-start max-w-lg mx-auto mt-4 p-3.5 rounded-xl bg-gray-100 text-gray-600 text-xs leading-relaxed";
@@ -309,9 +310,9 @@ function renderBottomNav(current) {
       <span data-operation-message>${escapeHtml(onboardingBusyMessage || "Procesando…")}</span>
     </div>
     <div class="flex items-center justify-center gap-3">
-      <button type="button" class="onboarding-nav-arrow onboarding-nav-arrow--back ${canBack ? "" : "opacity-0 pointer-events-none"}" data-onboarding-action="back" aria-label="Paso anterior" title="Paso anterior">${ic("chevron-left", 18)}</button>
-      <div class="onboarding-progress relative flex items-center gap-1.5">${progressDots(current)}</div>
-      <button type="button" class="h-10 pl-4 pr-3 rounded-full bg-gray-900 hover:bg-gray-800 text-white text-[13px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-1 border-0 cursor-pointer" data-onboarding-action="${footerConfig.action}" ${footerConfig.disabled ? "disabled" : ""}><span>${escapeHtml(footerConfig.label)}</span>${ic("chevron-right", 16)}</button>
+      <button type="button" class="onboarding-nav-arrow onboarding-nav-arrow--back liquid-control border border-white/45 bg-white/55 ${canBack ? "" : "opacity-0 pointer-events-none"}" data-onboarding-action="back" aria-label="Paso anterior" title="Paso anterior">${ic("chevron-left", 18)}</button>
+      <div class="${cx(ui.liquid.group, 'onboarding-progress relative flex items-center gap-0.5 px-1')}">${progressDots(current)}</div>
+      <button type="button" class="${cx(ui.button.base, ui.button.primary, 'h-10 cursor-pointer pl-4 pr-3 text-[13px]')}" data-onboarding-action="${footerConfig.action}" ${footerConfig.disabled ? "disabled" : ""}><span>${escapeHtml(footerConfig.label)}</span>${ic("chevron-right", 16)}</button>
     </div>
     ${skipLink}
   </div>`;

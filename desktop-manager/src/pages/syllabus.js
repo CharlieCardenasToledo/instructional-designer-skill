@@ -13,7 +13,7 @@ export function renderSyllabus() {
   const course = state.editingCourse !== undefined ? state.courses[state.editingCourse] : null;
   if (!course) {
     el.innerHTML = `
-      <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-10 text-center text-app-muted shadow-glass backdrop-blur-xl">
+      <div class="rounded-app-lg border border-slate-200 bg-white p-10 text-center text-app-muted shadow-sm">
         <span class="material-symbols-outlined mb-3 block text-[40px]">description</span>
         <div class="mb-1.5 text-base font-bold text-slate-700">Sin asignatura seleccionada</div>
         <div class="text-[13px]">Selecciona una asignatura en la página de Cursos para editar su sílabo.</div>
@@ -42,7 +42,7 @@ export function renderSyllabus() {
       <div class="syllabus-left">
 
         <!-- Course metadata -->
-        <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 flex items-center justify-between shadow-glass backdrop-blur-xl">
+        <div class="flex items-center justify-between rounded-app-lg border border-slate-200 bg-white p-4 shadow-sm">
           <div>
             <div class="mb-0.5 text-[10.5px] font-bold uppercase tracking-wider text-brand">Editando sílabo</div>
             <div class="text-[17px] font-extrabold tracking-tight text-app-text">${escapeHtml(course.name)} (${escapeHtml(course.code)})</div>
@@ -58,21 +58,21 @@ export function renderSyllabus() {
         </div>
 
         <!-- Week editor pane -->
-        <div class="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-900/10 bg-white/55 backdrop-blur-xl">
+        <div class="flex flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
 
           <!-- Week tabs -->
-          <div class="flex shrink-0 gap-1.5 overflow-x-auto border-b border-slate-300/40 bg-slate-50/60 px-3 py-2.5">
+          <div class="${cx(ui.liquid.group, 'm-3 flex shrink-0 gap-1 overflow-x-auto p-1')}">
             ${Array.from({ length: weekCount }, (_, i) => {
               const st = statuses[i];
               const w = weeksData[i];
               const label = w?.title ? escapeHtml(w.title.slice(0, 16) + (w.title.length > 16 ? "…" : "")) : `Semana ${i + 1}`;
               const dotClass = st === "complete" ? "bg-green-500" : (st === "draft" ? "bg-teal-600" : "bg-red-600/50");
               const tabClass = i === _activeWeek
-                ? "border-brand/25 bg-brand/10 font-semibold text-teal-700"
+                ? "border-brand/25 bg-white/80 font-semibold text-teal-700 shadow-sm"
                 : (st === "complete" ? "text-green-600" : (st === "missing" ? "text-red-600" : "text-app-muted"));
               const icon = i === _activeWeek ? `<span class="material-symbols-outlined text-[15px]">edit</span>` :
                            (st === "complete" ? `<span class="material-symbols-outlined text-[15px] text-green-500">check_circle</span>` : "");
-              return `<button class="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-transparent px-3.5 py-1.5 text-[12.5px] font-medium transition-colors hover:border-slate-300/40 hover:bg-slate-300/20 hover:text-slate-700 ${tabClass}" data-week="${i}">
+              return `<button class="${cx(ui.liquid.focus, 'inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-transparent px-3.5 py-1.5 text-[12.5px] font-medium transition-colors hover:bg-white/65 hover:text-slate-700', tabClass)}" data-week="${i}">
                 <span class="h-[7px] w-[7px] shrink-0 rounded-full ${dotClass}"></span>
                 Sem ${i + 1}: ${label}
                 ${icon}
@@ -81,7 +81,7 @@ export function renderSyllabus() {
           </div>
 
           <!-- Active week form -->
-          <div class="flex-1 overflow-y-auto bg-white/60 p-[18px]" id="syl-week-form">
+          <div class="flex-1 overflow-y-auto bg-white p-[18px]" id="syl-week-form">
             ${renderWeekForm(weeksData[_activeWeek], _activeWeek)}
           </div>
 
@@ -101,7 +101,7 @@ export function renderSyllabus() {
       <div class="syllabus-right">
 
         <!-- Validation panel -->
-        <div class="overflow-hidden rounded-xl border border-slate-900/10 bg-white/55 backdrop-blur-xl">
+        <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
           <div class="border-b border-slate-300/30 px-4 py-3.5">
             <div class="flex items-center gap-2 text-sm font-bold text-app-text">
               <span class="material-symbols-outlined text-lg text-brand">checklist</span>
@@ -132,7 +132,7 @@ export function renderSyllabus() {
         </div>
 
         <!-- Action panel -->
-        <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 flex flex-col gap-3 shadow-glass backdrop-blur-xl">
+        <div class="flex flex-col gap-3 rounded-app-lg border border-slate-200 bg-white p-4 shadow-sm">
           <div class="text-center text-[12.5px] text-app-muted">
             ${pct < 100 ? "Completa todas las semanas para generar el documento final." : "¡Sílabo completo! Puedes generar el README."}
           </div>

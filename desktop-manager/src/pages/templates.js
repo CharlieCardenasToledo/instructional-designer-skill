@@ -18,7 +18,7 @@ export async function renderTemplates() {
           <h1 class="text-[22px] font-extrabold tracking-tight text-app-text">Plantillas</h1>
           <p class="mt-1 text-[13px] text-app-muted">Elige el formato de tus guías.</p>
         </div>
-        <div class="flex flex-wrap gap-2" id="tpl-filter-btns">
+        <div class="${cx(ui.liquid.group, 'flex flex-wrap gap-1')}" id="tpl-filter-btns">
           <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)} tpl-filter-btn" data-filter="all">Todas</button>
           <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} tpl-filter-btn" data-filter="institutional">Institucional</button>
           <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} tpl-filter-btn" data-filter="personal">Personal</button>
@@ -79,7 +79,7 @@ function renderBento(filter) {
 
   bento.innerHTML = `
     <!-- Featured (8-col) -->
-    <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-[18px] shadow-glass backdrop-blur-xl col-span-1 md:col-span-2 xl:col-span-8 flex flex-col gap-[18px] sm:flex-row relative overflow-hidden">
+    <div class="relative col-span-1 flex flex-col gap-[18px] overflow-hidden rounded-app-lg border border-slate-200 bg-white p-[18px] shadow-sm md:col-span-2 sm:flex-row xl:col-span-8">
       <div class="pointer-events-none absolute inset-0 bg-brand-soft"></div>
       <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg border border-slate-300/50 bg-white sm:w-[45%]">
         <div class="pointer-events-none w-[161%] origin-top-left scale-[.62] p-3 text-[10px] leading-relaxed text-slate-700">
@@ -111,7 +111,7 @@ function renderBento(filter) {
 
     <!-- Secondary (4-col) -->
     ${secondary ? `
-    <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 shadow-glass backdrop-blur-xl col-span-1 xl:col-span-4 flex flex-col justify-between">
+    <div class="col-span-1 flex flex-col justify-between rounded-app-lg border border-slate-200 bg-white p-4 shadow-sm xl:col-span-4">
       <div>
         <div class="mb-3 aspect-video w-full overflow-hidden rounded-lg border border-slate-300/40 bg-white p-2.5 text-[10px] leading-relaxed text-slate-700">
           <div class="mb-2 border-b border-slate-200 pb-1.5 text-center font-bold">${escapeHtml(secondary.name)}</div>
@@ -128,7 +128,7 @@ function renderBento(filter) {
 
     <!-- Grid items (4-col each) -->
     ${gridItems.map(t => `
-    <div class="rounded-app-lg border border-slate-900/10 bg-white/65 p-4 shadow-glass backdrop-blur-xl col-span-1 xl:col-span-4 flex flex-col">
+    <div class="col-span-1 flex flex-col rounded-app-lg border border-slate-200 bg-white p-4 shadow-sm xl:col-span-4">
       <div class="mb-2.5 flex items-center gap-2 border-b border-slate-300/30 pb-2.5">
         <span class="material-symbols-outlined text-xl text-brand">assignment_ind</span>
         <span class="text-[13px] font-bold text-app-text">${escapeHtml(t.name)}</span>

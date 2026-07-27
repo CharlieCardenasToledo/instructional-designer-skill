@@ -9,7 +9,7 @@ import { escapeHtml } from "../dom.js";
 import { toast } from "../toast.js";
 import { refreshIcons } from "../icons.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
-import { ui, cx } from "../uiClasses.js";
+import { ui, cx, liquidForBackground } from "../uiClasses.js";
 
 // "Instalar herramientas necesarias" solo cubre lo indispensable para
 // producir el PDF; Git queda fuera aunque aparezca en la lista de abajo.
@@ -35,7 +35,7 @@ export async function renderSettings() {
 
       <!-- Left nav -->
       <div class="sticky top-0 z-10 self-start">
-        <div class="rounded-app border border-slate-900/10 bg-white/55 p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible backdrop-blur-xl">
+        <div class="${cx(ui.liquid.group, 'flex gap-1 overflow-x-auto p-1 lg:flex-col lg:overflow-visible')}">
           <a class="settings-nav-item active w-auto shrink-0 rounded-lg border-l-2 border-brand bg-brand/10 px-3 py-2 text-xs font-bold text-teal-700 transition-colors hover:bg-brand/[0.05] lg:w-full" data-section="inst-profile" href="#inst-profile">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
@@ -59,7 +59,7 @@ export async function renderSettings() {
 
 
         <!-- ── Institutional Profile ── -->
-        <section class="rounded-[14px] border border-slate-300/50 bg-white/70 p-5 shadow-[0_2px_8px_rgba(0,49,126,0.04)]" id="inst-profile">
+        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="inst-profile">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">domain</span> Perfil institucional
           </div>
@@ -129,7 +129,7 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Conexiones ── -->
-        <section class="rounded-[14px] border border-slate-300/50 bg-white/70 p-5 shadow-[0_2px_8px_rgba(0,49,126,0.04)]" id="mcp-config">
+        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="mcp-config">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">hub</span> Conexiones
             <span id="mcp-status-badge" class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-300/50 bg-slate-200/20 px-2.5 py-0.5 text-[11px] font-bold text-app-muted">
@@ -161,7 +161,7 @@ export async function renderSettings() {
             </div>
 
             <!-- NotebookLM Auth row -->
-            <div class="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
+            <div class="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-slate-200 bg-white px-3.5 py-3">
               <div>
                 <div class="text-[13px] font-semibold text-app-text">Sesión de Google</div>
                 <div id="nlm-auth-status" class="mt-0.5 text-xs text-app-muted">Verificando…</div>
@@ -179,7 +179,7 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Notebooks ── -->
-        <section class="rounded-[14px] border border-slate-300/50 bg-white/70 p-5 shadow-[0_2px_8px_rgba(0,49,126,0.04)]" id="notebooks-section">
+        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="notebooks-section">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">menu_book</span> Notebooks de NotebookLM
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-save-notebooks">
@@ -191,7 +191,7 @@ export async function renderSettings() {
           <div id="notebook-list" class="mb-3.5 flex flex-col gap-1.5"></div>
 
           <!-- Add notebook form -->
-          <div class="rounded-app border border-slate-900/10 bg-white/55 p-3.5 backdrop-blur-xl">
+          <div class="rounded-app border border-slate-200 bg-white p-3.5">
             <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-app-muted">
               Registrar notebook
             </div>
@@ -231,7 +231,7 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Environment ── -->
-        <section class="rounded-[14px] border border-slate-300/50 bg-white/70 p-5 shadow-[0_2px_8px_rgba(0,49,126,0.04)]" id="environment">
+        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="environment">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">terminal</span> Entorno del sistema
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-refresh-deps">
@@ -250,19 +250,19 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Preferencias ── -->
-        <section class="rounded-[14px] border border-slate-300/50 bg-white/70 p-5 shadow-[0_2px_8px_rgba(0,49,126,0.04)]" id="app-prefs">
+        <section class="rounded-[14px] border border-slate-200 bg-white p-5 shadow-sm" id="app-prefs">
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">tune</span> Preferencias
           </div>
 
           <!-- Skill path -->
-          <div class="mb-3.5 rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
+          <div class="mb-3.5 rounded-lg border border-slate-200 bg-white px-3.5 py-3">
             <div class="mb-1.5 text-[11.5px] font-bold uppercase tracking-wider text-app-muted">Carpeta de instalación</div>
             <div id="skill-path-val" class="mono break-all text-[12.5px] text-brand">Cargando…</div>
           </div>
 
           <div class="flex flex-col gap-2.5">
-            <div class="flex items-center justify-between rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
+            <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
               <div>
                 <div class="text-[13px] font-semibold text-app-text">Instalar en el proyecto local</div>
                 <div class="mt-0.5 text-[11.5px] text-app-muted">Copia los archivos a <code>~/.claude/skills/</code></div>
@@ -271,7 +271,7 @@ export async function renderSettings() {
                 <span class="material-symbols-outlined text-sm">download</span> Instalar
               </button>
             </div>
-            <div class="flex items-center justify-between rounded-lg border border-slate-300/50 bg-white/60 px-3.5 py-3">
+            <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
               <div>
                 <div class="text-[13px] font-semibold text-app-text">Exportar configuración</div>
                 <div class="mt-0.5 text-[11.5px] text-app-muted">Para instalar manualmente en la app de Claude</div>
@@ -476,7 +476,7 @@ function renderPalette(container, palette) {
     </div>
     <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-1.5">
       ${palette.map(({ color, occurrences }) => `
-        <button class="palette-swatch flex min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-slate-300/65 bg-white/70 p-1.5 text-left text-app-text transition-colors hover:border-teal-600 hover:shadow-[0_0_0_2px_rgba(0,121,107,0.1)]" type="button" data-palette-color="${escapeHtml(color)}"
+        <button class="${cx(liquidForBackground(color), 'palette-swatch flex min-w-0 cursor-pointer items-center gap-2 p-1.5 text-left transition-colors hover:border-teal-400 [&_code]:text-inherit [&_small]:text-inherit')}" style="background-color:color-mix(in srgb, ${escapeHtml(color)} 32%, transparent)" type="button" data-palette-color="${escapeHtml(color)}"
           title="Usar ${escapeHtml(color)}">
           <span class="inline-block h-[31px] w-[31px] shrink-0 rounded-[7px] border border-black/15" style="background:${escapeHtml(color)}"></span>
           <span class="flex min-w-0 flex-col">

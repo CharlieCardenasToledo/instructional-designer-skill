@@ -23,12 +23,12 @@ export function renderCourses() {
 
       <!-- Stats -->
       <div class="grid grid-cols-2 gap-3">
-        <div class="rounded-xl border border-slate-300/50 bg-white/70 p-4 shadow-[0_2px_8px_rgba(0,49,126,0.05)]">
+        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div class="text-[11px] font-semibold uppercase tracking-wider text-app-muted">Asignaturas</div>
           <div class="my-1 text-[26px] font-extrabold tracking-tight text-teal-700">${total}</div>
           <div class="text-[11px] text-app-muted">Total registradas</div>
         </div>
-        <div class="rounded-xl border border-slate-300/50 bg-white/70 p-4 shadow-[0_2px_8px_rgba(0,49,126,0.05)]">
+        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div class="text-[11px] font-semibold uppercase tracking-wider text-app-muted">Pendientes</div>
           <div class="my-1 text-[26px] font-extrabold tracking-tight text-teal-700">${pending}</div>
           <div class="text-[11px] text-app-muted">Sin contenido aún</div>
@@ -36,7 +36,7 @@ export function renderCourses() {
       </div>
 
       <!-- Toolbar -->
-      <div class="flex flex-col items-stretch gap-2.5 rounded-[10px] border border-slate-300/50 bg-white/70 px-4 py-3 sm:flex-row sm:items-center">
+      <div class="${cx(ui.liquid.group, 'flex flex-col items-stretch gap-2.5 px-3 py-2 sm:flex-row sm:items-center')}">
         <div class="flex flex-1 items-center gap-2 rounded-lg border border-slate-300/50 bg-slate-50/80 px-3 py-1.5">
           <span class="material-symbols-outlined text-lg text-app-muted">search</span>
           <input class="w-full border-0 bg-transparent p-0 text-[13px] text-app-text outline-none" id="courses-search-input" placeholder="Buscar por código o nombre…" value="${escapeHtml(_filter)}">
@@ -48,7 +48,7 @@ export function renderCourses() {
       </div>
 
       <!-- Table -->
-      <div class="flex-1 overflow-hidden rounded-xl border border-slate-300/50 bg-white/70">
+      <div class="flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="overflow-x-auto">
         <table class="courses-table min-w-[760px] w-full border-collapse text-[13px]">
           <thead>
@@ -90,8 +90,8 @@ export function renderCourses() {
     </div>
 
     <!-- Modal -->
-    <div class="fixed inset-0 z-[5000] hidden items-center justify-center bg-slate-900/45 p-6 backdrop-blur-[6px]" id="course-modal">
-      <div class="max-h-[calc(100vh-48px)] w-full max-w-[640px] overflow-y-auto rounded-2xl border border-slate-300/60 bg-white/95 shadow-2xl backdrop-blur-2xl" id="course-modal-box"></div>
+    <div class="fixed inset-0 z-[5000] hidden items-center justify-center bg-slate-900/45 p-6" id="course-modal">
+      <div class="max-h-[calc(100vh-48px)] w-full max-w-[640px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl" id="course-modal-box"></div>
     </div>
   `;
 
@@ -142,14 +142,14 @@ function renderTableRows() {
         </span>
       </td>
       <td>
-        <div class="row-actions">
-          <button class="row-action-edit" data-course-action="edit" data-index="${realIndex}">
+        <div class="${cx(ui.liquid.group, 'row-actions gap-1 p-1')}">
+          <button class="${cx(ui.button.base, ui.button.ghost, ui.button.xs, 'row-action-edit')}" data-course-action="edit" data-index="${realIndex}">
             <span class="material-symbols-outlined text-sm">edit_document</span> Sílabo
           </button>
-          <button class="row-action-folders" data-course-action="folders" data-index="${realIndex}">
+          <button class="${cx(ui.button.base, ui.button.ghost, ui.button.xs, 'row-action-folders')}" data-course-action="folders" data-index="${realIndex}">
             <span class="material-symbols-outlined text-sm">create_new_folder</span> Carpetas
           </button>
-          <button class="row-action-delete" data-course-action="delete" data-index="${realIndex}">
+          <button class="${cx(ui.button.base, ui.button.danger, ui.button.xs, 'row-action-delete')}" data-course-action="delete" data-index="${realIndex}" aria-label="Eliminar asignatura" title="Eliminar">
             <span class="material-symbols-outlined text-sm">delete</span>
           </button>
         </div>
@@ -303,7 +303,7 @@ function renderModal() {
         </div>
       </div>
       <div class="p-5 px-6">
-        <div class="rounded-app border border-slate-900/10 bg-white/55 p-3.5 mb-4 backdrop-blur-xl">
+        <div class="mb-4 rounded-app border border-slate-200 bg-white p-3.5">
           <div class="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-app-muted">Vista previa de carpetas</div>
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center gap-2 text-[12.5px] font-semibold text-slate-700">

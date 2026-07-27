@@ -28,7 +28,7 @@ function renderShell() {
   document.getElementById("app").innerHTML = `
 
     <!-- SIDEBAR -->
-    <aside class="flex w-[220px] shrink-0 flex-col border-r border-slate-900/10 bg-white/55 backdrop-blur-xl" role="navigation" aria-label="Menú principal">
+    <aside class="flex w-[220px] shrink-0 flex-col border-r border-slate-200 bg-white" role="navigation" aria-label="Menú principal">
       <div class="flex items-center gap-2.5 border-b border-slate-900/10 px-4 py-4">
         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand text-white shadow-sm">
           <span class="material-symbols-outlined">school</span>
@@ -47,16 +47,16 @@ function renderShell() {
       </div>
 
       <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
-        <button class="nav-item flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-slate-900/5 hover:text-slate-800" data-page="courses" aria-label="Cursos">
+        <button class="nav-item liquid-control flex w-full items-center gap-2.5 rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-white/70 hover:text-slate-800" data-page="courses" aria-label="Cursos">
           <span class="material-symbols-outlined">school</span> Cursos
         </button>
-        <button class="nav-item flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-slate-900/5 hover:text-slate-800" data-page="templates" aria-label="Plantillas">
+        <button class="nav-item liquid-control flex w-full items-center gap-2.5 rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-white/70 hover:text-slate-800" data-page="templates" aria-label="Plantillas">
           <span class="material-symbols-outlined">dashboard_customize</span> Plantillas
         </button>
-        <button class="nav-item flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-slate-900/5 hover:text-slate-800" data-page="docs" aria-label="Ayuda">
+        <button class="nav-item liquid-control flex w-full items-center gap-2.5 rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-white/70 hover:text-slate-800" data-page="docs" aria-label="Ayuda">
           <span class="material-symbols-outlined">help</span> Ayuda
         </button>
-        <button class="nav-item flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-slate-900/5 hover:text-slate-800" data-page="settings" aria-label="Configuración">
+        <button class="nav-item liquid-control flex w-full items-center gap-2.5 rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] text-slate-500 transition hover:bg-white/70 hover:text-slate-800" data-page="settings" aria-label="Configuración">
           <span class="material-symbols-outlined">settings</span> Configuración
         </button>
       </nav>
@@ -69,7 +69,7 @@ function renderShell() {
 
     <!-- MAIN -->
     <main class="flex min-w-0 flex-1 flex-col overflow-hidden" role="main">
-      <header class="flex h-[54px] shrink-0 items-center justify-between border-b border-slate-900/10 bg-white/45 px-5 backdrop-blur-xl" data-tauri-drag-region>
+      <header class="${cx(ui.liquid.control, 'mx-4 mt-3 flex h-[48px] shrink-0 items-center justify-between px-5')}" data-tauri-drag-region>
         <div>
           <h2 class="text-[14px] font-bold text-slate-800">Instructional Design Studio</h2>
           <div class="text-[11px] text-slate-500"></div>

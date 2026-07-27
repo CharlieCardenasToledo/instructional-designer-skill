@@ -103,7 +103,7 @@ test('el copy visible no reintroduce jerga técnica ya eliminada por auditoría 
   assert.doesNotMatch(settings, banned);
 });
 
-test('el stepper mueve un gusanito literal sin convertir las flechas en recuadros', async () => {
+test('el stepper conserva el gusanito y usa controles Liquid Glass', async () => {
   const [source, css] = await Promise.all([
     readFile(new URL('src/onboarding.js', root), 'utf8'),
     readFile(new URL('src/styles.css', root), 'utf8'),
@@ -117,7 +117,9 @@ test('el stepper mueve un gusanito literal sin convertir las flechas en recuadro
   assert.match(source, /onboarding-progress-worm--\$\{direction\}/);
   assert.match(source, /function showPreparedStep/);
   assert.doesNotMatch(bottomNav, /data-tauri-drag-region/);
-  assert.match(css, /\.onboarding-nav-arrow[\s\S]*background:\s*transparent/);
+  assert.match(bottomNav, /onboarding-nav-arrow[\s\S]*liquid-control/);
+  assert.match(bottomNav, /ui\.liquid\.group/);
+  assert.match(css, /\.liquid-control/);
   assert.match(css, /\.onboarding-progress-worm/);
   assert.match(css, /@keyframes onboarding-worm-walk/);
   assert.match(css, /\.onboarding-worm-segment--head::before/);
