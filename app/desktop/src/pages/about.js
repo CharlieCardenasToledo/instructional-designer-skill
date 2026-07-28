@@ -66,6 +66,7 @@ export async function renderAbout() {
 
       <nav class="${cx(ui.liquid.control, "sticky top-[76px] z-20 flex w-fit max-w-full gap-1 p-1")}" aria-label="Secciones de Acerca de">
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-project">Proyecto</button>
+        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-origin">Origen del nombre</button>
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-authorship">Autoría</button>
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-technology">Tecnologías</button>
       </nav>
@@ -77,6 +78,15 @@ export async function renderAbout() {
           La aplicación administra la configuración y los cursos; la skill aporta el método, las plantillas
           y las validaciones para producir materiales consistentes.
         </p>
+      </section>
+
+      <section id="about-origin" class="${cx(ui.surface.card, "p-6")}">
+        <h2 class="text-lg font-extrabold text-slate-900">El origen de nuestro nombre</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-700">${APP_META.originAttribution}</p>
+        <p class="mt-3 text-sm leading-6 text-slate-600">La elección expresa el propósito de la aplicación: ayudar a docentes a convertir un sílabo en una ruta de aprendizaje coherente, conectando resultados, contenidos, actividades, evaluaciones y recursos.</p>
+        <p class="mt-3 text-sm leading-6 text-slate-600">En el Currículo Nacional Intercultural Bilingüe de la Nacionalidad Shuar, la expresión <em>Aarma jintia</em> se emplea para referirse a “textos instructivos”.</p>
+        <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><strong>Reconocimiento:</strong> ${APP_META.originDisclaimer}</div>
+        <div class="mt-5 border-t border-slate-200 pt-4"><h3 class="text-sm font-bold text-slate-900">Fuentes</h3><ul class="mt-2 space-y-2 text-xs leading-5 text-slate-600"><li>Ministerio de Educación del Ecuador. <em>Currículo Nacional Intercultural Bilingüe de la Nacionalidad Shuar</em>, 2017, p. 106.</li><li>Pellizzaro, S. M. y Náwech, F. O. <em>Chicham: Diccionario shuar-castellano</em>, 2005.</li></ul></div>
       </section>
 
       <section id="about-authorship" class="${cx(ui.surface.card, "p-6")}">

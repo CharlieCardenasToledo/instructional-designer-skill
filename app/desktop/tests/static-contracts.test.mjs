@@ -501,9 +501,13 @@ test('Acerca de Jintia está conectado al pie, Ayuda y metadatos de ejecución',
   assert.doesNotMatch(main, /v10\.4 · jintia-skill/);
   assert.match(docs, /data-doc-nav="about"/);
   assert.match(about, /Creado y mantenido por/);
+  assert.match(about, /about-origin/);
+  assert.match(about, /Aarma jintia/);
+  assert.match(about, /originDisclaimer/);
   assert.match(about, /Tauri[\s\S]*Rust[\s\S]*React[\s\S]*ElegantBook/);
   assert.match(api, /Promise\.all\(\[[\s\S]*getName\(\)[\s\S]*getVersion\(\)/);
   assert.match(appMeta, /creator:\s*"Charlie Cárdenas Toledo"/);
+  assert.match(appMeta, /originName: brand\.linguisticForm/);
 });
 
 test('los enlaces externos de Acerca de usan opener con una lista cerrada', async () => {
