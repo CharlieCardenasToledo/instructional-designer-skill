@@ -19,6 +19,10 @@ Claude + jintia-skill
 
 La app administra el entorno; la skill ejecuta el razonamiento instruccional.
 
+La extracción incremental de lógica compartida comienza en `packages/core`.
+Este paquete contiene contratos de ruta, lectura del curso y estado editorial;
+la CLI lo consume antes de migrar más scripts.
+
 ## Límites de componentes
 
 ### `app/desktop`
@@ -38,6 +42,12 @@ Paquete autocontenido con:
 
 `agents/` y `.claude-plugin/` describen integraciones, pero no forman parte del
 payload mínimo exportado por la app.
+
+### `packages/core`
+
+Paquete CommonJS independiente de Desktop y de los agentes. Expone
+`readCourse`, `coursePaths`, `loadCourseState` y `updateCourseState` para que la
+CLI y futuras capas compartan el mismo contrato.
 
 ## Persistencia
 
