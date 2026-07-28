@@ -1,0 +1,9 @@
+{
+  "name": "@jintia/cli",
+  "version": "1.0.0",
+  "description": "CLI de la toolchain Jintia",
+  "type": "commonjs",
+  "bin": { "jintia": "../../skill/bin/jintia.js" },
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" }
+}

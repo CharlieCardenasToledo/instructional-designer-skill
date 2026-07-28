@@ -1,0 +1,9 @@
+{
+  "name": "@jintia/skill",
+  "version": "1.0.0",
+  "description": "Metadata del paquete de instrucciones Jintia",
+  "type": "commonjs",
+  "main": "index.js",
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" }
+}

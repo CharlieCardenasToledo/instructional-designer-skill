@@ -1,0 +1,9 @@
+{
+  "name": "@jintia/rules",
+  "version": "1.0.0",
+  "description": "Catálogo y runner de reglas deterministas Jintia",
+  "type": "commonjs",
+  "main": "index.js",
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" }
+}

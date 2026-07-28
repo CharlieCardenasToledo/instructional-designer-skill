@@ -23,6 +23,8 @@ npx jintia visual inspect figure/manifest.json
 npx jintia state update ./curso 03 compiled ./curso/semanas/semana-03/README.md
 npx jintia context init ./curso
 npx jintia context validate ./curso --json
+npx jintia agents plan guide --json
+npx jintia hook install ./curso
 ```
 
 Los reportes de `audit` admiten `--json` para integraciones de Desktop, CI y

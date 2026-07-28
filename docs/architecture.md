@@ -23,6 +23,11 @@ La extracción incremental de lógica compartida comienza en `packages/core`.
 Este paquete contiene contratos de ruta, lectura del curso y estado editorial;
 la CLI lo consume antes de migrar más scripts.
 
+Los paquetes `@jintia/cli`, `@jintia/rules`, `@jintia/templates` y
+`@jintia/skill` ya tienen límites de distribución explícitos; sus entradas
+delegan temporalmente en las implementaciones existentes para permitir una
+migración incremental sin duplicar lógica.
+
 ## Límites de componentes
 
 ### `app/desktop`
