@@ -42,6 +42,16 @@ function selectEngine(spec) {
   }
   if (spec.discipline === "chemistry" && spec.representation === "annotated-image") return "rdkit";
   const metrics = analyzeModel(spec);
+  if (metrics.requiresExactCoordinates) return "tikz";
+  if (metrics.temporalVariables && spec.model?.events?.some(event => event.value !== undefined)) {
+    return "vega-lite";
+  }
+  if (metrics.hierarchyDepth > 4 && ["flowchart", "concept-map", "technical-diagram"].includes(spec.representation)) {
+    return "graphviz";
+  }
+  if (metrics.crossingRisk > 2 && ["flowchart", "network", "concept-map", "argument-map"].includes(spec.representation)) {
+    return "graphviz";
+  }
   switch (spec.representation) {
     case "chart": return "vega-lite";
     case "forest-plot": return "vega-lite";
@@ -54,7 +64,7 @@ function selectEngine(spec) {
         || metrics.averageLabelWords > 8
         ? "graphviz"
         : "mermaid";
-    case "timeline": return "d2";
+    case "timeline": return spec.model?.events?.some(event => event.value !== undefined) ? "vega-lite" : "d2";
     case "signal-diagram": return "wavedrom";
     case "causal-diagram": return "graphviz";
     case "uml": return "plantuml";
@@ -70,7 +80,13 @@ function selectEngine(spec) {
       return spec.discipline === "chemistry" ? "chemfig" : "tikz";
     case "concept-map":
     case "technical-diagram":
+    case "bpmn":
+    case "argument-map":
+    case "curriculum-map":
       return "graphviz";
+    case "c4": return "plantuml";
+    case "sankey": return "html";
+    case "free-body-diagram": return "tikz";
     default:
       return "tikz";
   }

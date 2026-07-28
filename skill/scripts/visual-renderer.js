@@ -151,7 +151,7 @@ function prepareHtmlCapture(content, capture) {
   if (!capture) return content;
   const payload = JSON.stringify(capture);
   const script = `<script>
-document.addEventListener("DOMContentLoaded",()=>{const c=${payload};const target=document.querySelector(c.selector);if(!target)throw new Error("No existe el selector de captura: "+c.selector);const clone=target.cloneNode(true);document.body.replaceChildren(clone);Object.assign(document.documentElement.style,{margin:"0",width:c.width+"px",height:c.height+"px",overflow:"hidden",background:"transparent"});Object.assign(document.body.style,{margin:"0",width:c.width+"px",height:c.height+"px",overflow:"hidden",background:"transparent"});});
+document.addEventListener("DOMContentLoaded",async()=>{const c=${payload};const target=document.querySelector(c.selector);if(!target)throw new Error("No existe el selector de captura: "+c.selector);const clone=target.cloneNode(true);document.body.replaceChildren(clone);if(document.fonts?.ready)await document.fonts.ready;const images=[...document.images];await Promise.all(images.map(image=>image.complete?Promise.resolve():new Promise((resolve,reject)=>{image.addEventListener("load",resolve,{once:true});image.addEventListener("error",()=>reject(new Error("Imagen local no pudo cargarse: "+image.src)),{once:true});})));Object.assign(document.documentElement.style,{margin:"0",width:c.width+"px",height:c.height+"px",overflow:"hidden",background:"transparent"});Object.assign(document.body.style,{margin:"0",width:c.width+"px",height:c.height+"px",overflow:"hidden",background:"transparent"});});
 </script>`;
   return /<\/body>/i.test(content) ? content.replace(/<\/body>/i, `${script}</body>`) : `${content}${script}`;
 }

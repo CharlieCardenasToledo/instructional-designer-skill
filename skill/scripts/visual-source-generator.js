@@ -126,11 +126,14 @@ function wavedrom(model) {
 
 function vegaLite(model, description) {
   const chartType = model.chartType || "bar";
-  const data = Array.isArray(model.data)
+  const data = Array.isArray(model.events)
+    ? model.events.map(event => ({ date: event.date, label: event.label, value: event.value }))
+    : Array.isArray(model.data)
     ? model.data
     : (model.categories || []).map((category, index) => ({ category, value: model.values?.[index] }));
   if (!data.length) throw new Error("Vega-Lite requiere model.data o categories/values.");
-  const xField = model.xField || (["histogram", "boxplot"].includes(chartType) ? "value" : "category");
+  const eventTimeline = Array.isArray(model.events);
+  const xField = model.xField || (eventTimeline ? "date" : (["histogram", "boxplot"].includes(chartType) ? "value" : "category"));
   const yField = model.yField || (["histogram", "boxplot"].includes(chartType) ? null : "value");
   const mark = {
     scatter: "point",
@@ -140,7 +143,7 @@ function vegaLite(model, description) {
   const encoding = {
     x: {
       field: xField,
-      type: ["bar", "point"].includes(chartType) && !model.xField ? "nominal" : "quantitative",
+      type: eventTimeline ? "temporal" : (["bar", "point"].includes(chartType) && !model.xField ? "nominal" : "quantitative"),
       title: model.xTitle || model.units || "Categoría",
       ...(chartType === "histogram" ? { bin: true } : {}),
       ...(xField === "category" ? { sort: null } : {})
@@ -273,6 +276,14 @@ function plantuml(model) {
     throw new Error("PlantUML requiere model.nodes.");
   }
   const clean = value => String(value).replace(/["\r\n]/g, " ");
+  if (model.diagramType === "c4") {
+    const entities = (model.nodes || []).map(node => {
+      const constructor = node.kind === "person" ? "Person" : node.kind === "external" ? "System_Ext" : node.kind === "container" ? "Container" : "System";
+      return `${constructor}(${node.id}, "${clean(node.label)}", "${clean(node.technology || "")}")`;
+    });
+    const relations = (model.edges || []).map(edge => `Rel(${edge.from}, ${edge.to}, "${clean(edge.label || "uses")}")`);
+    return `@startuml\n!pragma layout smetana\nskinparam backgroundColor transparent\n${[...entities, ...relations].join("\n")}\n@enduml\n`;
+  }
   const kinds = {
     sequence: "participant",
     component: "component",
@@ -293,6 +304,54 @@ skinparam shadowing false
 ${[...declarations, ...relations].join("\n")}
 @enduml
 `;
+}
+
+function sankeyHtml(model) {
+  if (!Array.isArray(model.links) || model.links.length === 0) throw new Error("Sankey requiere model.links.");
+  const nodes = model.nodes || [...new Set(model.links.flatMap(link => [link.source, link.target]))].map(id => ({ id, label: id }));
+  const byId = new Map(nodes.map(node => [node.id, node]));
+  for (const link of model.links) {
+    if (!byId.has(link.source) || !byId.has(link.target) || !(Number(link.value) > 0)) throw new Error("Sankey requiere enlaces con source, target y value positivo.");
+  }
+  const columns = new Map();
+  nodes.forEach(node => columns.set(node.id, node.column ?? 0));
+  const positions = new Map();
+  const maxColumn = Math.max(...nodes.map(node => columns.get(node.id)), 0);
+  const grouped = [...Array(maxColumn + 1)].map(() => []);
+  nodes.forEach(node => grouped[columns.get(node.id)].push(node));
+  grouped.forEach((group, column) => group.forEach((node, index) => positions.set(node.id, {
+    x: 80 + (column * 360 / Math.max(maxColumn, 1)),
+    y: 90 + index * 80
+  })));
+  const width = model.width || 900;
+  const height = model.height || Math.max(260, Math.max(...grouped.map(group => group.length), 1) * 80 + 120);
+  const escape = value => String(value).replace(/[&<>"']/g, match => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[match]));
+  const paths = model.links.map(link => {
+    const source = positions.get(link.source);
+    const target = positions.get(link.target);
+    const middle = (source.x + target.x) / 2;
+    const stroke = Math.max(2, Math.sqrt(Number(link.value)) * 4);
+    return `<path d="M ${source.x + 28} ${source.y} C ${middle} ${source.y}, ${middle} ${target.y}, ${target.x - 28} ${target.y}" stroke="#00796b" stroke-width="${stroke}" opacity=".55" fill="none"/><title>${escape(link.source)} → ${escape(link.target)}: ${escape(link.value)}</title>`;
+  }).join("");
+  const shapes = nodes.map(node => {
+    const point = positions.get(node.id);
+    return `<g><rect x="${point.x - 28}" y="${point.y - 18}" width="56" height="36" rx="6" fill="#e0f2f1" stroke="#00796b"/><text x="${point.x}" y="${point.y + 5}" text-anchor="middle" font-size="13">${escape(node.label || node.id)}</text></g>`;
+  }).join("");
+  return `<!doctype html><meta charset="utf-8"><svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escape(model.altText || "Diagrama Sankey")}"><rect width="100%" height="100%" fill="white"/>${paths}${shapes}</svg>`;
+}
+
+function freeBodyDiagram(model) {
+  if (!Array.isArray(model.forces) || model.forces.length === 0) throw new Error("El cuerpo libre requiere model.forces.");
+  const escape = value => String(value).replace(/[\\{}%&#_$]/g, "\\$&");
+  const origin = model.origin || [0, 0];
+  const arrows = model.forces.map(force => {
+    const angle = Number(force.angle || 0) * Math.PI / 180;
+    const length = Number(force.length || force.magnitude || 2);
+    const x = origin[0] + Math.cos(angle) * length;
+    const y = origin[1] + Math.sin(angle) * length;
+    return `\\draw[-{Latex},very thick] (${origin[0]},${origin[1]}) -- (${x.toFixed(3)},${y.toFixed(3)}) node[above] {${escape(force.label || force.name || "F")}};`;
+  }).join("\n");
+  return `\\documentclass[tikz,border=4pt]{standalone}\n\\usepackage{tikz}\n\\usetikzlibrary{arrows.meta}\n\\begin{document}\n\\begin{tikzpicture}\n\\fill (${origin[0]},${origin[1]}) circle (3pt);\n${arrows}\n\\end{tikzpicture}\n\\end{document}\n`;
 }
 
 function circuitikz(model) {
@@ -357,19 +416,20 @@ ${render(roots[0])}
 
 function canGenerateFromModel(engine, representation) {
   const support = {
-    graphviz: ["concept-map", "network", "flowchart", "causal-diagram", "technical-diagram"],
+    graphviz: ["concept-map", "network", "flowchart", "causal-diagram", "technical-diagram", "bpmn", "argument-map", "curriculum-map"],
     mermaid: ["concept-map", "network", "flowchart", "causal-diagram", "technical-diagram"],
     d2: ["concept-map", "network", "flowchart", "timeline", "technical-diagram"],
-    "vega-lite": ["chart", "forest-plot", "map"],
+    "vega-lite": ["chart", "forest-plot", "map", "timeline"],
     matplotlib: ["chart", "forest-plot"],
     geopandas: ["map"],
-    tikz: ["chart", "concept-map", "network", "flowchart", "timeline", "causal-diagram", "technical-diagram", "equation"],
+    tikz: ["chart", "concept-map", "network", "flowchart", "timeline", "causal-diagram", "technical-diagram", "equation", "free-body-diagram"],
     wavedrom: ["signal-diagram"],
     rdkit: ["annotated-image", "chemical-structure"]
-    ,plantuml: ["uml", "technical-diagram"]
+    ,plantuml: ["uml", "technical-diagram", "bpmn", "c4"]
     ,circuitikz: ["electrical-circuit", "disciplinary-notation"]
     ,chemfig: ["chemical-structure", "chemical-reaction", "disciplinary-notation"]
     ,forest: ["syntax-tree", "phylogenetic-tree", "pedigree"]
+    ,html: ["sankey"]
   };
   return Boolean(support[engine]?.includes(representation));
 }
@@ -412,6 +472,8 @@ function generateSource(engine, spec) {
   if (engine === "circuitikz") return circuitikz(spec.model, spec);
   if (engine === "chemfig") return chemfig(spec.model, spec);
   if (engine === "forest") return forest(spec.model, spec);
+  if (engine === "html" && spec.representation === "sankey") return sankeyHtml(spec.model);
+  if (engine === "tikz" && spec.representation === "free-body-diagram") return freeBodyDiagram(spec.model);
   throw new Error(`El motor ${engine} no admite generación desde model; proporciona source o sourceFile.`);
 }
 
@@ -419,4 +481,5 @@ module.exports = {
   generateSource, canGenerateFromModel, graphviz, mermaid, d2, vegaLite,
   forestPlot, geoMap, wavedrom, rdkit, matplotlib, geopandas, tikz,
   plantuml, circuitikz, chemfig, forest
+  ,sankeyHtml, freeBodyDiagram
 };

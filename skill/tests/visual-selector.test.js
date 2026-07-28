@@ -14,7 +14,7 @@ const { hashes } = require("../scripts/visual-regression");
 const {
   graphviz, mermaid, d2, vegaLite, forestPlot, geoMap, wavedrom, rdkit,
   matplotlib, geopandas, tikz, canGenerateFromModel,
-  plantuml, circuitikz, chemfig, forest
+  plantuml, circuitikz, chemfig, forest, sankeyHtml, freeBodyDiagram
 } = require("../scripts/visual-source-generator");
 const { expandProgressive } = require("../scripts/visual-progressive");
 const { encodePng, decodePng, comparePng } = require("../scripts/png-compare");
@@ -195,6 +195,13 @@ test("mide complejidad estructural antes de seleccionar el motor", () => {
   assert.ok(metrics.averageLabelWords >= 2);
 });
 
+test("usa las métricas avanzadas para elegir motor", () => {
+  assert.equal(selectEngine({ representation: "flowchart", model: { requiresExactCoordinates: true } }), "tikz");
+  assert.equal(selectEngine({ representation: "flowchart", model: { hierarchyDepth: 6 } }), "graphviz");
+  assert.equal(selectEngine({ representation: "argument-map", model: { nodes: [{ id: "a" }, { id: "b" }], edges: [{ from: "a", to: "b" }, { from: "a", to: "b" }, { from: "a", to: "b" }, { from: "a", to: "b" }, { from: "a", to: "b" }] } }), "graphviz");
+  assert.equal(selectEngine({ representation: "timeline", model: { events: [{ date: "2024-01-01", label: "Inicio", value: 1 }] } }), "vega-lite");
+});
+
 test("genera fallbacks reales de Matplotlib, GeoPandas y TikZ", () => {
   const chart = { categories: ["A", "B"], values: [2, 5], chartType: "line" };
   assert.match(matplotlib(chart, { representation: "chart" }), /ax\.plot/);
@@ -224,6 +231,25 @@ test("genera notaciones disciplinares desde modelos neutrales", () => {
       { id: "vp", label: "VP", parent: "s" }
     ]
   }), /\[S \[NP \] \[VP \]\]/);
+});
+
+test("genera las representaciones avanzadas declaradas desde modelos neutrales", () => {
+  assert.equal(selectEngine({ representation: "bpmn" }), "graphviz");
+  assert.equal(selectEngine({ representation: "c4" }), "plantuml");
+  assert.equal(selectEngine({ representation: "sankey" }), "html");
+  assert.equal(selectEngine({ representation: "argument-map" }), "graphviz");
+  assert.equal(selectEngine({ representation: "curriculum-map" }), "graphviz");
+  assert.equal(selectEngine({ representation: "free-body-diagram" }), "tikz");
+  assert.equal(canGenerateFromModel("graphviz", "bpmn"), true);
+  assert.equal(canGenerateFromModel("plantuml", "c4"), true);
+  assert.equal(canGenerateFromModel("html", "sankey"), true);
+  assert.equal(canGenerateFromModel("tikz", "free-body-diagram"), true);
+  assert.match(plantuml({ diagramType: "c4", nodes: [{ id: "web", label: "Web", kind: "container" }], edges: [] }), /Container\(web/);
+  assert.match(sankeyHtml({ links: [{ source: "a", target: "b", value: 4 }] }), /<svg/);
+  assert.match(freeBodyDiagram({ forces: [{ angle: 90, magnitude: 2, label: "Peso" }] }), /Peso/);
+  const timeline = JSON.parse(vegaLite({ events: [{ date: "2024-01-01", label: "Inicio", value: 2 }] }, "Cronología."));
+  assert.equal(timeline.data.values[0].value, 2);
+  assert.equal(timeline.encoding.x.type, "temporal");
 });
 
 test("la plantilla rechaza placements que no soporta", () => {
