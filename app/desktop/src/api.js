@@ -121,6 +121,10 @@ export async function getDefaultCourseRoot() {
   return invoke("get_default_course_root");
 }
 
+export async function getCourseState(projectPath) {
+  return invoke("get_course_state", { projectPath });
+}
+
 // ── Biblioteca de PDFs generados ─────────────────────────────────────────
 export async function listGeneratedPdfs(projects) {
   return invoke("list_generated_pdfs", { projects });

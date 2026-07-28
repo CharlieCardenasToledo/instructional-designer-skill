@@ -1,5 +1,6 @@
 mod config;
 mod course;
+mod course_state;
 mod mcp;
 mod models;
 mod onboarding;
@@ -180,6 +181,13 @@ async fn get_default_course_root(app: tauri::AppHandle) -> ActionResult {
 }
 
 #[tauri::command]
+async fn get_course_state(project_path: String) -> serde_json::Value {
+    tauri::async_runtime::spawn_blocking(move || course_state::read(project_path))
+        .await
+        .unwrap_or_else(|error| serde_json::json!({ "success": false, "message": format!("No se pudo leer el estado: {error}") }))
+}
+
+#[tauri::command]
 async fn list_generated_pdfs(projects: Vec<PdfProjectRoot>) -> Vec<GeneratedPdf> {
     tauri::async_runtime::spawn_blocking(move || pdfs::list_generated_pdfs(projects))
         .await
@@ -330,6 +338,7 @@ pub fn run() {
             check_notebooklm_auth,
             run_notebooklm_auth,
             get_default_course_root,
+            get_course_state,
             list_generated_pdfs,
             open_generated_pdf,
             reveal_generated_pdf,

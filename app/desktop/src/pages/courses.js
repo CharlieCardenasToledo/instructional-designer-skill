@@ -1,4 +1,4 @@
-import { createCourseStructure, getDefaultCourseRoot, pickDirectory } from "../api.js";
+import { createCourseStructure, getDefaultCourseRoot, getCourseState, pickDirectory } from "../api.js";
 import { escapeHtml, safeIndex } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
@@ -19,6 +19,9 @@ let _defaultCourseRootPromise = null;
 let _appearanceIndex = -1;
 let _appearanceDraft = {};
 let _appearanceOpener = null;
+let _courseStates = new Map();
+let _statesLoading = false;
+let _statesLoaded = false;
 
 const REQUIRED_WEEK_FIELDS = ["title", "unit", "topics", "outcomes", "bibliography", "graded_activity"];
 const PROJECT_COLORS = [
@@ -69,6 +72,15 @@ bindGlobalEvents();
 
 function courseProgress(course) {
   const total = Math.min(52, Math.max(1, Number(course.weeks) || 16));
+  const trackedWeeks = _courseStates.get(course.project_path || "");
+  if (trackedWeeks) {
+    const statuses = Object.values(trackedWeeks);
+    const complete = statuses.filter(item => ["compiled", "complete"].includes(item?.status)).length;
+    const outdated = statuses.filter(item => item?.status === "outdated").length;
+    const started = statuses.length > 0;
+    const status = outdated ? "outdated" : complete === total ? "complete" : started ? "progress" : "pending";
+    return { complete: Math.min(complete, total), total, pct: Math.round((Math.min(complete, total) / total) * 100), status, outdated };
+  }
   const weeks = Array.isArray(course.weeks_data) ? course.weeks_data : [];
   const complete = Array.from({ length: total }, (_, index) => {
     const week = weeks[index];
@@ -76,13 +88,14 @@ function courseProgress(course) {
   }).filter(Boolean).length;
   const started = weeks.some(week => week && Object.values(week).some(value => value !== null && value !== "" && value !== undefined));
   const status = complete === total ? "complete" : started ? "progress" : "pending";
-  return { complete, total, pct: Math.round((complete / total) * 100), status };
+  return { complete, total, pct: Math.round((complete / total) * 100), status, outdated: 0 };
 }
 
 function statusView(progress) {
   return {
     complete: { label: "Lista", icon: "check_circle", classes: "border-green-200 bg-green-50 text-green-700" },
     progress: { label: "En progreso", icon: "pending", classes: "border-teal-200 bg-teal-50 text-teal-700" },
+    outdated: { label: "Desactualizado", icon: "sync_problem", classes: "border-amber-200 bg-amber-50 text-amber-700" },
     pending: { label: "Pendiente", icon: "radio_button_unchecked", classes: "border-slate-200 bg-slate-50 text-slate-600" },
   }[progress.status];
 }
@@ -90,6 +103,8 @@ function statusView(progress) {
 function persistCourseList(nextCourses, successMessage) {
   const previous = state.courses;
   state.courses = nextCourses;
+  _statesLoaded = false;
+  _courseStates = new Map();
   try {
     saveCourses();
     if (successMessage) toast(successMessage, "success", 3200);
@@ -104,6 +119,18 @@ function persistCourseList(nextCourses, successMessage) {
 export function renderCourses() {
   const el = document.getElementById("p-courses");
   if (!el) return;
+
+  if (!_statesLoaded && !_statesLoading && state.courses.some(course => course.project_path)) {
+    _statesLoading = true;
+    Promise.all(state.courses.filter(course => course.project_path).map(async course => [course.project_path, await getCourseState(course.project_path).catch(() => null)]))
+      .then(entries => {
+        _courseStates = new Map(entries.filter(([, result]) => result?.success && result.exists).map(([projectPath, result]) => [projectPath, result.state?.weeks || {}]));
+        _statesLoaded = true;
+        _statesLoading = false;
+        renderCourses();
+      })
+      .catch(() => { _statesLoaded = true; _statesLoading = false; });
+  }
 
   const summaries = state.courses.map(courseProgress);
   const total = state.courses.length;

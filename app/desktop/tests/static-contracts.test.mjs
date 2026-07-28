@@ -813,6 +813,17 @@ test('Courses muestra progreso real y protege sus operaciones', async () => {
   assert.match(main, /jintia:new-course/);
 });
 
+test('Courses incorpora el estado persistente de semanas sin reemplazar el progreso local', async () => {
+  const courses = await readFile(new URL('src/pages/courses.js', root), 'utf8');
+  const api = await readFile(new URL('src/api.js', root), 'utf8');
+  const rust = await readFile(new URL('src-tauri/src/course_state.rs', root), 'utf8');
+  assert.match(courses, /getCourseState/);
+  assert.match(courses, /Desactualizado/);
+  assert.match(courses, /_courseStates/);
+  assert.match(api, /get_course_state/);
+  assert.match(rust, /state\.json/);
+});
+
 test('las asignaturas usan Documentos por defecto y permiten cambiar la ubicación', async () => {
   const [courses, api, lib] = await Promise.all([
     readFile(new URL('src/pages/courses.js', root), 'utf8'),

@@ -196,6 +196,7 @@ const handlers = {
   },
   save_notebooks_config: () => actionResult(true, "Notebooks guardados (mock)."),
   get_default_course_root: () => actionResult(true, "Carpeta de proyectos Jintia disponible (mock).", { path: "C:\\Users\\Demo\\Documents\\Jintia" }),
+  get_course_state: () => ({ success: true, exists: false, message: "El proyecto aún no tiene estado Jintia (mock)." }),
   create_course_structure: ({ rootPath, courseCode, courseName }) => {
     const slug = `${courseCode}_${courseName}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
