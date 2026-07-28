@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "tools": {
+    "graphviz": { "commands": ["dot"], "required": false, "supports": ["graphviz"] },
+    "mermaid": { "commands": ["mmdc"], "required": false, "supports": ["mermaid"] },
+    "plantuml": { "commands": ["plantuml"], "required": false, "supports": ["plantuml"] },
+    "d2": { "commands": ["d2"], "required": false, "supports": ["d2"] },
+    "vegaLite": { "commands": ["vl2svg"], "required": false, "supports": ["vega-lite"] },
+    "latex": { "commands": ["pdflatex"], "required": true, "supports": ["tikz", "circuitikz", "chemfig", "forest"] },
+    "python": { "commands": ["python3", "python", "py"], "required": false, "supports": ["matplotlib", "geopandas", "rdkit"] },
+    "chrome": { "environmentVariable": "CHROME_PATH", "commands": ["chrome", "google-chrome", "chromium"], "required": false, "versionProbe": false, "supports": ["html"] },
+    "wavedrom": { "commands": ["wavedrom-cli"], "required": false, "supports": ["wavedrom"] },
+    "inkscape": { "commands": ["inkscape"], "required": false, "supports": ["svg-to-pdf", "svg-preview"] }
+  }
+}

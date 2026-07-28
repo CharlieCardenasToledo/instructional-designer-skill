@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jintia.local/schemas/visual-manifest.schema.json",
+  "title": "Jintia visual manifest",
+  "type": "object",
+  "required": ["version", "figures"],
+  "properties": {
+    "version": { "const": 1 },
+    "figures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "engine", "source", "rendered", "status", "altText"],
+        "properties": {
+          "id": { "type": "string" },
+          "engine": { "type": "string" },
+          "source": { "type": "string" },
+          "rendered": { "type": "string" },
+          "preview": { "type": ["string", "null"] },
+          "templatePlacement": { "enum": ["auto", "main", "wide", "margin"] },
+          "status": { "enum": ["planned", "valid", "failed", "fallback"] },
+          "altText": { "type": "string" },
+          "longDescription": { "type": ["string", "null"] },
+          "representation": { "type": "string" },
+          "complexity": { "type": "string" },
+          "dataTable": { "type": ["string", "null"] },
+          "sourceAttribution": { "type": ["string", "null"] },
+          "license": { "type": ["string", "null"] },
+          "provenance": { "type": ["string", "null"] },
+          "palette": { "type": ["object", "null"] },
+          "fallback": { "type": ["object", "null"] },
+          "toolVersion": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

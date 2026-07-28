@@ -1,0 +1,69 @@
+name: Visual engine matrix
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/visual-engine-matrix.yml"
+      - "skill/config/visual-tools.json"
+      - "skill/scripts/visual-*.js"
+      - "skill/tests/**"
+  push:
+    branches: [master]
+    tags: ["v*"]
+    paths:
+      - ".github/workflows/visual-engine-matrix.yml"
+      - "skill/config/visual-tools.json"
+      - "skill/scripts/visual-*.js"
+      - "skill/tests/**"
+
+permissions:
+  contents: read
+
+jobs:
+  real-render:
+    name: Real render (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      JINTIA_EXPECT_VISUAL_TOOLS: graphviz,mermaid,vegaLite,python,chrome,wavedrom
+      JINTIA_REAL_RENDER_TESTS: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Graphviz (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes graphviz
+      - name: Install Graphviz (macOS)
+        if: runner.os == 'macOS'
+        run: brew install graphviz
+      - name: Install Graphviz (Windows)
+        if: runner.os == 'Windows'
+        run: choco install graphviz --yes --no-progress
+
+      - name: Install portable visual CLIs
+        run: npm install --global @mermaid-js/mermaid-cli vega-cli vega-lite wavedrom-cli
+
+      - name: Configure Chrome (Linux)
+        if: runner.os == 'Linux'
+        run: echo "CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+      - name: Configure Chrome (macOS)
+        if: runner.os == 'macOS'
+        run: echo "CHROME_PATH=/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" >> "$GITHUB_ENV"
+
+      - name: Verify real engine availability
+        run: node skill/scripts/visual-matrix-check.js
+      - name: Run visual tests with real Chrome rendering
+        run: npm --prefix skill test

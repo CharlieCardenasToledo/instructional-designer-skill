@@ -20,6 +20,19 @@ El inventario verificable generado desde `package-lock.json`, `Cargo.lock` y
 los recursos empaquetados se encuentra en
 `app/desktop/public/legal/third-party-notices.json`.
 
+## Herramientas visuales opcionales no distribuidas
+
+Jintia puede detectar y ejecutar instalaciones locales de Graphviz, Mermaid
+CLI, PlantUML, D2, Vega-Lite/Vega CLI, WaveDrom, Inkscape, Chrome, Python,
+GeoPandas y RDKit. Esas herramientas no se empaquetan ni redistribuyen con
+Jintia. Conservan sus propias licencias, versiones y condiciones de
+instalación. La aplicación no las instala silenciosamente.
+
+Las especificaciones y archivos fuente generados por Jintia no incorporan por
+sí mismos código de esos proyectos. Antes de distribuir un instalador que
+incluya cualquiera de estas herramientas, actualizar este inventario y
+verificar su licencia por separado.
+
 ## Marcas y servicios
 
 Claude y Anthropic son marcas de Anthropic PBC. Google, Gemini y NotebookLM

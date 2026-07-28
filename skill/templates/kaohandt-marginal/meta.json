@@ -18,7 +18,8 @@
     "wideLayout": true,
     "coloredBlocks": true,
     "biblatex": true,
-    "tikz": true
+    "tikz": true,
+    "visualPlacements": ["auto", "main", "wide", "margin"]
   },
   "blocks": {
     "softblock": { "title": "Orientación", "color": "#f7f8fa" },

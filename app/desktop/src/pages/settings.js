@@ -1,5 +1,5 @@
 import {
-  applyInstitutionConfig, checkDependencies, installDependency,
+  applyInstitutionConfig, checkDependencies, getVisualInstallProfiles, installDependency,
   configureMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
   installSkill, exportSkillZip, installOpenAIPlugin, exportOpenAIPluginZip,
   pickDirectory, saveNotebooksConfig,
@@ -895,12 +895,37 @@ async function loadDeps() {
   container.innerHTML = `<div class="p-6 text-center text-slate-400">Cargando…</div>`;
 
   try {
-    const deps  = await checkDependencies();
+    const [deps, visualProfiles] = await Promise.all([
+      checkDependencies(),
+      getVisualInstallProfiles()
+    ]);
     const ok    = deps.filter(d => d.installed).length;
     const total = deps.length;
     const pct   = total > 0 ? Math.round((ok / total) * 100) : 0;
 
+    const selectedProfile = localStorage.getItem("jintia.visualProfile") || "minimum";
+    const profiles = visualProfiles?.profiles || [];
+    const profile = profiles.find(item => item.id === selectedProfile) || profiles[0];
+    const dependencyByName = new Map(deps.map(dep => [dep.name, dep]));
+    const unavailable = (profile?.tools || []).filter(tool => !dependencyByName.get(tool.desktopName)?.installed);
+
     container.innerHTML = `
+      <div class="mb-4 rounded-xl border border-slate-900/10 bg-slate-900/[0.025] p-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="min-w-0 flex-1">
+            <div class="text-[13px] font-semibold text-app-text">Perfil de capacidades visuales</div>
+            <div class="${ui.list.sub}">${escapeHtml(profile?.description || "")}</div>
+          </div>
+          <select id="visual-install-profile" class="${ui.input}" aria-label="Perfil de capacidades visuales">
+            ${profiles.map(item => `<option value="${escapeHtml(item.id)}" ${item.id === profile?.id ? "selected" : ""}>${escapeHtml(item.name)}</option>`).join("")}
+          </select>
+        </div>
+        <div class="mt-3 text-xs ${unavailable.length ? "text-amber-700" : "text-green-700"}">
+          ${unavailable.length
+            ? `Capacidades deshabilitadas: ${unavailable.map(tool => `${escapeHtml(tool.desktopName)} (${escapeHtml(tool.version)})`).join(", ")}. La instalación es manual y siempre requiere tu confirmación.`
+            : "Todas las capacidades del perfil están disponibles."}
+        </div>
+      </div>
       <div class="mb-3 flex items-center gap-3">
         <span class="text-2xl font-extrabold text-brand">${ok}</span>
         <div>
@@ -923,9 +948,11 @@ async function loadDeps() {
             </div>
           </div>
           <div class="${ui.list.right}">
-            ${!dep.installed
+            ${!dep.installed && dep.installable !== false
               ? `<button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-dep-name="${escapeHtml(dep.name)}">Instalar</button>`
-              : `<span class="${ui.badge.success}">OK</span>`}
+              : dep.installed
+                ? `<span class="${ui.badge.success}">OK</span>`
+                : `<span class="${ui.badge.muted}">Instalación manual</span>`}
           </div>
         </div>`).join("")}`;
 
@@ -940,6 +967,11 @@ async function loadDeps() {
           if (r.success) { loadDeps(); loadSetupStatus(); }
         } catch (e) { toast(`Error: ${e}`, "error"); }
       });
+    });
+
+    container.querySelector("#visual-install-profile")?.addEventListener("change", event => {
+      localStorage.setItem("jintia.visualProfile", event.target.value);
+      loadDeps();
     });
 
     container.querySelector("#btn-install-all-deps")?.addEventListener("click", async () => {

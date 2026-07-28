@@ -21,6 +21,8 @@ Leer únicamente las referencias necesarias para la tarea. Leer siempre `referen
 | Citas, `reference.bib` y NotebookLM MCP | `references/bibliografia.md` |
 | Figuras TikZ y notación Chen | `references/figuras-tikz.md` |
 | Mock-ups HTML y captura PNG | `references/figuras-html.md` |
+| Selección, especificación, renderizado y accesibilidad visual | `references/sistema-visual.md` |
+| Convenciones visuales por área académica | `references/perfiles-disciplinares.md` |
 | Compilación y scripts auxiliares | `references/compilacion.md` |
 | Validación final obligatoria | `references/checklist.md` |
 
@@ -146,6 +148,27 @@ Aplicar Quality Matters:
 - mantener alineación entre resultado, actividad y evaluación;
 - evitar recursos sin función pedagógica.
 
+### 7. Diseñar representaciones visuales
+
+No añadir una figura por decoración. Cuando una representación ayude a
+demostrar el resultado de aprendizaje:
+
+1. Identificar la operación cognitiva y el tipo de información.
+2. Leer `references/sistema-visual.md`.
+   Leer también `references/perfiles-disciplinares.md` si la notación del área
+   condiciona la representación.
+3. Elegir gráfico, mapa, tabla, diagrama, imagen o interfaz antes de elegir el
+   motor.
+4. Crear una especificación en `figure/specs/` y renderizarla con
+   `scripts/visual-renderer.js`.
+5. Inspeccionar la salida con `scripts/visual-inspector.js`.
+6. Conservar fuente, datos, salida y procedencia en `figure/manifest.json`.
+7. Adaptar únicamente la colocación a la plantilla activa.
+
+No inventar una imagen real cuando su apariencia sea evidencia disciplinar.
+No fingir un renderizado. Registrar el fallback cuando el motor preferido no
+esté disponible.
+
 ## Reglas editoriales
 
 - Escribir en registro académico directo, causal y autoinstruccional.
@@ -155,7 +178,9 @@ Aplicar Quality Matters:
 - Usar un término técnico canónico de forma consistente.
 - Marcar solo su primera aparición con `\keyterm{}`.
 - Conectar el primer párrafo de cada sección con la necesidad creada por la anterior.
-- Usar una figura o una tabla comparativa por sección, no ambas, salvo justificación explícita.
+- Usar por defecto una representación principal por sección. Añadir otra solo
+  cuando responda a una operación cognitiva distinta y la combinación sea
+  necesaria para lograr el resultado.
 - Mencionar cada figura con `Figura~\ref{...}` en el párrafo previo.
 - Usar los macros y bloques de la plantilla activa; no sustituirlos por formato LaTeX genérico.
 - Encapsular todas las figuras en `guidefigure` y usar
@@ -186,7 +211,8 @@ Tratar logos, socios, módulos internacionales y ecosistemas institucionales com
 ## Cierre obligatorio
 
 1. Ejecutar `node scripts/latex-linter.js <guia.tex> --template <activeTemplate>`.
-2. Compilar con `node scripts/latex-validator.js <guia.tex>` cuando el entorno lo permita.
-3. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
-4. Ejecutar `references/checklist.md` punto por punto.
-5. Informar archivos creados, validaciones ejecutadas y limitaciones reales.
+2. Si existen figuras, ejecutar `node scripts/visual-linter.js <guia.tex>`.
+3. Compilar con `node scripts/latex-validator.js <guia.tex>` cuando el entorno lo permita.
+4. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
+5. Ejecutar `references/checklist.md` punto por punto.
+6. Informar archivos creados, validaciones ejecutadas y limitaciones reales.

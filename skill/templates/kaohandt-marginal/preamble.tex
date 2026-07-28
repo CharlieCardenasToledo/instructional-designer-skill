@@ -45,7 +45,31 @@
 \newcommand{\widecontent}[1]{\pagelayout{wide}#1\pagelayout{margin}}
 \newenvironment{guidetable}{\par\medskip\refstepcounter{table}\begin{center}\begin{minipage}{\textwidth}\centering}{\end{minipage}\end{center}\medskip}
 \newcommand{\guidetablecaption}[2]{\textbf{Tabla \thetable.} #1\label{#2}\par\smallskip}
-\newenvironment{guidefigure}{\par\medskip\refstepcounter{figure}\begin{center}\begin{minipage}{\textwidth}\centering}{\end{minipage}\end{center}\medskip}
+\newif\ifguidefigurewide
+\newif\ifguidefiguremargin
+\pgfkeys{/guidefigure/.is family,/guidefigure,placement/.store in=\guidefigureplacement,placement/.default=auto}
+\newenvironment{guidefigure}[1][]{%
+  \def\guidefigureplacement{auto}%
+  \pgfkeys{/guidefigure,placement=auto,#1}%
+  \guidefigurewidefalse
+  \guidefiguremarginfalse
+  \ifstrequal{\guidefigureplacement}{wide}{\guidefigurewidetrue}{}%
+  \ifstrequal{\guidefigureplacement}{margin}{\guidefiguremargintrue}{}%
+  \refstepcounter{figure}%
+  \ifguidefigurewide\pagelayout{wide}\fi
+  \ifguidefiguremargin
+    \begin{marginfigure}\centering
+  \else
+    \par\medskip\begin{center}\begin{minipage}{\linewidth}\centering
+  \fi
+}{%
+  \ifguidefiguremargin
+    \end{marginfigure}%
+  \else
+    \end{minipage}\end{center}\medskip
+  \fi
+  \ifguidefigurewide\pagelayout{margin}\fi
+}
 \newcommand{\guidefigurecaption}[2]{\textbf{Figura \thefigure.} #1\label{#2}\par\smallskip}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 

@@ -8,7 +8,7 @@ Referencia de `jintia-skill`. Ejecutar esta verificación completa antes de entr
 - [ ] Los datos de la semana (temas, RA, bibliografía, actividades) se extrajeron del README, no se solicitaron al usuario.
 
 **Archivo principal (`guia-semana-XX.tex`)**
-- [ ] Clase `elegantbook` con opciones `lang=es,color=blue,citestyle=apa,bibstyle=apa`.
+- [ ] La clase, las opciones y los archivos requeridos corresponden al `meta.json` de la plantilla activa.
 - [ ] La paleta, los bloques y las macros proceden de la plantilla activa; no se redefinieron sin necesidad.
 - [ ] Los entornos usados (`softblock`, `accentblock`, `mintblock`, `sandblock`, `roseblock`) existen en el preámbulo.
 - [ ] Las macros usadas (`\iconidea`, `\iconcheck`, `\editorialtitle`, `\conceptline`, `\coursemeta`, `\guidesection`) existen en el preámbulo.
@@ -52,12 +52,27 @@ Referencia de `jintia-skill`. Ejecutar esta verificación completa antes de entr
 - [ ] Cuando una sección introduce tres o más conceptos, se evaluó si una pregunta de recuperación mejora el aprendizaje.
 
 **Figuras y tablas**
-- [ ] Las figuras usan `\begin{figure}[H]`, `\caption{}` y `\label{fig:...}`.
+- [ ] Las figuras usan `guidefigure` y `\guidefigurecaption`; no usan `figure`, `\caption` ni `\label` directamente.
 - [ ] El párrafo previo a cada figura la menciona explícitamente con `Figura~\ref{fig:...}` (D2/Spatial Contiguity).
 - [ ] Los diagramas TikZ usan exclusivamente variables semánticas de la paleta.
 - [ ] Los estilos TikZ locales se definen dentro de `\tikzset{...}` al inicio del `tikzpicture`.
 - [ ] Las tablas comparativas usan `tabularx` + `booktabs`. PROHIBIDO `\hline`.
 - [ ] Cada sección usa como máximo una figura o una tabla, salvo justificación pedagógica explícita.
+- [ ] Toda figura tiene especificación, fuente editable, salida renderizada y entrada en `figure/manifest.json`.
+- [ ] Toda figura tiene texto alternativo; los gráficos cuantitativos incluyen tabla de datos.
+- [ ] La procedencia, licencia y cualquier fallback están registrados.
+- [ ] SVG y HTML no contienen recursos remotos, animaciones, texto menor de 10 px ni elementos recortables por falta de `viewBox`.
+- [ ] El contraste de texto declarado es al menos 4.5:1.
+- [ ] La regresión perceptual no produjo diferencias sin revisar en `figure/diffs/`.
+
+**ElegantBook Clásico**
+- [ ] Las figuras permanecen en el flujo principal y su ancho no excede `\linewidth`.
+- [ ] Los bloques y comandos requeridos coinciden con `templates/elegantbook-clasico/meta.json`.
+
+**Kaohandt Marginal**
+- [ ] El contenido esencial permanece en la columna principal.
+- [ ] Las figuras `wide` restauran el layout marginal y las figuras marginales son complementarias.
+- [ ] Las notas marginales no exceden 60 palabras.
 
 **Figuras HTML (solo si la guía las incluye)**
 - [ ] Cada vista de interfaz es un archivo HTML separado en `latex/figure/`, con contenedor raíz `w-[390px]` y sin carcasa de teléfono.
@@ -75,5 +90,6 @@ Referencia de `jintia-skill`. Ejecutar esta verificación completa antes de entr
 
 **Validación automática y manual**
 - [ ] `latex-linter.js` terminó sin errores.
+- [ ] `visual-linter.js` terminó sin errores cuando la guía contiene figuras.
 - [ ] `latex-validator.js` compiló la guía, o se documentó por qué no pudo ejecutarse.
 - [ ] Las reglas editoriales, pedagógicas y de evidencia no cubiertas por los scripts se revisaron manualmente.

@@ -45,7 +45,11 @@
 \newcommand{\guidesection}[1]{\section*{#1}\addcontentsline{toc}{section}{#1}}
 \newenvironment{guidetable}{\begin{table}[H]\centering}{\end{table}}
 \newcommand{\guidetablecaption}[2]{\caption{#1}\label{#2}}
-\newenvironment{guidefigure}{\begin{figure}[H]\centering}{\end{figure}}
+\pgfkeys{/guidefigure/.is family,/guidefigure,placement/.initial=auto}
+\newenvironment{guidefigure}[1][]{%
+  \pgfkeys{/guidefigure,placement=auto,#1}%
+  \begin{figure}[H]\centering
+}{\end{figure}}
 \newcommand{\guidefigurecaption}[2]{\caption{#1}\label{#2}}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 

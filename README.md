@@ -10,7 +10,7 @@ Aplicación de escritorio y skill para convertir un sílabo universitario en una
 ruta conectada de resultados, contenidos, actividades, evaluaciones y guías
 semanales listas para publicar.
 
-[![Version](https://img.shields.io/badge/version-10.4.0-00796b.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-10.7.0-00796b.svg)](CHANGELOG.md)
 [![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![macOS](https://img.shields.io/badge/macOS-DMG-111827.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)
@@ -70,9 +70,9 @@ paleta visual que utilizarán los documentos.
 
 ### 4. Plantilla editorial
 
-La versión actual incluye `ElegantBook Clásico`, una plantilla LaTeX técnica
-que adapta su color a la identidad institucional. La arquitectura admite
-incorporar más plantillas en versiones futuras.
+La versión actual incluye `ElegantBook Clásico` para un flujo técnico de ancho
+principal y `Kaohandt Marginal` para guías con columna pedagógica lateral. Las
+dos comparten contratos portables para figuras, tablas, bloques y metadatos.
 
 ![Selector de plantillas LaTeX](docs/images/app/templates.png)
 
@@ -95,7 +95,10 @@ Una vez instalada, la skill guía la creación de:
 
 - guías semanales modulares en LaTeX;
 - resultados, actividades y evaluaciones alineados;
-- diagramas semánticos con TikZ;
+- gráficos, mapas, redes, procesos, interfaces y diagramas disciplinares
+  seleccionados por intención pedagógica;
+- fuentes visuales editables, manifiesto de procedencia y renderizado
+  reproducible mediante motores locales disponibles;
 - bibliografía en APA 7 mediante `biblatex` y `biber`;
 - secciones de recuperación, transferencia y aplicación profesional;
 - documentos validados antes de la compilación final.
@@ -108,7 +111,7 @@ intercalado.
 
 ### Opción recomendada: aplicación de escritorio
 
-Descargas directas de la versión 10.4.0:
+Descargas directas de la versión 10.7.0:
 
 | Sistema | Instalador | Descarga |
 |---|---|---|

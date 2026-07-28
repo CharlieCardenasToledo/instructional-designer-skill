@@ -325,6 +325,39 @@ test('los destinos distinguen Claude del plugin universal de ChatGPT y Codex', a
   assert.match(connect, /id: "both",\s*title: "Usar en todos"/);
 });
 
+test('Entorno detecta motores visuales opcionales sin instalarlos silenciosamente', async () => {
+  const [course, models, setup, settings] = await Promise.all([
+    readFile(new URL('src-tauri/src/course.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/models.rs', root), 'utf8'),
+    readFile(new URL('src/pages/setup.js', root), 'utf8'),
+    readFile(new URL('src/pages/settings.js', root), 'utf8'),
+  ]);
+  for (const tool of ['Graphviz', 'Mermaid CLI', 'PlantUML', 'D2', 'Vega-Lite CLI', 'WaveDrom', 'Inkscape', 'Google Chrome']) {
+    assert.match(course, new RegExp(`"${tool.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`));
+  }
+  assert.match(models, /pub installable: bool/);
+  assert.match(course, /installable: false/);
+  assert.match(setup, /dep\.installable !== false/);
+  assert.match(settings, /dep\.installable !== false/);
+  assert.doesNotMatch(course, /"Graphviz"\s*=>|"Mermaid CLI"\s*=>|"PlantUML"\s*=>/);
+});
+
+test('Entorno ofrece perfiles visuales versionados sin instalación automática', async () => {
+  const [api, settings, lib, profilesText] = await Promise.all([
+    readFile(new URL('src/api.js', root), 'utf8'),
+    readFile(new URL('src/pages/settings.js', root), 'utf8'),
+    readFile(new URL('src-tauri/src/lib.rs', root), 'utf8'),
+    readFile(new URL('../../skill/config/visual-install-profiles.json', root), 'utf8'),
+  ]);
+  const profiles = JSON.parse(profilesText);
+  assert.deepEqual(profiles.profiles.map(profile => profile.id), ['minimum', 'core', 'full']);
+  assert.ok(profiles.profiles.every(profile => profile.tools.every(tool => tool.version)));
+  assert.match(api, /getVisualInstallProfiles/);
+  assert.match(lib, /get_visual_install_profiles/);
+  assert.match(settings, /jintia\.visualProfile/);
+  assert.match(settings, /Capacidades deshabilitadas/);
+});
+
 test('cambiar el destino mantiene sincronizada la selección visible del onboarding', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
   const start = source.indexOf('input[name=onboarding-target]');
@@ -667,7 +700,7 @@ test('Jintia se empaqueta como plugin universal para ChatGPT y Codex', async () 
   const manifest = JSON.parse(manifestText);
   const mcp = JSON.parse(mcpText);
   assert.equal(manifest.name, "jintia");
-  assert.equal(manifest.version, "10.6.0");
+  assert.equal(manifest.version, "10.7.0");
   assert.equal(manifest.skills, "./skills/");
   assert.equal(manifest.mcpServers, "./.mcp.json");
   assert.equal(mcp.notebooklm.command, "npx");

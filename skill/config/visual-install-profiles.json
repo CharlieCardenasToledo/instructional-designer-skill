@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "id": "minimum",
+      "name": "Mínimo",
+      "description": "LaTeX y figuras HTML; usa fallbacks o detiene notación formal no disponible.",
+      "tools": [
+        { "id": "latex", "desktopName": "Compilador LaTeX", "version": "MiKTeX/TeX Live vigente" },
+        { "id": "chrome", "desktopName": "Google Chrome", "version": "estable vigente" }
+      ]
+    },
+    {
+      "id": "core",
+      "name": "Visual general",
+      "description": "Añade redes, flujos y gráficos cuantitativos reproducibles.",
+      "tools": [
+        { "id": "latex", "desktopName": "Compilador LaTeX", "version": "MiKTeX/TeX Live vigente" },
+        { "id": "chrome", "desktopName": "Google Chrome", "version": "estable vigente" },
+        { "id": "graphviz", "desktopName": "Graphviz", "version": "12.2.x" },
+        { "id": "mermaid", "desktopName": "Mermaid CLI", "version": "11.12.x" },
+        { "id": "vegaLite", "desktopName": "Vega-Lite CLI", "version": "6.x" }
+      ]
+    },
+    {
+      "id": "full",
+      "name": "Completo",
+      "description": "Habilita además UML, D2, señales y conversión vectorial.",
+      "tools": [
+        { "id": "latex", "desktopName": "Compilador LaTeX", "version": "MiKTeX/TeX Live vigente" },
+        { "id": "chrome", "desktopName": "Google Chrome", "version": "estable vigente" },
+        { "id": "graphviz", "desktopName": "Graphviz", "version": "12.2.x" },
+        { "id": "mermaid", "desktopName": "Mermaid CLI", "version": "11.12.x" },
+        { "id": "plantuml", "desktopName": "PlantUML", "version": "1.2026.x" },
+        { "id": "d2", "desktopName": "D2", "version": "0.7.x" },
+        { "id": "vegaLite", "desktopName": "Vega-Lite CLI", "version": "6.x" },
+        { "id": "wavedrom", "desktopName": "WaveDrom", "version": "3.5.x" },
+        { "id": "inkscape", "desktopName": "Inkscape", "version": "1.4.x" }
+      ]
+    }
+  ]
+}

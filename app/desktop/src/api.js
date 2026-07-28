@@ -34,6 +34,10 @@ export async function checkDependencies() {
   return invoke("check_dependencies");
 }
 
+export async function getVisualInstallProfiles() {
+  return invoke("get_visual_install_profiles");
+}
+
 export async function getOnboardingStatus() {
   return invoke("get_onboarding_status");
 }

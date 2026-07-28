@@ -332,6 +332,7 @@ mod tests {
             installed,
             version: None,
             required,
+            installable: true,
             note: String::new(),
             command: String::new(),
         }

@@ -179,6 +179,33 @@ fn command_exists(command: &str) -> bool {
         .unwrap_or(false)
 }
 
+fn chrome_executable() -> Option<PathBuf> {
+    if let Ok(configured) = std::env::var("CHROME_PATH") {
+        let path = PathBuf::from(configured);
+        if path.is_file() {
+            return Some(path);
+        }
+    }
+    if cfg!(target_os = "windows") {
+        for variable in ["PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"] {
+            if let Ok(root) = std::env::var(variable) {
+                let path = Path::new(&root)
+                    .join("Google")
+                    .join("Chrome")
+                    .join("Application")
+                    .join("chrome.exe");
+                if path.is_file() {
+                    return Some(path);
+                }
+            }
+        }
+    }
+    ["google-chrome", "chromium", "chrome"]
+        .into_iter()
+        .find(|command| command_exists(command))
+        .map(PathBuf::from)
+}
+
 fn version(command: &str, args: &[&str]) -> Option<String> {
     Command::new(command)
         .args(args)
@@ -229,6 +256,7 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
             installed: node && npx,
             version: version("node", &["--version"]),
             required: true,
+            installable: true,
             note: "Necesario para que la app funcione correctamente.".to_string(),
             command: "node --version".to_string(),
         },
@@ -237,6 +265,7 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
             installed: git,
             version: version("git", &["--version"]),
             required: false,
+            installable: true,
             note: "Opcional: guarda el historial de cambios de tus cursos.".to_string(),
             command: "git --version".to_string(),
         },
@@ -245,6 +274,7 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
             installed: python,
             version: version(python_command, &["--version"]),
             required: true,
+            installable: true,
             note: "Procesa recursos del curso (recortes bibliográficos).".to_string(),
             command: format!("{python_command} --version"),
         },
@@ -262,8 +292,42 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
         installed: latex,
         version: version("pdflatex", &["--version"]),
         required: true,
+        installable: true,
         note: "Genera el PDF de tu guía (MiKTeX en Windows).".to_string(),
         command: "pdflatex --version".to_string(),
+    });
+
+    let optional_visual_tools = [
+        ("Graphviz", "dot", &["-V"][..], "Redes, mapas conceptuales y grafos."),
+        ("Mermaid CLI", "mmdc", &["--version"][..], "Flujos y decisiones simples."),
+        ("PlantUML", "plantuml", &["-version"][..], "UML y diagramas técnicos formales."),
+        ("D2", "d2", &["--version"][..], "Diagramas declarativos y cronologías."),
+        ("Vega-Lite CLI", "vl2svg", &["--version"][..], "Gráficos cuantitativos reproducibles."),
+        ("WaveDrom", "wavedrom-cli", &["--version"][..], "Señales digitales."),
+        ("Inkscape", "inkscape", &["--version"][..], "Conversión SVG, PDF y previsualizaciones."),
+    ];
+    dependencies.extend(optional_visual_tools.into_iter().map(
+        |(name, command, version_args, note)| DependencyStatus {
+            name: name.to_string(),
+            installed: command_exists(command),
+            version: version(command, version_args),
+            required: false,
+            installable: false,
+            note: format!("{note} Capacidad visual opcional; Jintia aplicará un fallback cuando sea válido."),
+            command: format!("{command} {}", version_args.join(" ")),
+        },
+    ));
+    let chrome = chrome_executable();
+    dependencies.push(DependencyStatus {
+        name: "Google Chrome".to_string(),
+        installed: chrome.is_some(),
+        version: None,
+        required: false,
+        installable: false,
+        note: "Capturas HTML reproducibles en segundo plano; Jintia no abre ventanas durante el renderizado.".to_string(),
+        command: chrome
+            .map(|path| path_text(&path))
+            .unwrap_or_else(|| "CHROME_PATH".to_string()),
     });
 
     if let Ok(mut cache) = dependency_cache().lock() {

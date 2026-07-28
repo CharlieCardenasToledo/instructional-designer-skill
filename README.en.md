@@ -10,7 +10,7 @@ Desktop application and skill for turning a university syllabus into a
 connected path of outcomes, content, activities, assessments, and
 publication-ready weekly learning guides.
 
-[![Version](https://img.shields.io/badge/version-10.4.0-00796b.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-10.7.0-00796b.svg)](CHANGELOG.md)
 [![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![macOS](https://img.shields.io/badge/macOS-DMG-111827.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)
@@ -72,9 +72,9 @@ visual palette used by generated documents.
 
 ### 4. Editorial template
 
-The current release includes `ElegantBook Clásico`, a technical LaTeX template
-whose primary color follows the institution settings. The architecture can
-support additional templates in future releases.
+The current codebase includes `ElegantBook Clásico` for a technical
+single-column flow and `Kaohandt Marginal` for guides with a pedagogical
+margin. Both use portable contracts for figures, tables, blocks, and metadata.
 
 ![LaTeX template selector](docs/images/app/templates.png)
 
@@ -88,7 +88,10 @@ support additional templates in future releases.
 - Installs the skill for Claude Code or exports it for other targets.
 - Creates the canonical course structure.
 - Converts weekly syllabus content into a structured `README.md`.
-- Activates and previews the included LaTeX template.
+- Activates and previews the included LaTeX templates.
+- Detects optional visual engines and reports which capabilities are disabled.
+- Offers Minimum, General Visual, and Full capability profiles without
+  installing optional tools silently.
 - Keeps course data, configuration, files, and compilation local.
 
 ## What the skill produces
@@ -97,7 +100,11 @@ Once installed, the skill guides the creation of:
 
 - modular weekly guides in LaTeX;
 - aligned outcomes, activities, and assessments;
-- semantic TikZ diagrams;
+- charts, maps, networks, timelines, interfaces, forest plots, digital signals,
+  and disciplinary diagrams selected by pedagogical intent;
+- editable visual sources, accessible data tables, provenance manifests, and
+  reproducible local rendering;
+- exact and perceptual visual regression with reviewable diff images;
 - APA 7 bibliographies with `biblatex` and `biber`;
 - retrieval, transfer, and professional-application sections;
 - documents validated before final compilation.
@@ -110,7 +117,7 @@ practices.
 
 ### Recommended: desktop application
 
-Direct downloads for version 10.4.0:
+Direct downloads for version 10.7.0:
 
 | Platform | Installer | Download |
 |---|---|---|
@@ -170,8 +177,9 @@ It can also be invoked explicitly as `/jintia-skill`.
 3. Query available sources through NotebookLM MCP.
 4. Propose the section structure and confirm missing information.
 5. Generate modular LaTeX files.
-6. Apply editorial and accessibility rules.
-7. Compile and review the PDF.
+6. Select and render only the visual representations needed by the outcome.
+7. Apply editorial, accessibility, provenance, and visual-quality rules.
+8. Compile and review the PDF.
 
 The resulting structure follows a predictable sequence:
 
@@ -186,6 +194,12 @@ semanas/semana-XX/latex/
 │   ├── 05-aplicacion.tex
 │   └── 06-bibliografia.tex
 └── figure/
+    ├── specs/
+    ├── data/
+    ├── sources/
+    ├── rendered/
+    ├── previews/
+    └── manifest.json
 ```
 
 ## Application development
@@ -197,6 +211,19 @@ cd app/desktop
 npm ci
 npm test
 npm run tauri:dev
+```
+
+Validate the installable skill:
+
+```bash
+npm run skill:check
+```
+
+Run real visual-engine tests explicitly:
+
+```powershell
+$env:JINTIA_REAL_RENDER_TESTS = "1"
+npm --prefix skill test
 ```
 
 To generate installers locally:

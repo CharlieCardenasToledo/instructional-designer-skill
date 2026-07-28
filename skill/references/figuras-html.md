@@ -19,7 +19,7 @@ Cuando la figura pedagógica representa una interfaz de usuario real (app móvil
 
 ### Stack tecnológico recomendado
 
-- **Framework:** HTML y CSS autosuficientes. Tailwind CSS vía CDN es opcional para prototipos rápidos.
+- **Framework:** HTML y CSS autosuficientes y locales. No depender de una CDN en el renderizado final.
 - **Config de colores personalizados:** bloque `<script>tailwind.config = { ... }</script>` en el `<head>`
 - **Fuente:** `fontFamily: { sans: ['Segoe UI', 'Arial', 'sans-serif'] }` en el config
 
@@ -61,10 +61,7 @@ Estructura mínima de cada archivo HTML:
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = { /* colores + fuente */ }
-</script>
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body class="bg-gray-100 flex justify-center items-start p-0 m-0 font-sans">
   <div class="w-[390px] bg-white shadow-lg flex flex-col">
@@ -107,17 +104,16 @@ Todos los archivos van en `latex/figure/`.
 
 **Vista única:**
 ```latex
-\begin{figure}[H]
+\begin{guidefigure}[placement=main]
 \centering
 \includegraphics[width=0.60\textwidth]{figure/concepto-loja.png}
-\caption{Descripción de la figura.}
-\label{fig:concepto}
-\end{figure}
+\guidefigurecaption{Descripción de la figura.}{fig:concepto}
+\end{guidefigure}
 ```
 
 **Dos vistas lado a lado con subcaption:**
 ```latex
-\begin{figure}[H]
+\begin{guidefigure}[placement=wide]
 \centering
 \begin{minipage}[t]{0.45\textwidth}
   \centering
@@ -132,9 +128,8 @@ Todos los archivos van en `latex/figure/`.
   \par\smallskip
   {\small\itshape Con tratamiento visual diferenciado}
 \end{minipage}
-\caption{Caption principal de la figura compuesta.}
-\label{fig:concepto}
-\end{figure}
+\guidefigurecaption{Descripción principal de la figura compuesta.}{fig:concepto}
+\end{guidefigure}
 ```
 
 ---
@@ -212,6 +207,5 @@ node screenshot.mjs
 
 Los PNG se generan en la misma carpeta `figure/` y quedan listos para que LaTeX los incluya.
 
-**Nota:** El ejemplo carga Tailwind desde CDN y por tanto necesita red. Para un
-flujo offline, compila previamente el CSS y enlaza un archivo local antes de
-capturar.
+Esperar `document.fonts.ready`, desactivar animaciones y usar viewport fijo.
+Empaquetar el CSS y las fuentes localmente para que la captura sea reproducible.

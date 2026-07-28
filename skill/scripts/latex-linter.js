@@ -249,7 +249,7 @@ function lintFile(filePath) {
         }
         
         // 6. Contigüidad Espacial (D2)
-        if (line.includes("\\begin{figure}")) {
+        if (/\\begin\{guidefigure\}(?:\[[^\]]*\])?/.test(line)) {
             inFigure = true;
             figureStartLine = lineNum;
             
@@ -271,6 +271,9 @@ function lintFile(filePath) {
                     "Principio de Contigüidad Espacial (D2): No se encontró una referencia a esta figura (\\ref{fig:...} o 'Figura') en los párrafos inmediatamente precedentes."
                 );
             }
+        }
+        if (inFigure && line.includes("\\end{guidefigure}")) {
+            inFigure = false;
         }
     }
     
@@ -327,6 +330,12 @@ function validatePortableFloatContract(filePath, content, templateMeta) {
                 1,
                 `Contrato de plantilla: no uses ${label} directamente. Usa guidefigure/guidefigurecaption o guidetable/guidetablecaption.`
             );
+        }
+    });
+    const guideFigures = [...content.matchAll(/\\begin\{guidefigure\}(?:\[[^\]]*\])?([\s\S]*?)\\end\{guidefigure\}/g)];
+    guideFigures.forEach(match => {
+        if (!/\\guidefigurecaption\{[\s\S]*?\}\{fig:[^}]+\}/.test(match[1])) {
+            logIssue("ERROR", filePath, 1, "guidefigure debe incluir \\guidefigurecaption{texto}{fig:identificador}.");
         }
     });
 }

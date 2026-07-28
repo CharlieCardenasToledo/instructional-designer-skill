@@ -3,7 +3,24 @@
 Este archivo sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
 y versionado semántico.
 
-## Sin publicar
+## 10.7.0 — 2026-07-28
+
+### Añadido
+
+- Incorporado un sistema visual neutral con especificaciones JSON, manifiesto,
+  selector pedagógico, fallbacks registrados y adaptadores para motores
+  generales y disciplinares.
+- Añadidos renderizado, inspección, accesibilidad, previsualizaciones,
+  regresión exacta y perceptual, imágenes diff y tablas CSV equivalentes.
+- Añadidos generadores para redes, flujos, gráficos, mapas GeoJSON, forest
+  plots, cronologías, señales digitales, estructuras RDKit y figuras
+  progresivas.
+- Añadidos perfiles visuales `Mínimo`, `Visual general` y `Completo` en Jintia
+  Desktop, con versiones objetivo y capacidades deshabilitadas visibles.
+- Incorporada la plantilla `Kaohandt Marginal` junto a `ElegantBook Clásico`
+  mediante contratos portables para figuras y tablas.
+- Añadida una matriz de integración continua para comprobar motores reales y
+  renderizado con Chrome en Windows, macOS y Linux.
 
 ### Corregido
 
@@ -11,6 +28,10 @@ y versionado semántico.
   archivos entre la aplicación y la skill.
 - Corregidos el sitio web institucional, el comportamiento sin logotipo y los
   metadatos de invocación de la skill.
+- Corregido el detector de Chrome en Windows para evitar que una consulta de
+  versión abra ventanas `newtab`.
+- Corregidas las referencias que todavía exigían flotantes LaTeX directos en
+  lugar de `guidefigure` y `guidetable`.
 
 ### Cambiado
 
@@ -25,6 +46,8 @@ y versionado semántico.
 - Normalizada la dependencia NotebookLM MCP verificada.
 - Preparada la política, privacidad y automatización condicional requeridas
   para solicitar firma gratuita mediante SignPath Foundation.
+- Publicada `jintia-skill` 10.7.0 con una matriz reproducible de pruebas
+  multiplataforma como puerta de calidad del sistema visual.
 
 ## 10.4.0 — 2026-07-27
 

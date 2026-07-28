@@ -66,6 +66,7 @@ pub struct DependencyStatus {
     pub installed: bool,
     pub version: Option<String>,
     pub required: bool,
+    pub installable: bool,
     pub note: String,
     pub command: String,
 }

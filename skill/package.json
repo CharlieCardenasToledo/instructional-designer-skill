@@ -1,6 +1,6 @@
 {
   "name": "jintia-skill",
-  "version": "10.6.0",
+  "version": "10.7.0",
   "description": "Jintia Skill for evidence-based self-paced instructional design with LaTeX and NotebookLM",
   "license": "MIT",
   "author": "Charlie Cárdenas Toledo <charlie.act7@gmail.com>",
@@ -14,6 +14,13 @@
   },
   "scripts": {
     "lint": "node scripts/latex-linter.js",
+    "visual:render": "node scripts/visual-renderer.js",
+    "visual:lint": "node scripts/visual-linter.js",
+    "visual:inspect": "node scripts/visual-inspector.js",
+    "visual:regression": "node scripts/visual-regression.js",
+    "visual:progressive": "node scripts/visual-progressive.js",
+    "visual:capabilities": "node scripts/visual-capabilities.js",
+    "test": "node --test tests/*.test.js",
     "validate": "node scripts/latex-validator.js",
     "archive": "node scripts/legacy-manager.js"
   },

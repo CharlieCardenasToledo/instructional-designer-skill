@@ -68,7 +68,9 @@ function depItem(dep) {
       <div class="${ui.list.right}">
         ${dep.installed
           ? `<span class="${ui.badge.success}">${ic("check-circle-2", 11)} Listo</span>`
-          : `<button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-install-dependency="${escapeHtml(dep.name)}" title="Instalar ${escapeHtml(dep.name)}">${ic("download", 13)} Instalar</button>`}
+          : dep.installable !== false
+            ? `<button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-install-dependency="${escapeHtml(dep.name)}" title="Instalar ${escapeHtml(dep.name)}">${ic("download", 13)} Instalar</button>`
+            : `<span class="${ui.badge.muted}">Instalación manual</span>`}
       </div>
     </div>`;
 }

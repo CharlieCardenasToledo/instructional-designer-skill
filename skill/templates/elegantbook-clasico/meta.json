@@ -7,6 +7,15 @@
   "tags": ["ElegantBook", "Colorido", "Técnico", "Bloques"],
   "previewType": "elegantbook-clasico",
   "featured": true,
+  "capabilities": {
+    "marginNotes": false,
+    "marginFigures": false,
+    "wideLayout": false,
+    "coloredBlocks": true,
+    "biblatex": true,
+    "tikz": true,
+    "visualPlacements": ["auto", "main"]
+  },
   "blocks": {
     "softblock":   { "title": "Orientación",    "color": "#e8f4f1" },
     "accentblock": { "title": "Análisis",        "color": "primary" },

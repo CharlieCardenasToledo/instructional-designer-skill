@@ -23,6 +23,14 @@ async fn check_dependencies() -> Vec<DependencyStatus> {
 }
 
 #[tauri::command]
+async fn get_visual_install_profiles() -> serde_json::Value {
+    serde_json::from_str(include_str!(
+        "../../../../skill/config/visual-install-profiles.json"
+    ))
+    .unwrap_or_else(|_| serde_json::json!({ "version": 1, "profiles": [] }))
+}
+
+#[tauri::command]
 async fn install_dependency(name: String, confirmed: Option<bool>) -> ActionResult {
     tauri::async_runtime::spawn_blocking(move || {
         course::install_dependency(name, confirmed.unwrap_or(false))
@@ -289,6 +297,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             check_dependencies,
+            get_visual_install_profiles,
             install_dependency,
             get_onboarding_status,
             advance_onboarding,

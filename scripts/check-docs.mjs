@@ -2,7 +2,16 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
-const ignored = new Set([".git", ".rtfm", ".claude", ".playwright-mcp", "node_modules", "dist", "target"]);
+const ignored = new Set([
+  ".agents",
+  ".git",
+  ".rtfm",
+  ".claude",
+  ".playwright-mcp",
+  "node_modules",
+  "dist",
+  "target",
+]);
 const errors = [];
 const requiredProjectFiles = [
   "AUTHORS.md",
@@ -77,7 +86,7 @@ const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
 if (plugin.version !== skillPackage.version) {
   errors.push(`Versiones distintas: plugin ${plugin.version}, skill ${skillPackage.version}`);
 }
-if (!changelog.includes(`## ${plugin.version} `)) {
+if (!changelog.includes(`jintia-skill\` ${plugin.version}`)) {
   errors.push(`CHANGELOG.md no contiene la versión ${plugin.version} del plugin`);
 }
 if (desktopPackage.author !== "Charlie Cárdenas Toledo" || desktopPackage.license !== "MIT") {

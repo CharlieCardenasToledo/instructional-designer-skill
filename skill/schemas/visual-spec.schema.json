@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://jintia.local/schemas/visual-spec.schema.json",
+  "title": "Jintia visual specification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "pedagogicalIntent", "representation", "altText"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^fig-[a-z0-9][a-z0-9-]*$" },
+    "title": { "type": "string", "minLength": 1 },
+    "pedagogicalIntent": {
+      "enum": ["identify", "classify", "compare", "sequence", "relate", "hierarchize", "quantify", "locate", "explain-causality", "simulate", "argue"]
+    },
+    "representation": {
+      "enum": ["chart", "forest-plot", "map", "table", "concept-map", "network", "flowchart", "timeline", "signal-diagram", "causal-diagram", "technical-diagram", "interface", "annotated-image", "equation", "disciplinary-notation"]
+    },
+    "discipline": { "type": "string" },
+    "engine": {
+      "enum": ["auto", "tikz", "graphviz", "mermaid", "plantuml", "d2", "vega-lite", "html", "matplotlib", "geopandas", "dagitty", "rdkit", "circuitikz", "chemfig", "forest", "wavedrom"]
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["content"],
+      "properties": {
+        "content": { "type": "string", "minLength": 1 },
+        "data": { "type": ["string", "object", "array"] }
+      }
+    },
+    "sourceFile": { "type": "string", "minLength": 1 },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "direction": { "enum": ["TB", "LR", "BT", "RL"] },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$" },
+              "label": { "type": "string", "minLength": 1 },
+              "group": { "type": "string" }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to"],
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "label": { "type": "string" }
+            }
+          }
+        },
+        "categories": { "type": "array", "items": { "type": "string" } },
+        "values": { "type": "array", "items": { "type": "number" } },
+        "smiles": { "type": "string", "minLength": 1 },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["date", "label"],
+            "properties": {
+              "date": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "signals": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "wave"],
+            "properties": {
+              "name": { "type": "string" },
+              "wave": { "type": "string" },
+              "data": { "type": "string" }
+            }
+          }
+        },
+        "estimates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "estimate", "lower", "upper"],
+            "properties": {
+              "label": { "type": "string" },
+              "estimate": { "type": "number" },
+              "lower": { "type": "number" },
+              "upper": { "type": "number" }
+            }
+          }
+        },
+        "geojson": { "type": "object" },
+        "valueField": { "type": "string" },
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "nodeIds"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+              "label": { "type": "string" },
+              "nodeIds": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "xTitle": { "type": "string" },
+        "yTitle": { "type": "string" }
+      }
+    },
+    "outputFormat": { "enum": ["pdf", "svg", "png"] },
+    "placement": { "enum": ["auto", "main", "wide", "margin"] },
+    "caption": { "type": "string" },
+    "altText": { "type": "string", "minLength": 12 },
+    "longDescription": { "type": "string" },
+    "dataTable": { "type": "string" },
+    "sourceAttribution": { "type": "string" },
+    "license": { "type": "string" },
+    "provenance": {
+      "enum": ["original", "adapted_from_source", "reproduced_from_source", "generated_from_verified_data"]
+    },
+    "complexity": { "enum": ["low", "medium", "high"] },
+    "formalNotationRequired": { "type": "boolean" }
+    ,
+    "palette": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["foreground", "background"],
+      "properties": {
+        "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "background": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+      }
+    }
+  },
+  "oneOf": [
+    { "required": ["source"] },
+    { "required": ["sourceFile"] },
+    { "required": ["model"] }
+  ]
+}
