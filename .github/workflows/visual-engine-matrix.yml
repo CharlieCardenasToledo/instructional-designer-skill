@@ -63,12 +63,18 @@ jobs:
 
       - name: Install LaTeX disciplinary packages (macOS)
         if: runner.os == 'macOS'
-        run: sudo /Library/TeX/texbin/tlmgr update --self && sudo /Library/TeX/texbin/tlmgr install standalone pgfplots circuitikz chemfig forest
+        run: |
+          sudo /Library/TeX/texbin/tlmgr update --self
+          sudo /Library/TeX/texbin/tlmgr install standalone pgfplots circuitikz chemfig forest
+          echo "/Library/TeX/texbin" >> "$GITHUB_PATH"
 
       - name: Refresh MiKTeX packages (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: initexmf --admin --update-fndb
+        run: |
+          $miktexBin = "C:\Program Files\MiKTeX\miktex\bin\x64"
+          & "$miktexBin\initexmf.exe" --admin --update-fndb
+          $miktexBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install portable visual CLIs
         run: npm install --global @mermaid-js/mermaid-cli vega-cli vega-lite wavedrom-cli
