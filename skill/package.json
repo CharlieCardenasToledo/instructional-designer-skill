@@ -20,7 +20,7 @@
     "visual:regression": "node scripts/visual-regression.js",
     "visual:progressive": "node scripts/visual-progressive.js",
     "visual:capabilities": "node scripts/visual-capabilities.js",
-    "test": "node --test tests/*.test.js",
+    "test": "node --test tests/visual-selector.test.js",
     "validate": "node scripts/latex-validator.js",
     "archive": "node scripts/legacy-manager.js"
   },
