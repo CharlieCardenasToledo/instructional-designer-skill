@@ -571,6 +571,8 @@ test('Configuración ejecuta el diagnóstico de la toolchain mediante un comando
   const toolchain = await readFile(new URL('src-tauri/src/toolchain.rs', root), 'utf8');
   assert.match(settings, /btn-run-toolchain-doctor/);
   assert.match(settings, /runSkillTool\("doctor"\)/);
+  assert.match(settings, /btn-run-toolchain-operation/);
+  assert.match(settings, /runSkillTool\(operation, target, strict\)/);
   assert.match(api, /invoke\("run_skill_tool"/);
   assert.match(rust, /run_skill_tool/);
   assert.match(toolchain, /\["doctor", "audit", "validate", "compile"\]/);

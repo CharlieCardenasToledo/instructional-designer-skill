@@ -285,6 +285,22 @@ export async function renderSettings() {
               </button>
             </div>
             <pre id="toolchain-report" class="mt-3 max-h-64 overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-5 text-slate-100" aria-live="polite">Aún no se ha ejecutado.</pre>
+            <div class="mt-4 grid gap-3 md:grid-cols-[10rem_minmax(0,1fr)_auto]">
+              <label class="text-xs font-semibold text-app-muted">Operación
+                <select id="toolchain-operation" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-app-text">
+                  <option value="audit">Auditar</option>
+                  <option value="validate">Validar LaTeX</option>
+                  <option value="compile">Compilar PDF</option>
+                </select>
+              </label>
+              <label class="text-xs font-semibold text-app-muted">Archivo objetivo
+                <input id="toolchain-target" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-app-text" placeholder="C:\\Cursos\\mi-curso\\README.md o guia.tex" autocomplete="off">
+              </label>
+              <label class="flex items-end gap-2 pb-2 text-xs font-semibold text-app-muted"><input id="toolchain-strict" type="checkbox" class="h-4 w-4 accent-teal-700"> Estricto</label>
+            </div>
+            <button class="${cx(ui.button.base, ui.button.primary, 'mt-3 min-h-11')}" id="btn-run-toolchain-operation">
+              <span class="material-symbols-outlined text-[17px]">play_arrow</span> Ejecutar operación
+            </button>
           </div>
         </section>
 
@@ -432,6 +448,7 @@ export async function renderSettings() {
   // ── Environment ───────────────────────────────────────────────────────────
   el.querySelector("#btn-refresh-deps")?.addEventListener("click", loadDeps);
   el.querySelector("#btn-run-toolchain-doctor")?.addEventListener("click", runToolchainDoctor);
+  el.querySelector("#btn-run-toolchain-operation")?.addEventListener("click", runToolchainOperation);
   loadSetupStatus();
   loadDeps();
 
@@ -877,6 +894,32 @@ async function runToolchainDoctor(event) {
     } catch (error) {
       output.textContent = `No se pudo ejecutar el diagnóstico: ${error}`;
       toast("No se pudo ejecutar el diagnóstico", "error", 5000);
+    }
+  });
+}
+
+async function runToolchainOperation(event) {
+  const button = event?.currentTarget;
+  const operation = document.getElementById("toolchain-operation")?.value || "audit";
+  const target = document.getElementById("toolchain-target")?.value.trim();
+  const strict = Boolean(document.getElementById("toolchain-strict")?.checked);
+  const output = document.getElementById("toolchain-report");
+  if (!target) {
+    output.textContent = "Escribe la ruta del README.md o de la guía .tex.";
+    toast("Falta el archivo objetivo", "error", 4000);
+    document.getElementById("toolchain-target")?.focus();
+    return;
+  }
+  await runSettingsOperation(button, "toolchain-operation", "Ejecutando…", async () => {
+    output.textContent = `Ejecutando ${operation}…`;
+    try {
+      const result = await runSkillTool(operation, target, strict);
+      const report = result.report || result.stdout || result.message;
+      output.textContent = typeof report === "string" ? report : JSON.stringify(report, null, 2);
+      toast(result.success ? "Operación completada" : "La operación encontró problemas", result.success ? "success" : "error", 5000);
+    } catch (error) {
+      output.textContent = `No se pudo ejecutar ${operation}: ${error}`;
+      toast("No se pudo ejecutar la operación", "error", 5000);
     }
   });
 }
