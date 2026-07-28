@@ -41,18 +41,15 @@ const state = {
     mcp_desktop_configured: BYPASS,
     mcp_claude_code_configured: BYPASS,
     institution_configured: BYPASS,
-    skill_path: BYPASS ? "/mock/home/.claude/skills/instructional-designer-skill" : "",
+    skill_path: BYPASS ? "/mock/home/.claude/skills/jintia-skill" : "",
     mcp_config_path: BYPASS ? "/mock/home/.config/claude/claude_desktop_config.json" : "",
   },
   auth: BYPASS
     ? { authenticated: true, message: "Sesión activa — demo@uide.edu.ec" }
     : { authenticated: false, message: "Sin sesión activa. El skill no podrá consultar NotebookLM." },
-  lastSkillZip: BYPASS ? "/mock/exports/instructional-designer-skill.zip" : null,
+  lastSkillZip: BYPASS ? "/mock/exports/jintia-skill.zip" : null,
   templates: [
     { id: "elegantbook-clasico", name: "ElegantBook Clásico", description: "Portada institucional con bloques pedagógicos numerados y bibliografía APA.", tags: ["Institucional", "Formal"], previewType: "elegantbook-clasico", featured: true, documentClass: "elegantbook" },
-    { id: "minimal-mono", name: "Minimalista", description: "Tipografía sobria de una sola columna, ideal para guías breves.", tags: ["Personal", "Simple"], previewType: "minimal", featured: false, documentClass: "minimal" },
-    { id: "ieee-tecnico", name: "IEEE Técnico", description: "Formato de dos columnas para asignaturas técnicas.", tags: ["Institucional", "Técnico"], previewType: "ieee", featured: true, documentClass: "IEEEtran" },
-    { id: "cuaderno-taller", name: "Cuaderno de Taller", description: "Bloques de actividad destacados para materias prácticas.", tags: ["Personal"], previewType: "cuaderno", featured: false, documentClass: "article" },
   ],
   activeTemplateId: "elegantbook-clasico",
   institutionConfigured: BYPASS,
@@ -132,13 +129,13 @@ const handlers = {
     });
     return onboardingResult(true, "Onboarding reiniciado.");
   },
-  get_skill_path: () => (state.setup.skill_installed ? "/mock/home/.claude/skills/instructional-designer-skill" : ""),
+  get_skill_path: () => (state.setup.skill_installed ? "/mock/home/.claude/skills/jintia-skill" : ""),
   install_skill: () => {
     state.setup.skill_installed = true;
     return actionResult(true, "Skill instalado en tu proyecto local (mock).");
   },
   export_skill_zip: ({ destinationDir }) => {
-    const path = `${destinationDir || "/mock/exports"}/instructional-designer-skill.zip`;
+    const path = `${destinationDir || "/mock/exports"}/jintia-skill.zip`;
     state.lastSkillZip = path;
     return actionResult(true, "Archivo exportado (mock).", { path });
   },

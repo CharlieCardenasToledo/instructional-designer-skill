@@ -1,11 +1,14 @@
-# Instructional Designer
+# Jintia
 
 <p align="right">
   <a href="README.md">🇪🇸 Español</a>
 </p>
 
+**Design the path of learning.**
+
 Desktop application and skill for turning a university syllabus into a
-structured course and publication-ready weekly learning guides.
+connected path of outcomes, content, activities, assessments, and
+publication-ready weekly learning guides.
 
 [![Version](https://img.shields.io/badge/version-10.4.0-00796b.svg)](CHANGELOG.md)
 [![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
@@ -19,9 +22,9 @@ several tools, editing configuration files, connecting NotebookLM, and
 organizing every course by hand. This project brings that workflow together
 in one product:
 
-- **Instructional Designer Manager** installs and configures the environment
-  through a desktop interface.
-- **`instructional-designer-skill`** guides Claude Code in producing syllabi,
+- **Jintia Desktop** installs and configures the environment through a desktop
+  interface.
+- **`jintia-skill`** guides Claude Code in producing syllabi,
   LaTeX guides, activities, and assessments based on explicit pedagogical and
   editorial criteria.
 
@@ -50,7 +53,7 @@ Generate and validate weekly PDF guides
 The onboarding explains the expected outcome and verifies every requirement
 before the main dashboard becomes available.
 
-![Instructional Designer Manager onboarding](docs/images/app/onboarding.png)
+![Jintia Desktop onboarding](docs/images/app/onboarding.png)
 
 ### 2. Course management
 
@@ -111,9 +114,9 @@ Direct downloads for version 10.4.0:
 
 | Platform | Installer | Download |
 |---|---|---|
-| Windows 10/11 x64 | NSIS `.exe` — recommended | [Download EXE](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_x64-setup.exe) |
-| Windows 10/11 x64 | Windows Installer `.msi` | [Download MSI](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_x64_en-US.msi) |
-| Apple Silicon macOS | `.dmg` disk image | [Download DMG](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_aarch64.dmg) |
+| Windows 10/11 x64 | NSIS `.exe` — recommended | [View downloads](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
+| Windows 10/11 x64 | Windows Installer `.msi` | [View downloads](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
+| Apple Silicon macOS | `.dmg` disk image | [View downloads](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
 
 You can also browse the
 [latest release](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest).
@@ -136,9 +139,9 @@ git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill.
 Copy or link **the contents of `skill/`** into:
 
 ```text
-Windows: %USERPROFILE%\.claude\skills\instructional-designer-skill
-macOS:   ~/.claude/skills/instructional-designer-skill
-Linux:   ~/.claude/skills/instructional-designer-skill
+Windows: %USERPROFILE%\.claude\skills\jintia-skill
+macOS:   ~/.claude/skills/jintia-skill
+Linux:   ~/.claude/skills/jintia-skill
 ```
 
 The installed directory must contain `SKILL.md`, `config/`, `references/`,
@@ -158,7 +161,7 @@ Structure the syllabus and its weekly activities.
 Validate and compile the guide as a PDF.
 ```
 
-It can also be invoked explicitly as `/instructional-designer-skill`.
+It can also be invoked explicitly as `/jintia-skill`.
 
 ## Editorial workflow
 
@@ -219,7 +222,7 @@ artifacts, but does not publish a Release.
 ## Repository structure
 
 ```text
-instructional-designer-skill/
+jintia/
 ├── app/
 │   └── desktop/            Tauri application and frontend
 ├── skill/                  Installable skill package
@@ -262,8 +265,12 @@ See the [code signing policy](CODE_SIGNING_POLICY.md) and
 - [Application technical guide](app/desktop/README.md)
 - [Using the project with Claude Code, Claude Skills, Projects, and Cowork](docs/guia-claude-desktop.md)
 - [Architecture](docs/architecture.md)
+- [Jintia design system](docs/design-system.md)
 - [Release process](docs/releasing.md)
 - [Contributing](CONTRIBUTING.md)
+- [Authorship and maintenance](AUTHORS.md)
+- [How to cite Jintia](CITATION.cff)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
 - [Security policy](SECURITY.md)
 - [Privacy policy](PRIVACY.md)
 - [Code signing policy](CODE_SIGNING_POLICY.md)

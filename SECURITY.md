@@ -11,7 +11,7 @@ institucionales ni datos de estudiantes en un issue.
 
 Envía el reporte a
 [charlie.act7@gmail.com](mailto:charlie.act7@gmail.com) con el asunto
-`[SECURITY] instructional-designer-skill`.
+`[SECURITY] Jintia`.
 
 Incluye la versión, plataforma, impacto, pasos mínimos de reproducción y una
 propuesta de mitigación si la tienes.

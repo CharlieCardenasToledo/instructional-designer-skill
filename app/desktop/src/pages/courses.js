@@ -48,14 +48,24 @@ export function renderCourses() {
       </div>
 
       <!-- Table -->
-      <div class="${cx(ui.surface.tableWrap, 'flex-1')}">
-        <div class="overflow-x-auto">
+      <div class="${cx(ui.surface.tableWrap, 'responsive-course-region flex-1')}">
+        <div>
         <table class="${ui.table.base}">
+          <colgroup>
+            <col class="courses-col-code">
+            <col class="courses-col-name">
+            <col class="courses-col-period">
+            <col class="courses-col-semester">
+            <col class="courses-col-credits">
+            <col class="courses-col-weeks">
+            <col class="courses-col-status">
+            <col class="courses-col-actions">
+          </colgroup>
           <thead>
             <tr class="${ui.table.headRow}">
-              <th class="${ui.table.th}">Código</th>
-              <th class="${ui.table.th}">Asignatura</th>
-              <th class="${ui.table.th}">Periodo</th>
+              <th class="${cx(ui.table.th, 'courses-cell-code')}">Código</th>
+              <th class="${cx(ui.table.th, 'courses-cell-name')}">Asignatura</th>
+              <th class="${cx(ui.table.th, 'courses-cell-period')}">Periodo</th>
               <th class="${ui.table.th}">Semestre</th>
               <th class="${cx(ui.table.th, 'text-center')}">Créditos</th>
               <th class="${cx(ui.table.th, 'text-center')}">Semanas</th>
@@ -129,9 +139,9 @@ function renderTableRows() {
     const hasContent = (course.weeks_data || []).some(w => w.title);
     return `
     <tr class="${ui.table.row}">
-      <td class="${ui.table.td}"><span class="font-mono font-bold text-brand">${escapeHtml(course.code)}</span></td>
-      <td class="${cx(ui.table.td, 'font-semibold text-app-text')}">${escapeHtml(course.name)}</td>
-      <td class="${cx(ui.table.td, 'text-app-muted')}">${escapeHtml(course.period || "—")}</td>
+      <td class="${cx(ui.table.td, 'courses-cell-code')}"><span class="font-mono font-bold text-brand">${escapeHtml(course.code)}</span></td>
+      <td class="${cx(ui.table.td, 'courses-cell-name font-semibold leading-snug text-app-text')}">${escapeHtml(course.name)}</td>
+      <td class="${cx(ui.table.td, 'courses-cell-period text-app-muted')}">${escapeHtml(course.period || "—")}</td>
       <td class="${cx(ui.table.td, 'text-app-muted')}">${escapeHtml(course.semester || "—")}</td>
       <td class="${cx(ui.table.td, 'text-center')}">${Number(course.credits) || 0}</td>
       <td class="${cx(ui.table.td, 'text-center')}">${Number(course.weeks) || 0}</td>
@@ -142,14 +152,14 @@ function renderTableRows() {
         </span>
       </td>
       <td class="${ui.table.td}">
-        <div class="${cx(ui.liquid.group, 'flex items-center gap-1 p-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100')}">
-          <button class="${cx(ui.button.base, ui.button.ghost, ui.button.xs, 'row-action-edit')}" data-course-action="edit" data-index="${realIndex}">
-            <span class="material-symbols-outlined text-sm">edit_document</span> Sílabo
+        <div class="${cx(ui.liquid.group, 'ml-auto flex w-fit items-center gap-0.5 p-0.5 opacity-65 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100')}">
+          <button class="${cx(ui.button.base, ui.button.ghost, 'row-action-edit h-7 w-7 p-0')}" data-course-action="edit" data-index="${realIndex}" aria-label="Editar sílabo" title="Editar sílabo">
+            <span class="material-symbols-outlined text-sm">edit_document</span>
           </button>
-          <button class="${cx(ui.button.base, ui.button.ghost, ui.button.xs, 'row-action-folders')}" data-course-action="folders" data-index="${realIndex}">
-            <span class="material-symbols-outlined text-sm">create_new_folder</span> Carpetas
+          <button class="${cx(ui.button.base, ui.button.ghost, 'row-action-folders h-7 w-7 p-0')}" data-course-action="folders" data-index="${realIndex}" aria-label="Generar carpetas" title="Generar carpetas">
+            <span class="material-symbols-outlined text-sm">create_new_folder</span>
           </button>
-          <button class="${cx(ui.button.base, ui.button.danger, ui.button.xs, 'row-action-delete')}" data-course-action="delete" data-index="${realIndex}" aria-label="Eliminar asignatura" title="Eliminar">
+          <button class="${cx(ui.button.base, ui.button.danger, 'row-action-delete h-7 w-7 p-0')}" data-course-action="delete" data-index="${realIndex}" aria-label="Eliminar asignatura" title="Eliminar">
             <span class="material-symbols-outlined text-sm">delete</span>
           </button>
         </div>

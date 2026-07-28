@@ -2,6 +2,7 @@
 export function getCurrentWindow() {
   return {
     minimize: () => console.log("[tauri-mock] minimize()"),
+    toggleMaximize: () => console.log("[tauri-mock] toggleMaximize()"),
     close: () => console.log("[tauri-mock] close() — en el navegador no cierra la pestaña"),
   };
 }

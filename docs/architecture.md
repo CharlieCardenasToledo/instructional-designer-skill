@@ -4,13 +4,13 @@
 
 ```text
 Usuario
-  └─ Instructional Designer Manager
+  └─ Jintia Desktop
        ├─ configura institución y NotebookLM
        ├─ crea estructura y sílabo del curso
-       ├─ instala skill → ~/.claude/skills/instructional-designer-skill
+       ├─ instala skill → ~/.claude/skills/jintia-skill
        └─ exporta ZIP → Claude Customize / Skills
 
-Claude + instructional-designer-skill
+Claude + jintia-skill
   ├─ lee README del curso
   ├─ consulta evidencia local o NotebookLM
   ├─ genera LaTeX modular
@@ -47,7 +47,7 @@ payload mínimo exportado por la app.
 | Onboarding y preferencias | Directorio de configuración de la app |
 | Institución y notebooks | Directorio de configuración y skill instalada |
 | Curso, sílabo y guías | Carpeta elegida por el usuario |
-| Skill local | `~/.claude/skills/instructional-designer-skill` |
+| Skill local | `~/.claude/skills/jintia-skill` |
 
 ## Red
 

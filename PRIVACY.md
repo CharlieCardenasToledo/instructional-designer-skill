@@ -2,7 +2,7 @@
 
 ## Resumen
 
-Instructional Designer Manager no incorpora telemetría, publicidad ni un
+Jintia Desktop no incorpora telemetría, publicidad ni un
 backend propio. La aplicación no transfiere información a otros sistemas de
 red salvo cuando la persona que instala u opera el programa solicita
 explícitamente una función que requiere esa comunicación.

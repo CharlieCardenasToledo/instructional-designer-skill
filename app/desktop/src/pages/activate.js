@@ -25,7 +25,7 @@ export async function renderActivate() {
     mcp_desktop_configured: false,
     mcp_claude_code_configured: false,
     institution_configured: false,
-    skill_path: "~/.claude/skills/instructional-designer-skill",
+    skill_path: "~/.claude/skills/jintia-skill",
     mcp_config_path: "",
   };
   let auth = { authenticated: false, message: "No verificado" };

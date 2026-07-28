@@ -4,7 +4,7 @@ import {
   installSkill, exportSkillZip, pickDirectory, saveNotebooksConfig,
   resetOnboarding, getSkillPath, extractSitePalette
 } from "../api.js";
-import { state, getNotebooks, saveNotebooks } from "../state.js";
+import { state, getNotebooks, saveConfig, saveNotebooks } from "../state.js";
 import { escapeHtml } from "../dom.js";
 import { toast } from "../toast.js";
 import { refreshIcons } from "../icons.js";
@@ -27,16 +27,12 @@ export async function renderSettings() {
   if (!el) return;
 
   el.innerHTML = `
-    <div class="mb-5">
-      <h2 class="text-[22px] font-extrabold tracking-tight text-app-text">Configuración</h2>
-      <p class="mt-1 text-[13px] text-app-muted">Ajustes institucionales, conexiones, notebooks, entorno y preferencias.</p>
-    </div>
-    <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-[220px_1fr]">
+    <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-[200px_minmax(0,1fr)]">
 
       <!-- Left nav -->
       <div class="sticky top-0 z-10 self-start">
-        <div class="${cx(ui.liquid.group, 'flex gap-1 overflow-x-auto p-1 lg:flex-col lg:overflow-visible')}">
-          <a class="${cx(ui.settingsNav.item, ui.settingsNav.active)}" data-settings-nav data-section="inst-profile" href="#inst-profile">
+        <nav class="flex gap-1 overflow-x-auto p-1 lg:flex-col lg:overflow-visible" aria-label="Secciones de configuración">
+          <a class="${cx(ui.settingsNav.item, ui.settingsNav.active)}" data-settings-nav data-section="inst-profile" href="#inst-profile" aria-current="page">
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
           <a class="${ui.settingsNav.item}" data-settings-nav data-section="mcp-config" href="#mcp-config">
@@ -51,7 +47,7 @@ export async function renderSettings() {
           <a class="${ui.settingsNav.item}" data-settings-nav data-section="app-prefs" href="#app-prefs">
             <span class="material-symbols-outlined">tune</span> Preferencias
           </a>
-        </div>
+        </nav>
       </div>
 
       <!-- Right panes -->
@@ -262,6 +258,13 @@ export async function renderSettings() {
           </div>
 
           <div class="flex flex-col gap-2.5">
+            <label class="flex cursor-pointer items-start justify-between gap-4 rounded-lg border border-slate-200 bg-white px-3.5 py-3">
+              <span>
+                <span class="block text-[13px] font-semibold text-app-text">Incluir «Producido con Jintia» en los documentos</span>
+                <span class="mt-0.5 block text-[11.5px] leading-5 text-app-muted">Añade un crédito discreto en el colofón o la última página. Nunca sustituye ni modifica la autoría académica.</span>
+              </span>
+              <input id="cfg-include-jintia-credit" class="mt-1 h-4 w-4 shrink-0 accent-teal-700" type="checkbox" ${state.config?.includeJintiaCredit !== false ? "checked" : ""}>
+            </label>
             <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
               <div>
                 <div class="text-[13px] font-semibold text-app-text">Instalar en el proyecto local</div>
@@ -301,9 +304,12 @@ export async function renderSettings() {
       e.preventDefault();
       el.querySelectorAll("[data-settings-nav]").forEach(x => {
         x.className = ui.settingsNav.item;
+        x.removeAttribute("aria-current");
       });
       a.className = cx(ui.settingsNav.item, ui.settingsNav.active);
-      document.getElementById(a.dataset.section)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      a.setAttribute("aria-current", "page");
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      document.getElementById(a.dataset.section)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
     });
   });
 
@@ -354,6 +360,11 @@ export async function renderSettings() {
 
   // ── App Preferences ───────────────────────────────────────────────────────
   loadSkillPath();
+  el.querySelector("#cfg-include-jintia-credit")?.addEventListener("change", event => {
+    state.config.includeJintiaCredit = event.target.checked;
+    saveConfig();
+    toast(event.target.checked ? "Crédito de Jintia activado." : "Crédito de Jintia desactivado.", "success", 2500);
+  });
 
   el.querySelector("#btn-install-skill")?.addEventListener("click", async () => {
     toast("Instalando en tu proyecto local…", "loading", 20000);

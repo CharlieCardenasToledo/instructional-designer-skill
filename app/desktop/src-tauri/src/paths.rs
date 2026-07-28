@@ -15,21 +15,46 @@ pub fn app_config_dir() -> Result<PathBuf, String> {
     #[cfg(target_os = "windows")]
     let base = std::env::var_os("APPDATA").map(PathBuf::from);
     #[cfg(target_os = "macos")]
-    let base = home_dir().ok().map(|p| p.join("Library").join("Application Support"));
+    let base = home_dir()
+        .ok()
+        .map(|p| p.join("Library").join("Application Support"));
     #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
     let base = std::env::var_os("XDG_CONFIG_HOME")
         .map(PathBuf::from)
         .or_else(|| home_dir().ok().map(|p| p.join(".config")));
 
+    // Se conserva la carpeta histórica para que el cambio de marca no pierda
+    // configuración, cursos ni el progreso del onboarding.
     base.map(|path| path.join("InstructionalDesignerManager"))
-        .ok_or_else(|| "No se pudo resolver la carpeta de configuración de la aplicación.".to_string())
+        .ok_or_else(|| {
+            "No se pudo resolver la carpeta de configuración de la aplicación.".to_string()
+        })
 }
 
 pub fn skill_dir() -> Result<PathBuf, String> {
     Ok(home_dir()?
         .join(".claude")
         .join("skills")
+        .join("jintia-skill"))
+}
+
+pub fn legacy_skill_dir() -> Result<PathBuf, String> {
+    Ok(home_dir()?
+        .join(".claude")
+        .join("skills")
         .join("instructional-designer-skill"))
+}
+
+pub fn installed_skill_dir() -> Result<PathBuf, String> {
+    let canonical = skill_dir()?;
+    if canonical.join("SKILL.md").is_file() {
+        return Ok(canonical);
+    }
+    let legacy = legacy_skill_dir()?;
+    if legacy.join("SKILL.md").is_file() {
+        return Ok(legacy);
+    }
+    Ok(canonical)
 }
 
 pub fn claude_desktop_config_path() -> Result<PathBuf, String> {
@@ -50,7 +75,10 @@ pub fn claude_desktop_config_path() -> Result<PathBuf, String> {
     }
     #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
     {
-        Ok(home_dir()?.join(".config").join("Claude").join("claude_desktop_config.json"))
+        Ok(home_dir()?
+            .join(".config")
+            .join("Claude")
+            .join("claude_desktop_config.json"))
     }
 }
 
@@ -66,11 +94,14 @@ pub fn timestamp() -> u64 {
 }
 
 pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<(), String> {
-    let parent = path.parent().ok_or_else(|| "La ruta no tiene carpeta padre.".to_string())?;
+    let parent = path
+        .parent()
+        .ok_or_else(|| "La ruta no tiene carpeta padre.".to_string())?;
     fs::create_dir_all(parent)
         .map_err(|error| format!("No se pudo crear {}: {error}", parent.display()))?;
 
-    let file_name = path.file_name()
+    let file_name = path
+        .file_name()
         .and_then(|name| name.to_str())
         .ok_or_else(|| "Nombre de archivo inválido.".to_string())?;
     let temp = parent.join(format!(".{file_name}.tmp-{}", timestamp()));
@@ -85,8 +116,12 @@ pub fn atomic_write(path: &Path, bytes: &[u8]) -> Result<(), String> {
 
         let swap = parent.join(format!(".{file_name}.swap-{}", timestamp()));
         if path.exists() {
-            fs::rename(path, &swap)
-                .map_err(|error| format!("No se pudo preparar el reemplazo de {}: {error}", path.display()))?;
+            fs::rename(path, &swap).map_err(|error| {
+                format!(
+                    "No se pudo preparar el reemplazo de {}: {error}",
+                    path.display()
+                )
+            })?;
         }
         match fs::rename(&temp, path) {
             Ok(_) => {
@@ -124,7 +159,8 @@ pub fn backup_file(path: &Path) -> Result<Option<PathBuf>, String> {
     if !path.exists() {
         return Ok(None);
     }
-    let name = path.file_name()
+    let name = path
+        .file_name()
         .and_then(|value| value.to_str())
         .ok_or_else(|| "Nombre de archivo inválido.".to_string())?;
     let backup = path.with_file_name(format!("{name}.bak-{}", timestamp()));
@@ -138,7 +174,8 @@ pub fn canonical_directory(raw: &str) -> Result<PathBuf, String> {
     if !path.is_absolute() {
         return Err("Selecciona una ruta absoluta.".to_string());
     }
-    let canonical = path.canonicalize()
+    let canonical = path
+        .canonicalize()
         .map_err(|error| format!("No se pudo acceder a {}: {error}", path.display()))?;
     if !canonical.is_dir() {
         return Err(format!("{} no es una carpeta.", canonical.display()));
@@ -152,9 +189,13 @@ pub fn safe_segment(value: &str, field: &str) -> Result<String, String> {
         return Err(format!("{field} es obligatorio."));
     }
     if trimmed == "." || trimmed == ".." || trimmed.contains("..") {
-        return Err(format!("{field} contiene una secuencia de ruta no permitida."));
+        return Err(format!(
+            "{field} contiene una secuencia de ruta no permitida."
+        ));
     }
-    if trimmed.chars().any(|ch| ch.is_control() || matches!(ch, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|')) {
+    if trimmed.chars().any(|ch| {
+        ch.is_control() || matches!(ch, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|')
+    }) {
         return Err(format!("{field} contiene caracteres no permitidos."));
     }
     Ok(trimmed.to_string())
@@ -178,10 +219,8 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .expect("clock")
             .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "instructional-designer-atomic-{unique}-{}.txt",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("jintia-atomic-{unique}-{}.txt", std::process::id()));
         assert!(atomic_write_if_changed(&path, b"same").expect("first write"));
         assert!(!atomic_write_if_changed(&path, b"same").expect("unchanged write"));
         assert!(atomic_write_if_changed(&path, b"changed").expect("changed write"));

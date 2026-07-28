@@ -32,6 +32,13 @@ export function renderDocs() {
         <p><strong>Un botón de conexión falla:</strong> vuelve a <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="mcp-config">Configuración → Conexiones</button> y pulsa "Verificar". Si el problema persiste, cierra sesión de Google y vuelve a iniciarla.</p>
         <p><strong>No se genera el PDF:</strong> confirma en <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="environment">Configuración → Entorno</button> que el compilador LaTeX esté instalado; sin él no es posible compilar el documento final.</p>
         <p><strong>Quieres empezar de nuevo:</strong> en <button type="button" class="cursor-pointer border-0 bg-transparent p-0 font-semibold text-teal-600 hover:text-teal-700 underline inline-flex items-center gap-0.5" data-doc-nav="settings" data-section="app-prefs">Configuración → Preferencias</button> hay un botón para reiniciar el onboarding.</p>
+
+        <div class="mt-7 border-t border-slate-200 pt-4">
+          <button type="button" class="inline-flex items-center gap-1.5 rounded-lg font-semibold text-teal-700 underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600" data-doc-nav="about">
+            <span class="material-symbols-outlined text-lg">info</span>
+            Acerca de Jintia, autoría y licencias
+          </button>
+        </div>
       </div>
     </div>`;
 

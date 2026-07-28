@@ -12,11 +12,21 @@ pub struct ActionResult {
 
 impl ActionResult {
     pub fn ok(message: impl Into<String>) -> Self {
-        Self { success: true, message: message.into(), path: None, backup_path: None }
+        Self {
+            success: true,
+            message: message.into(),
+            path: None,
+            backup_path: None,
+        }
     }
 
     pub fn error(message: impl Into<String>) -> Self {
-        Self { success: false, message: message.into(), path: None, backup_path: None }
+        Self {
+            success: false,
+            message: message.into(),
+            path: None,
+            backup_path: None,
+        }
     }
 
     pub fn with_path(mut self, path: impl Into<String>) -> Self {

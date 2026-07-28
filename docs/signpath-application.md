@@ -7,7 +7,7 @@ la solicitud en <https://signpath.org/apply>.
 
 | Campo | Valor |
 |---|---|
-| Project name | Instructional Designer |
+| Project name | Jintia |
 | Repository | `https://github.com/CharlieCardenasToledo/instructional-designer-skill` |
 | Download page | `https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases` |
 | License | MIT |
@@ -19,11 +19,11 @@ la solicitud en <https://signpath.org/apply>.
 
 ## Descripción breve
 
-Instructional Designer is an open-source desktop application and agent skill
-that configures an evidence-based instructional-design workflow for higher
-education. The Windows application installs or exports the skill, manages
-institutional settings and course structures, configures NotebookLM MCP, and
-supports local LaTeX validation and PDF generation.
+Jintia is an open-source desktop application and agent skill that turns a
+university syllabus into a connected, evidence-based learning path. Jintia
+Desktop installs or exports Jintia Skill, manages institutional settings and
+course structures, configures NotebookLM MCP, and supports local LaTeX
+validation and PDF generation.
 
 ## Enlaces requeridos
 

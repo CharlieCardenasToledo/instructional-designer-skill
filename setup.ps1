@@ -6,7 +6,7 @@
 param([switch]$Install)
 
 $ErrorActionPreference = 'Stop'
-$skillDir = Join-Path $env:USERPROFILE '.claude\skills\instructional-designer-skill'
+$skillDir = Join-Path $env:USERPROFILE '.claude\skills\jintia-skill'
 
 function Test-Tool([string]$name) { return [bool](Get-Command $name -ErrorAction SilentlyContinue) }
 function Show-Status([string]$name, [string]$command) {
@@ -14,7 +14,7 @@ function Show-Status([string]$name, [string]$command) {
     else { Write-Host "[--] ${name} no está instalado" -ForegroundColor Yellow }
 }
 
-Write-Host "Instructional Designer Skill - preparación del entorno" -ForegroundColor Cyan
+Write-Host "Jintia Skill - preparación del entorno" -ForegroundColor Cyan
 Write-Host "No requiere privilegios de administrador. No instala TeX Live automáticamente."
 Show-Status 'Node.js' 'node'
 Show-Status 'npm' 'npm'

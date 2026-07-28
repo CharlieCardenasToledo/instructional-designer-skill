@@ -1,4 +1,4 @@
-# Usar Instructional Designer con Claude
+# Usar Jintia con Claude
 
 Esta guía separa las cuatro superficies de Claude que pueden intervenir en el
 flujo. No son equivalentes y la forma de instalar la skill cambia en cada una.
@@ -48,21 +48,21 @@ curso, ejecutar validadores y compilar LaTeX.
 La app instala el payload en:
 
 ```text
-Windows: %USERPROFILE%\.claude\skills\instructional-designer-skill
-macOS:   ~/.claude/skills/instructional-designer-skill
-Linux:   ~/.claude/skills/instructional-designer-skill
+Windows: %USERPROFILE%\.claude\skills\jintia-skill
+macOS:   ~/.claude/skills/jintia-skill
+Linux:   ~/.claude/skills/jintia-skill
 ```
 
 ### Instalación manual
 
 Clona el repositorio y copia **el contenido de `skill/`**, no la raíz del
 monorepo, a la ruta anterior. `SKILL.md` debe quedar directamente dentro de
-`instructional-designer-skill/`.
+`jintia-skill/`.
 
 La estructura mínima es:
 
 ```text
-instructional-designer-skill/
+jintia-skill/
 ├── SKILL.md
 ├── config/
 ├── references/
@@ -73,7 +73,7 @@ instructional-designer-skill/
 Claude Code puede activar la skill por contexto o mediante:
 
 ```text
-/instructional-designer-skill
+/jintia-skill
 ```
 
 Abre Claude Code en la carpeta de la asignatura y pide, por ejemplo:
@@ -101,7 +101,7 @@ app con tu configuración.
 
 Projects sirve para conservar instrucciones, archivos de conocimiento y
 conversaciones relacionadas. No convierte automáticamente el contenido pegado
-en una skill ni registra `/instructional-designer-skill`.
+en una skill ni registra `/jintia-skill`.
 
 Úsalo para:
 
@@ -162,7 +162,9 @@ incluye.
 ### Claude Code no detecta la skill
 
 - Confirma que `SKILL.md` está directamente dentro de la carpeta de la skill.
-- Confirma que la carpeta se llama `instructional-designer-skill`.
+- Confirma que la carpeta se llama `jintia-skill`.
+- Si conservas una instalación anterior en `instructional-designer-skill`,
+  vuelve a instalar desde Jintia Desktop para migrar la configuración.
 - Reinicia Claude Code.
 
 ### NotebookLM no autentica

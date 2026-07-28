@@ -5,6 +5,38 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const repositoryRoot = new URL('../../../', import.meta.url);
 
+test('Jintia es la identidad canónica en la aplicación, la skill y los instaladores', async () => {
+  const [main, onboarding, html, tauriText, appPackageText, skill, pluginText, paths, payload] = await Promise.all([
+    readFile(new URL('src/main.js', root), 'utf8'),
+    readFile(new URL('src/onboarding.js', root), 'utf8'),
+    readFile(new URL('index.html', root), 'utf8'),
+    readFile(new URL('src-tauri/tauri.conf.json', root), 'utf8'),
+    readFile(new URL('package.json', root), 'utf8'),
+    readFile(new URL('skill/SKILL.md', repositoryRoot), 'utf8'),
+    readFile(new URL('skill/.claude-plugin/plugin.json', repositoryRoot), 'utf8'),
+    readFile(new URL('src-tauri/src/paths.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/payload.rs', root), 'utf8'),
+  ]);
+  const tauri = JSON.parse(tauriText);
+  const appPackage = JSON.parse(appPackageText);
+  const plugin = JSON.parse(pluginText);
+
+  assert.match(main, />Jintia</);
+  assert.match(main, /Diseña el camino del aprendizaje/);
+  assert.match(onboarding, />Jintia</);
+  assert.match(onboarding, /Diseña el camino del aprendizaje/);
+  assert.match(html, /<title>Jintia/);
+  assert.equal(tauri.productName, 'Jintia Desktop');
+  assert.equal(tauri.identifier, 'com.charliecardenas.jintia');
+  assert.equal(appPackage.name, 'jintia-desktop');
+  assert.match(skill, /^name:\s*jintia-skill$/m);
+  assert.equal(plugin.name, 'jintia-skill');
+  assert.match(paths, /\.join\("jintia-skill"\)/);
+  assert.match(paths, /legacy_skill_dir/);
+  assert.match(payload, /jintia-skill-10\.4\.0\.zip/);
+  assert.match(payload, /instructional-designer-skill\.backup-/);
+});
+
 test('la arquitectura separa la app de escritorio y el paquete instalable de la skill', async () => {
   const [payload, config, windowsWorkflow, macosWorkflow] = await Promise.all([
     readFile(new URL('app/desktop/src-tauri/src/payload.rs', repositoryRoot), 'utf8'),
@@ -26,6 +58,12 @@ test('la arquitectura separa la app de escritorio y el paquete instalable de la 
   for (const source of [payload, config, windowsWorkflow, macosWorkflow]) {
     assert.doesNotMatch(source, /desktop-manager/);
   }
+});
+
+test('el modo mock no anuncia plantillas que el backend no incorpora', async () => {
+  const mock = await readFile(new URL('src/mocks/tauri-core.mock.js', root), 'utf8');
+  assert.match(mock, /id:\s*"elegantbook-clasico"/);
+  assert.doesNotMatch(mock, /minimal-mono|ieee-tecnico|cuaderno-taller/);
 });
 
 test('la firma SignPath solo publica artifacts verificados cuando está activada', async () => {
@@ -337,12 +375,23 @@ test('el backend evita reescrituras, reinstalaciones y recompilaciones idéntica
   assert.match(mcp, /root == previous/);
 });
 
-test('la ventana sin marco permite minimizar, cerrar y arrastrar', async () => {
-  const capability = JSON.parse(await readFile(new URL('src-tauri/capabilities/default.json', root), 'utf8'));
+test('el dashboard permite minimizar, maximizar, cerrar y arrastrar sin añadir maximizar al onboarding', async () => {
+  const [capabilityText, main, onboarding, windowMock] = await Promise.all([
+    readFile(new URL('src-tauri/capabilities/default.json', root), 'utf8'),
+    readFile(new URL('src/main.js', root), 'utf8'),
+    readFile(new URL('src/onboarding.js', root), 'utf8'),
+    readFile(new URL('src/mocks/tauri-window.mock.js', root), 'utf8'),
+  ]);
+  const capability = JSON.parse(capabilityText);
   const permissions = new Set(capability.permissions);
   assert.ok(permissions.has('core:window:allow-minimize'));
+  assert.ok(permissions.has('core:window:allow-toggle-maximize'));
   assert.ok(permissions.has('core:window:allow-close'));
   assert.ok(permissions.has('core:window:allow-start-dragging'));
+  assert.match(main, /id="app-win-maximize"/);
+  assert.match(main, /getCurrentWindow\(\)\.toggleMaximize\(\)/);
+  assert.match(windowMock, /toggleMaximize/);
+  assert.doesNotMatch(onboarding, /onb-win-maximize/);
 });
 
 test('la UI compartida usa recetas Tailwind v4 y no reintroduce componentes CSS legacy', async () => {
@@ -364,7 +413,7 @@ test('la UI compartida usa recetas Tailwind v4 y no reintroduce componentes CSS 
 });
 
 test('Liquid Glass aparece solo en controles y el contenido principal permanece opaco', async () => {
-  const files = ['main.js', 'pages/courses.js', 'pages/settings.js', 'pages/syllabus.js', 'pages/templates.js', 'pages/docs.js', 'pages/institution.js', 'templatePreview.js'];
+  const files = ['main.js', 'pages/about.js', 'pages/courses.js', 'pages/settings.js', 'pages/syllabus.js', 'pages/templates.js', 'pages/docs.js', 'pages/institution.js', 'templatePreview.js'];
   const pageSources = (await Promise.all(files.map(file => readFile(new URL(`src/${file}`, root), 'utf8')))).join('\n');
   assert.doesNotMatch(pageSources, /(?:card|table)[^"`]*backdrop-blur/i);
   assert.doesNotMatch(pageSources, /panel[^"`]*backdrop-blur/i);
@@ -392,4 +441,53 @@ test('router y topbar usan atributos e IDs estables, no clases legacy', async ()
   assert.match(main, /id="topbar-title"/);
   assert.match(main, /id="topbar-sub"/);
   assert.match(router, /getElementById\("topbar-title"\)/);
+});
+
+test('Acerca de Jintia está conectado al pie, Ayuda y metadatos de ejecución', async () => {
+  const [main, router, docs, about, api, appMeta] = await Promise.all([
+    readFile(new URL('src/main.js', root), 'utf8'),
+    readFile(new URL('src/router.js', root), 'utf8'),
+    readFile(new URL('src/pages/docs.js', root), 'utf8'),
+    readFile(new URL('src/pages/about.js', root), 'utf8'),
+    readFile(new URL('src/api.js', root), 'utf8'),
+    readFile(new URL('src/appMeta.js', root), 'utf8'),
+  ]);
+  assert.match(router, /about:\s*\{\s*title:\s*"Acerca de Jintia"/);
+  assert.match(main, /data-sidebar-page data-page="about"/);
+  assert.doesNotMatch(main, /v10\.4 · jintia-skill/);
+  assert.match(docs, /data-doc-nav="about"/);
+  assert.match(about, /Creado y mantenido por/);
+  assert.match(about, /Tauri[\s\S]*Rust[\s\S]*React[\s\S]*ElegantBook/);
+  assert.match(api, /Promise\.all\(\[[\s\S]*getName\(\)[\s\S]*getVersion\(\)/);
+  assert.match(appMeta, /creator:\s*"Charlie Cárdenas Toledo"/);
+});
+
+test('los enlaces externos de Acerca de usan opener con una lista cerrada', async () => {
+  const [api, capabilityText] = await Promise.all([
+    readFile(new URL('src/api.js', root), 'utf8'),
+    readFile(new URL('src-tauri/capabilities/default.json', root), 'utf8'),
+  ]);
+  const capability = JSON.parse(capabilityText);
+  assert.match(api, /ALLOWED_EXTERNAL_URLS\.includes\(url\)/);
+  assert.match(api, /openUrl\(url\)/);
+  const opener = capability.permissions.find(permission => permission?.identifier === 'opener:allow-open-url');
+  assert.ok(opener);
+  assert.ok(opener.allow.every(entry => entry.url.startsWith('https://github.com/CharlieCardenasToledo')));
+});
+
+test('el crédito opcional de Jintia no sustituye la autoría académica', async () => {
+  const [settings, onboarding, lib, course] = await Promise.all([
+    readFile(new URL('src/pages/settings.js', root), 'utf8'),
+    readFile(new URL('src/onboarding.js', root), 'utf8'),
+    readFile(new URL('src-tauri/src/lib.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/course.rs', root), 'utf8'),
+  ]);
+  assert.match(settings, /id="cfg-include-jintia-credit"/);
+  assert.match(settings, /Nunca sustituye ni modifica la autoría académica/);
+  assert.match(onboarding, /includeJintiaCredit:\s*state\.config\?\.includeJintiaCredit !== false/);
+  assert.match(lib, /include_jintia_credit:\s*Option<bool>/);
+  assert.match(course, /if include_jintia_credit/);
+  assert.match(course, /Producido con Jintia/);
+  assert.match(course, /Autor académico no configurado/);
+  assert.doesNotMatch(course, /author = if institution\.author\.is_empty\(\) \{ "Jintia Desktop"/);
 });

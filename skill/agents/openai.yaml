@@ -1,8 +1,8 @@
 interface:
-  display_name: "Instructional Designer"
+  display_name: "Jintia"
   short_description: "Crea guías académicas verificables y accesibles"
   brand_color: "#0f766e"
-  default_prompt: "Usa $instructional-designer-skill para diseñar una guía semanal autoinstruccional."
+  default_prompt: "Usa $jintia-skill para diseñar una guía semanal autoinstruccional."
 
 dependencies:
   tools:

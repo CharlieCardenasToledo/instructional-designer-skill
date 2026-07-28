@@ -1,6 +1,6 @@
 # Plantilla LaTeX — Preamble, Bloques y Patrones Canónicos
 
-Referencia de la skill `instructional-designer-skill`. Leer cuando la tarea implique crear o editar el archivo principal, la introducción, secciones de teoría, el estudio de caso o tablas comparativas.
+Referencia de `jintia-skill`. Leer cuando la tarea implique crear o editar el archivo principal, la introducción, secciones de teoría, el estudio de caso o tablas comparativas.
 
 ## Índice
 

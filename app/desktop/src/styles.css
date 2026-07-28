@@ -23,8 +23,8 @@
   --radius-app-lg: 14px;
   --radius-capsule: 999px;
   --shadow-surface: 0 8px 24px rgba(15, 23, 42, 0.08);
-  --shadow-control: 0 8px 28px rgba(15, 23, 42, 0.16);
-  --shadow-control-dark: 0 8px 28px rgba(0, 0, 0, 0.28);
+  --shadow-control: 0 10px 24px rgba(15, 23, 42, 0.10);
+  --shadow-control-dark: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 /* Sin Preflight, `[hidden]` pierde contra utilidades (capa utilities > default
@@ -323,6 +323,59 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
   outline: none;
 }
 
+.liquid-control {
+  --liquid-fill: rgba(255, 255, 255, .38);
+  --liquid-border: rgba(255, 255, 255, .58);
+  --liquid-edge: rgba(255, 255, 255, .82);
+  --liquid-depth: rgba(15, 23, 42, .12);
+  background-color: var(--liquid-fill) !important;
+  border-color: var(--liquid-border);
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, .10),
+    inset 0 1px 0 rgba(255, 255, 255, .54),
+    inset 0 -1px 0 rgba(15, 23, 42, .06);
+  -webkit-backdrop-filter: blur(18px) saturate(180%) contrast(104%);
+  backdrop-filter: blur(18px) saturate(180%) contrast(104%);
+}
+
+.liquid-control-dark {
+  --liquid-fill: rgba(15, 23, 42, .42);
+  --liquid-border: rgba(255, 255, 255, .25);
+  --liquid-depth: rgba(0, 0, 0, .22);
+}
+
+.liquid-control-subtle {
+  --liquid-fill: rgba(255, 255, 255, .24);
+}
+
+.liquid-control-brand {
+  --liquid-fill: rgba(15, 118, 110, .78);
+  --liquid-border: rgba(153, 246, 228, .62);
+  --liquid-depth: rgba(6, 78, 72, .28);
+}
+
+.liquid-control-brand-soft {
+  --liquid-fill: rgba(204, 251, 241, .48);
+  --liquid-border: rgba(94, 234, 212, .46);
+}
+
+.liquid-control-danger {
+  --liquid-fill: rgba(254, 226, 226, .62);
+  --liquid-border: rgba(252, 165, 165, .58);
+}
+
+.liquid-control:hover {
+  --liquid-fill: rgba(255, 255, 255, .56);
+}
+
+.liquid-control-brand:hover {
+  --liquid-fill: rgba(17, 94, 89, .86);
+}
+
+.liquid-control-danger:hover {
+  --liquid-fill: rgba(254, 202, 202, .82);
+}
+
 .liquid-control::before,
 .liquid-control::after {
   content: "";
@@ -334,20 +387,49 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
 
 .liquid-control::before {
   z-index: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,.55), rgba(255,255,255,.12) 38%, rgba(255,255,255,.04) 62%, rgba(255,255,255,.32));
-  opacity: .55;
+  background: linear-gradient(145deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.34) 15%, transparent 38%, rgba(255,255,255,.06) 62%, rgba(255,255,255,.42) 82%, rgba(15,23,42,.08) 100%);
+  opacity: .72;
 }
 
 .liquid-control::after {
   z-index: 1;
   inset: 1px;
-  border: 1px solid rgba(255,255,255,.52);
-  box-shadow: inset 0 1px 1px rgba(255,255,255,.9), inset 0 -1px 1px rgba(15,23,42,.16), 0 1px 0 rgba(255,255,255,.24);
+  border: 1px solid color-mix(in srgb, var(--liquid-edge) 76%, transparent);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.86),
+    inset 1px 0 0 rgba(255,255,255,.32),
+    inset 0 -1px 1px var(--liquid-depth);
 }
 
 .liquid-control > * {
   position: relative;
   z-index: 2;
+}
+
+/* La tabla se adapta al ancho útil, incluido Full HD con escalado de Windows. */
+.responsive-course-region {
+  container-type: inline-size;
+}
+
+.courses-col-code { width: 112px; }
+.courses-col-name { width: 28%; }
+.courses-col-period { width: 150px; }
+.courses-col-semester { width: 120px; }
+.courses-col-credits { width: 82px; }
+.courses-col-weeks { width: 78px; }
+.courses-col-status { width: 118px; }
+.courses-col-actions { width: 112px; }
+
+@container (max-width: 980px) {
+  .courses-cell-period { display: none; }
+  .courses-col-period { width: 0; }
+  .courses-col-name { width: auto; }
+}
+
+@container (max-width: 760px) {
+  .courses-cell-code { display: none; }
+  .courses-col-code { width: 0; }
+  .courses-col-name { width: auto; }
 }
 
 @media (prefers-reduced-transparency: reduce) {

@@ -124,7 +124,11 @@ fn extract_site_name(document: &Html) -> Option<String> {
     }
 
     let selector = Selector::parse("title").ok()?;
-    let title = document.select(&selector).next()?.text().collect::<String>();
+    let title = document
+        .select(&selector)
+        .next()?
+        .text()
+        .collect::<String>();
     let title = title
         .split(['|', '–', '—'])
         .map(str::trim)
@@ -153,9 +157,7 @@ fn validate_remote_url(url: &Url) -> Result<(), String> {
                     || ip.is_broadcast()
                     || ip.is_unspecified()
             }
-            IpAddr::V6(ip) => {
-                ip.is_loopback() || ip.is_unspecified() || ip.is_unique_local()
-            }
+            IpAddr::V6(ip) => ip.is_loopback() || ip.is_unspecified() || ip.is_unique_local(),
         };
         if private {
             return Err("No se permiten direcciones de red privadas.".to_string());
@@ -200,12 +202,12 @@ async fn fetch_text(client: &Client, url: Url) -> Result<String, String> {
 }
 
 pub async fn extract_site_palette(raw_url: String) -> Result<SitePalette, String> {
-    let base_url = Url::parse(raw_url.trim())
-        .map_err(|error| format!("La URL no es válida: {error}"))?;
+    let base_url =
+        Url::parse(raw_url.trim()).map_err(|error| format!("La URL no es válida: {error}"))?;
     validate_remote_url(&base_url)?;
 
     let client = Client::builder()
-        .user_agent("AcademiaOS Palette Extractor/1.0")
+        .user_agent("Jintia Palette Extractor/1.0")
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(25))
         .redirect(Policy::limited(5))
@@ -225,10 +227,10 @@ pub async fn extract_site_palette(raw_url: String) -> Result<SitePalette, String
         let urls = document
             .select(&selector)
             .filter(|element| {
-                element
-                    .value()
-                    .attr("rel")
-                    .is_some_and(|rel| rel.split_ascii_whitespace().any(|item| item.eq_ignore_ascii_case("stylesheet")))
+                element.value().attr("rel").is_some_and(|rel| {
+                    rel.split_ascii_whitespace()
+                        .any(|item| item.eq_ignore_ascii_case("stylesheet"))
+                })
             })
             .filter_map(|element| element.value().attr("href"))
             .filter_map(|href| base_url.join(href).ok())

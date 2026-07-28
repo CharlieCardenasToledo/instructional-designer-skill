@@ -1,9 +1,9 @@
 ---
-name: instructional-designer-skill
+name: jintia-skill
 description: Diseña, redacta, edita y valida cursos, guías semanales LaTeX, módulos autoinstruccionales, rúbricas y evaluaciones de educación superior con UDL 3.0, Backward Design, Quality Matters y evidencia verificable mediante NotebookLM.
 ---
 
-# Diseño instruccional autoinstruccional basado en evidencia
+# Jintia Skill — diseño instruccional autoinstruccional basado en evidencia
 
 ## Objetivo
 

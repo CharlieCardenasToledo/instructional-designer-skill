@@ -1,7 +1,7 @@
 /** Shared Tailwind v4 class recipes for the application UI. */
 export const ui = {
   layout: {
-    appMain: "flex min-w-0 flex-1 flex-col overflow-hidden",
+    appMain: "relative flex min-w-0 flex-1 flex-col overflow-hidden",
     page: "min-h-0 flex-1 overflow-y-auto p-5",
     stack: "flex h-full flex-col gap-4",
     twoCol: "grid h-full grid-cols-1 items-start gap-3.5 lg:grid-cols-[1fr_300px]",
@@ -16,34 +16,34 @@ export const ui = {
     input: "rounded-md border border-slate-300 bg-white text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15",
   },
   liquid: {
-    control: "liquid-control relative isolate overflow-hidden rounded-full border border-white/45 bg-white/55 text-slate-900 shadow-control backdrop-blur-2xl backdrop-saturate-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
-    controlDark: "liquid-control liquid-control-dark relative isolate overflow-hidden rounded-full border border-white/25 bg-slate-950/35 text-white shadow-control-dark backdrop-blur-2xl backdrop-saturate-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2",
-    group: "liquid-control relative isolate overflow-hidden rounded-full border border-white/45 bg-white/50 p-1 shadow-control backdrop-blur-2xl backdrop-saturate-150",
+    control: "liquid-control relative isolate overflow-hidden rounded-full border text-slate-900 backdrop-blur-2xl backdrop-saturate-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+    controlDark: "liquid-control liquid-control-dark relative isolate overflow-hidden rounded-full border text-white backdrop-blur-2xl backdrop-saturate-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2",
+    group: "liquid-control relative isolate overflow-hidden rounded-full border p-1 backdrop-blur-2xl backdrop-saturate-150",
     focus: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-white",
   },
   button: {
     base: "relative isolate inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-full border px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
-    primary: "liquid-control border-brand/45 bg-brand/80 text-white shadow-control backdrop-blur-2xl backdrop-saturate-150 hover:bg-brand-hover/85",
-    secondary: "liquid-control border-white/45 bg-white/55 text-slate-800 shadow-control backdrop-blur-2xl backdrop-saturate-150 hover:bg-white/75",
-    ghost: "liquid-control border-white/35 bg-white/30 text-slate-700 shadow-control backdrop-blur-2xl backdrop-saturate-150 hover:bg-white/65 hover:text-slate-950",
-    danger: "liquid-control border-red-200/70 bg-red-50/75 text-red-600 shadow-control backdrop-blur-2xl backdrop-saturate-150 hover:bg-red-100/90",
+    primary: "liquid-control liquid-control-brand text-white backdrop-blur-2xl backdrop-saturate-150",
+    secondary: "liquid-control text-slate-800 backdrop-blur-2xl backdrop-saturate-150",
+    ghost: "liquid-control liquid-control-subtle text-slate-700 backdrop-blur-2xl backdrop-saturate-150 hover:text-slate-950",
+    danger: "liquid-control liquid-control-danger text-red-700 backdrop-blur-2xl backdrop-saturate-150",
     sm: "px-2.5 py-1.5 text-xs",
     xs: "px-2 py-1 text-[11px]",
   },
   nav: {
-    item: "liquid-control relative isolate flex w-full items-center gap-2.5 overflow-hidden rounded-full border border-white/35 bg-white/35 px-3 py-2 text-left text-[13px] font-medium text-slate-600 shadow-control backdrop-blur-2xl backdrop-saturate-150 transition hover:bg-white/70 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
-    active: "border-brand/35 bg-brand/15 text-teal-800",
+    item: "relative isolate flex w-full items-center gap-2.5 overflow-hidden rounded-full border border-transparent bg-transparent px-3 py-2 text-left text-[13px] font-medium text-slate-600 transition hover:bg-slate-900/[0.045] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+    active: "liquid-control liquid-control-brand-soft border text-teal-800 backdrop-blur-2xl backdrop-saturate-150",
   },
   settingsNav: {
-    item: "w-auto shrink-0 rounded-full px-3 py-2 text-xs text-slate-600 transition hover:bg-white/65 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand lg:w-full",
-    active: "bg-white/80 font-bold text-teal-700 shadow-sm",
+    item: "relative isolate flex w-auto shrink-0 items-center gap-2.5 overflow-hidden rounded-full border border-transparent bg-transparent px-3 py-2.5 text-xs font-medium text-slate-600 no-underline transition hover:bg-slate-900/[0.045] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 lg:w-full",
+    active: "liquid-control liquid-control-brand-soft border font-bold text-teal-800 backdrop-blur-2xl backdrop-saturate-150",
   },
   windowControl: {
-    base: "liquid-control relative isolate inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-white/35 bg-white/35 text-slate-600 shadow-control backdrop-blur-2xl backdrop-saturate-150 transition hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
-    close: "hover:border-red-400/50 hover:bg-red-600/80 hover:text-white",
+    base: "relative isolate inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-600 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1",
+    close: "hover:border-red-300/70 hover:bg-red-500/85 hover:text-white",
   },
   table: {
-    base: "min-w-[760px] w-full border-collapse text-[13px]",
+    base: "w-full table-fixed border-collapse text-[13px]",
     headRow: "border-b border-slate-300/50 bg-slate-100/70",
     th: "px-3.5 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-app-muted",
     td: "border-b border-slate-200/70 px-3.5 py-3 align-middle",

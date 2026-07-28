@@ -1,6 +1,11 @@
 use crate::models::{ActionResult, InstitutionConfig, NotebookEntry, SetupStatus, TemplateMeta};
-use crate::paths::{app_config_dir, atomic_write, atomic_write_if_changed, claude_code_config_path, claude_desktop_config_path, path_text};
-use crate::payload::{config_file_path, installed_skill_path, skill_is_installed, sync_user_config_to_install};
+use crate::paths::{
+    app_config_dir, atomic_write, atomic_write_if_changed, claude_code_config_path,
+    claude_desktop_config_path, path_text,
+};
+use crate::payload::{
+    config_file_path, installed_skill_path, skill_is_installed, sync_user_config_to_install,
+};
 use include_dir::{include_dir, Dir};
 use serde_json::{json, Value};
 use std::collections::HashSet;
@@ -9,13 +14,15 @@ use std::sync::Mutex;
 
 static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/templates");
 const DEFAULT_TEMPLATE: &str = "elegantbook-clasico";
-const EMBEDDED_TEMPLATE_IDS: &[&str] = &[
-    "elegantbook-clasico",
-];
+const EMBEDDED_TEMPLATE_IDS: &[&str] = &["elegantbook-clasico"];
 static CONFIG_WRITE_OPERATION: Mutex<()> = Mutex::new(());
 
 fn clean(value: &str) -> String {
-    value.trim().chars().filter(|character| !character.is_control()).collect()
+    value
+        .trim()
+        .chars()
+        .filter(|character| !character.is_control())
+        .collect()
 }
 
 fn validate_institution(config: &InstitutionConfig) -> Result<(), String> {
@@ -46,7 +53,9 @@ fn active_template_from_settings() -> String {
 
 pub fn template_exists(id: &str) -> bool {
     !id.is_empty()
-        && id.chars().all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
+        && id
+            .chars()
+            .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
         && TEMPLATES.get_file(format!("{id}/meta.json")).is_some()
         && TEMPLATES.get_file(format!("{id}/template.md")).is_some()
         && TEMPLATES.get_file(format!("{id}/preamble.tex")).is_some()
@@ -94,7 +103,9 @@ pub fn active_institution() -> ActiveInstitution {
         author: get(&["institution", "author"]).unwrap_or_default(),
         career: get(&["institution", "career"]).unwrap_or_default(),
         institution: get(&["institution", "name"]).unwrap_or_default(),
-        primary_rgb: hex_to_rgb_csv(&get(&["branding", "primaryColor"]).unwrap_or_else(|| "#00796B".to_string())),
+        primary_rgb: hex_to_rgb_csv(
+            &get(&["branding", "primaryColor"]).unwrap_or_else(|| "#00796B".to_string()),
+        ),
     }
 }
 
@@ -112,7 +123,9 @@ pub fn copy_active_template_assets(dest_dir: &std::path::Path) -> Result<(), Str
     };
     let primary_rgb = active_institution().primary_rgb;
     for file in template_dir.files() {
-        let Some(name) = file.path().file_name().and_then(|n| n.to_str()) else { continue };
+        let Some(name) = file.path().file_name().and_then(|n| n.to_str()) else {
+            continue;
+        };
         if TEMPLATE_CONTRACT_FILES.contains(&name) {
             continue;
         }
@@ -177,7 +190,9 @@ pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
 
     let bytes = match serde_json::to_vec_pretty(&value) {
         Ok(bytes) => bytes,
-        Err(error) => return ActionResult::error(format!("No se pudo serializar la configuración: {error}")),
+        Err(error) => {
+            return ActionResult::error(format!("No se pudo serializar la configuración: {error}"))
+        }
     };
     let path = match config_file_path("institution.json") {
         Ok(path) => path,
@@ -194,12 +209,14 @@ pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
     }
 
     let message = if changed {
-        format!("Configuración institucional guardada en:\n{}", path_text(&path))
+        format!(
+            "Configuración institucional guardada en:\n{}",
+            path_text(&path)
+        )
     } else {
         "La configuración institucional ya estaba actualizada; no se volvió a escribir.".to_string()
     };
-    ActionResult::ok(message)
-        .with_path(path_text(&path))
+    ActionResult::ok(message).with_path(path_text(&path))
 }
 
 pub fn save_notebooks(entries: Vec<NotebookEntry>) -> ActionResult {
@@ -212,7 +229,9 @@ pub fn save_notebooks(entries: Vec<NotebookEntry>) -> ActionResult {
         let id = clean(&entry.notebook_id);
         let url = clean(&entry.notebook_url);
         if code.is_empty() || name.is_empty() || root.is_empty() {
-            return ActionResult::error("Cada notebook requiere código, nombre y carpeta del curso.");
+            return ActionResult::error(
+                "Cada notebook requiere código, nombre y carpeta del curso.",
+            );
         }
         if !url.is_empty() && !url.starts_with("https://notebooklm.google.com/notebook/") {
             return ActionResult::error(format!("La URL de {code} no pertenece a NotebookLM."));
@@ -232,7 +251,9 @@ pub fn save_notebooks(entries: Vec<NotebookEntry>) -> ActionResult {
     let value = json!({ "schemaVersion": 1, "courses": courses });
     let bytes = match serde_json::to_vec_pretty(&value) {
         Ok(bytes) => bytes,
-        Err(error) => return ActionResult::error(format!("No se pudo serializar el registro: {error}")),
+        Err(error) => {
+            return ActionResult::error(format!("No se pudo serializar el registro: {error}"))
+        }
     };
     let path = match config_file_path("notebooks.json") {
         Ok(path) => path,
@@ -247,8 +268,11 @@ pub fn save_notebooks(entries: Vec<NotebookEntry>) -> ActionResult {
         ));
     }
 
-    ActionResult::ok(format!("Registro de notebooks guardado en:\n{}", path_text(&path)))
-        .with_path(path_text(&path))
+    ActionResult::ok(format!(
+        "Registro de notebooks guardado en:\n{}",
+        path_text(&path)
+    ))
+    .with_path(path_text(&path))
 }
 
 pub fn list_templates() -> Vec<TemplateMeta> {
@@ -258,7 +282,11 @@ pub fn list_templates() -> Vec<TemplateMeta> {
         .filter_map(|file| serde_json::from_slice::<TemplateMeta>(file.contents()).ok())
         .filter(|meta| template_exists(&meta.id))
         .collect::<Vec<_>>();
-    templates.sort_by(|a, b| b.featured.cmp(&a.featured).then_with(|| a.name.cmp(&b.name)));
+    templates.sort_by(|a, b| {
+        b.featured
+            .cmp(&a.featured)
+            .then_with(|| a.name.cmp(&b.name))
+    });
     templates
 }
 
@@ -273,11 +301,12 @@ pub fn institution_is_configured() -> bool {
         .and_then(|text| serde_json::from_str::<Value>(&text).ok())
         .and_then(|value| {
             let institution = value.get("institution")?;
-            Some(
-                ["name", "faculty", "career", "author"]
-                    .iter()
-                    .all(|key| institution.get(key).and_then(Value::as_str).is_some_and(|text| !text.trim().is_empty())),
-            )
+            Some(["name", "faculty", "career", "author"].iter().all(|key| {
+                institution
+                    .get(key)
+                    .and_then(Value::as_str)
+                    .is_some_and(|text| !text.trim().is_empty())
+            }))
         })
         .unwrap_or(false)
 }
@@ -332,9 +361,13 @@ pub fn set_active_template(template_id: String) -> ActionResult {
     }
 
     if changed {
-        ActionResult::ok(format!("Plantilla '{template_id}' activada y guardada en la configuración."))
+        ActionResult::ok(format!(
+            "Plantilla '{template_id}' activada y guardada en la configuración."
+        ))
     } else {
-        ActionResult::ok(format!("La plantilla '{template_id}' ya estaba activa; no se volvió a escribir."))
+        ActionResult::ok(format!(
+            "La plantilla '{template_id}' ya estaba activa; no se volvió a escribir."
+        ))
     }
 }
 
@@ -356,7 +389,10 @@ fn server_configured(path: Result<std::path::PathBuf, String>) -> bool {
 
 pub fn setup_status() -> SetupStatus {
     let desktop_config = claude_desktop_config_path();
-    let desktop_path_text = desktop_config.as_ref().map(|path| path_text(path)).unwrap_or_default();
+    let desktop_path_text = desktop_config
+        .as_ref()
+        .map(|path| path_text(path))
+        .unwrap_or_default();
     let desktop = server_configured(desktop_config);
     let code = server_configured(claude_code_config_path());
     let institution = institution_is_configured();

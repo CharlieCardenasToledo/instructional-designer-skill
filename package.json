@@ -1,11 +1,13 @@
 {
-  "name": "instructional-designer",
+  "name": "jintia",
   "private": true,
   "version": "1.0.0",
   "scripts": {
     "test": "npm --prefix app/desktop test",
     "build": "npm --prefix app/desktop run build",
     "docs:check": "node scripts/check-docs.mjs",
+    "licenses:generate": "node scripts/generate-third-party-notices.mjs",
+    "licenses:check": "node scripts/generate-third-party-notices.mjs --check",
     "desktop:dev": "npm --prefix app/desktop run tauri:dev",
     "desktop:build": "npm --prefix app/desktop run tauri:build",
     "skill:check": "node --check skill/scripts/latex-linter.js && node --check skill/scripts/latex-validator.js && node --check skill/scripts/legacy-manager.js"

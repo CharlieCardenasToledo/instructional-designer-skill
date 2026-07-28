@@ -1,6 +1,6 @@
 # Compilación LaTeX y scripts auxiliares
 
-Referencia de la skill `instructional-designer-skill`. Leer cuando haya que compilar una guía, exportar figuras o usar los scripts de la carpeta `scripts/`.
+Referencia de `jintia-skill`. Leer cuando haya que compilar una guía, exportar figuras o usar los scripts de la carpeta `scripts/`.
 
 ## Comportamiento por plataforma
 

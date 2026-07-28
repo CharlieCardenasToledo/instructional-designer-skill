@@ -1,8 +1,15 @@
 {
-  "name": "instructional-designer-manager",
+  "name": "jintia-desktop",
   "version": "1.0.0",
   "type": "module",
-  "description": "Gestor visual para el Instructional Designer Skill — configura dependencias, cursos y sílabos desde una interfaz gráfica",
+  "description": "Aplicación de escritorio de Jintia para configurar el entorno, organizar cursos e instalar Jintia Skill",
+  "author": "Charlie Cárdenas Toledo",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CharlieCardenasToledo/instructional-designer-skill.git",
+    "directory": "app/desktop"
+  },
   "scripts": {
     "dev": "vite",
     "dev:web": "vite --mode mock",
@@ -15,6 +22,7 @@
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/api": "2.11.1",
     "@tauri-apps/plugin-dialog": "2.7.2",
+    "@tauri-apps/plugin-opener": "^2.5.4",
     "lucide": "1.26.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

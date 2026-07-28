@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "Si utilizas Jintia en investigación, docencia o una publicación, cita este software."
+title: "Jintia"
+type: software
+version: 1.0.0
+date-released: 2026-07-27
+authors:
+  - family-names: "Cárdenas Toledo"
+    given-names: "Charlie"
+repository-code: "https://github.com/CharlieCardenasToledo/instructional-designer-skill"
+url: "https://github.com/CharlieCardenasToledo/instructional-designer-skill"
+license: MIT
+abstract: >-
+  Entorno abierto de diseño instruccional que conecta sílabos, planificación
+  semanal, actividades, evidencia y documentos académicos verificables.
+keywords:
+  - diseño instruccional
+  - educación
+  - LaTeX
+  - Tauri
+  - skill

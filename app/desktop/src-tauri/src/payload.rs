@@ -1,5 +1,8 @@
 use crate::models::ActionResult;
-use crate::paths::{app_config_dir, atomic_write, atomic_write_if_changed, canonical_directory, path_text, skill_dir, timestamp};
+use crate::paths::{
+    app_config_dir, atomic_write, atomic_write_if_changed, canonical_directory,
+    installed_skill_dir, legacy_skill_dir, path_text, skill_dir, timestamp,
+};
 use include_dir::{include_dir, Dir};
 use std::fs;
 use std::hash::{DefaultHasher, Hash, Hasher};
@@ -36,9 +39,8 @@ fn read_valid_json(path: &Path) -> Option<Vec<u8>> {
 
 fn user_config(name: &str, installed: Option<&Path>) -> Option<Vec<u8>> {
     let manager_path = app_config_dir().ok()?.join(name);
-    read_valid_json(&manager_path).or_else(|| {
-        installed.and_then(|root| read_valid_json(&root.join("config").join(name)))
-    })
+    read_valid_json(&manager_path)
+        .or_else(|| installed.and_then(|root| read_valid_json(&root.join("config").join(name))))
 }
 
 fn materialize_payload(target: &Path, installed: Option<&Path>) -> Result<(), String> {
@@ -120,12 +122,19 @@ pub fn install_local_skill() -> ActionResult {
         .with_path(path_text(&target));
     }
 
-    let stage = parent.join(format!(".instructional-designer-skill.stage-{}", timestamp()));
-    if let Err(error) = materialize_payload(&stage, target.exists().then_some(target.as_path())) {
+    let legacy = legacy_skill_dir().ok().filter(|path| path.exists());
+    let migrating_legacy = !target.exists() && legacy.is_some();
+    let installed = if target.exists() {
+        Some(target.as_path())
+    } else {
+        legacy.as_deref()
+    };
+    let stage = parent.join(format!(".jintia-skill.stage-{}", timestamp()));
+    if let Err(error) = materialize_payload(&stage, installed) {
         let _ = fs::remove_dir_all(&stage);
         return ActionResult::error(error);
     }
-    let backup = parent.join(format!("instructional-designer-skill.backup-{}", timestamp()));
+    let backup = parent.join(format!("jintia-skill.backup-{}", timestamp()));
     if target.exists() {
         if let Err(error) = fs::rename(&target, &backup) {
             let _ = fs::remove_dir_all(&stage);
@@ -138,13 +147,36 @@ pub fn install_local_skill() -> ActionResult {
 
     match fs::rename(&stage, &target) {
         Ok(_) => {
-            let result = ActionResult::ok(format!(
-                "Skill instalado para Claude Code en:\n{}",
-                path_text(&target)
-            ))
+            let legacy_backup = if migrating_legacy {
+                legacy.as_ref().and_then(|previous| {
+                    let archived = parent.join(format!(
+                        "instructional-designer-skill.backup-{}",
+                        timestamp()
+                    ));
+                    fs::rename(previous, &archived).ok().map(|_| archived)
+                })
+            } else {
+                None
+            };
+            let result = ActionResult::ok(if let Some(archived) = legacy_backup.as_ref() {
+                format!(
+                    "Jintia Skill se instaló en:\n{}\n\nLa instalación anterior quedó archivada en:\n{}",
+                    path_text(&target),
+                    path_text(archived)
+                )
+            } else if migrating_legacy {
+                format!(
+                    "Jintia Skill se instaló en:\n{}\n\nNo se pudo archivar la carpeta anterior; puedes retirarla manualmente después de verificar Jintia.",
+                    path_text(&target)
+                )
+            } else {
+                format!("Jintia Skill se instaló para Claude Code en:\n{}", path_text(&target))
+            })
             .with_path(path_text(&target));
             if backup.exists() {
                 result.with_backup(path_text(&backup))
+            } else if let Some(archived) = legacy_backup {
+                result.with_backup(path_text(&archived))
             } else {
                 result
             }
@@ -159,11 +191,7 @@ pub fn install_local_skill() -> ActionResult {
     }
 }
 
-fn add_bytes(
-    zip: &mut zip::ZipWriter<fs::File>,
-    path: &str,
-    bytes: &[u8],
-) -> Result<(), String> {
+fn add_bytes(zip: &mut zip::ZipWriter<fs::File>, path: &str, bytes: &[u8]) -> Result<(), String> {
     let options = SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated)
         .unix_permissions(0o644);
@@ -233,10 +261,11 @@ fn export_record_matches(path: &Path, fingerprint: &str) -> bool {
         .ok()
         .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok())
         .is_some_and(|value| {
-            value.get("lastExportPath").and_then(serde_json::Value::as_str)
+            value
+                .get("lastExportPath")
+                .and_then(serde_json::Value::as_str)
                 == Some(path_text(path).as_str())
-                && value.get("fingerprint").and_then(serde_json::Value::as_str)
-                    == Some(fingerprint)
+                && value.get("fingerprint").and_then(serde_json::Value::as_str) == Some(fingerprint)
                 && path.is_file()
         })
 }
@@ -262,8 +291,8 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
     };
-    let final_path = destination.join("instructional-designer-skill-10.4.0.zip");
-    let installed = skill_dir().ok();
+    let final_path = destination.join("jintia-skill-10.4.0.zip");
+    let installed = installed_skill_dir().ok();
     let fingerprint = payload_fingerprint(installed.as_deref());
     if export_record_matches(&final_path, &fingerprint) {
         return ActionResult::ok(format!(
@@ -272,7 +301,7 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
         ))
         .with_path(path_text(&final_path));
     }
-    let temp_path = destination.join(format!(".instructional-designer-skill-{}.tmp", timestamp()));
+    let temp_path = destination.join(format!(".jintia-skill-{}.tmp", timestamp()));
     let file = match fs::File::create(&temp_path) {
         Ok(file) => file,
         Err(error) => return ActionResult::error(format!("No se pudo crear el ZIP: {error}")),
@@ -293,7 +322,8 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
                 add_bytes(&mut zip, &format!("config/{name}"), &bytes)?;
             }
         }
-        zip.finish().map_err(|error| format!("No se pudo finalizar el ZIP: {error}"))?;
+        zip.finish()
+            .map_err(|error| format!("No se pudo finalizar el ZIP: {error}"))?;
 
         if final_path.exists() && files_equal(&temp_path, &final_path) {
             fs::remove_file(&temp_path)
@@ -301,8 +331,9 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
             return Ok(false);
         }
         if final_path.exists() {
-            fs::remove_file(&final_path)
-                .map_err(|error| format!("No se pudo reemplazar {}: {error}", final_path.display()))?;
+            fs::remove_file(&final_path).map_err(|error| {
+                format!("No se pudo reemplazar {}: {error}", final_path.display())
+            })?;
         }
         fs::rename(&temp_path, &final_path)
             .map_err(|error| format!("No se pudo guardar {}: {error}", final_path.display()))?;
@@ -363,15 +394,19 @@ pub fn last_export_path() -> Option<String> {
 }
 
 pub fn installed_skill_path() -> String {
-    skill_dir().map(|path| path_text(&path)).unwrap_or_default()
+    installed_skill_dir()
+        .map(|path| path_text(&path))
+        .unwrap_or_default()
 }
 
 pub fn skill_is_installed() -> bool {
-    skill_dir().map(|path| path.join("SKILL.md").is_file()).unwrap_or(false)
+    installed_skill_dir()
+        .map(|path| path.join("SKILL.md").is_file())
+        .unwrap_or(false)
 }
 
 pub fn sync_user_config_to_install(name: &str, bytes: &[u8]) -> Result<(), String> {
-    let target = skill_dir()?.join("config").join(name);
+    let target = installed_skill_dir()?.join("config").join(name);
     if target.parent().is_some_and(Path::exists) {
         atomic_write_if_changed(&target, bytes)?;
     }

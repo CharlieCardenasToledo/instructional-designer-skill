@@ -1,5 +1,7 @@
 use crate::models::{ActionResult, NotebookLmAuthStatus};
-use crate::paths::{atomic_write, backup_file, claude_code_config_path, claude_desktop_config_path, path_text};
+use crate::paths::{
+    atomic_write, backup_file, claude_code_config_path, claude_desktop_config_path, path_text,
+};
 use serde_json::{json, Value};
 use std::env;
 use std::fs;
@@ -21,7 +23,9 @@ static MCP_CONFIG_OPERATION: Mutex<()> = Mutex::new(());
 pub fn configure_mcp(target: String) -> ActionResult {
     let _operation = match MCP_CONFIG_OPERATION.lock() {
         Ok(operation) => operation,
-        Err(_) => return ActionResult::error("El estado interno de configuración MCP está bloqueado."),
+        Err(_) => {
+            return ActionResult::error("El estado interno de configuración MCP está bloqueado.")
+        }
     };
     let (path, label) = match target.as_str() {
         "desktop" => match claude_desktop_config_path() {
@@ -38,11 +42,18 @@ pub fn configure_mcp(target: String) -> ActionResult {
     let mut root = if path.exists() {
         let text = match fs::read_to_string(&path) {
             Ok(text) => text,
-            Err(error) => return ActionResult::error(format!("No se pudo leer {}: {error}", path.display())),
+            Err(error) => {
+                return ActionResult::error(format!("No se pudo leer {}: {error}", path.display()))
+            }
         };
         match serde_json::from_str::<Value>(&text) {
             Ok(Value::Object(object)) => Value::Object(object),
-            Ok(_) => return ActionResult::error(format!("{} no contiene un objeto JSON.", path.display())),
+            Ok(_) => {
+                return ActionResult::error(format!(
+                    "{} no contiene un objeto JSON.",
+                    path.display()
+                ))
+            }
             Err(error) => {
                 return ActionResult::error(format!(
                     "La configuración existente no es JSON válido y no fue modificada: {error}"
@@ -53,7 +64,10 @@ pub fn configure_mcp(target: String) -> ActionResult {
         json!({})
     };
 
-    if root.get("mcpServers").is_some_and(|value| !value.is_object()) {
+    if root
+        .get("mcpServers")
+        .is_some_and(|value| !value.is_object())
+    {
         return ActionResult::error(
             "La clave mcpServers existente no es un objeto. Corrígela antes de continuar.",
         );
@@ -75,7 +89,9 @@ pub fn configure_mcp(target: String) -> ActionResult {
 
     let bytes = match serde_json::to_vec_pretty(&root) {
         Ok(bytes) => bytes,
-        Err(error) => return ActionResult::error(format!("No se pudo serializar la configuración: {error}")),
+        Err(error) => {
+            return ActionResult::error(format!("No se pudo serializar la configuración: {error}"))
+        }
     };
     let backup = match backup_file(&path) {
         Ok(path) => path,
@@ -98,7 +114,11 @@ pub fn configure_mcp(target: String) -> ActionResult {
 }
 
 fn npx_command() -> &'static str {
-    if cfg!(target_os = "windows") { "npx.cmd" } else { "npx" }
+    if cfg!(target_os = "windows") {
+        "npx.cmd"
+    } else {
+        "npx"
+    }
 }
 
 fn receive_json(
@@ -110,7 +130,9 @@ fn receive_json(
     loop {
         let remaining = deadline.saturating_duration_since(Instant::now());
         if remaining.is_zero() {
-            return Err(format!("NotebookLM MCP no respondió a la solicitud {id} dentro del tiempo esperado."));
+            return Err(format!(
+                "NotebookLM MCP no respondió a la solicitud {id} dentro del tiempo esperado."
+            ));
         }
         let line = match receiver.recv_timeout(remaining) {
             Ok(line) => line,
@@ -156,10 +178,18 @@ impl McpConnection {
             .stdout(Stdio::piped())
             .stderr(Stdio::inherit())
             .spawn()
-            .map_err(|error| format!("No se pudo iniciar gemini-notebook-mcp. Verifica Node.js y npx: {error}"))?;
+            .map_err(|error| {
+                format!("No se pudo iniciar gemini-notebook-mcp. Verifica Node.js y npx: {error}")
+            })?;
 
-        let stdout = child.stdout.take().ok_or_else(|| "No se pudo leer la salida del MCP.".to_string())?;
-        let stdin = child.stdin.take().ok_or_else(|| "No se pudo escribir al MCP.".to_string())?;
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or_else(|| "No se pudo leer la salida del MCP.".to_string())?;
+        let stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| "No se pudo escribir al MCP.".to_string())?;
         let (sender, receiver) = mpsc::channel();
         std::thread::spawn(move || {
             let mut reader = BufReader::new(stdout).lines();
@@ -180,15 +210,21 @@ impl McpConnection {
             }
         });
 
-        let mut connection = McpConnection { child, stdin: Some(stdin), receiver, next_id: 1 };
+        let mut connection = McpConnection {
+            child,
+            stdin: Some(stdin),
+            receiver,
+            next_id: 1,
+        };
         connection.initialize()?;
         Ok(connection)
     }
 
     fn send(&mut self, value: Value) -> Result<(), String> {
-        let stdin = self.stdin.as_mut().ok_or_else(|| {
-            "La entrada estándar de NotebookLM MCP ya está cerrada.".to_string()
-        })?;
+        let stdin = self
+            .stdin
+            .as_mut()
+            .ok_or_else(|| "La entrada estándar de NotebookLM MCP ya está cerrada.".to_string())?;
         writeln!(stdin, "{value}")
             .map_err(|error| format!("No se pudo escribir al MCP: {error}"))?;
         stdin.flush().map_err(|error| error.to_string())
@@ -198,16 +234,16 @@ impl McpConnection {
         let id = self.next_id;
         self.next_id += 1;
         self.send(json!({
-                "jsonrpc": "2.0",
-                "id": id,
-                "method": "initialize",
-                "params": {
-                    "protocolVersion": "2025-03-26",
-                    "capabilities": {},
-                    "clientInfo": { "name": "instructional-designer-manager", "version": "1.0.0" }
-                }
-            }))
-            .map_err(|error| format!("No se pudo inicializar el MCP: {error}"))?;
+            "jsonrpc": "2.0",
+            "id": id,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-03-26",
+                "capabilities": {},
+                "clientInfo": { "name": "jintia-desktop", "version": "1.0.0" }
+            }
+        }))
+        .map_err(|error| format!("No se pudo inicializar el MCP: {error}"))?;
         let response = receive_json(&self.receiver, id, Duration::from_secs(30))?;
         if let Some(error) = response.get("error") {
             return Err(format!("NotebookLM MCP rechazó la inicialización: {error}"));
@@ -253,9 +289,7 @@ fn spawn_connection() -> Result<McpConnection, String> {
             );
             thread::sleep(Duration::from_millis(350));
             McpConnection::spawn().map_err(|second_error| {
-                format!(
-                    "{second_error} El primer intento también falló: {first_error}"
-                )
+                format!("{second_error} El primer intento también falló: {first_error}")
             })
         }
     }
@@ -320,8 +354,13 @@ fn find_string_field(value: &Value, field: &str) -> Option<String> {
             .get(field)
             .and_then(Value::as_str)
             .map(str::to_string)
-            .or_else(|| map.values().find_map(|value| find_string_field(value, field))),
-        Value::Array(items) => items.iter().find_map(|value| find_string_field(value, field)),
+            .or_else(|| {
+                map.values()
+                    .find_map(|value| find_string_field(value, field))
+            }),
+        Value::Array(items) => items
+            .iter()
+            .find_map(|value| find_string_field(value, field)),
         Value::String(text) => serde_json::from_str::<Value>(text)
             .ok()
             .as_ref()
@@ -332,7 +371,10 @@ fn find_string_field(value: &Value, field: &str) -> Option<String> {
 
 fn is_tool_error(value: &Value) -> bool {
     value.get("error").is_some()
-        || value.pointer("/result/isError").and_then(Value::as_bool).unwrap_or(false)
+        || value
+            .pointer("/result/isError")
+            .and_then(Value::as_bool)
+            .unwrap_or(false)
         || find_bool_field(value, "success") == Some(false)
 }
 
@@ -351,19 +393,25 @@ fn notebooklm_data_dir() -> Option<PathBuf> {
             .map(PathBuf::from)
             .map(|path| path.join("notebooklm"))
     } else if cfg!(target_os = "macos") {
-        env::var_os("HOME")
-            .map(PathBuf::from)
-            .map(|path| path.join("Library").join("Application Support").join("notebooklm-mcp"))
+        env::var_os("HOME").map(PathBuf::from).map(|path| {
+            path.join("Library")
+                .join("Application Support")
+                .join("notebooklm-mcp")
+        })
     } else {
         env::var_os("XDG_DATA_HOME")
             .map(PathBuf::from)
-            .or_else(|| env::var_os("HOME").map(|home| PathBuf::from(home).join(".local").join("share")))
+            .or_else(|| {
+                env::var_os("HOME").map(|home| PathBuf::from(home).join(".local").join("share"))
+            })
             .map(|path| path.join("notebooklm-mcp"))
     }
 }
 
 fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
-    haystack.windows(needle.len()).any(|window| window == needle)
+    haystack
+        .windows(needle.len())
+        .any(|window| window == needle)
 }
 
 /// Workaround para gemini-notebook-mcp 2.0.0: `get_health` solo comprueba
@@ -375,8 +423,16 @@ fn persistent_profile_has_recent_google_auth() -> bool {
         return false;
     };
     let cookie_files = [
-        data_dir.join("chrome_profile").join("Default").join("Network").join("Cookies"),
-        data_dir.join("chrome_profile").join("Default").join("Network").join("Cookies-wal"),
+        data_dir
+            .join("chrome_profile")
+            .join("Default")
+            .join("Network")
+            .join("Cookies"),
+        data_dir
+            .join("chrome_profile")
+            .join("Default")
+            .join("Network")
+            .join("Cookies-wal"),
     ];
 
     cookie_files.iter().any(|path| {
@@ -472,8 +528,7 @@ pub fn start_auth() -> ActionResult {
     );
     match response {
         Ok(value)
-            if !is_tool_error(&value)
-                && find_bool_field(&value, "authenticated") == Some(true) =>
+            if !is_tool_error(&value) && find_bool_field(&value, "authenticated") == Some(true) =>
         {
             let status = NotebookLmAuthStatus {
                 authenticated: true,
@@ -489,7 +544,9 @@ pub fn start_auth() -> ActionResult {
             discard_connection();
             let status = NotebookLmAuthStatus {
                 authenticated: true,
-                message: "Sesión iniciada. Se verificó mediante el perfil persistente de NotebookLM.".to_string(),
+                message:
+                    "Sesión iniciada. Se verificó mediante el perfil persistente de NotebookLM."
+                        .to_string(),
             };
             remember_auth_validation(&status);
             ActionResult::ok(status.message)

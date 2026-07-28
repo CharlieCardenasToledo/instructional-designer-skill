@@ -1,7 +1,7 @@
-# Instructional Designer Manager
+# Jintia Desktop
 
 Aplicación Tauri que instala, configura y exporta
-`instructional-designer-skill`. La descripción del producto y las descargas
+`jintia-skill`. La descripción del producto y las descargas
 están en el [README principal](../../README.md).
 
 ## Responsabilidades

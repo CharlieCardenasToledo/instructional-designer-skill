@@ -1,12 +1,16 @@
 use crate::models::{ActionResult, DependencyStatus, WeekData};
-use crate::paths::{atomic_write, atomic_write_if_changed, backup_file, canonical_directory, path_text, safe_segment, timestamp};
+use crate::paths::{
+    atomic_write, atomic_write_if_changed, backup_file, canonical_directory, path_text,
+    safe_segment, timestamp,
+};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::process::Command;
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
 const DEPENDENCY_CACHE_TTL: Duration = Duration::from_secs(300);
-static DEPENDENCY_CACHE: OnceLock<Mutex<Option<(Instant, Vec<DependencyStatus>)>>> = OnceLock::new();
+static DEPENDENCY_CACHE: OnceLock<Mutex<Option<(Instant, Vec<DependencyStatus>)>>> =
+    OnceLock::new();
 static SYLLABUS_WRITE_OPERATION: Mutex<()> = Mutex::new(());
 static PDF_COMPILE_OPERATION: Mutex<()> = Mutex::new(());
 
@@ -21,7 +25,11 @@ fn invalidate_dependency_cache() {
 }
 
 fn command_exists(command: &str) -> bool {
-    let checker = if cfg!(target_os = "windows") { "where.exe" } else { "which" };
+    let checker = if cfg!(target_os = "windows") {
+        "where.exe"
+    } else {
+        "which"
+    };
     Command::new(checker)
         .arg(command)
         .output()
@@ -35,10 +43,19 @@ fn version(command: &str, args: &[&str]) -> Option<String> {
         .output()
         .ok()
         .and_then(|output| {
-            let text = if output.stdout.is_empty() { output.stderr } else { output.stdout };
+            let text = if output.stdout.is_empty() {
+                output.stderr
+            } else {
+                output.stdout
+            };
             String::from_utf8(text).ok()
         })
-        .and_then(|text| text.lines().find(|line| !line.trim().is_empty()).map(str::trim).map(str::to_string))
+        .and_then(|text| {
+            text.lines()
+                .find(|line| !line.trim().is_empty())
+                .map(str::trim)
+                .map(str::to_string)
+        })
 }
 
 pub fn check_dependencies() -> Vec<DependencyStatus> {
@@ -51,8 +68,16 @@ pub fn check_dependencies() -> Vec<DependencyStatus> {
     refresh_path_from_registry();
 
     let node = command_exists("node");
-    let npx = command_exists(if cfg!(target_os = "windows") { "npx.cmd" } else { "npx" });
-    let python_command = if command_exists("python3") { "python3" } else { "python" };
+    let npx = command_exists(if cfg!(target_os = "windows") {
+        "npx.cmd"
+    } else {
+        "npx"
+    });
+    let python_command = if command_exists("python3") {
+        "python3"
+    } else {
+        "python"
+    };
     let python = command_exists(python_command);
     let git = command_exists("git");
 
@@ -159,7 +184,9 @@ pub fn install_dependency(name: String, confirmed: bool) -> ActionResult {
                 }
                 ActionResult::ok(format!("{name} instalado correctamente."))
             }
-            Ok(status) => ActionResult::error(format!("winget terminó con código {:?}.", status.code())),
+            Ok(status) => {
+                ActionResult::error(format!("winget terminó con código {:?}.", status.code()))
+            }
             Err(error) => ActionResult::error(format!("No se pudo ejecutar winget: {error}")),
         }
     }
@@ -272,7 +299,10 @@ pub fn create_course_structure(
         course.join("semanas").join("_shared").join("latex"),
     ];
     for week in 1..=weeks {
-        let week_root = course.join("semanas").join(format!("semana-{week:02}")).join("latex");
+        let week_root = course
+            .join("semanas")
+            .join(format!("semana-{week:02}"))
+            .join("latex");
         paths.push(week_root.join("sections"));
         paths.push(week_root.join("figure"));
     }
@@ -282,14 +312,20 @@ pub fn create_course_structure(
         }
     }
 
-    ActionResult::ok(format!("Estructura creada para {weeks} semanas en:\n{}", path_text(&course)))
-        .with_path(path_text(&course))
+    ActionResult::ok(format!(
+        "Estructura creada para {weeks} semanas en:\n{}",
+        path_text(&course)
+    ))
+    .with_path(path_text(&course))
 }
 
 fn bullets(text: &str) -> Vec<String> {
     text.lines()
         .map(str::trim)
-        .map(|line| line.trim_start_matches(|character: char| matches!(character, '-' | '*' | '•' | ' ')).trim())
+        .map(|line| {
+            line.trim_start_matches(|character: char| matches!(character, '-' | '*' | '•' | ' '))
+                .trim()
+        })
         .filter(|line| !line.is_empty())
         .map(str::to_string)
         .collect()
@@ -300,9 +336,15 @@ fn labelled_outcomes(text: &str) -> Vec<String> {
         .into_iter()
         .enumerate()
         .map(|(index, line)| {
-            if ["docencia:", "práctica:", "practica:", "autónomo:", "autonomo:"]
-                .iter()
-                .any(|prefix| line.to_lowercase().starts_with(prefix))
+            if [
+                "docencia:",
+                "práctica:",
+                "practica:",
+                "autónomo:",
+                "autonomo:",
+            ]
+            .iter()
+            .any(|prefix| line.to_lowercase().starts_with(prefix))
             {
                 line
             } else if index == 0 {
@@ -318,7 +360,11 @@ fn list_block(items: Vec<String>, empty: &str) -> String {
     if items.is_empty() {
         format!("- {empty}")
     } else {
-        items.into_iter().map(|item| format!("- {item}")).collect::<Vec<_>>().join("\n")
+        items
+            .into_iter()
+            .map(|item| format!("- {item}"))
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 }
 
@@ -351,7 +397,10 @@ pub fn build_syllabus_md(
         }
         let topics = bullets(&week.topics);
         let title = if week.title.trim().is_empty() {
-            topics.first().cloned().unwrap_or_else(|| week.unit.trim().to_string())
+            topics
+                .first()
+                .cloned()
+                .unwrap_or_else(|| week.unit.trim().to_string())
         } else {
             week.title.trim().to_string()
         };
@@ -430,8 +479,11 @@ pub fn generate_syllabus(
         return ActionResult::error(error);
     }
 
-    let result = ActionResult::ok(format!("Sílabo canónico generado en:\n{}", path_text(&path)))
-        .with_path(path_text(&path));
+    let result = ActionResult::ok(format!(
+        "Sílabo canónico generado en:\n{}",
+        path_text(&path)
+    ))
+    .with_path(path_text(&path));
     if let Some(backup) = backup {
         result.with_backup(path_text(&backup))
     } else {
@@ -448,6 +500,7 @@ pub fn compile_syllabus_pdf(
     _semester: String,
     description: String,
     weeks_data: Vec<WeekData>,
+    include_jintia_credit: bool,
     reuse_if_valid: bool,
 ) -> ActionResult {
     let _operation = match PDF_COMPILE_OPERATION.lock() {
@@ -461,7 +514,10 @@ pub fn compile_syllabus_pdf(
 
     let course_dir = course.join(format!("{} {}", course_code, course_name));
     if !course_dir.exists() {
-        return ActionResult::error(format!("Carpeta del curso no encontrada: {}", course_dir.display()));
+        return ActionResult::error(format!(
+            "Carpeta del curso no encontrada: {}",
+            course_dir.display()
+        ));
     }
 
     let latex_dir = course_dir.join("latex");
@@ -479,9 +535,21 @@ pub fn compile_syllabus_pdf(
     let institution = crate::config::active_institution();
     let primary_rgb = institution.primary_rgb.clone();
     let active_template = crate::config::get_active_template();
-    let author = if institution.author.is_empty() { "Instructional Designer Manager".to_string() } else { institution.author };
-    let institute_line = if institution.career.is_empty() { "Sistema Académico".to_string() } else { institution.career };
-    let extrainfo_line = if institution.institution.is_empty() { String::new() } else { institution.institution };
+    let author = if institution.author.is_empty() {
+        "Autor académico no configurado".to_string()
+    } else {
+        institution.author
+    };
+    let institute_line = if institution.career.is_empty() {
+        "Sistema Académico".to_string()
+    } else {
+        institution.career
+    };
+    let extrainfo_line = if institution.institution.is_empty() {
+        String::new()
+    } else {
+        institution.institution
+    };
 
     let mut full_content = format!(
         "\\documentclass[11pt,oneside,lang=es,color=blue,citestyle=apa,bibstyle=apa]{{elegantbook}}\n\
@@ -509,7 +577,10 @@ pub fn compile_syllabus_pdf(
         ));
         full_content.push_str(&format!(
             "\\coursemeta{{Unidad: {} \\quad Horas: Docencia {} · Práctica {} · Autónomo {}}}\n\n",
-            week.unit.trim(), week.teaching_hours, week.practice_hours, week.autonomous_hours
+            week.unit.trim(),
+            week.teaching_hours,
+            week.practice_hours,
+            week.autonomous_hours
         ));
         if !week.topics.trim().is_empty() {
             full_content.push_str("\\begin{accentblock}[title=Temas]\n\\begin{itemize}\n");
@@ -519,14 +590,22 @@ pub fn compile_syllabus_pdf(
             full_content.push_str("\\end{itemize}\n\\end{accentblock}\n\n");
         }
         if !week.outcomes.trim().is_empty() {
-            full_content.push_str("\\begin{mintblock}[title=Resultado de aprendizaje]\n\\begin{itemize}\n");
+            full_content
+                .push_str("\\begin{mintblock}[title=Resultado de aprendizaje]\n\\begin{itemize}\n");
             for line in week.outcomes.lines().filter(|l| !l.trim().is_empty()) {
                 full_content.push_str(&format!("\\item {}\n", line.trim()));
             }
             full_content.push_str("\\end{itemize}\n\\end{mintblock}\n\n");
         }
-        if let Some(activity) = week.graded_activity.as_ref().filter(|a| !a.trim().is_empty()) {
-            full_content.push_str(&format!("\\begin{{sandblock}}[title=Actividad calificada]\n{}\n\\end{{sandblock}}\n\n", activity.trim()));
+        if let Some(activity) = week
+            .graded_activity
+            .as_ref()
+            .filter(|a| !a.trim().is_empty())
+        {
+            full_content.push_str(&format!(
+                "\\begin{{sandblock}}[title=Actividad calificada]\n{}\n\\end{{sandblock}}\n\n",
+                activity.trim()
+            ));
         }
         if !week.bibliography.trim().is_empty() {
             full_content.push_str("\\begin{softblock}[title=Bibliografía]\n\\begin{itemize}\n");
@@ -537,6 +616,19 @@ pub fn compile_syllabus_pdf(
         }
     }
 
+    if include_jintia_credit {
+        full_content.push_str(
+            "\n\\clearpage\n\
+             \\thispagestyle{empty}\n\
+             \\vspace*{\\fill}\n\
+             \\begin{center}\n\
+             {\\footnotesize\\color{gray}Producido con Jintia\\\\\n\
+             Diseña el camino del aprendizaje.\\\\\n\
+             Software creado por Charlie Cárdenas Toledo.}\n\
+             \\end{center}\n\
+             \\vspace*{\\fill}\n",
+        );
+    }
     full_content.push_str("\n\\end{document}\n");
 
     let main_tex = latex_dir.join("main.tex");
@@ -550,7 +642,9 @@ pub fn compile_syllabus_pdf(
     let fingerprint = format!("{:016x}", hasher.finish());
 
     let valid_pdf = || {
-        std::fs::metadata(&pdf_path).ok().is_some_and(|metadata| metadata.len() > 100)
+        std::fs::metadata(&pdf_path)
+            .ok()
+            .is_some_and(|metadata| metadata.len() > 100)
             && std::fs::read(&pdf_path)
                 .ok()
                 .is_some_and(|bytes| bytes.starts_with(b"%PDF-"))
@@ -582,7 +676,8 @@ pub fn compile_syllabus_pdf(
     // no tiene una, se crea vacía para que la compilación no falle.
     let bib_path = latex_dir.join("reference.bib");
     if !bib_path.exists() {
-        if let Err(error) = atomic_write(&bib_path, b"% Sin referencias bibliograficas todavia.\n") {
+        if let Err(error) = atomic_write(&bib_path, b"% Sin referencias bibliograficas todavia.\n")
+        {
             return ActionResult::error(format!("No se pudo crear reference.bib: {error}"));
         }
     }
@@ -607,14 +702,16 @@ pub fn compile_syllabus_pdf(
                     }
                 }
             }
-            ActionResult::ok(format!("PDF compilado exitosamente"))
-                .with_path(path_text(&pdf_path))
+            ActionResult::ok(format!("PDF compilado exitosamente")).with_path(path_text(&pdf_path))
         }
         Err(error) => ActionResult::error(error),
     }
 }
 
-fn compile_via_pdflatex(latex_dir: &std::path::Path, base_name: &str) -> Result<std::path::PathBuf, String> {
+fn compile_via_pdflatex(
+    latex_dir: &std::path::Path,
+    base_name: &str,
+) -> Result<std::path::PathBuf, String> {
     let output = Command::new("pdflatex")
         .args(["-interaction=nonstopmode", &format!("{}.tex", base_name)])
         .current_dir(latex_dir)
@@ -635,7 +732,10 @@ fn compile_via_pdflatex(latex_dir: &std::path::Path, base_name: &str) -> Result<
         } else {
             String::from_utf8_lossy(&output.stderr).to_string()
         };
-        Err(format!("Error en compilación LaTeX:\n{}", extract_tex_error(&error_log)))
+        Err(format!(
+            "Error en compilación LaTeX:\n{}",
+            extract_tex_error(&error_log)
+        ))
     }
 }
 
@@ -645,7 +745,10 @@ fn compile_via_pdflatex(latex_dir: &std::path::Path, base_name: &str) -> Result<
 /// la encuentra, devuelve el final del log (donde suele estar el error).
 fn extract_tex_error(log: &str) -> String {
     let lines: Vec<&str> = log.lines().collect();
-    if let Some(idx) = lines.iter().position(|line| line.trim_start().starts_with('!')) {
+    if let Some(idx) = lines
+        .iter()
+        .position(|line| line.trim_start().starts_with('!'))
+    {
         let end = (idx + 8).min(lines.len());
         return lines[idx..end].join("\n");
     }

@@ -29,7 +29,7 @@ jobs:
       - run: npm run tauri:build
       - uses: actions/upload-artifact@v4
         with:
-          name: instructional-designer-manager-macos
+          name: jintia-desktop-macos
           path: app/desktop/src-tauri/target/release/bundle/dmg/*.dmg
       - name: Publish GitHub Release assets
         if: startsWith(github.ref, 'refs/tags/')

@@ -1,7 +1,7 @@
 {
-  "productName": "Instructional Designer Manager",
+  "productName": "Jintia Desktop",
   "version": "1.0.0",
-  "identifier": "com.charliecardenas.ids-manager",
+  "identifier": "com.charliecardenas.jintia",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -11,7 +11,7 @@
   "app": {
     "windows": [
       {
-        "title": "Instructional Designer Manager",
+        "title": "Jintia Desktop",
         "width": 1100,
         "height": 720,
         "minWidth": 900,

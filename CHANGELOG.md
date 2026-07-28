@@ -1,4 +1,4 @@
-# Changelog — instructional-designer-skill
+# Changelog — Jintia
 
 Este archivo sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
 y versionado semántico.
@@ -14,6 +14,12 @@ y versionado semántico.
 
 ### Cambiado
 
+- Adoptada **Jintia** como identidad del producto, con **Jintia Desktop** para
+  la aplicación y `jintia-skill` para el motor instalable.
+- Añadida compatibilidad para detectar instalaciones anteriores y conservar
+  su configuración al instalar la nueva ruta `~/.claude/skills/jintia-skill`.
+- Renombrados los metadatos de aplicación, instaladores, workflows y
+  documentación sin alterar el contenido académico existente.
 - Reescritas las guías públicas, técnicas y de integración con Claude.
 - Sustituidas las plantillas Markdown de issues por formularios YAML.
 - Normalizada la dependencia NotebookLM MCP verificada.

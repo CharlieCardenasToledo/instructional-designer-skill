@@ -12,17 +12,20 @@ import { renderSyllabus }     from "./pages/syllabus.js";
 import { renderTemplates }    from "./pages/templates.js";
 import { renderSettings }     from "./pages/settings.js";
 import { renderDocs }         from "./pages/docs.js";
+import { renderAbout }        from "./pages/about.js";
 import { toast }              from "./toast.js";
-import { getOnboardingStatus } from "./api.js";
+import { getOnboardingStatus, getRuntimeAppMeta } from "./api.js";
 import { renderOnboarding }  from "./onboarding.js";
 import { getCurrentWindow }  from "@tauri-apps/api/window";
 import { ui, cx } from "./uiClasses.js";
+import { APP_META } from "./appMeta.js";
 
 registerPage("courses",   renderCourses);
 registerPage("syllabus",  renderSyllabus);
 registerPage("templates", renderTemplates);
 registerPage("settings",  renderSettings);
 registerPage("docs",      renderDocs);
+registerPage("about",     renderAbout);
 
 function renderShell() {
   document.getElementById("app").innerHTML = `
@@ -30,12 +33,12 @@ function renderShell() {
     <!-- SIDEBAR -->
     <aside class="flex w-[220px] shrink-0 flex-col border-r border-slate-200 bg-white" role="navigation" aria-label="Menú principal">
       <div class="flex items-center gap-2.5 border-b border-slate-900/10 px-4 py-4">
-        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand text-white shadow-sm">
-          <span class="material-symbols-outlined">school</span>
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand text-white shadow-sm" aria-hidden="true">
+          <span class="material-symbols-outlined">route</span>
         </div>
         <div class="min-w-0">
-          <h1 class="truncate text-[14px] font-extrabold tracking-tight text-slate-900">AcademiaOS</h1>
-          <span class="block truncate text-[10px] text-slate-500">Diseñador instruccional</span>
+          <h1 class="truncate text-[14px] font-extrabold tracking-tight text-slate-900">Jintia</h1>
+          <span class="block max-w-[145px] text-[9px] leading-tight text-slate-500">Diseña el camino del aprendizaje</span>
         </div>
       </div>
 
@@ -61,40 +64,47 @@ function renderShell() {
         </button>
       </nav>
 
-      <div class="border-t border-slate-900/10 px-3 py-3 text-[10px] text-slate-400">
-        <span class="material-symbols-outlined">package_2</span>
-        v10.4 · instructional-designer-skill
+      <div class="border-t border-slate-900/10 p-2">
+        <button type="button" class="group flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-slate-500 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600" data-sidebar-page data-page="about" aria-label="Acerca de Jintia">
+          <span class="material-symbols-outlined text-[19px] text-slate-400 group-hover:text-teal-700">route</span>
+          <span class="min-w-0">
+            <span class="block truncate text-[10px] font-bold text-slate-600" data-shell-version>${APP_META.brandName} · …</span>
+            <span class="block truncate text-[9px] text-slate-400">Por ${APP_META.creator}</span>
+          </span>
+        </button>
       </div>
     </aside>
 
     <!-- MAIN -->
     <main class="${ui.layout.appMain}" role="main">
-      <header class="${cx(ui.liquid.control, 'mx-4 mt-3 flex h-[48px] shrink-0 items-center justify-between px-5')}" data-tauri-drag-region>
+      <header class="${cx(ui.liquid.control, 'absolute inset-x-4 top-3 z-30 flex h-[52px] items-center justify-between px-5')}" data-tauri-drag-region>
         <div>
-          <h2 id="topbar-title" class="text-sm font-bold text-slate-800">Instructional Design Studio</h2>
+          <h2 id="topbar-title" class="text-sm font-bold text-slate-800">Jintia Desktop</h2>
           <div id="topbar-sub" class="text-[11px] text-slate-500"></div>
         </div>
         <div class="flex items-center gap-1">
-          <div class="flex items-center gap-1">
+          <div class="${cx(ui.liquid.group, 'flex items-center gap-0.5 p-0.5')}" role="group" aria-label="Controles de ventana">
             <button class="${ui.windowControl.base}" id="app-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
+            <button class="${ui.windowControl.base}" id="app-win-maximize" aria-label="Maximizar o restaurar" title="Maximizar o restaurar"><span class="material-symbols-outlined">crop_square</span></button>
             <button class="${cx(ui.windowControl.base, ui.windowControl.close)}" id="app-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
           </div>
         </div>
       </header>
 
-      <div class="${ui.surface.page}">
+      <div class="${cx(ui.surface.page, 'pt-[80px]')}">
         <section id="p-courses" hidden aria-label="Cursos"></section>
         <section id="p-syllabus" hidden aria-label="Editor de sílabo"></section>
         <section id="p-templates" hidden aria-label="Plantillas"></section>
         <section id="p-settings" hidden aria-label="Configuración"></section>
         <section id="p-docs" hidden aria-label="Documentación"></section>
+        <section id="p-about" hidden aria-label="Acerca de Jintia"></section>
       </div>
     </main>
   `;
 }
 
 document.addEventListener("click", event => {
-  const nav = event.target.closest("[data-nav-item][data-page], .sidebar-cta button[data-page]");
+  const nav = event.target.closest("[data-nav-item][data-page], [data-sidebar-page][data-page], .sidebar-cta button[data-page]");
   if (nav) navigate(nav.dataset.page);
 });
 
@@ -105,9 +115,14 @@ async function boot() {
     const onboarding = await getOnboardingStatus();
     if (onboarding.completed) {
       renderShell();
+      getRuntimeAppMeta().then(runtime => {
+        const version = document.querySelector("[data-shell-version]");
+        if (version) version.textContent = `${APP_META.brandName} · v${runtime.version}`;
+      });
       refreshIcons();
       navigate(state.page || "courses");
       document.getElementById("app-win-minimize")?.addEventListener("click", () => getCurrentWindow().minimize());
+      document.getElementById("app-win-maximize")?.addEventListener("click", () => getCurrentWindow().toggleMaximize());
       document.getElementById("app-win-close")?.addEventListener("click", () => getCurrentWindow().close());
     } else {
       await renderOnboarding();

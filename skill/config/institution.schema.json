@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/config/institution.schema.json",
-  "title": "Instructional Designer institution configuration",
+  "title": "Jintia institution configuration",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "institution", "branding", "digitalEcosystem", "activeTemplate", "options"],

@@ -38,6 +38,7 @@ import geminiLogo from "./assets/gemini-icon.svg";
 import googleGLogo from "./assets/google-g.svg";
 import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 import { ui, cx } from "./uiClasses.js";
+import { APP_META } from "./appMeta.js";
 
 // Esquema de 5 pasos (v3 en el backend; ver migrate_status en onboarding.rs).
 const TOTAL_STEPS = 5;
@@ -209,6 +210,15 @@ function renderCurrentStep() {
   const meta = STEP_META[current - 1];
   root.innerHTML = `
     ${onboardingAmbientBackground()}
+    <div class="absolute left-4 top-3 z-10 flex items-center gap-2.5" aria-label="Jintia">
+      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-white shadow-sm" aria-hidden="true">
+        <span class="material-symbols-outlined">route</span>
+      </div>
+      <div>
+        <div class="text-sm font-extrabold tracking-tight text-slate-900">Jintia</div>
+        <div class="text-[10px] text-slate-500">Diseña el camino del aprendizaje</div>
+      </div>
+    </div>
     <div class="absolute top-3 right-3 flex z-10" data-tauri-drag-region>
       <button class="${ui.windowControl.base}" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
       <button class="${cx(ui.windowControl.base, ui.windowControl.close)}" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
@@ -1081,6 +1091,11 @@ function finalStep() {
       Destino: <strong class="text-gray-700">${escapeHtml(targetLabel)}</strong>
     </div>
 
+    <div class="mx-auto max-w-md rounded-xl border border-gray-200 bg-white px-4 py-3 text-center">
+      <div class="text-sm font-bold text-gray-900">${APP_META.brandName} está listo</div>
+      <div class="mt-0.5 text-[11px] text-gray-500">Creado y mantenido por ${APP_META.creator}</div>
+    </div>
+
   </section>`;
 }
 
@@ -1337,6 +1352,7 @@ async function animateFinalStep() {
     pdfResult = await compileSyllabusPdf({
       coursePath: testBasePath,
       ...syllabusTestData,
+      includeJintiaCredit: state.config?.includeJintiaCredit !== false,
       reuseIfValid: true,
     });
     if (pdfResult?.success) {

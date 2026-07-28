@@ -1,6 +1,6 @@
 # Contribuir
 
-Gracias por mejorar Instructional Designer. El repositorio combina una
+Gracias por mejorar Jintia. El repositorio combina una
 aplicación de escritorio y una skill; los cambios deben mantener ambos
 contratos sincronizados.
 

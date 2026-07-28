@@ -17,6 +17,7 @@ const PAGE_REGISTRY = {
   activate:    { title: "Activar en Claude Desktop",     sub: "Instala el skill y configura el servidor MCP con un clic" },
   settings:    { title: "Configuración",                 sub: "Institución, conexiones, entorno y preferencias" },
   docs:        { title: "Ayuda",                          sub: "Requisitos, conexión y solución de problemas" },
+  about:       { title: "Acerca de Jintia",               sub: "Proyecto, autoría, versiones, licencia y tecnologías" },
 };
 
 /** Callbacks de renderizado registrados por cada módulo de página. */

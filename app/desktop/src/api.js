@@ -4,7 +4,30 @@
  * Esto permite sustituir la implementación (mock, test, etc.) sin tocar las páginas.
  */
 import { invoke } from "@tauri-apps/api/core";
+import { getName, getTauriVersion, getVersion } from "@tauri-apps/api/app";
 import { open as dialogOpen } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { ALLOWED_EXTERNAL_URLS, APP_META } from "./appMeta.js";
+
+export async function getRuntimeAppMeta() {
+  try {
+    const [name, version, tauriVersion] = await Promise.all([
+      getName(),
+      getVersion(),
+      getTauriVersion(),
+    ]);
+    return { name, version, tauriVersion };
+  } catch {
+    return { name: APP_META.desktopName, version: "1.0.0", tauriVersion: "2" };
+  }
+}
+
+export async function openExternal(url) {
+  if (!ALLOWED_EXTERNAL_URLS.includes(url)) {
+    throw new Error("Enlace externo no permitido");
+  }
+  return openUrl(url);
+}
 
 // ── Dependencias del sistema ─────────────────────────────────────────────
 export async function checkDependencies() {

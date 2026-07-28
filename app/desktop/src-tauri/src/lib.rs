@@ -21,9 +21,13 @@ async fn check_dependencies() -> Vec<DependencyStatus> {
 
 #[tauri::command]
 async fn install_dependency(name: String, confirmed: Option<bool>) -> ActionResult {
-    tauri::async_runtime::spawn_blocking(move || course::install_dependency(name, confirmed.unwrap_or(false)))
-        .await
-        .unwrap_or_else(|error| ActionResult::error(format!("No se pudo ejecutar la instalación: {error}")))
+    tauri::async_runtime::spawn_blocking(move || {
+        course::install_dependency(name, confirmed.unwrap_or(false))
+    })
+    .await
+    .unwrap_or_else(|error| {
+        ActionResult::error(format!("No se pudo ejecutar la instalación: {error}"))
+    })
 }
 
 #[tauri::command]
@@ -117,7 +121,9 @@ async fn check_notebooklm_auth() -> NotebookLmAuthStatus {
 async fn run_notebooklm_auth() -> ActionResult {
     tauri::async_runtime::spawn_blocking(mcp::start_auth)
         .await
-        .unwrap_or_else(|error| ActionResult::error(format!("No se pudo iniciar la autenticación: {error}")))
+        .unwrap_or_else(|error| {
+            ActionResult::error(format!("No se pudo iniciar la autenticación: {error}"))
+        })
 }
 
 #[tauri::command]
@@ -163,6 +169,7 @@ async fn compile_syllabus_pdf(
     semester: String,
     description: String,
     weeks_data: Vec<WeekData>,
+    include_jintia_credit: Option<bool>,
     reuse_if_valid: Option<bool>,
 ) -> ActionResult {
     tauri::async_runtime::spawn_blocking(move || {
@@ -175,6 +182,7 @@ async fn compile_syllabus_pdf(
             semester,
             description,
             weeks_data,
+            include_jintia_credit.unwrap_or(true),
             reuse_if_valid.unwrap_or(false),
         )
     })
@@ -201,6 +209,7 @@ async fn set_active_template(template_id: String) -> ActionResult {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             check_dependencies,
             install_dependency,

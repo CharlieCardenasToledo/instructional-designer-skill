@@ -50,7 +50,9 @@ fn migrate_status(mut status: OnboardingStatus) -> OnboardingStatus {
         // "completo" un paso nuevo cuyas partes no se terminaron todas.
         status.current_step = map_legacy_step(status.current_step);
         status.max_completed_step = map_legacy_max_completed(status.max_completed_step);
-        status.current_step = status.current_step.min(status.max_completed_step.saturating_add(1));
+        status.current_step = status
+            .current_step
+            .min(status.max_completed_step.saturating_add(1));
         status.version = ONBOARDING_VERSION;
     }
     status
@@ -113,7 +115,9 @@ fn validate_environment(dependencies: &[crate::models::DependencyStatus]) -> Res
         return Err("Instala Python para poder continuar.".to_string());
     }
     if !installed("Compilador LaTeX") {
-        return Err("Instala el compilador LaTeX para poder generar el PDF de tu guía.".to_string());
+        return Err(
+            "Instala el compilador LaTeX para poder generar el PDF de tu guía.".to_string(),
+        );
     }
     Ok(())
 }
@@ -146,16 +150,25 @@ fn first_invalid_step(
         // El motivo exacto (Node.js, Python o el compilador LaTeX) ya se
         // muestra en la tarjeta correspondiente del paso 2; este mensaje
         // solo explica por qué se regresó a ese paso.
-        return Some((2, "falta una herramienta necesaria para que la app funcione"));
+        return Some((
+            2,
+            "falta una herramienta necesaria para que la app funcione",
+        ));
     }
     if !config::institution_is_configured() {
-        return Some((3, "los datos de tu institución o perfil académico ya no están guardados"));
+        return Some((
+            3,
+            "los datos de tu institución o perfil académico ya no están guardados",
+        ));
     }
     if !config::template_exists(&config::get_active_template()) {
         return Some((3, "la plantilla que tenías elegida ya no está disponible"));
     }
     if !target_ready(&status.selected_target) {
-        return Some((4, "el destino que elegiste dejó de estar completamente configurado"));
+        return Some((
+            4,
+            "el destino que elegiste dejó de estar completamente configurado",
+        ));
     }
     None
 }
@@ -177,14 +190,22 @@ pub fn get_status() -> OnboardingStatus {
 }
 
 fn result(success: bool, message: impl Into<String>, status: OnboardingStatus) -> OnboardingResult {
-    OnboardingResult { success, message: message.into(), status }
+    OnboardingResult {
+        success,
+        message: message.into(),
+        status,
+    }
 }
 
 pub fn go_to_step(step: u8) -> OnboardingResult {
     let mut status = get_status();
     let highest_open = (status.max_completed_step + 1).min(LAST_STEP);
     if step < 1 || step > highest_open {
-        return result(false, "Completa los pasos anteriores antes de continuar.", status);
+        return result(
+            false,
+            "Completa los pasos anteriores antes de continuar.",
+            status,
+        );
     }
     status.current_step = step;
     if let Err(error) = save(&mut status) {
@@ -196,7 +217,11 @@ pub fn go_to_step(step: u8) -> OnboardingResult {
 pub fn advance(step: u8, selected_target: Option<String>) -> OnboardingResult {
     let mut status = get_status();
     if step != status.current_step {
-        return result(false, "El estado del onboarding cambió. Vuelve a verificar el paso.", status);
+        return result(
+            false,
+            "El estado del onboarding cambió. Vuelve a verificar el paso.",
+            status,
+        );
     }
 
     let validation = match step {
@@ -204,7 +229,10 @@ pub fn advance(step: u8, selected_target: Option<String>) -> OnboardingResult {
         2 => validate_environment(&course::check_dependencies_cached()),
         3 => {
             if !config::institution_is_configured() {
-                Err("Completa los datos de tu institución y tu perfil antes de continuar.".to_string())
+                Err(
+                    "Completa los datos de tu institución y tu perfil antes de continuar."
+                        .to_string(),
+                )
             } else if !config::template_exists(&config::get_active_template()) {
                 Err("Elige una plantilla para continuar.".to_string())
             } else {
@@ -245,12 +273,20 @@ pub fn advance(step: u8, selected_target: Option<String>) -> OnboardingResult {
 pub fn complete() -> OnboardingResult {
     let mut status = get_status();
     if status.current_step != LAST_STEP {
-        return result(false, "Completa todos los pasos antes de finalizar.", status);
+        return result(
+            false,
+            "Completa todos los pasos antes de finalizar.",
+            status,
+        );
     }
     if let Some((step, reason)) = first_invalid_step(&status, false) {
         status.current_step = step;
         let _ = save(&mut status);
-        return result(false, format!("Necesitamos revisar este punto antes de continuar: {reason}."), status);
+        return result(
+            false,
+            format!("Necesitamos revisar este punto antes de continuar: {reason}."),
+            status,
+        );
     }
     let auth = mcp::check_auth();
     if !auth.authenticated {

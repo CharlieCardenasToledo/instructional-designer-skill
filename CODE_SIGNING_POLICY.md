@@ -13,7 +13,7 @@ Free code signing provided by
 
 ## Project
 
-- Project: Instructional Designer
+- Project: Jintia
 - Repository:
   <https://github.com/CharlieCardenasToledo/instructional-designer-skill>
 - License: MIT
@@ -67,7 +67,7 @@ artifacts from untrusted runners are not eligible for signing.
 
 ## Version and metadata
 
-The product name must be `Instructional Designer Manager`. File and product
+The product name must be `Jintia Desktop`. File and product
 versions must match the application version declared in the repository for
 each build. SignPath artifact rules must reject unexpected product names or
 inconsistent versions.

@@ -1,11 +1,14 @@
-# Instructional Designer
+# Jintia
 
 <p align="right">
   <a href="README.en.md">🇺🇸 English</a>
 </p>
 
-Aplicación de escritorio y skill para transformar un sílabo universitario en
-una estructura de curso y en guías semanales listas para publicar.
+**Diseña el camino del aprendizaje.**
+
+Aplicación de escritorio y skill para convertir un sílabo universitario en una
+ruta conectada de resultados, contenidos, actividades, evaluaciones y guías
+semanales listas para publicar.
 
 [![Version](https://img.shields.io/badge/version-10.4.0-00796b.svg)](CHANGELOG.md)
 [![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
@@ -18,9 +21,9 @@ Preparar un entorno de diseño instruccional suele exigir instalar herramientas,
 editar archivos de configuración, conectar NotebookLM y organizar manualmente
 cada curso. Este proyecto reúne ese proceso en un solo producto:
 
-- **Instructional Designer Manager** instala y configura el entorno mediante
-  una interfaz gráfica.
-- **`instructional-designer-skill`** guía a Claude Code para producir sílabos,
+- **Jintia Desktop** instala y configura el entorno mediante una interfaz
+  gráfica.
+- **`jintia-skill`** guía a Claude Code para producir sílabos,
   guías LaTeX, actividades y evaluaciones con criterios pedagógicos verificables.
 
 La aplicación no sustituye a la skill. Es su instalador, configurador y centro
@@ -48,7 +51,7 @@ Generar y validar las guías semanales en PDF
 El onboarding explica el resultado esperado y verifica cada requisito antes de
 habilitar el panel principal.
 
-![Onboarding del Instructional Designer Manager](docs/images/app/onboarding.png)
+![Onboarding de Jintia Desktop](docs/images/app/onboarding.png)
 
 ### 2. Gestión de asignaturas
 
@@ -109,9 +112,9 @@ Descargas directas de la versión 10.4.0:
 
 | Sistema | Instalador | Descarga |
 |---|---|---|
-| Windows 10/11 x64 | NSIS `.exe` — recomendado | [Descargar EXE](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_x64-setup.exe) |
-| Windows 10/11 x64 | Windows Installer `.msi` | [Descargar MSI](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_x64_en-US.msi) |
-| macOS Apple Silicon | Imagen de disco `.dmg` | [Descargar DMG](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/download/v10.4.0/Instructional.Designer.Manager_1.0.0_aarch64.dmg) |
+| Windows 10/11 x64 | NSIS `.exe` — recomendado | [Ver descargas](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
+| Windows 10/11 x64 | Windows Installer `.msi` | [Ver descargas](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
+| macOS Apple Silicon | Imagen de disco `.dmg` | [Ver descargas](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
 
 También puedes consultar la
 [release más reciente](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest).
@@ -134,9 +137,9 @@ git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill.
 Después, copia o enlaza **el contenido de `skill/`** dentro de:
 
 ```text
-Windows: %USERPROFILE%\.claude\skills\instructional-designer-skill
-macOS:   ~/.claude/skills/instructional-designer-skill
-Linux:   ~/.claude/skills/instructional-designer-skill
+Windows: %USERPROFILE%\.claude\skills\jintia-skill
+macOS:   ~/.claude/skills/jintia-skill
+Linux:   ~/.claude/skills/jintia-skill
 ```
 
 La carpeta instalada debe contener `SKILL.md`, `config/`, `references/`,
@@ -157,7 +160,7 @@ Valida y compila la guía en PDF.
 ```
 
 También puede invocarse explícitamente como
-`/instructional-designer-skill`.
+`/jintia-skill`.
 
 ## Flujo editorial
 
@@ -218,7 +221,7 @@ artefactos en GitHub Actions, pero no publica una Release.
 ## Estructura del repositorio
 
 ```text
-instructional-designer-skill/
+jintia/
 ├── app/
 │   └── desktop/            Aplicación Tauri y frontend
 ├── skill/                  Paquete instalable de la skill
@@ -262,8 +265,12 @@ Consulta la [política de firma](CODE_SIGNING_POLICY.md) y el
 - [Manual técnico de la aplicación](app/desktop/README.md)
 - [Uso con Claude Code, Claude Skills, Projects y Cowork](docs/guia-claude-desktop.md)
 - [Arquitectura](docs/architecture.md)
+- [Sistema visual de Jintia](docs/design-system.md)
 - [Proceso de publicación](docs/releasing.md)
 - [Cómo contribuir](CONTRIBUTING.md)
+- [Autoría y mantenimiento](AUTHORS.md)
+- [Cómo citar Jintia](CITATION.cff)
+- [Avisos de terceros](THIRD_PARTY_NOTICES.md)
 - [Política de seguridad](SECURITY.md)
 - [Política de privacidad](PRIVACY.md)
 - [Política de firma](CODE_SIGNING_POLICY.md)
