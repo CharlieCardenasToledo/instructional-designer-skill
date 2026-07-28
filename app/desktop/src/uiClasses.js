@@ -9,7 +9,7 @@ export const ui = {
   surface: {
     page: "min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain bg-app-bg p-3 sm:p-4 xl:p-5",
     card: "rounded-xl border border-slate-200 bg-white shadow-sm",
-    cardGlass: "relative isolate overflow-hidden rounded-xl border border-white/20 backdrop-blur-xl backdrop-saturate-150 bg-white/40 shadow-sm",
+    cardGlass: "relative isolate overflow-hidden rounded-xl border border-white/20 backdrop-blur-xl backdrop-saturate-125 bg-white/40 shadow-sm will-change-[backdrop-filter]",
     panel: "rounded-xl border border-slate-200 bg-white",
     tableWrap: "overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm",
     mutedPanel: "rounded-xl border border-slate-200 bg-slate-50",
@@ -17,16 +17,16 @@ export const ui = {
     input: "rounded-md border border-slate-300 bg-white text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15",
   },
   liquid: {
-    control: "liquid-control relative isolate overflow-hidden rounded-full border text-slate-900 backdrop-blur-2xl backdrop-saturate-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
-    controlDark: "liquid-control liquid-control-dark relative isolate overflow-hidden rounded-full border text-white backdrop-blur-2xl backdrop-saturate-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2",
-    group: "liquid-control relative isolate overflow-hidden rounded-full border p-1 backdrop-blur-2xl backdrop-saturate-150",
+    control: "liquid-control relative isolate overflow-hidden rounded-full border text-slate-900 backdrop-blur-xl backdrop-saturate-150 will-change-[backdrop-filter] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+    controlDark: "liquid-control liquid-control-dark relative isolate overflow-hidden rounded-full border text-white backdrop-blur-xl backdrop-saturate-150 will-change-[backdrop-filter] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2",
+    group: "liquid-control relative isolate overflow-hidden rounded-full border p-1 backdrop-blur-xl backdrop-saturate-150 will-change-[backdrop-filter]",
     focus: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-white",
   },
   button: {
     base: "relative isolate inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-full border px-3 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
     primary: "border-transparent bg-brand-600 text-white shadow-sm hover:bg-brand-700",
     secondary: "border-slate-300 bg-white text-brand-950 hover:bg-slate-50",
-    ghost: "border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-brand-950",
+    ghost: "border-transparent bg-transparent text-slate-700 hover:bg-slate-100 hover:text-brand-950",
     danger: "border-red-200 bg-red-50 text-red-700 hover:bg-red-100",
     sm: "px-2.5 py-1.5 text-xs",
     xs: "px-2 py-1 text-[11px]",
@@ -36,11 +36,11 @@ export const ui = {
     active: "border-brand-600/20 bg-brand-600/10 font-semibold text-white",
   },
   settingsNav: {
-    item: "relative isolate flex w-auto shrink-0 items-center gap-2.5 overflow-hidden rounded-full border border-transparent bg-transparent px-3 py-2.5 text-xs font-medium text-slate-600 no-underline transition hover:bg-slate-900/[0.045] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 lg:w-full",
-    active: "liquid-control liquid-control-brand-soft border font-bold text-teal-800 backdrop-blur-2xl backdrop-saturate-150",
+    item: "relative isolate flex w-auto shrink-0 items-center gap-2.5 overflow-hidden rounded-full border border-transparent bg-transparent px-3 py-2.5 text-xs font-medium text-slate-700 no-underline transition hover:bg-slate-900/[0.045] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 lg:w-full",
+    active: "liquid-control liquid-control-brand-soft border font-bold text-teal-800 backdrop-blur-xl backdrop-saturate-150 will-change-[backdrop-filter]",
   },
   windowControl: {
-    base: "relative isolate inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-600 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1",
+    base: "relative isolate inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-700 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1",
     close: "hover:border-red-300/70 hover:bg-red-500/85 hover:text-white",
   },
   table: {
@@ -73,12 +73,32 @@ export const ui = {
     group: "flex flex-col gap-1.5",
   },
   modal: {
-    overlay: "fixed inset-0 z-[5000] hidden items-center justify-center bg-slate-900/45 p-6",
-    panel: "max-h-[calc(100vh-48px)] w-full max-w-[640px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl",
+    overlay: "fixed inset-0 z-[5000] hidden items-center justify-center bg-slate-900/45 p-4 sm:p-6",
+    panel: "max-h-[calc(100vh-32px)] w-full max-w-[640px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100vh-48px)]",
   },
 };
 
 export const cx = (...classes) => classes.filter(Boolean).join(" ");
+
+/**
+ * Project color reference mapping for maintenance and theming.
+ * These colors are defined as CSS custom properties in styles.css and can be
+ * updated there to change all project colors globally (supporting future dark mode or theme changes).
+ * Hex values are stored in course.project_color for persistence; CSS vars are for rendering.
+ *
+ * Usage:
+ *  - In JS: Reference the hex value directly: projectColor(course) returns course.project_color
+ *  - In CSS: Use var(--project-color-jintia), var(--project-color-blue), etc. to support theming
+ *  - To add dark mode: Update CSS custom properties in styles.css only
+ */
+export const projectColorMap = {
+  "jintia":  { hex: "#0f766e", cssVar: "--project-color-jintia", label: "Verde Jintia" },
+  "blue":    { hex: "#2563eb", cssVar: "--project-color-blue", label: "Azul" },
+  "purple":  { hex: "#7c3aed", cssVar: "--project-color-purple", label: "Violeta" },
+  "orange":  { hex: "#c2410c", cssVar: "--project-color-orange", label: "Naranja" },
+  "rose":    { hex: "#be123c", cssVar: "--project-color-rose", label: "Rosa" },
+  "slate":   { hex: "#475569", cssVar: "--project-color-slate", label: "Grafito" },
+};
 
 /** Selects the readable Liquid Glass tone for a control over a known color. */
 export function liquidForBackground(color) {

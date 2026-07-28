@@ -88,6 +88,15 @@
   /* Sombras */
   --shadow-sm:    0 2px 8px rgba(15,23,42,0.08);
 
+  /* Project color palette (course/project appearance customization)
+     Used for visual identity of courses and allowing theme changes */
+  --project-color-jintia:  #0f766e;
+  --project-color-blue:    #2563eb;
+  --project-color-purple:  #7c3aed;
+  --project-color-orange:  #c2410c;
+  --project-color-rose:    #be123c;
+  --project-color-slate:   #475569;
+
   --radius: 10px;
   --radius-lg: 14px;
   --titlebar-h: 34px;
@@ -410,8 +419,9 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
     0 10px 24px rgba(15, 23, 42, .10),
     inset 0 1px 0 rgba(255, 255, 255, .54),
     inset 0 -1px 0 rgba(15, 23, 42, .06);
-  -webkit-backdrop-filter: blur(18px) saturate(180%) contrast(104%);
-  backdrop-filter: blur(18px) saturate(180%) contrast(104%);
+  will-change: backdrop-filter;
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
 }
 
 .liquid-control-dark {
@@ -611,8 +621,9 @@ code {
   transform: translateY(10px);
   transition: opacity 0.18s, transform 0.18s;
   pointer-events: none;
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  will-change: transform, opacity;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 #toast.show    { opacity: 1; transform: translateY(0); }
 #toast.success { background: rgba(20,60,40,0.85); border: 1px solid var(--green-border); color: var(--green); }
@@ -693,9 +704,79 @@ code {
   will-change: transform;
 }
 
-@media (max-width: 980px) {
+/* ── Mobile Responsiveness (Touch & Small Viewport Adaptation) ──────────── */
+
+/* Mobile: Increase spacing and touch targets (max-width: 640px) */
+@media (max-width: 640px) {
+  /* Topbar adjustments for small screens */
+  header[data-tauri-drag-region] {
+    height: 56px !important;
+    padding: 4px 12px !important;
+    top: 0 !important;
+    inset-x: 0 !important;
+  }
+
+  /* Adjust main content top padding for smaller topbar */
+  [class*="pt-\[80px\]"] {
+    padding-top: 64px !important;
+  }
+
+  /* Increase button and interactive element padding on touch devices */
+  @media (pointer: coarse) {
+    button:not(.rounded-full),
+    input,
+    select,
+    textarea {
+      min-height: 44px;
+      padding: 10px 14px;
+    }
+
+    /* Larger tap areas for navigation items */
+    [data-nav-item],
+    [data-sidebar-page],
+    [data-create-course],
+    [role="button"] {
+      min-height: 48px;
+      padding: 12px 12px;
+    }
+
+    /* Window control buttons stay round but maintain 44px minimum */
+    .rounded-full {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Compact modal for small screens */
+  [role="dialog"] {
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+    margin: auto;
+    padding: 12px;
+  }
+}
+
+/* Tablet: Two-column layout adapts intelligently (640px–1024px) */
+@media (min-width: 641px) and (max-width: 1023px) {
   .sidebar { width: 196px; }
   .content { padding: 16px; }
+}
+
+/* Desktop: Full layout (1024px+) */
+@media (min-width: 1024px) {
+  .sidebar { width: 240px; }
+}
+
+/* Landscape mobile: Compact vertical spacing */
+@media (max-height: 500px) and (orientation: landscape) {
+  header[data-tauri-drag-region] {
+    height: 44px !important;
+    padding: 2px 8px !important;
+  }
+
+  [class*="pt-\[80px\]"] {
+    padding-top: 52px !important;
+  }
 }
 
 @media (max-width: 760px) {
