@@ -198,6 +198,8 @@ const handlers = {
   get_default_course_root: () => actionResult(true, "Carpeta de proyectos Jintia disponible (mock).", { path: "C:\\Users\\Demo\\Documents\\Jintia" }),
   get_course_state: () => ({ success: true, exists: false, message: "El proyecto aún no tiene estado Jintia (mock)." }),
   detect_harnesses: () => ({ schemaVersion: "1.0.0", projectRoot: "C:\\Users\\Demo\\Documents\\Jintia", providers: [{ id: "claude", name: "Claude Code", scope: "global", status: "detected", installed: false, hasSkills: false, supportsHooks: true }] }),
+  manage_harnesses: ({ operation, providers = [], scope = "project", confirm = false } = {}) => ({ success: confirm, operation, message: confirm ? `Operación ${operation} aplicada a ${providers.join(", ")} (${scope}).` : "Confirma explícitamente la operación.", results: [] }),
+  manage_harnesses: ({ operation, providers = [], scope = "project", confirm = false } = {}) => ({ success: confirm, operation, message: confirm ? `Operación ${operation} aplicada a ${providers.join(", ")} (${scope}).` : "Confirma explícitamente la operación.", results: [] }),
   create_course_structure: ({ rootPath, courseCode, courseName }) => {
     const slug = `${courseCode}_${courseName}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");

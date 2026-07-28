@@ -31,6 +31,7 @@ explícitamente con `/jintia <comando>` o usar lenguaje natural.
 | Registrar estado editorial | `state` | `commands/state.md` |
 | Migrar estructuras antiguas | `migrate` | `commands/migrate.md` |
 | Diagnosticar el entorno | `doctor` | `commands/doctor.md` |
+| Detectar o gestionar harnesses | `harness` | `references/harnesses.md` |
 | Leer o validar contexto persistente | `context` | `JINTIA.md` y `packages/core` |
 
 Ejemplos de routing:
@@ -42,6 +43,10 @@ Ejemplos de routing:
 
 La CLI unificada vive en `bin/jintia.js` y reutiliza los scripts deterministas
 de `scripts/`; no duplica la lógica de validación ni de renderizado.
+
+Para gestionar la instalación en harnesses, usar `harness status`, `harness
+install`, `harness update`, `harness repair` o `harness uninstall`. Las
+mutaciones exigen `--yes` y nunca sobrescriben rutas no gestionadas.
 
 ## Delegación opcional
 

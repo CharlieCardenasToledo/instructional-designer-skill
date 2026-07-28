@@ -6,6 +6,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { detectInstallationStates, mutate, installPath } = require("../../packages/core");
 const { readCourse } = require("../../packages/core");
 
 const root = path.resolve(__dirname, "..");
@@ -88,8 +89,31 @@ test("detect identifica harnesses de proyecto, globales y alias explícitos", ()
   const detected = spawnSync(process.execPath, [cli, "detect", project, "--json"], { encoding: "utf8" });
   assert.equal(detected.status, 0, detected.stderr);
   const report = JSON.parse(detected.stdout).data;
-  assert.equal(report.providers.find(provider => provider.id === "cursor").status, "installed");
+  assert.equal(report.providers.find(provider => provider.id === "cursor").status, "repair-needed");
   const explicit = spawnSync(process.execPath, [cli, "detect", project, "--providers=claude,codex", "--json"], { encoding: "utf8" });
   const explicitReport = JSON.parse(explicit.stdout).data;
-  assert.deepEqual(explicitReport.providers.map(provider => provider.id), ["claude", "codex"]);
+  assert.deepEqual([...new Set(explicitReport.providers.map(provider => provider.id))], ["claude", "codex"]);
+});
+
+test("el gestor instala, actualiza, repara y desinstala sin sobrescribir rutas ajenas", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-harness-manager-"));
+  const source = path.join(root, "source");
+  const project = path.join(root, "project");
+  fs.mkdirSync(source, { recursive: true });
+  fs.writeFileSync(path.join(source, "SKILL.md"), "---\nname: jintia-skill\n---\n");
+  const base = { projectRoot: project, sourcePath: source, providers: ["claude", "codex", "cursor"], scope: "project", version: "10.8.0", confirm: true };
+  const installed = mutate("install", base);
+  assert.equal(installed.results.length, 3);
+  assert.ok(installed.results.every(result => fs.existsSync(path.join(result.target, "VERSION"))));
+  assert.ok(detectInstallationStates(base).filter(item => item.scope === "project").every(item => item.state.status === "installed"));
+  assert.equal(mutate("update", { ...base, version: "10.9.0" }).results[0].status, "update");
+  assert.equal(detectInstallationStates({ ...base, version: "10.9.0" }).find(item => item.id === "cursor" && item.scope === "project").state.status, "installed");
+  fs.rmSync(path.join(project, ".cursor", "skills", "jintia-skill", "SKILL.md"));
+  assert.equal(detectInstallationStates({ ...base, providers: ["cursor"] })[0].state.status, "repair-needed");
+  mutate("repair", { ...base, providers: ["cursor"] });
+  assert.equal(mutate("uninstall", { ...base, providers: ["cursor"] }).results[0].status, "not-detected");
+  const foreign = installPath({ id: "gemini", projectDir: ".gemini", globalHints: [".gemini"], skillsDir: "skills" }, "project", project, "");
+  fs.mkdirSync(foreign, { recursive: true });
+  fs.writeFileSync(path.join(foreign, "SKILL.md"), "foreign");
+  assert.throws(() => mutate("install", { ...base, providers: ["gemini"] }), /ruta ajena/);
 });

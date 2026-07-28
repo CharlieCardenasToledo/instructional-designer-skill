@@ -196,6 +196,13 @@ async fn detect_harnesses(project_path: String, explicit_providers: Option<Vec<S
 }
 
 #[tauri::command]
+async fn manage_harnesses(operation: String, project_path: String, providers: Option<Vec<String>>, scope: String, confirm: bool) -> models::ToolchainReport {
+    tauri::async_runtime::spawn_blocking(move || toolchain::manage_harness(operation, project_path, providers.unwrap_or_default(), scope, confirm))
+        .await
+        .unwrap_or_else(|error| models::ToolchainReport::error(format!("No se pudo gestionar el harness: {error}")))
+}
+
+#[tauri::command]
 async fn list_generated_pdfs(projects: Vec<PdfProjectRoot>) -> Vec<GeneratedPdf> {
     tauri::async_runtime::spawn_blocking(move || pdfs::list_generated_pdfs(projects))
         .await
@@ -348,6 +355,7 @@ pub fn run() {
             get_default_course_root,
             get_course_state,
             detect_harnesses,
+            manage_harnesses,
             list_generated_pdfs,
             open_generated_pdf,
             reveal_generated_pdf,

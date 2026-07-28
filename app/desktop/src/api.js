@@ -129,6 +129,14 @@ export async function detectHarnesses(projectPath, explicitProviders = null) {
   return invoke("detect_harnesses", { projectPath, explicitProviders });
 }
 
+export async function manageHarnesses(operation, projectPath, providers, scope = "project", confirm = false) {
+  return invoke("manage_harnesses", { operation, projectPath, providers, scope, confirm });
+}
+
+export async function manageHarnesses(operation, projectPath, providers, scope = "project", confirm = false) {
+  return invoke("manage_harnesses", { operation, projectPath, providers, scope, confirm });
+}
+
 // ── Biblioteca de PDFs generados ─────────────────────────────────────────
 export async function listGeneratedPdfs(projects) {
   return invoke("list_generated_pdfs", { projects });

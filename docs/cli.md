@@ -5,6 +5,8 @@ de una conversación con un agente. Desde la carpeta de la skill:
 
 ```bash
 npx jintia doctor
+npx jintia harness status --project ./mi-curso --providers=claude,codex,cursor
+npx jintia harness install --project ./mi-curso --scope=project --providers=claude,codex --yes
 npx jintia init ./mi-curso --code IFT200 --name "Mi curso"
 npx jintia syllabus validate ./mi-curso/README.md
 npx jintia audit ./mi-curso/README.md --json
