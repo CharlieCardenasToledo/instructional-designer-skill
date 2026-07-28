@@ -3,7 +3,7 @@ import {
   configureMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
   installSkill, exportSkillZip, installOpenAIPlugin, exportOpenAIPluginZip,
   pickDirectory, saveNotebooksConfig,
-  resetOnboarding, getSkillPath, extractSitePalette, runSkillTool
+  resetOnboarding, getSkillPath, extractSitePalette, runSkillTool, detectHarnesses
 } from "../api.js";
 import { state, getNotebooks, saveConfig, saveNotebooks } from "../state.js";
 import { escapeHtml } from "../dom.js";
@@ -302,6 +302,24 @@ export async function renderSettings() {
               <span class="material-symbols-outlined text-[17px]">play_arrow</span> Ejecutar operación
             </button>
           </div>
+
+          <div class="mb-5 rounded-xl border border-slate-200 bg-white p-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div>
+                <h3 class="text-sm font-bold text-app-text">Entornos de agentes detectados</h3>
+                <p class="mt-1 text-xs text-app-muted">Busca carpetas de Claude, Codex, Cursor y otros harnesses en el proyecto y en tu perfil.</p>
+              </div>
+              <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-detect-harnesses">
+                <span class="material-symbols-outlined text-sm">radar</span> Detectar
+              </button>
+            </div>
+            <label class="mt-3 block text-xs font-semibold text-app-muted">Proyecto a inspeccionar
+              <input id="harness-project-path" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-app-text" placeholder="Dejar vacío para el proyecto actual" autocomplete="off">
+            </label>
+            <div id="harness-detection-list" class="mt-3 space-y-2" aria-live="polite">
+              <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">Aún no se ha ejecutado la detección.</div>
+            </div>
+          </div>
         </section>
 
         <!-- ── Preferencias ── -->
@@ -449,8 +467,10 @@ export async function renderSettings() {
   el.querySelector("#btn-refresh-deps")?.addEventListener("click", loadDeps);
   el.querySelector("#btn-run-toolchain-doctor")?.addEventListener("click", runToolchainDoctor);
   el.querySelector("#btn-run-toolchain-operation")?.addEventListener("click", runToolchainOperation);
+  el.querySelector("#btn-detect-harnesses")?.addEventListener("click", detectAgentHarnesses);
   loadSetupStatus();
   loadDeps();
+  detectAgentHarnesses();
 
   // ── App Preferences ───────────────────────────────────────────────────────
   loadSkillPath();
@@ -920,6 +940,29 @@ async function runToolchainOperation(event) {
     } catch (error) {
       output.textContent = `No se pudo ejecutar ${operation}: ${error}`;
       toast("No se pudo ejecutar la operación", "error", 5000);
+    }
+  });
+}
+
+async function detectAgentHarnesses(event) {
+  const button = event?.currentTarget;
+  const list = document.getElementById("harness-detection-list");
+  if (!list) return;
+  const projectPath = document.getElementById("harness-project-path")?.value.trim() || state.courses.find(course => course.project_path)?.project_path || ".";
+  await runSettingsOperation(button, "harness-detection", "Detectando…", async () => {
+    list.innerHTML = `<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">Buscando entornos…</div>`;
+    try {
+      const result = await detectHarnesses(projectPath);
+      const providers = result.providers || [];
+      list.innerHTML = providers.map(provider => {
+        const ok = provider.status === "installed";
+        const detected = provider.status !== "not-detected";
+        const label = ok ? "Instalada" : detected ? "Detectado" : "No detectado";
+        const classes = ok ? "border-green-200 bg-green-50 text-green-700" : detected ? "border-teal-200 bg-teal-50 text-teal-700" : "border-slate-200 bg-slate-50 text-slate-500";
+        return `<div class="flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 ${classes}"><span class="font-semibold">${escapeHtml(provider.name)}</span><span class="ml-auto text-[11px] font-bold uppercase tracking-wide">${label}</span><span class="basis-full text-[11px] opacity-80">${escapeHtml(provider.foundPath || "No se encontró la carpeta de configuración")}</span></div>`;
+      }).join("") || `<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">No se encontraron entornos.</div>`;
+    } catch (error) {
+      list.innerHTML = `<div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">No se pudo detectar: ${escapeHtml(String(error))}</div>`;
     }
   });
 }

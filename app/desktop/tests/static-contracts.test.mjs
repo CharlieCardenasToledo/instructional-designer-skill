@@ -829,10 +829,13 @@ test('Desktop comparte la detección de harnesses con la CLI', async () => {
   const lib = await readFile(new URL('src-tauri/src/lib.rs', root), 'utf8');
   const backend = await readFile(new URL('src-tauri/src/harnesses.rs', root), 'utf8');
   const mock = await readFile(new URL('src/mocks/tauri-core.mock.js', root), 'utf8');
+  const settings = await readFile(new URL('src/pages/settings.js', root), 'utf8');
   assert.match(api, /detect_harnesses/);
   assert.match(lib, /detect_harnesses/);
   assert.match(backend, /supports_hooks/);
   assert.match(mock, /detect_harnesses/);
+  assert.match(settings, /btn-detect-harnesses/);
+  assert.match(settings, /detectAgentHarnesses/);
 });
 
 test('la skill expone contratos de delegación especializados sin duplicar el router', async () => {
