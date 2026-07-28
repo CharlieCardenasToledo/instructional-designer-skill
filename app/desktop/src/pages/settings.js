@@ -1,7 +1,8 @@
 import {
   applyInstitutionConfig, checkDependencies, installDependency,
   configureMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
-  installSkill, exportSkillZip, pickDirectory, saveNotebooksConfig,
+  installSkill, exportSkillZip, installOpenAIPlugin, exportOpenAIPluginZip,
+  pickDirectory, saveNotebooksConfig,
   resetOnboarding, getSkillPath, extractSitePalette
 } from "../api.js";
 import { state, getNotebooks, saveConfig, saveNotebooks } from "../state.js";
@@ -14,6 +15,33 @@ import { ui, cx, liquidForBackground } from "../uiClasses.js";
 // "Instalar herramientas necesarias" solo cubre lo indispensable para
 // producir el PDF; Git queda fuera aunque aparezca en la lista de abajo.
 const BULK_INSTALL_TARGETS = new Set(["Node.js", "Python", "Compilador LaTeX"]);
+let _settingsSection = "inst-profile";
+const _busySettingsOps = new Set();
+
+function sectionHidden(id) {
+  return _settingsSection === id ? "" : " hidden";
+}
+
+async function runSettingsOperation(button, key, busyLabel, operation) {
+  if (_busySettingsOps.has(key)) return;
+  _busySettingsOps.add(key);
+  const original = button?.innerHTML;
+  if (button) {
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    button.innerHTML = `<span class="material-symbols-outlined animate-spin text-[17px]" aria-hidden="true">progress_activity</span>${escapeHtml(busyLabel)}`;
+  }
+  try {
+    return await operation();
+  } finally {
+    _busySettingsOps.delete(key);
+    if (button) {
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+      button.innerHTML = original;
+    }
+  }
+}
 
 // Convierte ecosystem a string independientemente de si es array o string
 function ecosystemToStr(val) {
@@ -27,43 +55,44 @@ export async function renderSettings() {
   if (!el) return;
 
   el.innerHTML = `
-    <div class="grid grid-cols-1 items-start gap-5 lg:grid-cols-[200px_minmax(0,1fr)]">
+    <div class="flex min-w-0 flex-col gap-4 [&_button]:min-h-11">
 
       <!-- Left nav -->
-      <div class="sticky top-0 z-10 self-start">
-        <nav class="flex gap-1 overflow-x-auto p-1 lg:flex-col lg:overflow-visible" aria-label="Secciones de configuración">
-          <a class="${cx(ui.settingsNav.item, ui.settingsNav.active)}" data-settings-nav data-section="inst-profile" href="#inst-profile" aria-current="page">
+      <div class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+        <nav class="grid grid-cols-2 gap-2 p-1 sm:grid-cols-3 xl:grid-cols-5" aria-label="Secciones de configuración">
+          <a class="${cx(ui.settingsNav.item, _settingsSection === "inst-profile" && ui.settingsNav.active)}" data-settings-nav data-section="inst-profile" href="#inst-profile" ${_settingsSection === "inst-profile" ? 'aria-current="page"' : ""}>
             <span class="material-symbols-outlined">domain</span> Perfil institucional
           </a>
-          <a class="${ui.settingsNav.item}" data-settings-nav data-section="mcp-config" href="#mcp-config">
+          <a class="${cx(ui.settingsNav.item, _settingsSection === "mcp-config" && ui.settingsNav.active)}" data-settings-nav data-section="mcp-config" href="#mcp-config" ${_settingsSection === "mcp-config" ? 'aria-current="page"' : ""}>
             <span class="material-symbols-outlined">hub</span> Conexiones
           </a>
-          <a class="${ui.settingsNav.item}" data-settings-nav data-section="notebooks-section" href="#notebooks-section">
+          <a class="${cx(ui.settingsNav.item, _settingsSection === "notebooks-section" && ui.settingsNav.active)}" data-settings-nav data-section="notebooks-section" href="#notebooks-section" ${_settingsSection === "notebooks-section" ? 'aria-current="page"' : ""}>
             <span class="material-symbols-outlined">menu_book</span> Notebooks
           </a>
-          <a class="${ui.settingsNav.item}" data-settings-nav data-section="environment" href="#environment">
+          <a class="${cx(ui.settingsNav.item, _settingsSection === "environment" && ui.settingsNav.active)}" data-settings-nav data-section="environment" href="#environment" ${_settingsSection === "environment" ? 'aria-current="page"' : ""}>
             <span class="material-symbols-outlined">terminal</span> Entorno
           </a>
-          <a class="${ui.settingsNav.item}" data-settings-nav data-section="app-prefs" href="#app-prefs">
+          <a class="${cx(ui.settingsNav.item, _settingsSection === "app-prefs" && ui.settingsNav.active)}" data-settings-nav data-section="app-prefs" href="#app-prefs" ${_settingsSection === "app-prefs" ? 'aria-current="page"' : ""}>
             <span class="material-symbols-outlined">tune</span> Preferencias
           </a>
         </nav>
       </div>
 
       <!-- Right panes -->
-      <div class="flex flex-col gap-5">
+      <div class="min-w-0">
 
 
         <!-- ── Institutional Profile ── -->
-        <section class="${cx(ui.surface.card, 'p-5')}" id="inst-profile">
+        <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("inst-profile"))}" id="inst-profile" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">domain</span> Perfil institucional
           </div>
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
             <div class="flex flex-col gap-1.5 sm:col-span-2">
               <label for="cfg-author">Nombre completo *</label>
-              <input id="cfg-author" placeholder="Ej: Charlie Cárdenas Toledo" autocomplete="name"
+              <input id="cfg-author" placeholder="Ej: Charlie Cárdenas Toledo" autocomplete="name" required aria-describedby="cfg-author-error"
                 value="${escapeHtml(state.config?.author || "")}">
+              <p id="cfg-author-error" class="hidden text-xs font-semibold text-red-700"></p>
             </div>
             <div class="flex flex-col gap-1.5">
               <label for="cfg-degree">Grado académico</label>
@@ -75,8 +104,9 @@ export async function renderSettings() {
             </div>
             <div class="flex flex-col gap-1.5">
               <label for="cfg-institution">Institución *</label>
-              <input id="cfg-institution" placeholder="Ej: Universidad Internacional del Ecuador"
+              <input id="cfg-institution" placeholder="Ej: Universidad Internacional del Ecuador" required aria-describedby="cfg-institution-error"
                 value="${escapeHtml(state.config?.institution || "")}">
+              <p id="cfg-institution-error" class="hidden text-xs font-semibold text-red-700"></p>
             </div>
             <div class="flex flex-col gap-1.5">
               <label for="cfg-faculty">Facultad</label>
@@ -125,10 +155,10 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Conexiones ── -->
-        <section class="${cx(ui.surface.card, 'p-5')}" id="mcp-config">
+        <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("mcp-config"))}" id="mcp-config" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">hub</span> Conexiones
-            <span id="mcp-status-badge" class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-300/50 bg-slate-200/20 px-2.5 py-0.5 text-[11px] font-bold text-app-muted">
+            <span id="mcp-status-badge" class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-300/50 bg-slate-200/20 px-2.5 py-0.5 text-[11px] font-bold text-app-muted" role="status" aria-live="polite">
               <span class="inline-block h-1.5 w-1.5 rounded-full bg-current"></span> Verificando…
             </span>
           </div>
@@ -160,7 +190,7 @@ export async function renderSettings() {
             <div class="flex flex-wrap items-center justify-between gap-2.5 rounded-lg border border-slate-200 bg-white px-3.5 py-3">
               <div>
                 <div class="text-[13px] font-semibold text-app-text">Sesión de Google</div>
-                <div id="nlm-auth-status" class="mt-0.5 text-xs text-app-muted">Verificando…</div>
+                <div id="nlm-auth-status" class="mt-0.5 text-xs text-app-muted" role="status" aria-live="polite">Verificando…</div>
               </div>
               <div class="flex gap-2">
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-verify-nlm">
@@ -175,12 +205,12 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Notebooks ── -->
-        <section class="${cx(ui.surface.card, 'p-5')}" id="notebooks-section">
+        <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("notebooks-section"))}" id="notebooks-section" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">menu_book</span> Notebooks de NotebookLM
-            <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-save-notebooks">
-              <span class="material-symbols-outlined text-sm">save</span> Guardar registro
-            </button>
+            <span class="ml-auto inline-flex min-h-8 items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 text-xs font-semibold text-green-700" id="notebooks-save-state" role="status" aria-live="polite">
+              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">cloud_done</span> Guardado automático
+            </span>
           </div>
 
           <!-- Notebook list -->
@@ -227,7 +257,7 @@ export async function renderSettings() {
         </section>
 
         <!-- ── Environment ── -->
-        <section class="${cx(ui.surface.card, 'p-5')}" id="environment">
+        <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("environment"))}" id="environment" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">terminal</span> Entorno del sistema
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-refresh-deps">
@@ -236,17 +266,17 @@ export async function renderSettings() {
           </div>
 
           <!-- Setup status summary -->
-          <div id="setup-status-bar" class="mb-3"></div>
+          <div id="setup-status-bar" class="mb-3" role="status" aria-live="polite"></div>
 
           <!-- Deps list -->
-          <div id="deps-content" class="flex flex-col gap-2">
+          <div id="deps-content" class="flex flex-col gap-2" aria-live="polite">
             <div class="p-6 text-center text-slate-400">Cargando…</div>
           </div>
           <div id="deps-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
         </section>
 
         <!-- ── Preferencias ── -->
-        <section class="${cx(ui.surface.card, 'p-5')}" id="app-prefs">
+        <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("app-prefs"))}" id="app-prefs" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="material-symbols-outlined text-xl text-teal-600">tune</span> Preferencias
           </div>
@@ -267,11 +297,29 @@ export async function renderSettings() {
             </label>
             <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
               <div>
-                <div class="text-[13px] font-semibold text-app-text">Instalar en el proyecto local</div>
-                <div class="mt-0.5 text-[11.5px] text-app-muted">Copia los archivos a <code>~/.claude/skills/</code></div>
+                <div class="text-[13px] font-semibold text-app-text">Instalar para Claude Code</div>
+                <div class="mt-0.5 text-[11.5px] text-app-muted">Copia la skill a <code>~/.claude/skills/</code></div>
               </div>
               <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-install-skill">
                 <span class="material-symbols-outlined text-sm">download</span> Instalar
+              </button>
+            </div>
+            <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
+              <div>
+                <div class="text-[13px] font-semibold text-app-text">Preparar para ChatGPT y Codex</div>
+                <div class="mt-0.5 text-[11.5px] text-app-muted">Registra el plugin universal en <code>~/.codex/plugins/</code></div>
+              </div>
+              <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-install-openai-plugin">
+                <span class="material-symbols-outlined text-sm">extension</span> Preparar
+              </button>
+            </div>
+            <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
+              <div>
+                <div class="text-[13px] font-semibold text-app-text">Exportar plugin universal</div>
+                <div class="mt-0.5 text-[11.5px] text-app-muted">Paquete para ChatGPT y Codex; la publicación web requiere revisión de OpenAI</div>
+              </div>
+              <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-export-openai-plugin">
+                <span class="material-symbols-outlined text-sm">archive</span> Exportar
               </button>
             </div>
             <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
@@ -283,12 +331,12 @@ export async function renderSettings() {
                 <span class="material-symbols-outlined text-sm">archive</span> Exportar ZIP
               </button>
             </div>
-            <div class="rounded-lg border border-red-200 bg-red-50/40 px-3.5 py-3">
-              <div class="mb-1.5 text-[13px] font-semibold text-app-text">Reiniciar configuración</div>
+            <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3">
+              <div class="mb-1.5 text-[13px] font-semibold text-app-text">Volver a mostrar el asistente inicial</div>
               <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="text-xs text-app-muted">Perderás el progreso configurado y volverás a empezar desde el primer paso.</div>
-                <button class="${cx(ui.button.base, ui.button.danger, ui.button.sm)}" id="btn-reset-onboarding">
-                  <span class="material-symbols-outlined text-sm">restart_alt</span> Reiniciar
+                <div class="max-w-[62ch] text-xs leading-5 text-app-muted">No elimina el perfil, las asignaturas, los notebooks ni los archivos generados. Solo vuelve a abrir el recorrido inicial.</div>
+                <button class="${cx(ui.button.base, ui.button.secondary, 'min-h-11')}" id="btn-reset-onboarding">
+                  <span class="material-symbols-outlined text-[17px]">restart_alt</span> Mostrar asistente
                 </button>
               </div>
             </div>
@@ -302,14 +350,17 @@ export async function renderSettings() {
   el.querySelectorAll("[data-settings-nav]").forEach(a => {
     a.addEventListener("click", e => {
       e.preventDefault();
+      _settingsSection = a.dataset.section;
       el.querySelectorAll("[data-settings-nav]").forEach(x => {
         x.className = ui.settingsNav.item;
         x.removeAttribute("aria-current");
       });
       a.className = cx(ui.settingsNav.item, ui.settingsNav.active);
       a.setAttribute("aria-current", "page");
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      document.getElementById(a.dataset.section)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      el.querySelectorAll("[data-settings-panel]").forEach(panel => {
+        panel.classList.toggle("hidden", panel.id !== _settingsSection);
+      });
+      document.getElementById(_settingsSection)?.querySelector("input, select, textarea, button")?.focus();
     });
   });
 
@@ -319,12 +370,18 @@ export async function renderSettings() {
     const preview = document.getElementById("cfg-color-preview");
     if (/^#[0-9a-fA-F]{6}$/.test(e.target.value) && preview) preview.style.background = e.target.value;
   });
-  el.querySelector("#btn-save-institution")?.addEventListener("click", saveInstitution);
+  el.querySelector("#btn-save-institution")?.addEventListener("click", event => {
+    runSettingsOperation(event.currentTarget, "institution", "Guardando…", saveInstitution);
+  });
   el.querySelector("#btn-extract-palette")?.addEventListener("click", loadInstitutionPalette);
 
   // ── Conexiones ────────────────────────────────────────────────────────────
   el.querySelectorAll(".mcp-target").forEach(btn => {
     btn.addEventListener("click", async () => {
+      if (_busySettingsOps.has("mcp")) return;
+      _busySettingsOps.add("mcp");
+      const targets = [...el.querySelectorAll(".mcp-target")];
+      targets.forEach(target => { target.disabled = true; target.setAttribute("aria-busy", "true"); });
       setInlineError("mcp-inline-error", "");
       toast("Conectando…", "loading", 8000);
       try {
@@ -339,7 +396,14 @@ export async function renderSettings() {
           if (!result.success) setInlineError("mcp-inline-error", result.message);
           toast(result.message, result.success ? "success" : "error", 6000);
         }
-      } catch (e) { toast(`Error: ${e}`, "error"); }
+      } catch (e) {
+        setInlineError("mcp-inline-error", `No se pudo completar la conexión. (${e})`);
+        toast("No se pudo completar la conexión", "error", 6000);
+      } finally {
+        _busySettingsOps.delete("mcp");
+        targets.forEach(target => { target.disabled = false; target.removeAttribute("aria-busy"); });
+        loadMcpStatus();
+      }
     });
   });
 
@@ -351,7 +415,6 @@ export async function renderSettings() {
   // ── Notebooks ─────────────────────────────────────────────────────────────
   renderNotebookList();
   el.querySelector("#btn-add-notebook")?.addEventListener("click", addNotebook);
-  el.querySelector("#btn-save-notebooks")?.addEventListener("click", persistNotebooks);
 
   // ── Environment ───────────────────────────────────────────────────────────
   el.querySelector("#btn-refresh-deps")?.addEventListener("click", loadDeps);
@@ -361,34 +424,79 @@ export async function renderSettings() {
   // ── App Preferences ───────────────────────────────────────────────────────
   loadSkillPath();
   el.querySelector("#cfg-include-jintia-credit")?.addEventListener("change", event => {
+    const previous = state.config.includeJintiaCredit;
     state.config.includeJintiaCredit = event.target.checked;
-    saveConfig();
-    toast(event.target.checked ? "Crédito de Jintia activado." : "Crédito de Jintia desactivado.", "success", 2500);
-  });
-
-  el.querySelector("#btn-install-skill")?.addEventListener("click", async () => {
-    toast("Instalando en tu proyecto local…", "loading", 20000);
     try {
-      const r = await installSkill();
-      toast(r.message, r.success ? "success" : "error", 6000);
-      if (r.success) loadSkillPath();
-    } catch (e) { toast(`Error: ${e}`, "error"); }
+      saveConfig();
+      toast(event.target.checked ? "Crédito de Jintia activado." : "Crédito de Jintia desactivado.", "success", 2500);
+    } catch (error) {
+      state.config.includeJintiaCredit = previous;
+      event.target.checked = previous !== false;
+      toast(`No se pudo guardar la preferencia: ${error}`, "error", 6000);
+    }
   });
 
-  el.querySelector("#btn-export-skill")?.addEventListener("click", async () => {
+  el.querySelector("#btn-install-skill")?.addEventListener("click", event => {
+    runSettingsOperation(event.currentTarget, "install-skill", "Instalando…", async () => {
+      toast("Instalando en tu proyecto local…", "loading", 20000);
+      try {
+        const r = await installSkill();
+        toast(r.message, r.success ? "success" : "error", 6000);
+        if (r.success) loadSkillPath();
+      } catch (e) { toast(`No se pudo instalar: ${e}`, "error", 7000); }
+    });
+  });
+
+  el.querySelector("#btn-export-skill")?.addEventListener("click", async event => {
     const dir = await pickDirectory("Selecciona el directorio de destino");
     if (!dir) return;
-    toast("Exportando ZIP…", "loading", 15000);
-    try { const r = await exportSkillZip(dir); toast(r.message, r.success ? "success" : "error", 6000); }
-    catch (e) { toast(`Error: ${e}`, "error"); }
+    await runSettingsOperation(event.currentTarget, "export-skill", "Exportando…", async () => {
+      toast("Exportando ZIP…", "loading", 15000);
+      try { const r = await exportSkillZip(dir); toast(r.message, r.success ? "success" : "error", 6000); }
+      catch (e) { toast(`No se pudo exportar: ${e}`, "error", 7000); }
+    });
+  });
+
+  el.querySelector("#btn-install-openai-plugin")?.addEventListener("click", event => {
+    runSettingsOperation(event.currentTarget, "install-openai-plugin", "Instalando…", async () => {
+      try {
+        const result = await installOpenAIPlugin();
+        toast(result.message, result.success ? "success" : "error", 10000);
+        if (result.success) loadSetupStatus();
+      } catch (error) {
+        toast(`No se pudo instalar para ChatGPT/Codex: ${error}`, "error", 7000);
+      }
+    });
+  });
+
+  el.querySelector("#btn-export-openai-plugin")?.addEventListener("click", async event => {
+    const dir = await pickDirectory("Selecciona dónde guardar el plugin universal");
+    if (!dir) return;
+    await runSettingsOperation(event.currentTarget, "export-openai-plugin", "Exportando…", async () => {
+      try {
+        const result = await exportOpenAIPluginZip(dir);
+        toast(result.message, result.success ? "success" : "error", 8000);
+      } catch (error) {
+        toast(`No se pudo exportar el plugin: ${error}`, "error", 7000);
+      }
+    });
   });
 
   el.querySelector("#btn-reset-onboarding")?.addEventListener("click", async () => {
-    if (!await confirm("¿Reiniciar el onboarding? Perderás el progreso configurado.")) return;
-    try {
-      const r = await resetOnboarding();
-      toast(r.message || "Onboarding reiniciado", "info", 4000);
-    } catch (e) { toast(`Error: ${e}`, "error"); }
+    if (!await confirm("¿Volver a mostrar el asistente inicial?\nNo se eliminarán tu perfil, asignaturas, notebooks ni archivos.")) return;
+    await runSettingsOperation(document.getElementById("btn-reset-onboarding"), "reset-onboarding", "Preparando…", async () => {
+      try {
+        const r = await resetOnboarding();
+        if (!r.success) {
+          toast(r.message || "No se pudo reactivar el asistente inicial", "error", 7000);
+          return;
+        }
+        toast("Abriendo el asistente inicial…", "info", 1500);
+        window.location.reload();
+      } catch (error) {
+        toast(`No se pudo reactivar el asistente: ${error}`, "error", 7000);
+      }
+    });
   });
 
   refreshIcons();
@@ -400,8 +508,18 @@ async function saveInstitution() {
   const get = id => document.getElementById(id)?.value?.trim() || "";
   const author      = get("cfg-author");
   const institution = get("cfg-institution");
-  if (!author)      { setInlineError("institution-inline-error", "Nombre completo obligatorio"); return; }
-  if (!institution) { setInlineError("institution-inline-error", "Institución obligatoria"); return; }
+  clearSettingsFieldError("cfg-author");
+  clearSettingsFieldError("cfg-institution");
+  if (!author) {
+    showSettingsFieldError("cfg-author", "Escribe tu nombre completo.");
+    document.getElementById("cfg-author")?.focus();
+    return;
+  }
+  if (!institution) {
+    showSettingsFieldError("cfg-institution", "Escribe el nombre de la institución.");
+    document.getElementById("cfg-institution")?.focus();
+    return;
+  }
 
   const color = document.getElementById("cfg-color")?.value || "#00317e";
   const { r, g, b } = hexToRgb(color);
@@ -431,7 +549,16 @@ async function saveInstitution() {
     });
     if (result.success) {
       if (!state.config) state.config = {};
+      const previous = { ...state.config };
       Object.assign(state.config, config);
+      try {
+        saveConfig();
+      } catch (error) {
+        state.config = previous;
+        setInlineError("institution-inline-error", `La configuración se aplicó, pero no pudo guardarse localmente. (${error})`);
+        toast("No se pudo completar el guardado local", "error", 6000);
+        return;
+      }
       toast("Configuración guardada", "success", 4000);
     } else {
       setInlineError("institution-inline-error", result.message);
@@ -445,6 +572,28 @@ function setInlineError(id, message) {
   if (!el) return;
   el.textContent = message || "";
   el.hidden = !message;
+}
+
+function showSettingsFieldError(id, message) {
+  const field = document.getElementById(id);
+  const error = document.getElementById(`${id}-error`);
+  field?.setAttribute("aria-invalid", "true");
+  field?.classList.add("border-red-500");
+  if (error) {
+    error.textContent = message;
+    error.classList.remove("hidden");
+  }
+}
+
+function clearSettingsFieldError(id) {
+  const field = document.getElementById(id);
+  const error = document.getElementById(`${id}-error`);
+  field?.removeAttribute("aria-invalid");
+  field?.classList.remove("border-red-500");
+  if (error) {
+    error.textContent = "";
+    error.classList.add("hidden");
+  }
 }
 
 async function loadInstitutionPalette() {
@@ -607,48 +756,96 @@ function renderNotebookList() {
         </div>
       </div>
       <div class="${ui.list.right}">
-        <button class="${cx(ui.button.base, ui.button.danger, ui.button.xs)}" data-nb-delete="${i}" title="Eliminar notebook">
+        <button class="${cx(ui.button.base, ui.button.danger, 'h-11 w-11 p-0')}" data-nb-delete="${i}" aria-label="Eliminar notebook ${escapeHtml(nb.code)}" title="Eliminar notebook">
           <span class="material-symbols-outlined text-[13px]">delete</span>
         </button>
       </div>
     </div>`).join("");
 
   list.querySelectorAll("[data-nb-delete]").forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const nbs = getNotebooks();
-      nbs.splice(Number(btn.dataset.nbDelete), 1);
-      saveNotebooks(nbs);
-      renderNotebookList();
+      const index = Number(btn.dataset.nbDelete);
+      const notebook = nbs[index];
+      if (!notebook || !await confirm(`¿Eliminar el notebook ${notebook.code} — ${notebook.courseName}?`)) return;
+      await syncNotebooks(
+        nbs.filter((_, notebookIndex) => notebookIndex !== index),
+        btn,
+        `Notebook ${notebook.code} eliminado`,
+      );
     });
   });
 }
 
-function addNotebook() {
+// ── Notebook registry ─────────────────────────────────────────────────────────
+async function addNotebook() {
   const get = id => document.getElementById(id)?.value?.trim() || "";
-  const code       = get("nb-code");
+  const code = get("nb-code").toUpperCase();
   const courseName = get("nb-course-name");
-  const root       = get("nb-root");
+  const root = get("nb-root");
+  let notebookId = get("nb-id");
+  const url = get("nb-url");
+  setInlineError("notebooks-inline-error", "");
+
   if (!code || !courseName || !root) {
-    toast("Código, asignatura y carpeta raíz son obligatorios", "error"); return;
+    setInlineError("notebooks-inline-error", "Completa código, asignatura y carpeta raíz.");
+    document.getElementById(!code ? "nb-code" : !courseName ? "nb-course-name" : "nb-root")?.focus();
+    return;
   }
-  const nbs = getNotebooks();
-  nbs.push({ code, courseName, root, notebookId: get("nb-id"), url: get("nb-url") });
-  saveNotebooks(nbs);
-  ["nb-code","nb-course-name","nb-root","nb-id","nb-url"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = "";
+  if (!notebookId && url) notebookId = notebookIdFromUrl(url);
+  if (!notebookId && !url) {
+    setInlineError("notebooks-inline-error", "Añade el Notebook ID o la URL de compartir.");
+    document.getElementById("nb-id")?.focus();
+    return;
+  }
+  if (url && !/^https:\/\/notebooklm\.google\.com\/notebook\//i.test(url)) {
+    setInlineError("notebooks-inline-error", "La URL debe pertenecer a notebooklm.google.com/notebook/.");
+    document.getElementById("nb-url")?.focus();
+    return;
+  }
+
+  const notebooks = getNotebooks();
+  if (notebooks.some(notebook => String(notebook.code).toLowerCase() === code.toLowerCase())) {
+    setInlineError("notebooks-inline-error", "Ya existe un notebook con este código.");
+    document.getElementById("nb-code")?.focus();
+    return;
+  }
+  const saved = await syncNotebooks(
+    [...notebooks, { code, courseName, root, notebookId, url }],
+    document.getElementById("btn-add-notebook"),
+    `Notebook ${code} registrado`,
+  );
+  if (!saved) return;
+  ["nb-code", "nb-course-name", "nb-root", "nb-id", "nb-url"].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.value = "";
   });
-  renderNotebookList();
-  toast(`Notebook ${code} registrado`, "success");
 }
 
-async function persistNotebooks() {
-  const nbs = getNotebooks();
-  toast("Guardando notebooks en el backend…", "loading", 8000);
+function notebookIdFromUrl(url) {
+  return String(url || "").match(/notebooklm\.google\.com\/notebook\/([^/?#]+)/i)?.[1] || "";
+}
+
+async function syncNotebooks(next, button, successMessage) {
+  setInlineError("notebooks-inline-error", "");
+  const status = document.getElementById("notebooks-save-state");
+  if (status) status.textContent = "Sincronizando…";
   try {
-    const result = await saveNotebooksConfig(nbs);
-    toast(result.message, result.success ? "success" : "error", 5000);
-  } catch (e) { toast(`Error: ${e}`, "error"); }
+    return await runSettingsOperation(button, "notebooks", "Guardando…", async () => {
+      const result = await saveNotebooksConfig(next);
+      if (!result.success) throw new Error(result.message);
+      saveNotebooks(next);
+      renderNotebookList();
+      if (status) status.innerHTML = `<span class="material-symbols-outlined text-[16px]" aria-hidden="true">cloud_done</span> Guardado automático`;
+      toast(successMessage, "success", 3200);
+      return true;
+    });
+  } catch (error) {
+    if (status) status.textContent = "No se pudo sincronizar";
+    setInlineError("notebooks-inline-error", `No se guardaron los cambios. Vuelve a intentarlo. (${error})`);
+    toast("No se pudieron sincronizar los notebooks", "error", 6000);
+    return false;
+  }
 }
 
 // ── Environment ───────────────────────────────────────────────────────────────
@@ -658,7 +855,22 @@ async function loadSetupStatus() {
   try {
     const status = await getSetupStatus();
     const items = [
-      { label: "Instalado localmente", ok: status.skill_installed },
+      {
+        label: status.skill_current
+          ? `Skill ${status.skill_version || status.available_skill_version} actualizada`
+          : status.skill_installed
+            ? `Skill desactualizada · disponible ${status.available_skill_version}`
+            : `Skill ${status.available_skill_version} sin instalar`,
+        ok: status.skill_current
+      },
+      {
+        label: status.openai_plugin_current
+          ? `ChatGPT/Codex ${status.available_skill_version} preparado`
+          : status.openai_plugin_installed
+            ? "Plugin ChatGPT/Codex desactualizado"
+            : "Plugin ChatGPT/Codex sin instalar",
+        ok: status.openai_plugin_current
+      },
       { label: "Conexión lista",       ok: status.mcp_configured },
       { label: "Institución guardada", ok: status.institution_configured },
       { label: "Sesión de Google",     ok: status.notebooklm_authenticated },

@@ -50,6 +50,10 @@ const elegantBook = fs.readFileSync(
   path.join(root, "skill", "templates", "elegantbook-clasico", "elegantbook.cls"),
   "utf8",
 );
+const kaohandt = fs.readFileSync(
+  path.join(root, "skill", "templates", "kaohandt-marginal", "kaohandt.cls"),
+  "utf8",
+);
 const resources = [
   {
     name: "ElegantBook",
@@ -57,6 +61,11 @@ const resources = [
     license: /(?:LPPL|LaTeX Project Public License)[\s\S]{0,240}1\.3c/i.test(elegantBook)
       ? "LPPL 1.3c or later"
       : "NO REGISTRADA",
+  },
+  {
+    name: "Kaobook / Kaohandt",
+    use: "Plantilla LaTeX marginal distribuida con Jintia Skill",
+    license: /LPPL/i.test(kaohandt) ? "LPPL 1.3 or later" : "NO REGISTRADA",
   },
   {
     name: "Material Symbols",
@@ -82,6 +91,7 @@ const inventory = {
     "app/desktop/src-tauri/Cargo.lock",
     "app/desktop/src-tauri/Cargo.toml",
     "skill/templates/elegantbook-clasico/elegantbook.cls",
+    "skill/templates/kaohandt-marginal/kaohandt.cls",
   ],
   packages,
   resources,

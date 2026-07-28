@@ -4,7 +4,8 @@
     "app/desktop/package-lock.json",
     "app/desktop/src-tauri/Cargo.lock",
     "app/desktop/src-tauri/Cargo.toml",
-    "skill/templates/elegantbook-clasico/elegantbook.cls"
+    "skill/templates/elegantbook-clasico/elegantbook.cls",
+    "skill/templates/kaohandt-marginal/kaohandt.cls"
   ],
   "packages": [
     {
@@ -721,6 +722,11 @@
       "name": "ElegantBook",
       "use": "Plantilla LaTeX distribuida con Jintia Skill",
       "license": "LPPL 1.3c or later"
+    },
+    {
+      "name": "Kaobook / Kaohandt",
+      "use": "Plantilla LaTeX marginal distribuida con Jintia Skill",
+      "license": "LPPL 1.3 or later"
     },
     {
       "name": "Material Symbols",

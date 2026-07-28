@@ -37,6 +37,12 @@ const state = {
   ],
   setup: {
     skill_installed: BYPASS,
+    skill_current: BYPASS,
+    skill_version: BYPASS ? "10.6.0" : "",
+    available_skill_version: "10.6.0",
+    openai_plugin_installed: BYPASS,
+    openai_plugin_current: BYPASS,
+    openai_plugin_path: BYPASS ? "/mock/home/.codex/plugins/jintia" : "",
     mcp_configured: BYPASS,
     mcp_desktop_configured: BYPASS,
     mcp_claude_code_configured: BYPASS,
@@ -50,6 +56,7 @@ const state = {
   lastSkillZip: BYPASS ? "/mock/exports/jintia-skill.zip" : null,
   templates: [
     { id: "elegantbook-clasico", name: "ElegantBook Clásico", description: "Portada institucional con bloques pedagógicos numerados y bibliografía APA.", tags: ["Institucional", "Formal"], previewType: "elegantbook-clasico", featured: true, documentClass: "elegantbook" },
+    { id: "kaohandt-marginal", name: "Kaohandt Marginal", description: "Diseño editorial con notas laterales para conceptos, preguntas y evidencias.", tags: ["Personal", "Marginal"], previewType: "kaohandt-marginal", featured: false, documentClass: "kaobook" },
   ],
   activeTemplateId: "elegantbook-clasico",
   institutionConfigured: BYPASS,
@@ -65,10 +72,12 @@ function onboardingResult(success, message) {
 
 function targetReady(target) {
   if (target === "claude-cowork") return Boolean(state.lastSkillZip) && state.setup.mcp_desktop_configured;
-  if (target === "claude-code") return state.setup.skill_installed && state.setup.mcp_claude_code_configured;
+  if (target === "claude-code") return state.setup.skill_installed && state.setup.skill_current && state.setup.mcp_claude_code_configured;
+  if (target === "openai") return state.setup.openai_plugin_current;
   if (target === "both") {
-    return Boolean(state.lastSkillZip) && state.setup.skill_installed &&
-      state.setup.mcp_desktop_configured && state.setup.mcp_claude_code_configured;
+    return Boolean(state.lastSkillZip) && state.setup.skill_installed && state.setup.skill_current &&
+      state.setup.mcp_desktop_configured && state.setup.mcp_claude_code_configured &&
+      state.setup.openai_plugin_current;
   }
   return false;
 }
@@ -132,12 +141,25 @@ const handlers = {
   get_skill_path: () => (state.setup.skill_installed ? "/mock/home/.claude/skills/jintia-skill" : ""),
   install_skill: () => {
     state.setup.skill_installed = true;
+    state.setup.skill_current = true;
+    state.setup.skill_version = state.setup.available_skill_version;
     return actionResult(true, "Skill instalado en tu proyecto local (mock).");
   },
   export_skill_zip: ({ destinationDir }) => {
     const path = `${destinationDir || "/mock/exports"}/jintia-skill.zip`;
     state.lastSkillZip = path;
     return actionResult(true, "Archivo exportado (mock).", { path });
+  },
+  install_openai_plugin: () => {
+    state.setup.openai_plugin_installed = true;
+    state.setup.openai_plugin_current = true;
+    return actionResult(true, "Plugin instalado para ChatGPT y Codex (mock).", {
+      path: "/mock/home/.codex/plugins/jintia"
+    });
+  },
+  export_openai_plugin_zip: ({ destinationDir }) => {
+    const path = `${destinationDir || "/mock/exports"}/jintia-openai-plugin-10.6.0.zip`;
+    return actionResult(true, "Plugin universal exportado (mock).", { path });
   },
   configure_mcp: ({ target }) => {
     if (target === "claude-code") {
@@ -173,9 +195,10 @@ const handlers = {
     return actionResult(true, "Sesión iniciada (mock).");
   },
   save_notebooks_config: () => actionResult(true, "Notebooks guardados (mock)."),
+  get_default_course_root: () => actionResult(true, "Carpeta Documentos disponible (mock).", { path: "C:\\Users\\Demo\\Documents" }),
   create_course_structure: () => actionResult(true, "Estructura de carpetas creada (mock)."),
   generate_syllabus: () => actionResult(true, "Sílabo generado (mock)."),
-  compile_syllabus_pdf: () => actionResult(true, "PDF compilado (mock)."),
+  compile_syllabus_pdf: () => actionResult(true, "PDF compilado (mock).", { path: "/mock/jintia-template-preview.pdf" }),
   list_templates: () => state.templates.map(t => ({ ...t })),
   get_active_template: () => state.activeTemplateId,
   set_active_template: ({ templateId }) => {

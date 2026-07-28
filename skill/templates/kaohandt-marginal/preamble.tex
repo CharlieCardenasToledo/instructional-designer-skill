@@ -1,21 +1,18 @@
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
-\usepackage{microtype}
-\usepackage{csquotes}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage[spanish=spanish]{csquotes}
 \usepackage{tabularx}
 \usepackage{array}
 \usepackage{booktabs}
 \usepackage{amsmath}
-\usepackage{enumitem}
-\usepackage{graphicx}
 \usepackage{pifont}
 \usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\usepackage[most]{tcolorbox}
+\usepackage[style=apa]{biblatex}
 \addbibresource{reference.bib}
 
 \definecolor{weekaccent}{RGB}{{{PRIMARY_RGB}}}
-\definecolor{weekaccentsoft}{RGB}{238,246,245}
 \definecolor{ink}{RGB}{36,44,53}
 \definecolor{softbg}{RGB}{250,251,253}
 \definecolor{softline}{RGB}{212,220,230}
@@ -26,9 +23,6 @@
 \definecolor{rosebg}{RGB}{253,248,248}
 \definecolor{roseline}{RGB}{184,77,77}
 \definecolor{slateline}{RGB}{103,119,138}
-\definecolor{structurecolor}{RGB}{{{PRIMARY_RGB}}}
-\definecolor{main}{RGB}{{{PRIMARY_RGB}}}
-\definecolor{second}{RGB}{36,44,53}
 
 \newtcolorbox{softblock}[1][]{enhanced,breakable,colback=softbg,colframe=softline,boxrule=.6pt,arc=2mm,left=3mm,right=3mm,top=2.5mm,bottom=2.5mm,#1}
 \newtcolorbox{accentblock}[1][]{enhanced,breakable,colback=white,colframe=weekaccent,boxrule=1pt,borderline west={2pt}{0pt}{weekaccent},arc=2mm,left=3mm,right=3mm,top=2.5mm,bottom=2.5mm,#1}
@@ -42,14 +36,19 @@
 \newcommand{\editorialtitle}[2]{{\Large\bfseries\color{ink}#1\par}\vspace{.2em}{\small\color{weekaccent}\rule{3.2cm}{.8pt}\hspace{.6em}\textsc{#2}\par}}
 \newcommand{\conceptline}[1]{{\large\itshape\color{ink}#1\par}}
 \newcommand{\coursemeta}[1]{{\small\color{slateline}#1\par}}
-\newcommand{\guidesection}[1]{\section*{#1}\addcontentsline{toc}{section}{#1}}
-\newenvironment{guidetable}{\begin{table}[H]\centering}{\end{table}}
-\newcommand{\guidetablecaption}[2]{\caption{#1}\label{#2}}
-\newenvironment{guidefigure}{\begin{figure}[H]\centering}{\end{figure}}
-\newcommand{\guidefigurecaption}[2]{\caption{#1}\label{#2}}
+\newcommand{\guidesection}[1]{\section{#1}}
+% marginnote termina su argumento ante cualquier salto de párrafo. Estas
+% macros mantienen cada nota en un único párrafo y no introducen \par ni \\.
+\newcommand{\marginconcept}[2]{\marginnote{\footnotesize\textbf{\color{weekaccent}#1:} #2}}
+\newcommand{\marginquestion}[1]{\marginnote{\footnotesize\textbf{\color{weekaccent}Pregunta de recuperación:} #1}}
+\newcommand{\marginevidence}[1]{\marginnote{\footnotesize\textbf{\color{weekaccent}Evidencia:} #1}}
+\newcommand{\widecontent}[1]{\pagelayout{wide}#1\pagelayout{margin}}
+\newenvironment{guidetable}{\par\medskip\refstepcounter{table}\begin{center}\begin{minipage}{\textwidth}\centering}{\end{minipage}\end{center}\medskip}
+\newcommand{\guidetablecaption}[2]{\textbf{Tabla \thetable.} #1\label{#2}\par\smallskip}
+\newenvironment{guidefigure}{\par\medskip\refstepcounter{figure}\begin{center}\begin{minipage}{\textwidth}\centering}{\end{minipage}\end{center}\medskip}
+\newcommand{\guidefigurecaption}[2]{\textbf{Figura \thefigure.} #1\label{#2}\par\smallskip}
 \newcolumntype{Y}{>{\centering\arraybackslash}X}
 
-% Ajustes editoriales del patrón UIDE, sin datos institucionales fijos.
 \setlist[itemize]{leftmargin=*,topsep=3pt,itemsep=3pt}
 \setlist[enumerate]{leftmargin=*,topsep=3pt,itemsep=3pt}
 \renewcommand{\arraystretch}{1.2}

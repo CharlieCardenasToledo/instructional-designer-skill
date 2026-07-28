@@ -1,7 +1,8 @@
 use crate::models::ActionResult;
 use crate::paths::{
     app_config_dir, atomic_write, atomic_write_if_changed, canonical_directory,
-    installed_skill_dir, legacy_skill_dir, path_text, skill_dir, timestamp,
+    installed_skill_dir, legacy_skill_dir, openai_marketplace_path, openai_plugin_dir, path_text,
+    skill_dir, timestamp,
 };
 use include_dir::{include_dir, Dir};
 use std::fs;
@@ -14,10 +15,16 @@ use zip::write::SimpleFileOptions;
 const SKILL_MD: &[u8] = include_bytes!("../../../../skill/SKILL.md");
 const LICENSE: &[u8] = include_bytes!("../../../../LICENSE");
 const REQUIREMENTS: &[u8] = include_bytes!("../../../../skill/requirements.txt");
+pub const SKILL_VERSION: &str = "10.6.0";
+const OPENAI_PLUGIN_MANIFEST: &[u8] =
+    include_bytes!("../../../../openai-plugin/.codex-plugin/plugin.json");
+const OPENAI_PLUGIN_MCP: &[u8] = include_bytes!("../../../../openai-plugin/.mcp.json");
+const OPENAI_PLUGIN_README: &[u8] = include_bytes!("../../../../openai-plugin/README.md");
 static REFERENCES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/references");
 static SCRIPTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/scripts");
 static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/templates");
 static CONFIG: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/config");
+static AGENTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/agents");
 static PAYLOAD_OPERATION: Mutex<()> = Mutex::new(());
 
 fn write_embedded_dir(dir: &Dir<'_>, target: &Path) -> Result<(), String> {
@@ -49,10 +56,12 @@ fn materialize_payload(target: &Path, installed: Option<&Path>) -> Result<(), St
     atomic_write(&target.join("SKILL.md"), SKILL_MD)?;
     atomic_write(&target.join("LICENSE"), LICENSE)?;
     atomic_write(&target.join("requirements.txt"), REQUIREMENTS)?;
+    atomic_write(&target.join("VERSION"), SKILL_VERSION.as_bytes())?;
     write_embedded_dir(&REFERENCES, &target.join("references"))?;
     write_embedded_dir(&SCRIPTS, &target.join("scripts"))?;
     write_embedded_dir(&TEMPLATES, &target.join("templates"))?;
     write_embedded_dir(&CONFIG, &target.join("config"))?;
+    write_embedded_dir(&AGENTS, &target.join("agents"))?;
 
     for name in ["institution.json", "notebooks.json"] {
         if let Some(bytes) = user_config(name, installed) {
@@ -92,10 +101,144 @@ fn installed_payload_matches(target: &Path) -> bool {
     fs::read(target.join("SKILL.md")).ok().as_deref() == Some(SKILL_MD)
         && fs::read(target.join("LICENSE")).ok().as_deref() == Some(LICENSE)
         && fs::read(target.join("requirements.txt")).ok().as_deref() == Some(REQUIREMENTS)
+        && fs::read_to_string(target.join("VERSION"))
+            .ok()
+            .is_some_and(|version| version.trim() == SKILL_VERSION)
         && embedded_dir_matches(&REFERENCES, &target.join("references"), target, false)
         && embedded_dir_matches(&SCRIPTS, &target.join("scripts"), target, false)
         && embedded_dir_matches(&TEMPLATES, &target.join("templates"), target, false)
         && embedded_dir_matches(&CONFIG, &target.join("config"), target, true)
+        && embedded_dir_matches(&AGENTS, &target.join("agents"), target, false)
+}
+
+fn materialize_openai_plugin(target: &Path, installed: Option<&Path>) -> Result<(), String> {
+    fs::create_dir_all(target.join(".codex-plugin"))
+        .map_err(|error| format!("No se pudo preparar el plugin: {error}"))?;
+    atomic_write(
+        &target.join(".codex-plugin").join("plugin.json"),
+        OPENAI_PLUGIN_MANIFEST,
+    )?;
+    atomic_write(&target.join(".mcp.json"), OPENAI_PLUGIN_MCP)?;
+    atomic_write(&target.join("README.md"), OPENAI_PLUGIN_README)?;
+    materialize_payload(&target.join("skills").join("jintia-skill"), installed)
+}
+
+fn openai_plugin_payload_matches(target: &Path) -> bool {
+    fs::read(target.join(".codex-plugin").join("plugin.json"))
+        .ok()
+        .as_deref()
+        == Some(OPENAI_PLUGIN_MANIFEST)
+        && fs::read(target.join(".mcp.json")).ok().as_deref() == Some(OPENAI_PLUGIN_MCP)
+        && fs::read(target.join("README.md")).ok().as_deref() == Some(OPENAI_PLUGIN_README)
+        && installed_payload_matches(&target.join("skills").join("jintia-skill"))
+}
+
+fn register_openai_marketplace() -> Result<(), String> {
+    let path = openai_marketplace_path()?;
+    let mut root = if path.exists() {
+        let bytes = fs::read(&path)
+            .map_err(|error| format!("No se pudo leer {}: {error}", path.display()))?;
+        serde_json::from_slice::<serde_json::Value>(&bytes)
+            .map_err(|error| format!("El marketplace existente no es JSON válido: {error}"))?
+    } else {
+        serde_json::json!({
+            "name": "jintia-local",
+            "interface": { "displayName": "Jintia local" },
+            "plugins": []
+        })
+    };
+    if !root.is_object() {
+        return Err("El marketplace personal no contiene un objeto JSON.".to_string());
+    }
+    if root.get("plugins").is_none() {
+        root["plugins"] = serde_json::json!([]);
+    }
+    let plugins = root["plugins"]
+        .as_array_mut()
+        .ok_or_else(|| "La clave plugins del marketplace no es una lista.".to_string())?;
+    plugins.retain(|entry| entry.get("name").and_then(|value| value.as_str()) != Some("jintia"));
+    plugins.push(serde_json::json!({
+        "name": "jintia",
+        "source": {
+            "source": "local",
+            "path": "./.codex/plugins/jintia"
+        },
+        "policy": {
+            "installation": "AVAILABLE",
+            "authentication": "ON_INSTALL"
+        },
+        "category": "Education"
+    }));
+    let bytes = serde_json::to_vec_pretty(&root)
+        .map_err(|error| format!("No se pudo serializar el marketplace: {error}"))?;
+    atomic_write_if_changed(&path, &bytes)?;
+    Ok(())
+}
+
+pub fn install_openai_plugin() -> ActionResult {
+    let _operation = match PAYLOAD_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno de instalación está bloqueado."),
+    };
+    let target = match openai_plugin_dir() {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+    if target.exists() && openai_plugin_payload_matches(&target) {
+        return match register_openai_marketplace() {
+            Ok(_) => ActionResult::ok(format!(
+                "Jintia ya está actualizado para ChatGPT y Codex.\n{}",
+                path_text(&target)
+            ))
+            .with_path(path_text(&target)),
+            Err(error) => ActionResult::error(error),
+        };
+    }
+    let Some(parent) = target.parent() else {
+        return ActionResult::error("Ruta del plugin inválida.");
+    };
+    if let Err(error) = fs::create_dir_all(parent) {
+        return ActionResult::error(format!("No se pudo crear {}: {error}", parent.display()));
+    }
+    let stage = parent.join(format!(".jintia-plugin.stage-{}", timestamp()));
+    let installed = target
+        .join("skills")
+        .join("jintia-skill")
+        .is_dir()
+        .then(|| target.join("skills").join("jintia-skill"));
+    if let Err(error) = materialize_openai_plugin(&stage, installed.as_deref()) {
+        let _ = fs::remove_dir_all(&stage);
+        return ActionResult::error(error);
+    }
+    let backup = parent.join(format!("jintia.backup-{}", timestamp()));
+    if target.exists() {
+        if let Err(error) = fs::rename(&target, &backup) {
+            let _ = fs::remove_dir_all(&stage);
+            return ActionResult::error(format!("No se pudo respaldar el plugin actual: {error}"));
+        }
+    }
+    if let Err(error) = fs::rename(&stage, &target) {
+        if backup.exists() {
+            let _ = fs::rename(&backup, &target);
+        }
+        let _ = fs::remove_dir_all(&stage);
+        return ActionResult::error(format!("No se pudo activar el plugin: {error}"));
+    }
+    if let Err(error) = register_openai_marketplace() {
+        return ActionResult::error(format!(
+            "El plugin se copió, pero no pudo registrarse en ChatGPT/Codex: {error}"
+        ));
+    }
+    let result = ActionResult::ok(format!(
+        "Jintia {SKILL_VERSION} quedó preparado para ChatGPT desktop y Codex.\nReinicia ChatGPT y actívalo desde Plugins.\n{}",
+        path_text(&target)
+    ))
+    .with_path(path_text(&target));
+    if backup.exists() {
+        result.with_backup(path_text(&backup))
+    } else {
+        result
+    }
 }
 
 pub fn install_local_skill() -> ActionResult {
@@ -245,10 +388,12 @@ fn payload_fingerprint(installed: Option<&Path>) -> String {
     SKILL_MD.hash(&mut hasher);
     LICENSE.hash(&mut hasher);
     REQUIREMENTS.hash(&mut hasher);
+    SKILL_VERSION.hash(&mut hasher);
     hash_embedded_dir(&REFERENCES, &mut hasher, installed, false);
     hash_embedded_dir(&SCRIPTS, &mut hasher, installed, false);
     hash_embedded_dir(&TEMPLATES, &mut hasher, installed, false);
     hash_embedded_dir(&CONFIG, &mut hasher, installed, true);
+    hash_embedded_dir(&AGENTS, &mut hasher, installed, false);
     format!("{:016x}", hasher.finish())
 }
 
@@ -291,7 +436,7 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
     };
-    let final_path = destination.join("jintia-skill-10.4.0.zip");
+    let final_path = destination.join(format!("jintia-skill-{SKILL_VERSION}.zip"));
     let installed = installed_skill_dir().ok();
     let fingerprint = payload_fingerprint(installed.as_deref());
     if export_record_matches(&final_path, &fingerprint) {
@@ -312,10 +457,12 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
         add_bytes(&mut zip, "SKILL.md", SKILL_MD)?;
         add_bytes(&mut zip, "LICENSE", LICENSE)?;
         add_bytes(&mut zip, "requirements.txt", REQUIREMENTS)?;
+        add_bytes(&mut zip, "VERSION", SKILL_VERSION.as_bytes())?;
         add_dir_to_zip(&mut zip, &REFERENCES, "references")?;
         add_dir_to_zip(&mut zip, &SCRIPTS, "scripts")?;
         add_dir_to_zip(&mut zip, &TEMPLATES, "templates")?;
         add_dir_to_zip(&mut zip, &CONFIG, "config")?;
+        add_dir_to_zip(&mut zip, &AGENTS, "agents")?;
 
         for name in ["institution.json", "notebooks.json"] {
             if let Some(bytes) = user_config(name, installed.as_deref()) {
@@ -375,6 +522,89 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
     }
 }
 
+pub fn export_openai_plugin_zip(destination_dir: String) -> ActionResult {
+    let _operation = match PAYLOAD_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => return ActionResult::error("El estado interno de exportación está bloqueado."),
+    };
+    let destination = match canonical_directory(&destination_dir) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+    let final_path = destination.join(format!("jintia-openai-plugin-{SKILL_VERSION}.zip"));
+    let temp_path = destination.join(format!(".jintia-openai-{}.tmp", timestamp()));
+    let file = match fs::File::create(&temp_path) {
+        Ok(file) => file,
+        Err(error) => return ActionResult::error(format!("No se pudo crear el ZIP: {error}")),
+    };
+    let installed = installed_skill_dir().ok();
+    let result = (|| -> Result<bool, String> {
+        let mut zip = zip::ZipWriter::new(file);
+        add_bytes(
+            &mut zip,
+            ".codex-plugin/plugin.json",
+            OPENAI_PLUGIN_MANIFEST,
+        )?;
+        add_bytes(&mut zip, ".mcp.json", OPENAI_PLUGIN_MCP)?;
+        add_bytes(&mut zip, "README.md", OPENAI_PLUGIN_README)?;
+        let prefix = "skills/jintia-skill";
+        add_bytes(&mut zip, &format!("{prefix}/SKILL.md"), SKILL_MD)?;
+        add_bytes(&mut zip, &format!("{prefix}/LICENSE"), LICENSE)?;
+        add_bytes(
+            &mut zip,
+            &format!("{prefix}/requirements.txt"),
+            REQUIREMENTS,
+        )?;
+        add_bytes(
+            &mut zip,
+            &format!("{prefix}/VERSION"),
+            SKILL_VERSION.as_bytes(),
+        )?;
+        add_dir_to_zip(&mut zip, &REFERENCES, &format!("{prefix}/references"))?;
+        add_dir_to_zip(&mut zip, &SCRIPTS, &format!("{prefix}/scripts"))?;
+        add_dir_to_zip(&mut zip, &TEMPLATES, &format!("{prefix}/templates"))?;
+        add_dir_to_zip(&mut zip, &CONFIG, &format!("{prefix}/config"))?;
+        add_dir_to_zip(&mut zip, &AGENTS, &format!("{prefix}/agents"))?;
+        for name in ["institution.json", "notebooks.json"] {
+            if let Some(bytes) = user_config(name, installed.as_deref()) {
+                add_bytes(&mut zip, &format!("{prefix}/config/{name}"), &bytes)?;
+            }
+        }
+        zip.finish()
+            .map_err(|error| format!("No se pudo finalizar el ZIP: {error}"))?;
+        if final_path.exists() && files_equal(&temp_path, &final_path) {
+            fs::remove_file(&temp_path)
+                .map_err(|error| format!("No se pudo retirar el ZIP temporal: {error}"))?;
+            return Ok(false);
+        }
+        if final_path.exists() {
+            fs::remove_file(&final_path)
+                .map_err(|error| format!("No se pudo reemplazar el ZIP: {error}"))?;
+        }
+        fs::rename(&temp_path, &final_path)
+            .map_err(|error| format!("No se pudo guardar el ZIP: {error}"))?;
+        Ok(true)
+    })();
+    match result {
+        Ok(changed) => ActionResult::ok(if changed {
+            format!(
+                "Plugin universal exportado para ChatGPT y Codex:\n{}",
+                path_text(&final_path)
+            )
+        } else {
+            format!(
+                "El plugin universal ya estaba actualizado:\n{}",
+                path_text(&final_path)
+            )
+        })
+        .with_path(path_text(&final_path)),
+        Err(error) => {
+            let _ = fs::remove_file(&temp_path);
+            ActionResult::error(error)
+        }
+    }
+}
+
 pub fn record_export(path: &Path, fingerprint: &str) -> Result<(), String> {
     let value = serde_json::json!({
         "schemaVersion": 1,
@@ -405,10 +635,50 @@ pub fn skill_is_installed() -> bool {
         .unwrap_or(false)
 }
 
+pub fn installed_skill_version() -> String {
+    installed_skill_dir()
+        .ok()
+        .and_then(|path| fs::read_to_string(path.join("VERSION")).ok())
+        .map(|version| version.trim().to_string())
+        .unwrap_or_default()
+}
+
+pub fn skill_is_current() -> bool {
+    installed_skill_dir()
+        .ok()
+        .is_some_and(|path| path.join("SKILL.md").is_file() && installed_payload_matches(&path))
+}
+
+pub fn openai_plugin_is_installed() -> bool {
+    openai_plugin_dir()
+        .ok()
+        .is_some_and(|path| path.join(".codex-plugin").join("plugin.json").is_file())
+}
+
+pub fn openai_plugin_is_current() -> bool {
+    openai_plugin_dir()
+        .ok()
+        .is_some_and(|path| openai_plugin_payload_matches(&path))
+}
+
+pub fn openai_plugin_path() -> String {
+    openai_plugin_dir()
+        .map(|path| path_text(&path))
+        .unwrap_or_default()
+}
+
 pub fn sync_user_config_to_install(name: &str, bytes: &[u8]) -> Result<(), String> {
     let target = installed_skill_dir()?.join("config").join(name);
     if target.parent().is_some_and(Path::exists) {
         atomic_write_if_changed(&target, bytes)?;
+    }
+    let openai_target = openai_plugin_dir()?
+        .join("skills")
+        .join("jintia-skill")
+        .join("config")
+        .join(name);
+    if openai_target.parent().is_some_and(Path::exists) {
+        atomic_write_if_changed(&openai_target, bytes)?;
     }
     Ok(())
 }

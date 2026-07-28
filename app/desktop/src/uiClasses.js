@@ -2,12 +2,12 @@
 export const ui = {
   layout: {
     appMain: "relative flex min-w-0 flex-1 flex-col overflow-hidden",
-    page: "min-h-0 flex-1 overflow-y-auto p-5",
-    stack: "flex h-full flex-col gap-4",
-    twoCol: "grid h-full grid-cols-1 items-start gap-3.5 lg:grid-cols-[1fr_300px]",
+    page: "min-h-0 min-w-0 flex-1 overflow-auto p-3 sm:p-4 xl:p-5",
+    stack: "flex min-h-full min-w-0 flex-col gap-4",
+    twoCol: "grid min-h-full min-w-0 grid-cols-1 items-start gap-3.5 xl:grid-cols-[minmax(0,1fr)_300px]",
   },
   surface: {
-    page: "min-h-0 flex-1 overflow-y-auto bg-app-bg p-5",
+    page: "min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain bg-app-bg p-3 sm:p-4 xl:p-5",
     card: "rounded-xl border border-slate-200 bg-white shadow-sm",
     panel: "rounded-xl border border-slate-200 bg-white",
     tableWrap: "overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm",

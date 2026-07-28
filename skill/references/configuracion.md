@@ -70,3 +70,7 @@ Los ids pertenecen a la biblioteca del servidor `@charlie.act7/gemini-notebook-m
 Leer `templates/<activeTemplate>/meta.json`, `template.md` y `preamble.tex`. Si el id es inválido, usar `elegantbook-clasico` e informar la corrección.
 
 La plantilla define la gramática visual. Las reglas pedagógicas y de evidencia siguen siendo las de `SKILL.md`.
+
+Validar los archivos declarados en `requiredFiles` y copiarlos junto al archivo
+principal. Las plantillas distribuidas son `elegantbook-clasico` y
+`kaohandt-marginal`.

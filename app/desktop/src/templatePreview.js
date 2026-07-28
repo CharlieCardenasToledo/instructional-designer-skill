@@ -68,8 +68,50 @@ export function renderTemplatePreview(previewType, config, activeId) {
   const textOnPrimary = luminance > 0.5 ? "#1a1a1a" : "#ffffff";
 
   switch (previewType) {
+    case "kaohandt-marginal":     return previewKaohandtMarginal(hex, textOnPrimary, author, degree, career, inst, week);
     default:                        return previewElegantbookClasico(hex, textOnPrimary, author, degree, career, inst, week);
   }
+}
+
+// ── Kaobook Marginal ─────────────────────────────────────────────────────
+function previewKaohandtMarginal(hex, textOnPrimary, author, degree, career, inst, week) {
+  const dim = hexAlpha(hex, 0.1);
+  const border = hexAlpha(hex, 0.35);
+  return `
+  <div class="${PREVIEW.page}">
+    <div class="border-t-4 px-5 pb-4 pt-5" style="border-color:${hex}">
+      <div class="text-[9px] font-bold uppercase tracking-[.14em]" style="color:${hex}">${inst}</div>
+      <div class="mt-3 text-[22px] font-extrabold leading-tight">Guía didáctica semanal</div>
+      <div class="mt-1 text-[13px] text-slate-500">Semana ${week} · Fundamentos y aplicaciones</div>
+      <div class="mt-4 border-t pt-3 text-[10px] leading-5 text-slate-600" style="border-color:${border}">
+        <div>${author}${degree ? `, ${degree}` : ""}</div><div>${career}</div>
+      </div>
+    </div>
+    <div class="border-t px-5 py-4" style="border-color:${border}">
+      <div class="grid grid-cols-[minmax(0,1fr)_30%] gap-4">
+        <main>
+          <div class="mb-1 text-[9px] font-bold uppercase tracking-[.1em]" style="color:${hex}">Semana ${week}</div>
+          <div class="mb-3 border-l-[3px] pl-2.5 text-[15px] font-bold" style="border-color:${hex}">Propósito y ruta de estudio</div>
+          <div class="${PREVIEW.block}" style="background:${dim};border-left:3px solid ${hex}">
+            <div class="${PREVIEW.blockTitle}" style="color:${hex}">Orientación</div>
+            <div class="${PREVIEW.blockBody}">${LOREM.intro.slice(0, 190)}…</div>
+          </div>
+          <div class="${PREVIEW.sectionTitle}">Marco conceptual</div>
+          <div class="${PREVIEW.paragraph}">${LOREM.body1}</div>
+          <div class="${PREVIEW.block}" style="background:#e8f7f0;border-left:3px solid #3d8b70">
+            <div class="${PREVIEW.blockTitle}" style="color:#2f765f">Práctica guiada</div>
+            <div class="${PREVIEW.blockBody}">${LOREM.activity.slice(0, 150)}…</div>
+          </div>
+        </main>
+        <aside class="border-l pl-3 text-[9px] leading-[1.5] text-slate-600" style="border-color:${border}">
+          <div class="mb-4"><div class="font-extrabold" style="color:${hex}">Concepto</div>Información breve que complementa el flujo principal.</div>
+          <div class="mb-4"><div class="font-extrabold" style="color:${hex}">Pregunta de recuperación</div>¿Qué criterio permite justificar la decisión?</div>
+          <div><div class="font-extrabold" style="color:${hex}">Evidencia</div>La respuesta conecta concepto, decisión y consecuencia.</div>
+        </aside>
+      </div>
+      <div class="${PREVIEW.footer}" style="border-top-color:${border}"><span style="color:${hex}">${inst}</span><span>Pág. 1</span></div>
+    </div>
+  </div>`;
 }
 
 // ── ElegantBook Clásico ───────────────────────────────────────────────────

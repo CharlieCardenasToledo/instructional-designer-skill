@@ -20,5 +20,16 @@
     "bibstyle": "apa",
     "fontSize": "11pt",
     "side": "oneside"
+  },
+  "validation": {
+    "portableFloatContract": true,
+    "requiredIntroductionCommands": [
+      "\\chapter",
+      "\\guidesection",
+      "\\editorialtitle",
+      "\\conceptline",
+      "\\coursemeta"
+    ],
+    "requiredIntroductionEnvironments": ["softblock"]
   }
 }

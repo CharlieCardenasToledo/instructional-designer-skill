@@ -23,8 +23,7 @@ Los diagramas **deben usar exclusivamente** estas variables semánticas. No usar
 ## Estructura obligatoria de figuras TikZ
 
 ```latex
-\begin{figure}[H]
-\centering
+\begin{guidefigure}
 \begin{tikzpicture}[font=\sffamily\small, node distance=...]
   \tikzset{
     nodo/.style={draw=weekaccent, fill=weekaccentsoft, rounded corners=3pt, ...},
@@ -35,12 +34,14 @@ Los diagramas **deben usar exclusivamente** estas variables semánticas. No usar
   }
   % Contenido del diagrama
 \end{tikzpicture}
-\caption{Descripción técnica de la relación representada.}
-\label{fig:identificador_descriptivo}
-\end{figure}
+\guidefigurecaption{Descripción técnica de la relación representada.}{fig:identificador_descriptivo}
+\end{guidefigure}
 ```
 
 **PROHIBIDO:** Numerar figuras manualmente. El contador de LaTeX lo gestiona automáticamente.
+
+**PROHIBIDO:** Usar `figure`, `\caption` o `\label` directamente. El contrato
+`guidefigure` adapta el contenido a ElegantBook y Kaohandt.
 
 ## Referencias cruzadas a figuras — contigüidad espacial
 

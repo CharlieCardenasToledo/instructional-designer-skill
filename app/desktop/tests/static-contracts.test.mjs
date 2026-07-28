@@ -33,7 +33,8 @@ test('Jintia es la identidad canónica en la aplicación, la skill y los instala
   assert.equal(plugin.name, 'jintia-skill');
   assert.match(paths, /\.join\("jintia-skill"\)/);
   assert.match(paths, /legacy_skill_dir/);
-  assert.match(payload, /jintia-skill-10\.4\.0\.zip/);
+  assert.match(payload, /SKILL_VERSION/);
+  assert.match(payload, /jintia-skill-\{SKILL_VERSION\}\.zip/);
   assert.match(payload, /instructional-designer-skill\.backup-/);
 });
 
@@ -170,8 +171,8 @@ test('el onboarding presenta el flujo de producción editorial aprobado', async 
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
   assert.match(source, /Sílabo[\s\S]*Fuentes[\s\S]*Guía[\s\S]*PDF/);
   assert.match(source, /No diseña la guía ni reemplaza tu criterio docente/);
-  assert.match(source, /Iniciando prueba final/);
-  assert.match(source, /Guías semanales[\s\S]*Bibliografía automática[\s\S]*Casos y ejercicios[\s\S]*PDF final/);
+  assert.match(source, /Preparando la prueba/);
+  assert.match(source, /Preparar[\s\S]*Comprobar[\s\S]*Crear[\s\S]*Compilar[\s\S]*Validar/);
 });
 
 test('el copy del onboarding no repite jerga técnica ni referencias obsoletas al esquema de 10 pasos', async () => {
@@ -313,14 +314,24 @@ test('Git no aparece como tarjeta en el onboarding (solo en Configuración > Ent
   assert.match(fn, /runtime\.dependencies\.filter\(dep => dep\.required\)/);
 });
 
-test('los destinos usan lenguaje de tarea, no nombres de producto, en título visible', async () => {
+test('los destinos distinguen Claude del plugin universal de ChatGPT y Codex', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
   const start = source.indexOf('function connectStep');
   const end = source.indexOf('function finalStep', start);
   const connect = source.slice(start, end);
-  assert.match(connect, /id: "claude-code",\s*title: "Trabajar en proyectos locales"/);
-  assert.match(connect, /id: "claude-cowork",\s*title: "Usar en la app de Claude"/);
-  assert.match(connect, /id: "both",\s*title: "Usar en ambos lugares"/);
+  assert.match(connect, /id: "claude-code",\s*title: "Usar con Claude"/);
+  assert.match(connect, /id: "openai",\s*title: "Usar con ChatGPT y Codex"/);
+  assert.match(connect, /id: "claude-cowork",\s*title: "Usar solo en la app de Claude"/);
+  assert.match(connect, /id: "both",\s*title: "Usar en todos"/);
+});
+
+test('cambiar el destino mantiene sincronizada la selección visible del onboarding', async () => {
+  const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  const start = source.indexOf('input[name=onboarding-target]');
+  const end = source.indexOf('root.querySelectorAll("[data-onboarding-action]"', start);
+  const handler = source.slice(start, end);
+  assert.match(handler, /const selectedTarget = event\.currentTarget\.value/);
+  assert.match(handler, /runtime\.status = \{[\s\S]*selectedTarget/);
 });
 
 test('el checklist final depende del destino elegido (no asume Skill instalada siempre)', async () => {
@@ -490,4 +501,297 @@ test('el crédito opcional de Jintia no sustituye la autoría académica', async
   assert.match(course, /Producido con Jintia/);
   assert.match(course, /Autor académico no configurado/);
   assert.doesNotMatch(course, /author = if institution\.author\.is_empty\(\) \{ "Jintia Desktop"/);
+});
+
+test('Configuración muestra una sola sección y conserva navegación accesible', async () => {
+  const settings = await readFile(new URL('src/pages/settings.js', root), 'utf8');
+  assert.match(settings, /let _settingsSection = "inst-profile"/);
+  assert.match(settings, /data-settings-panel/);
+  assert.match(settings, /sectionHidden\("inst-profile"\)/);
+  assert.match(settings, /panel\.classList\.toggle\("hidden"/);
+  assert.match(settings, /aria-current/);
+});
+
+test('Configuración guarda notebooks automáticamente en backend y almacenamiento local', async () => {
+  const settings = await readFile(new URL('src/pages/settings.js', root), 'utf8');
+  assert.match(settings, /Guardado automático/);
+  assert.match(settings, /async function syncNotebooks/);
+  assert.match(settings, /await saveNotebooksConfig\(next\)/);
+  assert.match(settings, /saveNotebooks\(next\)/);
+  assert.doesNotMatch(settings, /btn-save-notebooks|persistNotebooksLegacy|addNotebookLegacy/);
+});
+
+test('Configuración protege operaciones asíncronas y el reinicio no promete borrar datos', async () => {
+  const settings = await readFile(new URL('src/pages/settings.js', root), 'utf8');
+  assert.match(settings, /async function runSettingsOperation/);
+  assert.match(settings, /aria-busy/);
+  assert.match(settings, /No se eliminarán tu perfil, asignaturas, notebooks ni archivos/);
+  assert.match(settings, /const r = await resetOnboarding\(\)/);
+  assert.match(settings, /if \(!r\.success\)/);
+  assert.match(settings, /window\.location\.reload\(\)/);
+});
+
+test('Plantillas separa selección, vista previa y activación confirmada', async () => {
+  const templates = await readFile(new URL('src/pages/templates.js', root), 'utf8');
+  assert.match(templates, /compileSyllabusPdf/);
+  assert.match(templates, /previewTemplateId:\s*templateId/);
+  assert.match(templates, /convertFileSrc/);
+  assert.match(templates, /<iframe/);
+  assert.match(templates, /data-select-template/);
+  assert.match(templates, /Usar esta plantilla/);
+  assert.match(templates, /Plantilla activa/);
+  assert.match(templates, /aria-pressed/);
+  assert.match(templates, /aria-busy/);
+  assert.doesNotMatch(templates, /Activa \/ Editar/);
+  assert.doesNotMatch(templates, /renderTemplatePreview/);
+});
+
+test('el backend compila la vista previa sin cambiar la plantilla activa', async () => {
+  const [lib, course, config] = await Promise.all([
+    readFile(new URL('src-tauri/src/lib.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/course.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/config.rs', root), 'utf8'),
+  ]);
+  assert.match(lib, /preview_template_id:\s*Option<String>/);
+  assert.match(course, /preview_template_id[\s\S]*unwrap_or_else\(crate::config::get_active_template\)/);
+  assert.match(course, /copy_template_assets\(&active_template/);
+  assert.match(course, /template_assets_fingerprint\(&active_template\)/);
+  assert.match(config, /pub fn copy_template_assets/);
+  assert.match(config, /pub fn template_assets_fingerprint/);
+});
+
+test('la salida de pdflatex tolera la codificación local de Windows', async () => {
+  const course = await readFile(new URL('src-tauri/src/course.rs', root), 'utf8');
+  assert.match(course, /read_until\(b'\\n'/);
+  assert.match(course, /String::from_utf8_lossy\(&line_bytes\)/);
+  assert.match(course, /String::from_utf8_lossy\(&stderr_bytes\)/);
+  assert.doesNotMatch(course, /BufReader::new\(stdout\)\.lines\(\)/);
+});
+
+test('Plantillas muestra el catálogo completo sin cortar resultados', async () => {
+  const templates = await readFile(new URL('src/pages/templates.js', root), 'utf8');
+  assert.match(templates, /templates\.map\(templateCard\)/);
+  assert.doesNotMatch(templates, /gridItems|templates\.filter\([^;]+slice\(0/);
+  assert.match(templates, /btn-retry-templates/);
+  assert.match(templates, /No hay plantillas en esta categoría/);
+});
+
+test('onboarding y Plantillas comparten una guía semanal de demostración realista', async () => {
+  const onboarding = await readFile(new URL('src/onboarding.js', root), 'utf8');
+  const templates = await readFile(new URL('src/pages/templates.js', root), 'utf8');
+  const sample = await readFile(new URL('src/sampleGuide.js', root), 'utf8');
+  const course = await readFile(new URL('src-tauri/src/course.rs', root), 'utf8');
+
+  assert.match(onboarding, /buildSampleGuideData\(state\.config/);
+  assert.match(templates, /buildSampleGuideData\(state\.config/);
+  assert.match(sample, /Pensamiento crítico y decisiones profesionales/);
+  assert.match(sample, /Facione, P\. A\./);
+  assert.doesNotMatch(sample, /Apellido, [A-Z]\./);
+  assert.match(course, /append_demo_week/);
+  assert.match(course, /\\title\{\{Guía Didáctica Semanal\}\}/);
+  assert.match(course, /\\chapter\{Toma de Decisiones Basada en Evidencia\}/);
+  assert.match(course, /active_template == "kaohandt-marginal"[\s\S]*\\guidesection\{Toma de Decisiones Basada en Evidencia\}/);
+  assert.match(course, /\\guidesection\{Semana 1: De la Intuición a una Decisión Justificable\}/);
+  assert.match(course, /Transferencia a cualquier profesión/);
+  assert.match(course, /\\begin\{guidefigure\}/);
+  assert.match(course, /\\begin\{tikzpicture\}/);
+  assert.match(course, /\\guidefigurecaption\{Ruta de una decisión profesional justificable\.\}\{fig:ruta-decision\}/);
+  assert.match(course, /\\begin\{guidetable\}/);
+  assert.match(course, /\\begin\{tabularx\}/);
+  assert.match(course, /\\begin\{equation\}/);
+  assert.match(course, /\\marginconcept\{Criterio\}/);
+  assert.match(course, /Autoevaluación/);
+  assert.match(await readFile(new URL('../../skill/templates/kaohandt-marginal/preamble.tex', root), 'utf8'), /\\usepackage\{tikz\}/);
+});
+
+test('las notas marginales de Kaohandt no insertan párrafos dentro de marginnote', async () => {
+  const preamble = await readFile(new URL('../../skill/templates/kaohandt-marginal/preamble.tex', root), 'utf8');
+  assert.match(preamble, /\\newcommand\{\\marginconcept\}\[2\]\{\\marginnote\{[^\n]+\}\}/);
+  assert.doesNotMatch(preamble, /\\marginnote\{[^\n]*\\par/);
+  assert.doesNotMatch(preamble, /\\marginnote\{[^\n]*\\\\/);
+  assert.match(preamble, /\\newenvironment\{guidetable\}/);
+  assert.match(preamble, /\\newenvironment\{guidefigure\}/);
+  assert.doesNotMatch(preamble, /\\newenvironment\{guidetable\}[^\n]*\\begin\{table\}/);
+});
+
+test('la skill exige wrappers portables para figuras y tablas en ambas plantillas', async () => {
+  const [skill, figures, latexReference, elegantMeta, kaoMeta, linter] = await Promise.all([
+    readFile(new URL("skill/SKILL.md", repositoryRoot), "utf8"),
+    readFile(new URL("skill/references/figuras-tikz.md", repositoryRoot), "utf8"),
+    readFile(new URL("skill/references/plantilla-latex.md", repositoryRoot), "utf8"),
+    readFile(new URL("skill/templates/elegantbook-clasico/meta.json", repositoryRoot), "utf8"),
+    readFile(new URL("skill/templates/kaohandt-marginal/meta.json", repositoryRoot), "utf8"),
+    readFile(new URL("skill/scripts/latex-linter.js", repositoryRoot), "utf8"),
+  ]);
+  assert.match(skill, /guidefigurecaption/);
+  assert.match(skill, /guidetablecaption/);
+  assert.match(figures, /\\begin\{guidefigure\}/);
+  assert.doesNotMatch(figures, /\\begin\{figure\}/);
+  assert.match(latexReference, /\\begin\{guidetable\}/);
+  assert.equal(JSON.parse(elegantMeta).validation.portableFloatContract, true);
+  assert.equal(JSON.parse(kaoMeta).validation.portableFloatContract, true);
+  assert.match(linter, /validatePortableFloatContract/);
+});
+
+test('el validador comparte MiKTeX nativo con Jintia antes de recurrir a WSL', async () => {
+  const validator = await readFile(new URL("skill/scripts/latex-validator.js", repositoryRoot), "utf8");
+  const nativeBranch = validator.indexOf("commandExists('pdflatex') && commandExists('biber')");
+  const wslBranch = validator.indexOf("run('wsl.exe'");
+  assert.ok(nativeBranch >= 0);
+  assert.ok(wslBranch > nativeBranch);
+});
+
+test('Configuración distingue una skill instalada de una skill actualizada', async () => {
+  const [payload, models, onboarding, settings] = await Promise.all([
+    readFile(new URL("src-tauri/src/payload.rs", root), "utf8"),
+    readFile(new URL("src-tauri/src/models.rs", root), "utf8"),
+    readFile(new URL("src/onboarding.js", root), "utf8"),
+    readFile(new URL("src/pages/settings.js", root), "utf8"),
+  ]);
+  assert.match(payload, /pub const SKILL_VERSION/);
+  assert.match(payload, /pub fn skill_is_current/);
+  assert.match(models, /skill_current/);
+  assert.match(onboarding, /Paquete listo para importar en Claude/);
+  assert.match(settings, /Skill desactualizada/);
+});
+
+test('Jintia se empaqueta como plugin universal para ChatGPT y Codex', async () => {
+  const [manifestText, mcpText, payload, paths, onboarding, api] = await Promise.all([
+    readFile(new URL("openai-plugin/.codex-plugin/plugin.json", repositoryRoot), "utf8"),
+    readFile(new URL("openai-plugin/.mcp.json", repositoryRoot), "utf8"),
+    readFile(new URL("src-tauri/src/payload.rs", root), "utf8"),
+    readFile(new URL("src-tauri/src/paths.rs", root), "utf8"),
+    readFile(new URL("src/onboarding.js", root), "utf8"),
+    readFile(new URL("src/api.js", root), "utf8"),
+  ]);
+  const manifest = JSON.parse(manifestText);
+  const mcp = JSON.parse(mcpText);
+  assert.equal(manifest.name, "jintia");
+  assert.equal(manifest.version, "10.6.0");
+  assert.equal(manifest.skills, "./skills/");
+  assert.equal(manifest.mcpServers, "./.mcp.json");
+  assert.equal(mcp.notebooklm.command, "npx");
+  assert.match(payload, /materialize_openai_plugin/);
+  assert.match(payload, /register_openai_marketplace/);
+  assert.match(paths, /\.codex.*plugins.*jintia/s);
+  assert.match(onboarding, /id: "openai"/);
+  assert.match(api, /installOpenAIPlugin/);
+});
+
+test('el paquete OpenAI incluye los metadatos agents de la skill', async () => {
+  const payload = await readFile(new URL("src-tauri/src/payload.rs", root), "utf8");
+  const metadata = await readFile(new URL("skill/agents/openai.yaml", repositoryRoot), "utf8");
+  assert.match(payload, /static AGENTS/);
+  assert.match(payload, /target\.join\("agents"\)/);
+  assert.match(metadata, /display_name: "Jintia"/);
+  assert.match(metadata, /allow_implicit_invocation: true/);
+});
+
+test('Ayuda cubre el flujo real del producto y ofrece FAQ local buscable', async () => {
+  const docs = await readFile(new URL('src/pages/docs.js', root), 'utf8');
+  assert.match(docs, /const FAQS = \[/);
+  assert.match(docs, /help-search/);
+  assert.match(docs, /filterHelp/);
+  assert.match(docs, /Jintia Desktop y jintia-skill/);
+  assert.match(docs, /NotebookLM/);
+  assert.match(docs, /¿Necesito WSL para compilar\?/);
+  assert.match(docs, /no tiene telemetría ni un backend propio/i);
+  assert.match(docs, /No se eliminan el perfil, las asignaturas, los notebooks ni los archivos generados/);
+});
+
+test('Ayuda navega a la sección visible de Configuración, no a un panel oculto', async () => {
+  const docs = await readFile(new URL('src/pages/docs.js', root), 'utf8');
+  assert.match(docs, /data-settings-nav/);
+  assert.match(docs, /nav\.click\(\)/);
+  assert.match(docs, /section:\s*"environment"/);
+  assert.match(docs, /"notebooks-section"/);
+});
+
+test('la prueba final transmite progreso y permite copiar un diagnóstico', async () => {
+  const [onboarding, course, lib] = await Promise.all([
+    readFile(new URL('src/onboarding.js', root), 'utf8'),
+    readFile(new URL('src-tauri/src/course.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/lib.rs', root), 'utf8'),
+  ]);
+  assert.match(onboarding, /listen\("jintia:\/\/compile-progress"/);
+  assert.match(onboarding, /id="compile-live-log"/);
+  assert.match(onboarding, /Copiar diagnóstico/);
+  assert.match(onboarding, /Reportar problema/);
+  assert.match(course, /emit_compile_progress/);
+  assert.match(course, /"package-install"/);
+  assert.match(course, /fixtounicode/);
+  assert.match(course, /active_template == "kaohandt-marginal"/);
+  assert.match(course, /\\documentclass\[10pt,oneside\]\{\{kaohandt\}\}/);
+  assert.match(lib, /app:\s*tauri::AppHandle/);
+});
+
+test('el editor de silabo protege borradores y usa estados editoriales explicitos', async () => {
+  const syllabus = await readFile(new URL('src/pages/syllabus.js', root), 'utf8');
+  assert.match(syllabus, /const AUTOSAVE_DELAY = 700/);
+  assert.match(syllabus, /persistCurrentWeek\("draft", \{ silent: true \}\)/);
+  assert.match(syllabus, /collectWeekFormData\(_activeWeek, "complete"\)/);
+  assert.match(syllabus, /week\.status === "complete"/);
+  assert.match(syllabus, /_activeWeek = clampWeek\(_activeWeek, count\)/);
+  assert.doesNotMatch(syllabus, /course\.weeks = Math\.max/);
+});
+
+test('el formulario del silabo exige bibliografia y actividad con validacion accesible', async () => {
+  const syllabus = await readFile(new URL('src/pages/syllabus.js', root), 'utf8');
+  assert.match(syllabus, /\["bibliography", "Bibliografía \/ Recursos"\]/);
+  assert.match(syllabus, /\["graded_activity", "Actividad calificada"\]/);
+  assert.match(syllabus, /<label for="\$\{id\}"/);
+  assert.match(syllabus, /<fieldset[\s\S]*<legend/);
+  assert.match(syllabus, /aria-invalid/);
+  assert.match(syllabus, /id="syl-error-summary"/);
+  assert.match(syllabus, /min-h-11/);
+});
+
+test('Courses muestra progreso real y protege sus operaciones', async () => {
+  const [courses, api, main] = await Promise.all([
+    readFile(new URL('src/pages/courses.js', root), 'utf8'),
+    readFile(new URL('src/api.js', root), 'utf8'),
+    readFile(new URL('src/main.js', root), 'utf8'),
+  ]);
+  assert.match(courses, /week\?\.status === "complete"/);
+  assert.match(courses, /role="dialog" aria-modal="true"/);
+  assert.match(courses, /event\.key === "Escape"/);
+  assert.match(courses, /step="1"/);
+  assert.match(courses, /Number\.isInteger\(weeks\)/);
+  assert.match(courses, /_folderBusy\.has\(index\)/);
+  assert.match(courses, /persistCourseList/);
+  assert.match(api, /initializeReadme = true/);
+  assert.match(main, /data-create-course/);
+  assert.match(main, /jintia:new-course/);
+});
+
+test('las asignaturas usan Documentos por defecto y permiten cambiar la ubicación', async () => {
+  const [courses, api, lib] = await Promise.all([
+    readFile(new URL('src/pages/courses.js', root), 'utf8'),
+    readFile(new URL('src/api.js', root), 'utf8'),
+    readFile(new URL('src-tauri/src/lib.rs', root), 'utf8'),
+  ]);
+  assert.match(lib, /app\.path\(\)\.document_dir\(\)/);
+  assert.match(api, /invoke\("get_default_course_root"\)/);
+  assert.match(api, /dialogOpen\(\{ directory: true, title, defaultPath \}\)/);
+  assert.match(courses, /id="m-change-root"/);
+  assert.match(courses, /project_root: rootPath/);
+});
+
+test('el sílabo reutiliza la ruta preparada antes de pedir otra carpeta', async () => {
+  const syllabus = await readFile(new URL('src/pages/syllabus.js', root), 'utf8');
+  assert.match(syllabus, /course\.project_root \|\| parentDirectory\(course\.project_path\)/);
+  assert.match(syllabus, /if \(!coursePath\) \{[\s\S]*pickDirectory/);
+  assert.match(syllabus, /course\.project_root = coursePath/);
+});
+
+test('la estructura del curso puede crear un README inicial sin sobrescribirlo', async () => {
+  const [course, lib] = await Promise.all([
+    readFile(new URL('src-tauri/src/course.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/lib.rs', root), 'utf8'),
+  ]);
+  assert.match(lib, /initialize_readme:\s*Option<bool>/);
+  assert.match(course, /initialize_readme:\s*bool/);
+  assert.match(course, /if initialize_readme/);
+  assert.match(course, /if !readme\.exists\(\)/);
+  assert.match(course, /Proyecto académico preparado con Jintia/);
 });

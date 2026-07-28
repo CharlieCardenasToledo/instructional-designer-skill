@@ -17,7 +17,10 @@ const colors = {
     bold: "\x1b[1m"
 };
 
-const mainFilePath = process.argv[2];
+const args = process.argv.slice(2);
+const mainFilePath = args.find(arg => !arg.startsWith("--"));
+const templateArgIndex = args.indexOf("--template");
+const explicitTemplate = templateArgIndex >= 0 ? args[templateArgIndex + 1] : "";
 
 if (!mainFilePath) {
     console.error(`${colors.red}Error: Debes proporcionar la ruta del archivo principal .tex de la semana.${colors.reset}`);
@@ -32,6 +35,49 @@ if (!fs.existsSync(absMainPath)) {
 }
 
 const rootDir = path.dirname(absMainPath);
+const templatesDir = path.resolve(__dirname, "..", "templates");
+
+function resolveTemplateMeta(mainContent) {
+    let templateId = explicitTemplate;
+    if (!templateId) {
+        const candidates = [];
+        let current = rootDir;
+        while (true) {
+            candidates.push(path.join(current, "config", "institution.json"));
+            const parent = path.dirname(current);
+            if (parent === current) break;
+            current = parent;
+        }
+        candidates.push(path.resolve(__dirname, "..", "config", "institution.json"));
+        for (const configPath of candidates) {
+            if (!fs.existsSync(configPath)) continue;
+            try {
+                templateId = JSON.parse(fs.readFileSync(configPath, "utf-8")).activeTemplate || "";
+            } catch {
+                throw new Error(`Configuración institucional inválida: ${configPath}`);
+            }
+            if (templateId) break;
+        }
+    }
+    if (!templateId) {
+        const classMatch = mainContent.match(/\\documentclass(?:\[[^\]]*\])?\{(?:[^}]*\/)?([^}/]+)\}/);
+        if (classMatch?.[1] === "kaohandt") templateId = "kaohandt-marginal";
+        if (classMatch?.[1] === "elegantbook") templateId = "elegantbook-clasico";
+    }
+    templateId ||= "elegantbook-clasico";
+    if (!/^[a-z0-9-]+$/.test(templateId)) {
+        throw new Error(`Id de plantilla inválido: ${templateId}`);
+    }
+    const metaPath = path.join(templatesDir, templateId, "meta.json");
+    if (!fs.existsSync(metaPath)) {
+        throw new Error(`No existe el contrato de plantilla: ${metaPath}`);
+    }
+    return JSON.parse(fs.readFileSync(metaPath, "utf-8"));
+}
+
+function escapeRegex(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 // Palabras o frases prohibidas (muletillas de IA)
 const AI_TROPES = [
@@ -232,19 +278,26 @@ function lintFile(filePath) {
 }
 
 // Validador específico para 01-introduccion.tex
-function validateIntroduction(filePath) {
+function validateIntroduction(filePath, templateMeta) {
     if (!fs.existsSync(filePath)) return;
     
     const content = fs.readFileSync(filePath, 'utf-8');
     
     // Comprobar elementos estructurales
+    const validation = templateMeta.validation || {};
+    const commands = validation.requiredIntroductionCommands || [
+        "\\chapter", "\\guidesection", "\\editorialtitle", "\\conceptline", "\\coursemeta"
+    ];
+    const environments = validation.requiredIntroductionEnvironments || ["softblock"];
     const checks = [
-        { pattern: /\\chapter\{/, name: "\\chapter{...}" },
-        { pattern: /\\guidesection\{/, name: "\\guidesection{...}" },
-        { pattern: /\\editorialtitle\{/, name: "\\editorialtitle{...}{...}" },
-        { pattern: /\\conceptline\{/, name: "\\conceptline{...}" },
-        { pattern: /\\coursemeta\{/, name: "\\coursemeta{...}" },
-        { pattern: /\\begin\{softblock\}/, name: "entorno softblock" }
+        ...commands.map(command => ({
+            pattern: new RegExp(`${escapeRegex(command)}\\s*\\{`),
+            name: `${command}{...}`
+        })),
+        ...environments.map(environment => ({
+            pattern: new RegExp(`\\\\begin\\{${escapeRegex(environment)}\\}`),
+            name: `entorno ${environment}`
+        }))
     ];
     
     checks.forEach(check => {
@@ -259,11 +312,39 @@ function validateIntroduction(filePath) {
     }
 }
 
+function validatePortableFloatContract(filePath, content, templateMeta) {
+    if (!templateMeta.validation?.portableFloatContract) return;
+    if (path.basename(filePath).toLowerCase() === "preamble.tex") return;
+    [
+        [/\\begin\{figure\*?\}/, "figure"],
+        [/\\begin\{table\*?\}/, "table"],
+        [/\\caption(?:\[[^\]]*\])?\s*\{/, "\\caption"]
+    ].forEach(([pattern, label]) => {
+        if (pattern.test(content)) {
+            logIssue(
+                "ERROR",
+                filePath,
+                1,
+                `Contrato de plantilla: no uses ${label} directamente. Usa guidefigure/guidefigurecaption o guidetable/guidetablecaption.`
+            );
+        }
+    });
+}
+
 // Flujo Principal
 console.log(`${colors.bold}${colors.cyan}Iniciando análisis estático (linting) de la guía LaTeX...${colors.reset}`);
 
 // 1. Lint del archivo principal
 const mainContent = lintFile(absMainPath);
+let templateMeta;
+try {
+    templateMeta = resolveTemplateMeta(mainContent);
+    console.log(`${colors.cyan}Plantilla de validación: ${templateMeta.id}${colors.reset}`);
+    validatePortableFloatContract(absMainPath, mainContent, templateMeta);
+} catch (error) {
+    console.error(`${colors.red}Error: ${error.message}${colors.reset}`);
+    process.exit(1);
+}
 
 // 2. Buscar archivos importados vía \input y analizarlos en orden
 const inputs = [];
@@ -281,13 +362,36 @@ inputs.forEach(inputName => {
     }
     
     console.log(`${colors.cyan}Analizando archivo importado: ${inputName}...${colors.reset}`);
-    lintFile(inputPath);
+    const inputContent = lintFile(inputPath);
+    validatePortableFloatContract(inputPath, inputContent, templateMeta);
     
     // Si es la introducción, validar su estructura
     if (inputName.includes('introduccion')) {
-        validateIntroduction(inputPath);
+        validateIntroduction(inputPath, templateMeta);
     }
 });
+
+if (templateMeta.capabilities?.marginNotes) {
+    const combined = [mainContent, ...inputs.map(inputName => {
+        let inputPath = path.join(rootDir, inputName);
+        if (!inputPath.endsWith(".tex")) inputPath += ".tex";
+        return fs.existsSync(inputPath) ? fs.readFileSync(inputPath, "utf-8") : "";
+    })].join("\n");
+    const marginCommand = /\\(?:marginconcept\{[^{}]*\}\{([^{}]*)\}|marginquestion\{([^{}]*)\}|marginevidence\{([^{}]*)\})/g;
+    let marginMatch;
+    while ((marginMatch = marginCommand.exec(combined)) !== null) {
+        const text = marginMatch.slice(1).find(Boolean) || "";
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        if (words.length > 60) {
+            logIssue("ERROR", absMainPath, 1, `Nota marginal de ${words.length} palabras; el máximo es 60.`);
+        }
+    }
+    const wideStarts = (combined.match(/\\pagelayout\{wide\}/g) || []).length;
+    const marginRestores = (combined.match(/\\pagelayout\{margin\}/g) || []).length;
+    if (wideStarts > marginRestores) {
+        logIssue("ERROR", absMainPath, 1, "Existe un layout ancho sin restaurar \\pagelayout{margin}.");
+    }
+}
 
 console.log("\n------------------------------------------------");
 if (totalErrors > 0 || totalWarnings > 0) {

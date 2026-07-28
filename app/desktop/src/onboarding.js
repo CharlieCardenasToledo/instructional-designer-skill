@@ -16,8 +16,10 @@ import {
   getSkillPath,
   goToOnboardingStep,
   installDependency,
+  installOpenAIPlugin,
   installSkill,
   listTemplates,
+  openExternal,
   pickDirectory,
   runNotebookLMAuth,
   setActiveTemplate,
@@ -31,6 +33,7 @@ import { createRoot } from "react-dom/client";
 import { ThinkingOrb } from "thinking-orbs";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { listen } from "@tauri-apps/api/event";
 import claudeLogo from "./assets/claude-symbol.svg";
 import notebookLmLogo from "./assets/notebooklm-logo.svg";
 import latexLogo from "./assets/latex-logo.svg";
@@ -38,13 +41,14 @@ import geminiLogo from "./assets/gemini-icon.svg";
 import googleGLogo from "./assets/google-g.svg";
 import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 import { ui, cx } from "./uiClasses.js";
+import { buildSampleGuideData } from "./sampleGuide.js";
 import { APP_META } from "./appMeta.js";
 
 // Esquema de 5 pasos (v3 en el backend; ver migrate_status en onboarding.rs).
 const TOTAL_STEPS = 5;
 const LARGE_DEPENDENCIES = new Set(["Compilador LaTeX"]);
 const STEP_META = [
-  { title: "Bienvenida", subtitle: "Convierte el sílabo de tu curso en guías semanales en PDF.", icon: "graduation-cap" },
+  { title: "Bienvenida", subtitle: "Convierte tu sílabo en guías PDF y trabaja con Claude, ChatGPT o Codex.", icon: "graduation-cap" },
   { title: "Requisitos", subtitle: "Instalamos automáticamente lo que falte.", icon: "terminal" },
   { title: "Tu perfil", subtitle: "Institución, autoría y plantilla de tus documentos.", icon: "building-2" },
   { title: "Conexión", subtitle: "Verifica tu sesión de Google y elige dónde vas a trabajar.", icon: "notebook" },
@@ -146,10 +150,10 @@ const DEP_ROW_MISSING = "border-red-300 bg-red-50";
 const DEP_CARD_BASE = "flex flex-col gap-2.5 p-4 rounded-xl bg-white border transition-colors min-w-0";
 const DEP_CARD_STATUS_BASE = "w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center";
 const LOADING_PALETTE = [
-  { hex: "#4285f4", rgb: [66, 133, 244] },
-  { hex: "#ea4335", rgb: [234, 67, 53] },
-  { hex: "#fbbc05", rgb: [251, 188, 5] },
-  { hex: "#34a853", rgb: [52, 168, 83] },
+  { hex: "#4893FC", rgb: [72, 147, 252] },
+  { hex: "#749BFF", rgb: [116, 155, 255] },
+  { hex: "#969DFF", rgb: [150, 157, 255] },
+  { hex: "#BD99FE", rgb: [189, 153, 254] },
 ];
 
 function onboardingAmbientBackground() {
@@ -158,29 +162,105 @@ function onboardingAmbientBackground() {
   </div>`;
 }
 
+let geminiOrbSequence = 0;
+
+function geminiThinkingOrb(label) {
+  const instanceId = `gemini-thinking-orb-${geminiOrbSequence += 1}`;
+  const layers = [
+    ["inset(0 50% 50% 0)", LOADING_PALETTE[0].hex],
+    ["inset(0 0 50% 50%)", LOADING_PALETTE[1].hex],
+    ["inset(50% 50% 0 0)", LOADING_PALETTE[2].hex],
+    ["inset(50% 0 0 50%)", LOADING_PALETTE[3].hex],
+  ];
+  return createElement(
+    "div",
+    { className: "gemini-thinking-orb", role: "img", "aria-label": label },
+    createElement(
+      "svg",
+      { width: 0, height: 0, "aria-hidden": "true", focusable: "false" },
+      createElement(
+        "defs",
+        null,
+        ...layers.map(([, color], index) => createElement(
+          "filter",
+          { id: `${instanceId}-color-${index}`, key: color, colorInterpolationFilters: "sRGB" },
+          createElement("feFlood", { floodColor: color, result: "geminiColor" }),
+          createElement("feComposite", {
+            in: "geminiColor",
+            in2: "SourceGraphic",
+            operator: "in",
+          }),
+        )),
+      ),
+    ),
+    ...layers.map(([clipPath], index) => createElement(ThinkingOrb, {
+      key: `${instanceId}-layer-${index}`,
+      state: "working",
+      size: 64,
+      theme: "light",
+      "aria-hidden": "true",
+      className: "gemini-thinking-orb__layer",
+      style: {
+        position: "absolute",
+        inset: 0,
+        width: 192,
+        height: 192,
+        clipPath,
+        filter: `url(#${instanceId}-color-${index})`,
+      },
+      tabIndex: -1,
+      paused: false,
+      speed: 1,
+      "data-orb-layer": index,
+    })),
+  );
+}
+
+function mountGeminiOrb(host, label) {
+  const orbRoot = createRoot(host);
+  orbRoot.render(geminiThinkingOrb(label));
+  return () => orbRoot.unmount();
+}
+
+let stopStepOrb = null;
+
+export function mountGeminiLoading(root, message = "Preparando tu espacio de trabajo…") {
+  if (!root) return () => {};
+  root.className = "fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-gray-50";
+  root.innerHTML = `${onboardingAmbientBackground()}
+    <div class="relative z-[1] flex h-full w-full max-w-3xl flex-col items-center justify-center gap-4 p-6">
+      <div data-gemini-loading-orb role="status" aria-live="polite"></div>
+      <p class="text-sm font-semibold text-slate-700">${escapeHtml(message)}</p>
+    </div>`;
+
+  const stopOrb = mountGeminiOrb(root.querySelector("[data-gemini-loading-orb]"), message);
+  let mounted = true;
+  return () => {
+    if (!mounted) return;
+    mounted = false;
+    stopOrb();
+    root.replaceChildren();
+    root.className = "";
+  };
+}
+
 export async function renderOnboarding() {
   const root = document.getElementById("onboarding-root");
   if (!root) return;
-  root.className = "fixed top-0 right-0 bottom-0 left-0 z-[10000] flex items-center justify-center overflow-hidden bg-gray-50";
-  root.innerHTML = `${onboardingAmbientBackground()}
-  <div class="relative z-[1] w-full max-w-3xl mx-auto h-full max-h-screen flex flex-col items-center justify-center gap-4 p-6">
-    <div id="loading-orbs"></div>
-  </div>`;
-  // Monta ThinkingOrb en un root React aislado (el resto de la app es JS vanilla).
-  const orbRoot = createRoot(document.getElementById("loading-orbs"));
-  orbRoot.render(createElement(ThinkingOrb, { state: "working", size: 64 }));
-  const stopOrbs = () => orbRoot.unmount();
+  const stopOrbs = mountGeminiLoading(root);
 
   try {
     runtime.status = await getOnboardingStatus();
     const currentStep = Number(runtime.status?.currentStep || 1);
     await prepareOnboardingStep(currentStep);
     stopOrbs();
+    root.className = "fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-gray-50";
     if (runtime.status.regressionReason) toast(runtime.status.regressionReason, "error", 12000);
     renderCurrentStep();
     warmOnboardingData(currentStep);
   } catch (error) {
     stopOrbs();
+    root.className = "fixed inset-0 z-[10000] flex items-center justify-center overflow-hidden bg-gray-50";
     root.innerHTML = `${onboardingAmbientBackground()}
     <div class="relative z-[1] w-full max-w-3xl mx-auto h-full max-h-screen flex flex-col items-center justify-center p-6 text-center">
       <h1 class="text-2xl font-semibold text-gray-900 mb-2">No se pudo iniciar el onboarding</h1>
@@ -201,6 +281,8 @@ function stepNumber() {
 function renderCurrentStep() {
   const root = document.getElementById("onboarding-root");
   if (!root || !runtime.status) return;
+  stopStepOrb?.();
+  stopStepOrb = null;
   if (runtime.status.completed) {
     root.remove();
     return;
@@ -223,12 +305,12 @@ function renderCurrentStep() {
       <button class="${ui.windowControl.base}" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
       <button class="${cx(ui.windowControl.base, ui.windowControl.close)}" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
     </div>
-    <div class="relative z-[1] w-full max-w-3xl mx-auto h-full flex flex-col p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
-      <div class="flex-1 min-h-0 overflow-y-auto pr-2 flex flex-col items-center ${SCROLL_THIN}">
-        <div class="w-full my-auto">
-          <div class="text-center mb-4 w-full">
-            <h1 id="onboarding-title" class="text-4xl font-semibold text-gray-900 tracking-tight animate-[fade-in-up_0.5s_ease-out_forwards]">${escapeHtml(meta.title)}</h1>
-            <p class="mt-3 text-base text-gray-600 max-w-md mx-auto leading-relaxed animate-[fade-in-up_0.5s_ease-out_forwards] [animation-delay:75ms]">${escapeHtml(meta.subtitle)}</p>
+    <div class="relative z-[1] mx-auto flex h-full w-full max-w-3xl flex-col p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+      <div class="flex min-h-0 flex-1 flex-col items-center overflow-y-auto pr-2 ${SCROLL_THIN}">
+        <div class="my-auto w-full">
+          <div class="mb-4 w-full text-center">
+            <h1 id="onboarding-title" class="text-4xl font-semibold tracking-tight text-gray-900 animate-[fade-in-up_0.5s_ease-out_forwards]">${escapeHtml(meta.title)}</h1>
+            <p class="mx-auto mt-3 max-w-md text-base leading-relaxed text-gray-600 animate-[fade-in-up_0.5s_ease-out_forwards] [animation-delay:75ms]">${escapeHtml(meta.subtitle)}</p>
           </div>
           <div id="onboarding-step-content" class="w-full"></div>
         </div>
@@ -242,6 +324,8 @@ function renderCurrentStep() {
   const content = document.getElementById("onboarding-step-content");
   if (runtime.loadingStep === current) {
     content.innerHTML = loadingStep(current);
+    const host = content.querySelector("[data-step-loading-orb]");
+    if (host) stopStepOrb = mountGeminiOrb(host, "Preparando el siguiente paso");
   } else {
     if (current === 1) content.innerHTML = welcomeStep();
     if (current === 2) content.innerHTML = dependenciesStep();
@@ -255,9 +339,7 @@ function renderCurrentStep() {
   syncOnboardingBusyState();
 }
 
-// En el paso 2, el punto único se expande a un punto por herramienta (verde
-// si está instalada), sobre la misma pista de 5 pasos. El área de clic de
-// cada punto es más grande que el punto visual (Ley de Fitts).
+// En el paso 2, el punto único se expande a un punto por herramienta.
 function progressDots(current) {
   const maxDone = Number(runtime.status.maxCompletedStep || 0);
   const stepAvailable = step => step <= maxDone + 1;
@@ -269,7 +351,7 @@ function progressDots(current) {
     const color = isCompleted ? "bg-green-600" : isActive ? "bg-gray-900" : "bg-gray-300";
     const interactive = available ? "cursor-pointer hover:opacity-80" : "cursor-default";
     return `<button type="button" class="onboarding-progress-dot-hit w-8 h-8 flex items-center justify-center border-0 bg-transparent p-0 ${interactive}" data-step-index="${step}" ${available ? `data-onboarding-step="${step}"` : "disabled"} aria-label="Ir al paso ${step}" aria-current="${isActive ? "step" : "false"}">
-      <span class="onboarding-progress-dot w-2.5 h-2.5 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}"></span>
+      <span class="onboarding-progress-dot h-2.5 w-2.5 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}"></span>
     </button>`;
   };
 
@@ -280,7 +362,7 @@ function progressDots(current) {
       const color = dep.installed ? "bg-green-600" : isActive ? "bg-gray-900" : "bg-gray-300";
       const interactive = available ? "cursor-pointer hover:opacity-80" : "cursor-default";
       return `<button type="button" class="onboarding-progress-dot-hit w-8 h-8 flex items-center justify-center border-0 bg-transparent p-0 ${interactive}" data-dep-step-index="${index}" ${available ? "data-onboarding-dep-step" : "disabled"} aria-label="Ver ${escapeHtml(dep.name)}" aria-current="${isActive ? "step" : "false"}">
-        <span class="onboarding-progress-dot w-2 h-2 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}"></span>
+        <span class="onboarding-progress-dot h-2 w-2 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}"></span>
       </button>`;
     }).join("");
   };
@@ -301,7 +383,6 @@ function actionButton(label, action, disabled = false, secondary = false, iconHt
   return `<button class="${secondary ? BTN_SECONDARY : BTN_PRIMARY}" data-onboarding-action="${action}" ${disabled ? "disabled" : ""}>${iconHtml}<span>${escapeHtml(label)}</span></button>`;
 }
 
-// La barra de navegación es fija al final de la tarjeta, no parte del contenido de cada paso.
 let footerConfig = { label: "Continuar", action: "advance", disabled: false };
 function setFooter(label, action = "advance", disabled = false) {
   footerConfig = { label, action, disabled };
@@ -310,24 +391,23 @@ function setFooter(label, action = "advance", disabled = false) {
 function renderBottomNav(current) {
   const canBack = current > 1;
   const skipLink = current >= 2
-    ? `<button type="button" class="mt-3 text-[11px] text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline border-0 bg-transparent cursor-pointer transition-colors" data-onboarding-action="skip-onboarding" title="Saltar el asistente de configuración">
+    ? `<button type="button" class="mt-3 cursor-pointer border-0 bg-transparent text-[11px] text-gray-400 underline-offset-2 transition-colors hover:text-gray-600 hover:underline" data-onboarding-action="skip-onboarding" title="Saltar el asistente de configuración">
         Saltar configuración y acceder al dashboard →
       </button>`
     : "";
-  return `<div class="flex flex-col items-center pt-2 flex-shrink-0">
-    <div id="onboarding-operation-status" class="h-5 mb-1 flex items-center justify-center gap-1.5 text-[11px] font-medium text-gray-500 transition-opacity ${onboardingActionInFlight ? "opacity-100" : "opacity-0"}" role="status" aria-live="polite" aria-atomic="true">
-      <span class="material-symbols-outlined text-[13px] animate-spin">progress_activity</span>
+  return `<div class="flex flex-shrink-0 flex-col items-center pt-2">
+    <div id="onboarding-operation-status" class="mb-1 flex h-5 items-center justify-center gap-1.5 text-[11px] font-medium text-gray-500 transition-opacity ${onboardingActionInFlight ? "opacity-100" : "opacity-0"}" role="status" aria-live="polite" aria-atomic="true">
+      <span class="material-symbols-outlined animate-spin text-[13px]">progress_activity</span>
       <span data-operation-message>${escapeHtml(onboardingBusyMessage || "Procesando…")}</span>
     </div>
     <div class="flex items-center justify-center gap-3">
-      <button type="button" class="onboarding-nav-arrow onboarding-nav-arrow--back liquid-control border border-white/45 bg-white/55 ${canBack ? "" : "opacity-0 pointer-events-none"}" data-onboarding-action="back" aria-label="Paso anterior" title="Paso anterior">${ic("chevron-left", 18)}</button>
-      <div class="${cx(ui.liquid.group, 'onboarding-progress relative flex items-center gap-0.5 px-1')}">${progressDots(current)}</div>
-      <button type="button" class="${cx(ui.button.base, ui.button.primary, 'h-10 cursor-pointer pl-4 pr-3 text-[13px]')}" data-onboarding-action="${footerConfig.action}" ${footerConfig.disabled ? "disabled" : ""}><span>${escapeHtml(footerConfig.label)}</span>${ic("chevron-right", 16)}</button>
+      <button type="button" class="onboarding-nav-arrow onboarding-nav-arrow--back liquid-control border border-white/45 bg-white/55 ${canBack ? "" : "pointer-events-none opacity-0"}" data-onboarding-action="back" aria-label="Paso anterior" title="Paso anterior">${ic("chevron-left", 18)}</button>
+      <div class="${cx(ui.liquid.group, "onboarding-progress relative flex items-center gap-0.5 px-1")}">${progressDots(current)}</div>
+      <button type="button" class="${cx(ui.button.base, ui.button.primary, "h-10 cursor-pointer pl-4 pr-3 text-[13px]")}" data-onboarding-action="${footerConfig.action}" ${footerConfig.disabled ? "disabled" : ""}><span>${escapeHtml(footerConfig.label)}</span>${ic("chevron-right", 16)}</button>
     </div>
     ${skipLink}
   </div>`;
 }
-
 
 function syncOnboardingBusyState() {
   const root = document.getElementById("onboarding-root");
@@ -379,6 +459,7 @@ function actionBusyMessage(action, current) {
     "save-profile-and-template": "Guardando tu institución, perfil y plantilla…",
     "export-zip": "Exportando el archivo…",
     "install-local": "Instalando en tu proyecto local…",
+    "install-openai": "Preparando Jintia para ChatGPT y Codex…",
     "configure-code": "Conectando tu proyecto local…",
     "configure-desktop": "Conectando la app de Claude…",
     "advance-target": "Comprobando el destino seleccionado…",
@@ -401,9 +482,9 @@ function loadingStep(step) {
   };
   setFooter("Preparando el siguiente paso", "advance", true);
   return `<section class="flex flex-col items-center justify-center py-10" aria-live="polite">
-    <span class="material-symbols-outlined text-[26px] text-gray-700 animate-spin">progress_activity</span>
-    <p class="mt-3 text-sm font-medium text-gray-700">${messages[step] || "Preparando el siguiente paso…"}</p>
-    <p class="mt-1 text-xs text-gray-400">Puedes continuar en cuanto termine esta comprobación.</p>
+    <div data-step-loading-orb></div>
+    <p class="mt-5 text-sm font-semibold text-gray-800">${messages[step] || "Preparando el siguiente paso…"}</p>
+    <p class="mt-1 text-xs text-gray-500">Puedes continuar en cuanto termine esta comprobación.</p>
   </section>`;
 }
 
@@ -729,7 +810,7 @@ function welcomeStep() {
   </section>`;
 }
 
-const FIELD_INPUT = "bg-white text-gray-900 border border-gray-300 rounded-lg px-3 py-2 text-sm w-full focus:outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 transition-colors";
+const FIELD_INPUT = cx(ui.surface.input, "px-3 py-2 w-full");
 const FIELD_LABEL = "flex flex-col gap-1.5 text-gray-700 text-xs";
 
 // Institución + perfil + plantilla en una pantalla con un único guardado
@@ -891,16 +972,17 @@ function connectStep() {
   const iconCls = authenticated ? "text-gray-900" : "text-amber-600";
 
   const setup    = runtime.setup || {};
+  const skillReady = !!(setup.skill_installed && setup.skill_current);
   const selected = runtime.status.selectedTarget || state.config.onboardingTarget || "claude-code";
   const zipOk    = Boolean(state.config.lastSkillZip);
 
-  // Los ids internos (claude-code, claude-cowork, both) no cambian: solo el
-  // título visible pasa de nombres de producto a lenguaje de tarea, para
-  // usuario final que no necesita saber qué es "Claude Code" de antemano.
+  // Cada destino nombra la plataforma porque usa un formato de instalación
+  // distinto y el usuario debe saber exactamente cuál está preparando.
   const targets = [
-    { id: "claude-code",    title: "Trabajar en proyectos locales", icon: "terminal",        desc: "Trabaja con los archivos de tu proyecto, con validaciones automáticas." },
-    { id: "claude-cowork",  title: "Usar en la app de Claude",      icon: "desktop_windows",  desc: "Flujo visual dentro de la app, sin tocar archivos ni terminal." },
-    { id: "both",           title: "Usar en ambos lugares",         icon: "devices",          desc: "Combina el proyecto local y la app de Claude." },
+    { id: "claude-code",    title: "Usar con Claude",               icon: "terminal",        desc: "Instala la skill para Claude Code y conserva la exportación para la app de Claude." },
+    { id: "openai",         title: "Usar con ChatGPT y Codex",      icon: "auto_awesome",    desc: "Instala el plugin universal para ChatGPT desktop, Codex CLI y Codex en la app." },
+    { id: "claude-cowork",  title: "Usar solo en la app de Claude", icon: "desktop_windows", desc: "Exporta el paquete para incorporarlo manualmente en Claude." },
+    { id: "both",           title: "Usar en todos",                 icon: "devices",         desc: "Prepara Claude, ChatGPT y Codex en el mismo equipo." },
   ];
 
   // Checklist de pasos para el destino seleccionado
@@ -916,27 +998,41 @@ function connectStep() {
   let actions   = "";
 
   if (selected === "claude-code") {
-    checklist = checkItem("Instalado localmente", setup.skill_installed) +
+    checklist = checkItem(skillReady ? `Skill ${setup.skill_version || ""} actualizada`.trim() : "Skill pendiente de instalar o actualizar", skillReady) +
                 checkItem("Proyecto local conectado", setup.mcp_claude_code_configured);
-    allReady  = !!(setup.skill_installed && setup.mcp_claude_code_configured);
-    actions   = actionButton("1. Instalar", "install-local", setup.skill_installed, true) +
-                actionButton("2. Conectar proyecto local", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true);
+    allReady  = !!(skillReady && setup.mcp_claude_code_configured);
+    actions   = actionButton(setup.skill_installed ? "1. Actualizar skill" : "1. Instalar", "install-local", skillReady, true) +
+                actionButton("2. Conectar proyecto local", "configure-code", !skillReady || setup.mcp_claude_code_configured, true);
 
   } else if (selected === "claude-cowork") {
-    checklist = checkItem("Archivo exportado", zipOk) +
+    checklist = checkItem("Paquete listo para importar en Claude", zipOk) +
                 checkItem("App de Claude conectada", setup.mcp_desktop_configured);
     allReady  = !!(zipOk && setup.mcp_desktop_configured);
     actions   = actionButton("1. Exportar archivo", "export-zip", zipOk, true) +
                 actionButton("2. Conectar app de Claude", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
 
-  } else { // both
-    checklist = checkItem("Instalado localmente", setup.skill_installed) +
+  } else if (selected === "openai") {
+    checklist = checkItem(
+      setup.openai_plugin_current ? `Plugin Jintia ${setup.available_skill_version || ""} preparado`.trim() : "Plugin pendiente de preparar o actualizar",
+      setup.openai_plugin_current
+    );
+    allReady = !!setup.openai_plugin_current;
+    actions = actionButton(
+      setup.openai_plugin_installed ? "Actualizar para ChatGPT y Codex" : "Preparar para ChatGPT y Codex",
+      "install-openai",
+      setup.openai_plugin_current,
+      true
+    );
+  } else { // all
+    checklist = checkItem(skillReady ? `Skill ${setup.skill_version || ""} actualizada`.trim() : "Skill pendiente de instalar o actualizar", skillReady) +
                 checkItem("Proyecto local conectado", setup.mcp_claude_code_configured) +
-                checkItem("Archivo exportado", zipOk) +
-                checkItem("App de Claude conectada", setup.mcp_desktop_configured);
-    allReady  = !!(setup.skill_installed && setup.mcp_claude_code_configured && zipOk && setup.mcp_desktop_configured);
-    actions   = actionButton("Instalar (proyecto local)", "install-local", setup.skill_installed, true) +
+                checkItem("Paquete listo para importar en Claude", zipOk) +
+                checkItem("App de Claude conectada", setup.mcp_desktop_configured) +
+                checkItem("Plugin ChatGPT/Codex preparado", setup.openai_plugin_current);
+    allReady  = !!(skillReady && setup.mcp_claude_code_configured && zipOk && setup.mcp_desktop_configured && setup.openai_plugin_current);
+    actions   = actionButton(setup.skill_installed ? "Actualizar (proyecto local)" : "Instalar (proyecto local)", "install-local", skillReady, true) +
                 actionButton("Exportar archivo (app de Claude)", "export-zip", zipOk, true) +
+                actionButton(setup.openai_plugin_installed ? "Actualizar ChatGPT/Codex" : "Preparar ChatGPT/Codex", "install-openai", setup.openai_plugin_current, true) +
                 actionButton("Conectar proyecto local", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true) +
                 actionButton("Conectar app de Claude", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
   }
@@ -980,6 +1076,8 @@ function connectStep() {
       </div>
 
       <div class="flex justify-center flex-wrap gap-2">${actions}</div>
+      ${selected === "claude-cowork" || selected === "both" ? `<p class="mt-3 text-xs leading-relaxed text-gray-500"><strong>Claude:</strong> exportar prepara el paquete, pero no lo incorpora automáticamente; debes añadir el ZIP manualmente.</p>` : ""}
+      ${selected === "openai" || selected === "both" ? `<p class="mt-3 text-xs leading-relaxed text-gray-500"><strong>ChatGPT y Codex:</strong> reinicia ChatGPT después de instalar y activa Jintia desde Plugins. Su disponibilidad puede depender del plan y la política del workspace.</p>` : ""}
       <div class="${INLINE_ERROR}" id="onb-target-message" hidden></div>
     </div>
   </section>`;
@@ -989,25 +1087,30 @@ function finalStep() {
   const config = state.config || {};
   const setup  = runtime.setup || {};
   const target = runtime.status?.selectedTarget || config.onboardingTarget || "claude-code";
-  const targetLabel = { "claude-code": "Trabajar en proyectos locales", "claude-cowork": "Usar en la app de Claude", "both": "Usar en ambos lugares" }[target] || target;
+  const targetLabel = { "claude-code": "Usar con Claude", "openai": "Usar con ChatGPT y Codex", "claude-cowork": "Usar solo en la app de Claude", "both": "Usar en todos" }[target] || target;
+  const skillReady = !!(setup.skill_installed && setup.skill_current);
 
   // El checklist de conexión depende del destino elegido: a "claude-cowork"
   // no le corresponde "Instalado localmente" (usa un ZIP exportado, no una
   // instalación local), así que mostrar esa fila ahí sería una X roja falsa.
   const connectionChecks = {
     "claude-code": [
-      { label: "Instalado localmente", ok: setup.skill_installed },
+      { label: "Skill local actualizada", ok: skillReady },
       { label: "Proyecto local conectado", ok: setup.mcp_claude_code_configured },
     ],
     "claude-cowork": [
       { label: "Archivo exportado", ok: Boolean(config.lastSkillZip) },
       { label: "App de Claude conectada", ok: setup.mcp_desktop_configured },
     ],
+    openai: [
+      { label: "Plugin ChatGPT/Codex preparado", ok: setup.openai_plugin_current },
+    ],
     both: [
-      { label: "Instalado localmente", ok: setup.skill_installed },
+      { label: "Skill local actualizada", ok: skillReady },
       { label: "Proyecto local conectado", ok: setup.mcp_claude_code_configured },
       { label: "Archivo exportado", ok: Boolean(config.lastSkillZip) },
       { label: "App de Claude conectada", ok: setup.mcp_desktop_configured },
+      { label: "Plugin ChatGPT/Codex preparado", ok: setup.openai_plugin_current },
     ],
   };
   const checks = [
@@ -1034,66 +1137,60 @@ function finalStep() {
           </div>
         </div>
 
-        <div id="final-loading-msg" role="status" aria-live="polite" class="text-[13.5px] font-semibold text-gray-700 text-center">Iniciando prueba final…</div>
-        <p class="text-[11px] text-gray-400 text-center -mt-2">Generamos un PDF real de prueba; puede tardar hasta un minuto.</p>
+        <div id="final-loading-msg" role="status" aria-live="polite" class="text-[15px] font-bold text-gray-800 text-center">Preparando la prueba…</div>
+        <p class="text-[11px] text-gray-400 text-center -mt-2">Puedes seguir el avance sin abrir los detalles técnicos.</p>
 
         <!-- Barra de progreso -->
         <div class="w-full max-w-xs h-[3px] rounded-full bg-gray-200 overflow-hidden">
           <div id="gen-progress-fill" class="h-full w-0 rounded-full bg-gray-900 transition-[width] duration-500"></div>
         </div>
 
-        <div id="final-loading-steps" class="flex flex-col gap-1.5 w-full max-w-sm">
-          <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="0">
-            <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Preparando datos…</span>
+        <div id="final-loading-steps" class="grid w-full max-w-sm grid-cols-5 gap-1" aria-label="Progreso de la prueba">
+          <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="0">
+            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span>Preparar</span>
           </div>
-          <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="1">
-            <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Probando herramientas…</span>
+          <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="1">
+            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span>Comprobar</span>
           </div>
-          <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="2">
-            <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Generando ejemplo (2 semanas)…</span>
+          <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="2">
+            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span>Crear</span>
           </div>
-          <div class="final-check-row flex items-center gap-2 text-xs text-gray-600 opacity-30" data-check="3">
-            <span class="material-symbols-outlined text-[15px]">hourglass_empty</span>
-            <span>Compilando PDF…</span>
+          <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="3">
+            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span>Compilar</span>
+          </div>
+          <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="4">
+            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span>Validar</span>
           </div>
         </div>
+
+        <details id="compile-monitor" class="w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white text-left">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-[11.5px] font-semibold text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900">
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[15px] text-gray-500">terminal</span>
+              Ver detalles técnicos
+            </span>
+            <span id="compile-elapsed" class="font-mono text-[10.5px] tabular-nums text-gray-400">00:00</span>
+          </summary>
+          <div class="border-t border-gray-100 px-3 pb-3 pt-2.5">
+            <div id="compile-current" class="mb-2 text-[11px] font-medium text-gray-600">Esperando al compilador…</div>
+            <pre id="compile-live-log" aria-live="polite" class="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-950 px-3 py-2.5 font-mono text-[10px] leading-relaxed text-gray-200">La actividad aparecerá aquí.</pre>
+            <button type="button" id="btn-copy-live-diagnostic" class="mt-2 inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[10.5px] font-semibold text-gray-500 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900">
+              <span class="material-symbols-outlined text-[14px]">content_copy</span>
+              Copiar actividad
+            </button>
+          </div>
+        </details>
       </div>
 
       <!-- Resultado — aparece solo tras éxito o fallo definitivo -->
       <div id="final-result-wrap" class="hidden">
         <div id="final-result-content"></div>
       </div>
-    </div>
-
-    <div class="max-w-md mx-auto mb-4">
-      <div class="text-[10.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Listo para crear</div>
-      <div class="grid grid-cols-2 gap-1.5 text-[11px] text-gray-600">
-        ${["Guías semanales", "Bibliografía automática", "Casos y ejercicios", "PDF final"].map(item => `
-          <div class="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5">
-            ${ic("check", 13)} <span>${item}</span>
-          </div>`).join("")}
-      </div>
-    </div>
-
-    <!-- Checklist de estado de configuración -->
-    <div class="max-w-md mx-auto mb-4 grid grid-cols-2 gap-1.5">
-      ${checks.map(c => `
-        <div class="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-medium border ${c.ok ? "bg-green-50 border-green-200 text-green-600" : "bg-red-50 border-red-200 text-red-500"}">
-          <span class="material-symbols-outlined text-[15px]">${c.ok ? "check_circle" : "cancel"}</span>
-          ${escapeHtml(c.label)}
-        </div>`).join("")}
-    </div>
-
-    <div class="text-center text-[11.5px] text-gray-400 mb-4">
-      Destino: <strong class="text-gray-700">${escapeHtml(targetLabel)}</strong>
-    </div>
-
-    <div class="mx-auto max-w-md rounded-xl border border-gray-200 bg-white px-4 py-3 text-center">
-      <div class="text-sm font-bold text-gray-900">${APP_META.brandName} está listo</div>
-      <div class="mt-0.5 text-[11px] text-gray-500">Creado y mantenido por ${APP_META.creator}</div>
     </div>
 
   </section>`;
@@ -1104,6 +1201,33 @@ async function animateFinalStep() {
   const checkRows = document.querySelectorAll(".final-check-row");
   const msgEl     = document.getElementById("final-loading-msg");
   const fillEl    = document.getElementById("gen-progress-fill");
+  const compileLogEl = document.getElementById("compile-live-log");
+  const compileCurrentEl = document.getElementById("compile-current");
+  const compileElapsedEl = document.getElementById("compile-elapsed");
+  const compileDiagnostics = [];
+  const compileStartedAt = Date.now();
+
+  function formatElapsed(milliseconds) {
+    const seconds = Math.max(0, Math.floor(milliseconds / 1000));
+    return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+  }
+
+  function diagnosticText(error = "") {
+    return [
+      `${APP_META.desktopName} — diagnóstico de compilación`,
+      `Fecha: ${new Date().toISOString()}`,
+      `Skill: ${APP_META.skillVersion}`,
+      `Plantilla: ${runtime.activeTemplate || "no identificada"}`,
+      `Sistema: ${navigator.userAgent}`,
+      error ? `Error final:\n${error}` : "",
+      "Actividad:",
+      compileDiagnostics.length ? compileDiagnostics.join("\n") : "Sin actividad registrada.",
+    ].filter(Boolean).join("\n\n");
+  }
+
+  document.getElementById("btn-copy-live-diagnostic")?.addEventListener("click", () => {
+    navigator.clipboard.writeText(diagnosticText()).then(() => toast("Actividad copiada", "success", 3000));
+  });
 
   function setProgress(pct) {
     if (fillEl) fillEl.style.width = `${pct}%`;
@@ -1119,14 +1243,23 @@ async function animateFinalStep() {
       row.style.color  = "#111827";
       icon.textContent = "sync";
       icon.style.animation = reduceMotion ? "none" : "spin .7s linear infinite";
+      icon.style.background = "#111827";
+      icon.style.borderColor = "#111827";
+      icon.style.color = "#ffffff";
     } else if (rowState === "done") {
       row.style.color  = "#16a34a";
       icon.textContent = "check_circle";
       icon.style.animation = "none";
+      icon.style.background = "#f0fdf4";
+      icon.style.borderColor = "#86efac";
+      icon.style.color = "#16a34a";
     } else if (rowState === "error") {
       row.style.color  = "#ef4444";
       icon.textContent = "cancel";
       icon.style.animation = "none";
+      icon.style.background = "#fef2f2";
+      icon.style.borderColor = "#fca5a5";
+      icon.style.color = "#ef4444";
     }
   }
 
@@ -1150,13 +1283,23 @@ async function animateFinalStep() {
         <span class="material-symbols-outlined text-[36px] text-red-500 block mb-2.5">error</span>
         <div class="text-[15px] font-bold text-red-500 mb-1.5">${escapeHtml(title)}</div>
         <div class="text-[12.5px] text-gray-700 mb-3">${escapeHtml(detail)}</div>
-        ${errStr ? `<div class="text-[10.5px] font-mono text-gray-500 bg-black/5 px-3 py-2 rounded-md text-left whitespace-pre-wrap break-words max-h-[220px] overflow-y-auto mb-3.5">${escapeHtml(errStr)}</div>` : ""}
+        ${errStr ? `
+          <details class="mb-3.5 overflow-hidden rounded-lg border border-red-200 bg-white/70 text-left">
+            <summary class="cursor-pointer px-3 py-2 text-[11px] font-semibold text-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500">Ver detalles técnicos</summary>
+            <pre class="m-0 max-h-[220px] overflow-y-auto whitespace-pre-wrap break-words border-t border-red-100 bg-gray-950 px-3 py-2.5 font-mono text-[10px] leading-relaxed text-gray-200">${escapeHtml(errStr)}</pre>
+          </details>` : ""}
         <div class="flex justify-center gap-2 flex-wrap">
           <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-retry-gen">
             <span class="material-symbols-outlined text-[15px]">refresh</span> Reintentar verificación
           </button>
           <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-back-to-tools">
             <span class="material-symbols-outlined text-[15px]">terminal</span> Volver a herramientas
+          </button>
+          <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-copy-compile-report">
+            <span class="material-symbols-outlined text-[15px]">content_copy</span> Copiar diagnóstico
+          </button>
+          <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-report-compile-error">
+            <span class="material-symbols-outlined text-[15px]">bug_report</span> Reportar problema
           </button>
         </div>
       </div>`;
@@ -1192,6 +1335,16 @@ async function animateFinalStep() {
           await showPreparedStep(5, 2);
         } else toast(result.message, "error");
       });
+    });
+    document.getElementById("btn-copy-compile-report")?.addEventListener("click", () => {
+      navigator.clipboard.writeText(diagnosticText(errStr)).then(() => {
+        toast("Diagnóstico copiado; puedes adjuntarlo al reporte", "success", 4500);
+      });
+    });
+    document.getElementById("btn-report-compile-error")?.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(diagnosticText(errStr));
+      await openExternal(APP_META.issues);
+      toast("Diagnóstico copiado para pegarlo en el reporte", "success", 5000);
     });
     syncOnboardingBusyState();
   }
@@ -1290,35 +1443,7 @@ async function animateFinalStep() {
     testBasePath = skillPath;
   }
 
-  const cfg = state.config || {};
-  const syllabusTestData = {
-    courseCode: "TST-101",
-    courseName: "Asignatura de Prueba",
-    credits: 3,
-    academicPeriod: cfg.academicPeriod || "Período de Verificación 2025-A",
-    semester: "Primero",
-    description: "Documento de verificación generado automáticamente por el onboarding.",
-    weeksData: [
-      {
-        number: 1,
-        title: "Introducción y fundamentos conceptuales",
-        unit: "Unidad I: Bases Teóricas",
-        topics: "Conceptos generales de la disciplina\nMarco teórico y epistemológico\nContexto histórico y evolución",
-        outcomes: "Docencia: Identificar componentes esenciales del área de estudio\nPráctica: Analizar casos reales aplicando el marco teórico",
-        bibliography: "Apellido, N. (2024). Fundamentos. Editorial Universitaria.\nApellido, M. (2023). Teoría y práctica. Pearson.",
-        teachingHours: 2, practiceHours: 1, autonomousHours: 4, gradedActivity: null,
-      },
-      {
-        number: 2,
-        title: "Metodología y herramientas de análisis",
-        unit: "Unidad I: Bases Teóricas",
-        topics: "Métodos cuantitativos y cualitativos\nHerramientas digitales del área\nEstudios de caso comparativos",
-        outcomes: "Docencia: Aplicar metodologías estándar a problemas complejos\nPráctica: Desarrollar soluciones con base en los métodos aprendidos",
-        bibliography: "Autor, A. (2022). Metodología aplicada. McGraw-Hill.\nAutor, B. (2023). Análisis avanzado. Oxford.",
-        teachingHours: 2, practiceHours: 2, autonomousHours: 4, gradedActivity: "Taller grupal: análisis de casos",
-      },
-    ],
-  };
+  const syllabusTestData = buildSampleGuideData(state.config || {});
 
   let genResult;
   try {
@@ -1348,7 +1473,46 @@ async function animateFinalStep() {
   setMsg("Generando el PDF de la guía…");
   setProgress(85);
   let pdfResult;
+  let stopCompileEvents = null;
+  let elapsedTimer = null;
   try {
+    try {
+      stopCompileEvents = await listen("jintia://compile-progress", ({ payload }) => {
+        const message = payload?.message || "Compilando";
+        const detail = payload?.detail ? String(payload.detail) : "";
+        const elapsed = Number(payload?.elapsedMs ?? Date.now() - compileStartedAt);
+        const line = `[${formatElapsed(elapsed)}] ${message}${detail ? ` — ${detail}` : ""}`;
+        compileDiagnostics.push(line);
+        if (compileDiagnostics.length > 120) compileDiagnostics.shift();
+        if (compileCurrentEl) compileCurrentEl.textContent = message;
+        if (compileElapsedEl) compileElapsedEl.textContent = formatElapsed(elapsed);
+        if (compileLogEl) {
+          compileLogEl.textContent = compileDiagnostics.join("\n");
+          compileLogEl.scrollTop = compileLogEl.scrollHeight;
+        }
+        const phase = payload?.phase;
+        if (["package-install", "package-catalog", "package-ready", "engine-started", "log"].includes(phase)) {
+          setRow(3, "active");
+          setProgress(phase === "engine-started" || phase === "log" ? 88 : 82);
+        } else if (phase === "validating") {
+          setRow(3, "done");
+          setRow(4, "active");
+          setProgress(96);
+        } else if (phase === "complete") {
+          setRow(3, "done");
+          setRow(4, "done");
+          setProgress(100);
+        } else if (phase === "error") {
+          setRow(3, "error");
+        }
+        if (payload?.phase !== "log") setMsg(message);
+      });
+    } catch (eventError) {
+      compileDiagnostics.push(`[00:00] El monitor en vivo no está disponible — ${String(eventError)}`);
+    }
+    elapsedTimer = window.setInterval(() => {
+      if (compileElapsedEl) compileElapsedEl.textContent = formatElapsed(Date.now() - compileStartedAt);
+    }, 1000);
     pdfResult = await compileSyllabusPdf({
       coursePath: testBasePath,
       ...syllabusTestData,
@@ -1357,6 +1521,7 @@ async function animateFinalStep() {
     });
     if (pdfResult?.success) {
       setRow(3, "done");
+      setRow(4, "done");
       setProgress(100);
       setMsg("¡Verificación completada!");
     } else {
@@ -1366,12 +1531,19 @@ async function animateFinalStep() {
     setRow(3, "error");
     setProgress(85);
     setMsg("No se pudo generar el PDF");
+    const errorText = String(err);
+    const missingFile = errorText.match(/File [`']([^`']+\.sty)['`] not found/i)?.[1];
     showError(
-      "No pudimos generar el PDF de tu guía",
-      "Vuelve al paso de herramientas y verifica que el compilador LaTeX esté instalado, luego vuelve a intentarlo.",
-      String(err)
+      missingFile ? "Falta un componente de LaTeX" : "No se pudo generar el PDF",
+      missingFile
+        ? `MiKTeX no encontró ${missingFile}. Jintia intentará instalarlo al reintentar; si acabas de actualizar la aplicación, reiníciala primero.`
+        : "Reintenta la prueba. Si vuelve a fallar, abre los detalles técnicos o copia el diagnóstico para soporte.",
+      errorText
     );
     return;
+  } finally {
+    if (elapsedTimer) window.clearInterval(elapsedTimer);
+    if (stopCompileEvents) stopCompileEvents();
   }
 
   showSuccess(testBasePath, pdfResult.message, pdfResult.path);
@@ -1431,7 +1603,14 @@ function bindStepEvents(current) {
   }));
   root.querySelectorAll("input[name=onboarding-target]").forEach(input => input.addEventListener("change", event => {
     if (onboardingActionInFlight) return;
-    state.config.onboardingTarget = event.target.value;
+    const selectedTarget = event.currentTarget.value;
+    state.config.onboardingTarget = selectedTarget;
+    // connectStep prioriza el estado recibido del backend. Sincronizarlo aquí
+    // evita que el siguiente render vuelva a marcar el destino predeterminado.
+    runtime.status = {
+      ...(runtime.status || {}),
+      selectedTarget,
+    };
     saveConfig();
     renderCurrentStep();
   }));
@@ -1598,7 +1777,7 @@ async function performAction(action, current) {
     errorEl.hidden = true;
     state.config = config;
     saveConfig();
-    const result = await applyInstitutionConfig({ author: config.author, degree: config.degree, institution: config.institution, website: config.website, faculty: config.faculty, career: config.career, ecosystem: config.ecosystem, color_r: config.colorR, color_g: config.colorG, color_b: config.colorB });
+    const result = await applyInstitutionConfig({ author: config.author, degree: config.degree, institution: config.institution, website: config.website, faculty: config.faculty, career: config.career, ecosystem: config.ecosystem || "", color_r: config.colorR, color_g: config.colorG, color_b: config.colorB });
     if (!result.success) { toast(result.message, "error", 8000); return; }
     const templateResult = await setActiveTemplate(runtime.activeTemplate);
     toast(templateResult.message, templateResult.success ? "success" : "error", 7000);
@@ -1617,6 +1796,9 @@ async function performAction(action, current) {
   }
   if (action === "install-local") {
     const result = await installSkill(); toast(result.message, result.success ? "success" : "error", 9000); await refreshTarget(); renderCurrentStep(); return;
+  }
+  if (action === "install-openai") {
+    const result = await installOpenAIPlugin(); toast(result.message, result.success ? "success" : "error", 10000); await refreshTarget(); renderCurrentStep(); return;
   }
   if (action === "configure-code" || action === "configure-desktop") {
     const result = await configureMcp(action === "configure-code" ? "claude-code" : "desktop"); toast(result.message, result.success ? "success" : "error", 9000); await refreshTarget(); renderCurrentStep(); return;
@@ -1674,9 +1856,11 @@ async function refreshTarget() {
 
 function targetReady(target) {
   const setup = runtime.setup || {};
-  if (target === "claude-code") return setup.skill_installed && setup.mcp_claude_code_configured;
+  const skillReady = setup.skill_installed && setup.skill_current;
+  if (target === "claude-code") return skillReady && setup.mcp_claude_code_configured;
+  if (target === "openai") return !!setup.openai_plugin_current;
   if (target === "claude-cowork") return Boolean(state.config.lastSkillZip) && setup.mcp_desktop_configured;
-  return Boolean(state.config.lastSkillZip) && setup.skill_installed && setup.mcp_desktop_configured && setup.mcp_claude_code_configured;
+  return Boolean(state.config.lastSkillZip) && skillReady && setup.mcp_desktop_configured && setup.mcp_claude_code_configured && setup.openai_plugin_current;
 }
 
 function hexToRgb(hex) {

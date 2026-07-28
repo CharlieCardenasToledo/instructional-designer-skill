@@ -62,6 +62,7 @@ pub struct InstitutionConfig {
     pub color_r: u8,
     pub color_g: u8,
     pub color_b: u8,
+    #[serde(default)]
     pub ecosystem: String,
 }
 
@@ -126,6 +127,12 @@ pub struct NotebookLmAuthStatus {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SetupStatus {
     pub skill_installed: bool,
+    pub skill_current: bool,
+    pub skill_version: String,
+    pub available_skill_version: String,
+    pub openai_plugin_installed: bool,
+    pub openai_plugin_current: bool,
+    pub openai_plugin_path: String,
     pub mcp_configured: bool,
     pub mcp_desktop_configured: bool,
     pub mcp_claude_code_configured: bool,

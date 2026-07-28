@@ -1,6 +1,20 @@
-# Plantilla LaTeX — Preamble, Bloques y Patrones Canónicos
+# Contrato común de plantillas LaTeX
 
 Referencia de `jintia-skill`. Leer cuando la tarea implique crear o editar el archivo principal, la introducción, secciones de teoría, el estudio de caso o tablas comparativas.
+
+Toda plantilla debe implementar `\guidesection`, `\coursemeta`,
+`\conceptline`, `\editorialtitle`, `\keyterm` y los entornos `softblock`,
+`accentblock`, `mintblock`, `sandblock` y `roseblock`. También debe admitir
+contenido modular, `reference.bib`, `\textcite`, `\parencite`,
+`\printbibliography`, TikZ, `tabularx` y `booktabs`. Las figuras y tablas
+numeradas usan exclusivamente `guidefigure` / `\guidefigurecaption` y
+`guidetable` / `\guidetablecaption`.
+
+Consultar `templates/<activeTemplate>/meta.json` antes de elegir la clase o
+usar capacidades adicionales. La sección siguiente documenta la
+implementación ElegantBook; para el diseño marginal leer
+`templates/kaohandt-marginal/template.md`. No usar comandos marginales ni
+layout ancho si la plantilla activa no los declara.
 
 ## Índice
 
@@ -11,7 +25,7 @@ Referencia de `jintia-skill`. Leer cuando la tarea implique crear o editar el ar
 - Estudio de caso y aplicación
 - Tablas y bibliografía
 
-## Plantilla principal: `guia-semana-XX.tex`
+## Implementación ElegantBook: `guia-semana-XX.tex`
 
 Este archivo orquesta el documento y no contiene desarrollo didáctico: solo
 configuración, portada y secuencia de `\input`. La plantilla activa es la
@@ -399,10 +413,12 @@ operativo institucional. Máximo 2 oraciones.
 
 ## Estructura Canónica de Tabla Comparativa
 
-Cuando se comparan 3 o más entidades con 2 o más atributos, usar `tabularx` con `booktabs`:
+Cuando se comparan 3 o más entidades con 2 o más atributos, usar `tabularx`
+con `booktabs` dentro de `guidetable`:
 
 ```latex
-\begin{center}
+\begin{guidetable}
+\guidetablecaption{Comparación de alternativas según criterios observables.}{tab:comparacion}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.4cm}
                               >{\raggedright\arraybackslash}X
                               >{\raggedright\arraybackslash}X}
@@ -413,11 +429,12 @@ Fila 1 & Descripción técnica. & Descripción técnica. \\
 Fila 2 & Descripción técnica. & Descripción técnica. \\
 \bottomrule
 \end{tabularx}
-\end{center}
+\end{guidetable}
 ```
 
 **Reglas:**
 - Primera columna con ancho fijo (`p{3.4cm}`); columnas de contenido con `X`.
 - Usar `\toprule`, `\midrule`, `\bottomrule` de `booktabs`. **PROHIBIDO** usar `\hline`.
-- El bloque `center` envuelve la tabla sin agregar número de figura.
+- `guidetable` controla numeración, referencia y disposición en ambas
+  plantillas. No usar `table`, `center`, `\caption` ni `\label` como envoltorio.
 - Para columna centrada, usar el tipo `Y` definido en el preamble: `>{\centering\arraybackslash}X`.

@@ -38,6 +38,17 @@ pub fn skill_dir() -> Result<PathBuf, String> {
         .join("jintia-skill"))
 }
 
+pub fn openai_plugin_dir() -> Result<PathBuf, String> {
+    Ok(home_dir()?.join(".codex").join("plugins").join("jintia"))
+}
+
+pub fn openai_marketplace_path() -> Result<PathBuf, String> {
+    Ok(home_dir()?
+        .join(".agents")
+        .join("plugins")
+        .join("marketplace.json"))
+}
+
 pub fn legacy_skill_dir() -> Result<PathBuf, String> {
     Ok(home_dir()?
         .join(".claude")

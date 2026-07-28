@@ -15,7 +15,7 @@ import { renderDocs }         from "./pages/docs.js";
 import { renderAbout }        from "./pages/about.js";
 import { toast }              from "./toast.js";
 import { getOnboardingStatus, getRuntimeAppMeta } from "./api.js";
-import { renderOnboarding }  from "./onboarding.js";
+import { mountGeminiLoading, renderOnboarding } from "./onboarding.js";
 import { getCurrentWindow }  from "@tauri-apps/api/window";
 import { ui, cx } from "./uiClasses.js";
 import { APP_META } from "./appMeta.js";
@@ -31,7 +31,7 @@ function renderShell() {
   document.getElementById("app").innerHTML = `
 
     <!-- SIDEBAR -->
-    <aside class="flex w-[220px] shrink-0 flex-col border-r border-slate-200 bg-white" role="navigation" aria-label="Menú principal">
+    <aside class="flex w-[188px] shrink-0 flex-col border-r border-slate-200 bg-white xl:w-[220px]" role="navigation" aria-label="Menú principal">
       <div class="flex items-center gap-2.5 border-b border-slate-900/10 px-4 py-4">
         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand text-white shadow-sm" aria-hidden="true">
           <span class="material-symbols-outlined">route</span>
@@ -43,7 +43,7 @@ function renderShell() {
       </div>
 
       <div class="px-3 py-3">
-        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm, ui.button.xs, 'w-full border-dashed border-slate-300/60')}" data-page="courses">
+        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm, ui.button.xs, 'w-full border-dashed border-slate-300/60')}" data-page="courses" data-create-course>
           <span class="material-symbols-outlined" style="font-size:15px">add</span>
           Nueva asignatura
         </button>
@@ -92,28 +92,39 @@ function renderShell() {
       </header>
 
       <div class="${cx(ui.surface.page, 'pt-[80px]')}">
-        <section id="p-courses" hidden aria-label="Cursos"></section>
-        <section id="p-syllabus" hidden aria-label="Editor de sílabo"></section>
-        <section id="p-templates" hidden aria-label="Plantillas"></section>
-        <section id="p-settings" hidden aria-label="Configuración"></section>
-        <section id="p-docs" hidden aria-label="Documentación"></section>
-        <section id="p-about" hidden aria-label="Acerca de Jintia"></section>
+        <section class="h-full min-h-0 min-w-0" id="p-courses" hidden aria-label="Cursos"></section>
+        <section class="h-full min-h-0 min-w-0" id="p-syllabus" hidden aria-label="Editor de sílabo"></section>
+        <section class="h-full min-h-0 min-w-0" id="p-templates" hidden aria-label="Plantillas"></section>
+        <section class="h-full min-h-0 min-w-0" id="p-settings" hidden aria-label="Configuración"></section>
+        <section class="h-full min-h-0 min-w-0" id="p-docs" hidden aria-label="Documentación"></section>
+        <section class="h-full min-h-0 min-w-0" id="p-about" hidden aria-label="Acerca de Jintia"></section>
       </div>
     </main>
   `;
 }
 
 document.addEventListener("click", event => {
-  const nav = event.target.closest("[data-nav-item][data-page], [data-sidebar-page][data-page], .sidebar-cta button[data-page]");
-  if (nav) navigate(nav.dataset.page);
+  const nav = event.target.closest("[data-nav-item][data-page], [data-sidebar-page][data-page], [data-create-course][data-page], .sidebar-cta button[data-page]");
+  if (nav) {
+    navigate(nav.dataset.page);
+    if (nav.hasAttribute("data-create-course")) {
+      document.dispatchEvent(new CustomEvent("jintia:new-course", { detail: { opener: nav } }));
+    }
+  }
 });
 
 // El onboarding es una página independiente: la app principal (sidebar,
 // topbar, páginas) ni siquiera se construye hasta que el onboarding termine.
 async function boot() {
+  const stopInitialLoading = mountGeminiLoading(
+    document.getElementById("onboarding-root"),
+    "Cargando Jintia…",
+  );
   try {
     const onboarding = await getOnboardingStatus();
+    stopInitialLoading();
     if (onboarding.completed) {
+      await getCurrentWindow().maximize();
       renderShell();
       getRuntimeAppMeta().then(runtime => {
         const version = document.querySelector("[data-shell-version]");
@@ -128,6 +139,7 @@ async function boot() {
       await renderOnboarding();
     }
   } catch {
+    stopInitialLoading();
     await renderOnboarding();
   }
 }

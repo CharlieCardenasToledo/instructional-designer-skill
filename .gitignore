@@ -50,3 +50,9 @@ Thumbs.db
 # Keep personal institution.json and notebooks.json files outside the
 # tracked skill/config directory. The repository only contains examples
 # and schemas; exported skill ZIP files may contain the user's real data.
+.agents/
+.gemini/
+.impeccable/
+.tmp-*/
+tmp/
+skills-lock.json

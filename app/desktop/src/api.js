@@ -71,6 +71,14 @@ export async function exportSkillZip(destinationDir) {
   return invoke("export_skill_zip", { destinationDir });
 }
 
+export async function installOpenAIPlugin() {
+  return invoke("install_openai_plugin");
+}
+
+export async function exportOpenAIPluginZip(destinationDir) {
+  return invoke("export_openai_plugin_zip", { destinationDir });
+}
+
 export async function configureMcp(target) {
   return invoke("configure_mcp", { target });
 }
@@ -101,8 +109,12 @@ export async function saveNotebooksConfig(entries) {
 }
 
 // ── Estructura de carpetas y sílabo ──────────────────────────────────────
-export async function createCourseStructure({ rootPath, courseCode, courseName, weeks }) {
-  return invoke("create_course_structure", { rootPath, courseCode, courseName, weeks });
+export async function createCourseStructure({ rootPath, courseCode, courseName, weeks, initializeReadme = true }) {
+  return invoke("create_course_structure", { rootPath, courseCode, courseName, weeks, initializeReadme });
+}
+
+export async function getDefaultCourseRoot() {
+  return invoke("get_default_course_root");
 }
 
 export async function generateSyllabus(payload) {
@@ -110,7 +122,7 @@ export async function generateSyllabus(payload) {
 }
 
 export async function compileSyllabusPdf(payload) {
-  return invoke("compile_syllabus_pdf", payload);
+  return invoke("compile_syllabus_pdf", { previewTemplateId: null, ...payload });
 }
 
 // ── Sistema de plantillas LaTeX ───────────────────────────────────────────
@@ -128,9 +140,9 @@ export async function setActiveTemplate(templateId) {
 
 // ── Preview LaTeX local ──────────────────────────────────────────────────
 // ── Diálogos ─────────────────────────────────────────────────────────────
-export async function pickDirectory(title) {
+export async function pickDirectory(title, defaultPath = undefined) {
   try {
-    return await dialogOpen({ directory: true, title });
+    return await dialogOpen({ directory: true, title, defaultPath });
   } catch {
     return prompt(`${title} (escribe la ruta):`);
   }

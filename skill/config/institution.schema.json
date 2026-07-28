@@ -49,7 +49,7 @@
       }
     },
     "activeTemplate": {
-      "enum": ["elegantbook-clasico"]
+      "enum": ["elegantbook-clasico", "kaohandt-marginal"]
     },
     "options": {
       "type": "object",

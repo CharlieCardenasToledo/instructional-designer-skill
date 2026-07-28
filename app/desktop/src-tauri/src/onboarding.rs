@@ -126,12 +126,14 @@ fn target_ready(target: &str) -> bool {
     let setup = config::setup_status();
     match target {
         "claude-cowork" => payload::last_export_path().is_some() && setup.mcp_desktop_configured,
-        "claude-code" => setup.skill_installed && setup.mcp_claude_code_configured,
+        "claude-code" => setup.skill_current && setup.mcp_claude_code_configured,
+        "openai" => setup.openai_plugin_current,
         "both" => {
             payload::last_export_path().is_some()
-                && setup.skill_installed
+                && setup.skill_current
                 && setup.mcp_desktop_configured
                 && setup.mcp_claude_code_configured
+                && setup.openai_plugin_current
         }
         _ => false,
     }
@@ -245,7 +247,10 @@ pub fn advance(step: u8, selected_target: Option<String>) -> OnboardingResult {
                 Err(auth.message)
             } else {
                 let target = selected_target.unwrap_or_else(|| status.selected_target.clone());
-                if !matches!(target.as_str(), "claude-cowork" | "claude-code" | "both") {
+                if !matches!(
+                    target.as_str(),
+                    "claude-cowork" | "claude-code" | "openai" | "both"
+                ) {
                     Err("Selecciona dónde usarás la skill.".to_string())
                 } else if !target_ready(&target) {
                     Err("El destino seleccionado todavía no tiene skill y MCP completamente configurados.".to_string())

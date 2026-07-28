@@ -18,6 +18,7 @@ export default defineConfig(({ mode }) => ({
       "@tauri-apps/api/app": mockPath("tauri-app.mock.js"),
       "@tauri-apps/api/window": mockPath("tauri-window.mock.js"),
       "@tauri-apps/api/path": mockPath("tauri-path.mock.js"),
+      "@tauri-apps/api/event": mockPath("tauri-event.mock.js"),
       "@tauri-apps/plugin-dialog": mockPath("tauri-dialog.mock.js"),
       "@tauri-apps/plugin-opener": mockPath("tauri-opener.mock.js"),
     },

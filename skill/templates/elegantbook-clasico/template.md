@@ -54,6 +54,12 @@ logo ni ecosistema: esos datos se leen desde `config/institution.json`.
 4. `NN-aplicacion.tex`: práctica guiada, transferencia y evidencia esperada.
 5. `NN-bibliografia.tex`: `\printbibliography[heading=bibintoc]`.
 
+## Figuras y tablas
+
+Usar siempre `guidefigure` con `\guidefigurecaption{texto}{fig:clave}` y
+`guidetable` con `\guidetablecaption{texto}{tab:clave}`. No crear flotantes
+`figure` o `table` directamente.
+
 ## Gramática visual de bloques
 
 - `softblock`: orientación, contexto y metadatos de la semana.

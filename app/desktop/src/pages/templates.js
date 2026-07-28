@@ -1,170 +1,469 @@
-import { listTemplates, getActiveTemplate, setActiveTemplate } from "../api.js";
+import {
+  compileSyllabusPdf,
+  createCourseStructure,
+  listTemplates,
+  getActiveTemplate,
+  setActiveTemplate,
+} from "../api.js";
 import { toast } from "../toast.js";
 import { escapeHtml } from "../dom.js";
+import { state } from "../state.js";
 import { ui, cx } from "../uiClasses.js";
+import { appLocalDataDir } from "@tauri-apps/api/path";
+import { convertFileSrc } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { buildSampleGuideData } from "../sampleGuide.js";
 
 let _templates = [];
 let _activeId = "";
 let _selectedId = "";
+let _filter = "all";
+let _activatingId = "";
+let _activationError = "";
+let _previewCompilingId = "";
+let _previewProgress = "";
+const _pdfPreviews = new Map();
+const _previewErrors = new Map();
+
+const FILTERS = [
+  { id: "all", label: "Todas" },
+  { id: "institutional", label: "Institucionales" },
+  { id: "personal", label: "Personales" },
+];
 
 export async function renderTemplates() {
   const el = document.getElementById("p-templates");
   if (!el) return;
 
-  el.innerHTML = `
-    <div class="flex flex-col gap-4">
-      <div class="flex flex-wrap items-end justify-between gap-3">
-        <div>
+  el.innerHTML = pageShell();
+  bindPageEvents(el);
+  await loadTemplates();
+}
+
+function pageShell() {
+  return `
+    <div class="flex min-h-full min-w-0 flex-col gap-4">
+      <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div class="min-w-0">
           <h1 class="text-[22px] font-extrabold tracking-tight text-app-text">Plantillas</h1>
-          <p class="mt-1 text-[13px] text-app-muted">Elige el formato de tus guías.</p>
+          <p class="mt-1 max-w-[68ch] text-[13px] leading-5 text-app-muted">
+            Compara el resultado antes de elegir el formato de tus próximas guías.
+          </p>
         </div>
-        <div class="${cx(ui.liquid.group, 'flex flex-wrap gap-1')}" id="tpl-filter-btns">
-          <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)} tpl-filter-btn" data-filter="all">Todas</button>
-          <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} tpl-filter-btn" data-filter="institutional">Institucional</button>
-          <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} tpl-filter-btn" data-filter="personal">Personal</button>
+        <div class="${cx(ui.liquid.group, "flex w-fit max-w-full flex-wrap gap-1")}" id="tpl-filter-btns" role="group" aria-label="Filtrar plantillas">
+          ${FILTERS.map(filter => filterButton(filter)).join("")}
         </div>
-      </div>
-      <div id="tpl-bento" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3.5">
-        <div class="col-span-full p-10 text-center text-slate-400">
-          <span class="material-symbols-outlined mb-2 block text-[32px]">hourglass_empty</span>
-          Cargando plantillas…
-        </div>
+      </header>
+
+      <div id="tpl-status" class="sr-only" role="status" aria-live="polite"></div>
+      <div id="tpl-workspace" class="min-h-0 min-w-0 flex-1" aria-busy="true">
+        ${loadingState()}
       </div>
     </div>`;
+}
 
-  // Filter button behavior
-  el.querySelectorAll(".tpl-filter-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const primary = ui.button.primary.split(" ");
-      const secondary = ui.button.secondary.split(" ");
-      el.querySelectorAll(".tpl-filter-btn").forEach(b => {
-        primary.forEach(cls => b.classList.remove(cls));
-        secondary.forEach(cls => b.classList.add(cls));
-      });
-      secondary.forEach(cls => btn.classList.remove(cls));
-      primary.forEach(cls => btn.classList.add(cls));
-      renderBento(btn.dataset.filter);
-    });
+function filterButton(filter) {
+  const selected = _filter === filter.id;
+  return `
+    <button class="${cx(ui.button.base, selected ? ui.button.primary : ui.button.secondary, "min-h-11 px-3 text-xs tpl-filter-btn")}"
+      type="button" data-filter="${filter.id}" aria-pressed="${selected}">
+      ${filter.label}
+    </button>`;
+}
+
+function bindPageEvents(el) {
+  el.querySelector("#tpl-filter-btns")?.addEventListener("click", event => {
+    const button = event.target.closest(".tpl-filter-btn");
+    if (!button || button.dataset.filter === _filter) return;
+    _filter = button.dataset.filter;
+    updateFilterButtons();
+    renderWorkspace();
+    void ensurePdfPreview(_selectedId);
   });
+
+  el.querySelector("#tpl-workspace")?.addEventListener("click", event => {
+    const filterButton = event.target.closest(".tpl-filter-btn");
+    if (filterButton) {
+      _filter = filterButton.dataset.filter;
+      updateFilterButtons();
+      renderWorkspace();
+      void ensurePdfPreview(_selectedId);
+      return;
+    }
+    const selectButton = event.target.closest("[data-select-template]");
+    if (selectButton) {
+      selectTemplate(selectButton.dataset.selectTemplate);
+      return;
+    }
+    if (event.target.closest("#btn-activate-template")) activateSelectedTemplate();
+    if (event.target.closest("#btn-retry-templates")) loadTemplates();
+    if (event.target.closest("#btn-retry-template-preview")) {
+      _previewErrors.delete(_selectedId);
+      void ensurePdfPreview(_selectedId, true);
+    }
+    if (event.target.closest("#btn-copy-template-diagnostic")) {
+      const diagnostic = _previewErrors.get(_selectedId);
+      if (diagnostic) {
+        navigator.clipboard.writeText(diagnostic)
+          .then(() => toast("Diagnóstico copiado", "success"))
+          .catch(() => toast("No se pudo copiar el diagnóstico", "error"));
+      }
+    }
+  });
+}
+
+async function loadTemplates() {
+  const workspace = document.getElementById("tpl-workspace");
+  if (!workspace) return;
+  workspace.setAttribute("aria-busy", "true");
+  workspace.innerHTML = loadingState();
+  announce("Cargando plantillas…");
 
   try {
     [_templates, _activeId] = await Promise.all([listTemplates(), getActiveTemplate()]);
-    _selectedId = _activeId;
-    const filters = document.getElementById("tpl-filter-btns");
-    if (filters && _templates.length <= 1) filters.hidden = true;
-    renderBento("all");
-  } catch (e) {
-    document.getElementById("tpl-bento").innerHTML = `
-      <div class="col-span-full p-8 text-center text-red-500">
-        <span class="material-symbols-outlined mb-2 block text-[28px]">error</span>
-        Error al cargar plantillas: ${escapeHtml(String(e))}
-      </div>`;
+    _selectedId = _templates.some(template => template.id === _activeId)
+      ? _activeId
+      : _templates[0]?.id || "";
+    renderWorkspace();
+    announce(`${_templates.length} ${_templates.length === 1 ? "plantilla disponible" : "plantillas disponibles"}.`);
+    void ensurePdfPreview(_selectedId);
+  } catch {
+    workspace.innerHTML = errorState();
+    announce("No se pudieron cargar las plantillas.");
+  } finally {
+    workspace.removeAttribute("aria-busy");
   }
 }
 
-function renderBento(filter) {
-  const bento = document.getElementById("tpl-bento");
-  if (!bento) return;
+function filteredTemplates() {
+  if (_filter === "institutional") return _templates.filter(template => template.featured);
+  if (_filter === "personal") return _templates.filter(template => !template.featured);
+  return _templates;
+}
 
-  let templates = _templates;
-  if (filter === "institutional") templates = _templates.filter(t => t.featured);
-  if (filter === "personal")     templates = _templates.filter(t => !t.featured);
+function renderWorkspace() {
+  const workspace = document.getElementById("tpl-workspace");
+  if (!workspace) return;
+  const templates = filteredTemplates();
 
-  if (!templates.length) {
-    bento.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400">Sin plantillas en esta categoría.</div>`;
+  if (!_templates.length) {
+    workspace.innerHTML = emptyState(
+      "Aún no hay plantillas disponibles",
+      "Cuando se incorpore una plantilla compatible aparecerá aquí."
+    );
     return;
   }
 
-  const featured    = templates.find(t => t.featured) || templates[0];
-  const secondary   = templates.filter(t => t.id !== featured.id).slice(0, 1)[0];
-  const gridItems   = templates.filter(t => t.id !== featured.id && t.id !== secondary?.id).slice(0, 3);
+  if (!templates.length) {
+    workspace.innerHTML = emptyState(
+      "No hay plantillas en esta categoría",
+      "Elige otro filtro para continuar comparando.",
+      true
+    );
+    return;
+  }
 
-  bento.innerHTML = `
-    <!-- Featured (8-col) -->
-    <div class="relative col-span-1 flex flex-col gap-[18px] overflow-hidden rounded-app-lg border border-slate-200 bg-white p-[18px] shadow-sm md:col-span-2 sm:flex-row xl:col-span-8">
-      <div class="pointer-events-none absolute inset-0 bg-brand-soft"></div>
-      <div class="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-lg border border-slate-300/50 bg-white sm:w-[45%]">
-        <div class="pointer-events-none w-[161%] origin-top-left scale-[.62] p-3 text-[10px] leading-relaxed text-slate-700">
-          <h1 class="mb-2 border-b border-slate-200 pb-1.5 text-sm font-bold">${escapeHtml(featured.name)}</h1>
-          <p class="mb-2.5 text-slate-500">${escapeHtml(featured.description?.slice(0, 80) || "")}</p>
-          <h2 class="mb-1.5 text-xs font-semibold">1. Objetivos del curso</h2>
-          <ul class="mb-2 pl-3.5"><li>Análisis de complejidad</li><li>Estructuras avanzadas</li></ul>
+  if (!templates.some(template => template.id === _selectedId)) {
+    _selectedId = templates.find(template => template.id === _activeId)?.id || templates[0].id;
+  }
+
+  workspace.innerHTML = `
+    <div class="grid min-h-0 min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(320px,390px)]">
+      <section class="min-w-0" aria-labelledby="tpl-catalog-title">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h2 id="tpl-catalog-title" class="text-sm font-bold text-app-text">Catálogo</h2>
+          <span class="text-xs text-app-muted">${templates.length} ${templates.length === 1 ? "resultado" : "resultados"}</span>
+        </div>
+        <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+          ${templates.map(templateCard).join("")}
+        </div>
+      </section>
+      <aside id="tpl-detail" class="min-w-0 xl:sticky xl:top-0" aria-label="Vista previa de la plantilla seleccionada">
+        ${detailPanel(selectedTemplate())}
+      </aside>
+    </div>`;
+}
+
+function templateCard(template) {
+  const selected = template.id === _selectedId;
+  const active = template.id === _activeId;
+  return `
+    <article class="${cx(
+      "flex min-w-0 flex-col rounded-xl border bg-white p-3.5 shadow-sm transition-colors",
+      selected ? "border-brand ring-2 ring-brand/15" : "border-slate-200 hover:border-slate-300"
+    )}">
+      <button class="flex min-h-11 min-w-0 flex-1 flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+        type="button" data-select-template="${escapeHtml(template.id)}" aria-pressed="${selected}" aria-label="Ver vista previa de ${escapeHtml(template.name)}">
+        <div class="mb-3 aspect-[4/3] w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-50 p-3" aria-hidden="true">
+          <div class="h-full overflow-hidden bg-white p-3 shadow-sm">
+            <div class="mb-2 h-2 w-2/5 rounded-full bg-brand/70"></div>
+            <div class="mb-3 h-1.5 w-4/5 rounded-full bg-slate-200"></div>
+            <div class="grid grid-cols-[1fr_32%] gap-2">
+              <div class="space-y-2">
+                <div class="h-1.5 rounded-full bg-slate-300"></div>
+                <div class="h-8 rounded bg-brand-soft"></div>
+                <div class="h-1.5 rounded-full bg-slate-200"></div>
+                <div class="h-1.5 w-4/5 rounded-full bg-slate-200"></div>
+              </div>
+              <div class="space-y-2 border-l border-slate-200 pl-2">
+                <div class="h-6 rounded bg-slate-100"></div>
+                <div class="h-1.5 rounded-full bg-slate-200"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex w-full min-w-0 items-start gap-2">
+          <div class="min-w-0 flex-1">
+            <h3 class="truncate text-[14px] font-bold text-app-text">${escapeHtml(template.name)}</h3>
+            <p class="mt-1 line-clamp-2 text-xs leading-[1.55] text-app-muted">${escapeHtml(template.description || "Sin descripción disponible.")}</p>
+          </div>
+          ${active ? `<span class="${ui.badge.success} shrink-0"><span class="material-symbols-outlined text-sm" aria-hidden="true">check_circle</span>Activa</span>` : ""}
+        </div>
+        <div class="mt-3 flex min-h-6 flex-wrap gap-1.5">
+          ${(template.tags || []).slice(0, 3).map(tag => `<span class="${ui.badge.muted}">${escapeHtml(tag)}</span>`).join("")}
+        </div>
+      </button>
+    </article>`;
+}
+
+function selectedTemplate() {
+  return _templates.find(template => template.id === _selectedId) || _templates[0];
+}
+
+function detailPanel(template) {
+  if (!template) return "";
+  const active = template.id === _activeId;
+  const activating = template.id === _activatingId;
+  const pdfPath = _pdfPreviews.get(template.id);
+  const previewError = _previewErrors.get(template.id);
+  const compiling = template.id === _previewCompilingId;
+  return `
+    <div class="${cx(ui.surface.card, "overflow-hidden")}">
+      <div class="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3.5">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="text-[15px] font-bold text-app-text">${escapeHtml(template.name)}</h2>
+            ${active ? `<span class="${ui.badge.success}">Plantilla activa</span>` : ""}
+          </div>
+          <p class="mt-1 text-xs leading-5 text-app-muted">
+            ${active ? "Este formato se usará en las nuevas guías." : "Revisa el formato antes de aplicarlo a nuevas guías."}
+          </p>
         </div>
       </div>
-      <div class="relative flex flex-1 flex-col justify-between">
-        <div>
-          <div class="mb-2 flex items-start justify-between">
-            <span class="rounded bg-brand-soft px-2 py-0.5 text-[10px] font-bold uppercase text-brand">${featured.featured ? "INSTITUCIONAL ESTÁNDAR" : "PLANTILLA"}</span>
-            ${featured.id === _activeId ? `<span class="material-symbols-outlined text-xl text-brand" style="font-variation-settings:'FILL' 1">check_circle</span>` : ""}
-          </div>
-          <h3 class="mb-1.5 text-base font-bold text-app-text">${escapeHtml(featured.name)}</h3>
-          <p class="mb-3 text-[12.5px] leading-relaxed text-app-muted">${escapeHtml(featured.description || "")}</p>
-          <div class="mb-3.5 flex flex-wrap gap-1.5">
-            ${(featured.tags || []).slice(0, 4).map(tag => `<span class="rounded border border-slate-300/50 bg-slate-200/25 px-2 py-0.5 text-[10px] text-app-muted">${escapeHtml(tag)}</span>`).join("")}
-          </div>
-        </div>
-        <div class="flex gap-2">
-          <button class="${cx(ui.button.base, featured.id === _activeId ? ui.button.secondary : ui.button.primary, ui.button.sm, 'flex-1')} tpl-btn" data-tpl-id="${escapeHtml(featured.id)}">
-            ${featured.id === _activeId ? "Activa / Editar" : "Activar plantilla"}
+      <div class="min-h-[420px] bg-slate-700">
+        ${pdfPath ? pdfPreviewFrame(pdfPath, template.name) : compiling ? previewLoadingState() : previewError ? previewErrorState(previewError) : previewWaitingState()}
+      </div>
+      <div class="border-t border-slate-200 p-4">
+        <p class="mb-3 text-xs leading-5 text-app-muted">${escapeHtml(template.description || "")}</p>
+        <button class="${cx(ui.button.base, active ? ui.button.secondary : ui.button.primary, "min-h-11 w-full")}"
+          id="btn-activate-template" type="button" ${active || activating ? "disabled" : ""} aria-busy="${activating}">
+          <span class="material-symbols-outlined text-[18px] ${activating ? "animate-spin" : ""}" aria-hidden="true">${activating ? "progress_activity" : active ? "check_circle" : "check"}</span>
+          ${activating ? "Aplicando plantilla…" : active ? "Plantilla activa" : "Usar esta plantilla"}
+        </button>
+        <div id="tpl-activation-error" class="${_activationError ? "" : "hidden "}mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700" role="alert">${escapeHtml(_activationError)}</div>
+      </div>
+    </div>`;
+}
+
+function selectTemplate(id) {
+  if (!id || id === _selectedId || _activatingId) return;
+  _selectedId = id;
+  renderWorkspace();
+  document.getElementById("tpl-detail")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  announce(`Vista previa de ${selectedTemplate()?.name || "la plantilla"} seleccionada.`);
+  void ensurePdfPreview(id);
+}
+
+async function ensurePdfPreview(templateId, force = false) {
+  if (!templateId || _previewCompilingId) return;
+  if (!force && _pdfPreviews.has(templateId)) return;
+  const template = _templates.find(item => item.id === templateId);
+  if (!template) return;
+
+  _previewCompilingId = templateId;
+  _previewProgress = "Preparando los datos preliminares…";
+  _previewErrors.delete(templateId);
+  renderWorkspace();
+  announce(`Compilando la vista previa PDF de ${template.name}.`);
+
+  let stopProgress = null;
+  try {
+    stopProgress = await listen("jintia://compile-progress", ({ payload }) => {
+      if (_previewCompilingId !== templateId) return;
+      _previewProgress = payload?.message || "Compilando el PDF…";
+      const progress = document.getElementById("tpl-preview-progress");
+      if (progress) progress.textContent = _previewProgress;
+    });
+
+    const rootPath = await appLocalDataDir();
+    const previewData = templatePreviewData(template);
+    const structure = await createCourseStructure({
+      rootPath,
+      courseCode: previewData.courseCode,
+      courseName: previewData.courseName,
+      weeks: previewData.weeksData.length,
+      initializeReadme: false,
+    });
+    if (!structure?.success) {
+      throw new Error(structure?.message || "No se pudo preparar la carpeta temporal.");
+    }
+
+    const result = await compileSyllabusPdf({
+      coursePath: rootPath,
+      ...previewData,
+      includeJintiaCredit: state.config?.includeJintiaCredit !== false,
+      reuseIfValid: !force,
+      previewTemplateId: templateId,
+    });
+    if (!result?.success || !result?.path) {
+      throw new Error(result?.message || "El compilador no devolvió un PDF válido.");
+    }
+    _pdfPreviews.set(templateId, result.path);
+    announce(`Vista previa PDF de ${template.name} lista.`);
+  } catch (error) {
+    _previewErrors.set(templateId, String(error));
+    announce(`No se pudo compilar la vista previa de ${template.name}.`);
+  } finally {
+    if (stopProgress) stopProgress();
+    _previewCompilingId = "";
+    _previewProgress = "";
+    renderWorkspace();
+    if (_selectedId !== templateId && !_pdfPreviews.has(_selectedId)) {
+      void ensurePdfPreview(_selectedId);
+    }
+  }
+}
+
+function templatePreviewData(template) {
+  return buildSampleGuideData(state.config || {});
+}
+
+function pdfPreviewFrame(pdfPath, templateName) {
+  const assetUrl = convertFileSrc(pdfPath);
+  return `
+    <iframe class="h-[min(62vh,680px)] min-h-[420px] w-full border-0 bg-slate-700"
+      src="${escapeHtml(assetUrl)}#view=FitH&toolbar=0"
+      title="PDF de prueba compilado con ${escapeHtml(templateName)}"></iframe>`;
+}
+
+function previewLoadingState() {
+  return `
+    <div class="grid min-h-[420px] place-items-center p-6 text-center text-white" role="status">
+      <div class="max-w-[34ch]">
+        <span class="material-symbols-outlined mb-3 block animate-spin text-[38px]" aria-hidden="true">progress_activity</span>
+        <p class="font-semibold">Compilando un PDF real…</p>
+        <p id="tpl-preview-progress" class="mt-2 text-xs leading-5 text-slate-200">${escapeHtml(_previewProgress || "Preparando LaTeX…")}</p>
+        <p class="mt-3 text-[11px] leading-5 text-slate-300">La primera compilación puede tardar mientras se preparan los componentes de la plantilla.</p>
+      </div>
+    </div>`;
+}
+
+function previewWaitingState() {
+  return `
+    <div class="grid min-h-[420px] place-items-center p-6 text-center text-white">
+      <div>
+        <span class="material-symbols-outlined mb-3 block text-[38px] text-slate-300" aria-hidden="true">picture_as_pdf</span>
+        <p class="text-sm font-semibold">Preparando la vista previa PDF…</p>
+      </div>
+    </div>`;
+}
+
+function previewErrorState(diagnostic) {
+  return `
+    <div class="grid min-h-[420px] place-items-center p-5 text-center text-white">
+      <div class="max-w-[48ch]">
+        <span class="material-symbols-outlined mb-3 block text-[38px] text-red-300" aria-hidden="true">error</span>
+        <h3 class="font-bold">No pudimos compilar esta vista previa</h3>
+        <p class="mt-2 text-xs leading-5 text-slate-200">Verifica el compilador LaTeX en Configuración → Entorno y vuelve a intentarlo.</p>
+        <div class="mt-4 flex flex-wrap justify-center gap-2">
+          <button class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="btn-retry-template-preview" type="button">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">refresh</span> Reintentar
+          </button>
+          <button class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="btn-copy-template-diagnostic" type="button">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">content_copy</span> Copiar diagnóstico
           </button>
         </div>
+        <details class="mt-4 text-left">
+          <summary class="cursor-pointer text-xs font-semibold text-slate-200">Detalles técnicos</summary>
+          <pre class="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-950 p-3 text-[10px] leading-5 text-slate-200">${escapeHtml(diagnostic)}</pre>
+        </details>
       </div>
-    </div>
+    </div>`;
+}
 
-    <!-- Secondary (4-col) -->
-    ${secondary ? `
-    <div class="col-span-1 flex flex-col justify-between rounded-app-lg border border-slate-200 bg-white p-4 shadow-sm xl:col-span-4">
-      <div>
-        <div class="mb-3 aspect-video w-full overflow-hidden rounded-lg border border-slate-300/40 bg-white p-2.5 text-[10px] leading-relaxed text-slate-700">
-          <div class="mb-2 border-b border-slate-200 pb-1.5 text-center font-bold">${escapeHtml(secondary.name)}</div>
-          <div class="mb-2.5 text-center italic text-slate-500">Docente: …</div>
-          <div>${escapeHtml(secondary.description?.slice(0, 60) || "")}</div>
-        </div>
-        <h3 class="mb-1.5 text-[13.5px] font-bold text-app-text">${escapeHtml(secondary.name)}</h3>
-        <p class="mb-2.5 text-xs leading-normal text-app-muted">${escapeHtml(secondary.description?.slice(0, 100) || "")}</p>
-      </div>
-      <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'w-full')} tpl-btn" data-tpl-id="${escapeHtml(secondary.id)}">
-        ${secondary.id === _activeId ? "Activa" : "Seleccionar"}
-      </button>
-    </div>` : ""}
+async function activateSelectedTemplate() {
+  const template = selectedTemplate();
+  if (!template || template.id === _activeId || _activatingId) return;
+  _activatingId = template.id;
+  _activationError = "";
+  renderWorkspace();
+  announce(`Aplicando ${template.name}…`);
 
-    <!-- Grid items (4-col each) -->
-    ${gridItems.map(t => `
-    <div class="col-span-1 flex flex-col rounded-app-lg border border-slate-200 bg-white p-4 shadow-sm xl:col-span-4">
-      <div class="mb-2.5 flex items-center gap-2 border-b border-slate-300/30 pb-2.5">
-        <span class="material-symbols-outlined text-xl text-brand">assignment_ind</span>
-        <span class="text-[13px] font-bold text-app-text">${escapeHtml(t.name)}</span>
-      </div>
-      <p class="mb-3 flex-1 text-xs leading-relaxed text-app-muted">${escapeHtml(t.description || "")}</p>
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase tracking-wider text-slate-400">${t.featured ? "INSTITUCIONAL" : "PERSONAL"}</span>
-        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm, 'text-brand px-2.5 py-1')} tpl-btn" data-tpl-id="${escapeHtml(t.id)}">
-          ${t.id === _activeId ? "Activa" : "Seleccionar"}
-        </button>
-      </div>
-    </div>`).join("")}
+  try {
+    const result = await setActiveTemplate(template.id);
+    if (!result?.success) throw new Error(result?.message || "No se pudo guardar la selección.");
+    _activeId = template.id;
+    toast(`"${template.name}" es ahora la plantilla activa`, "success");
+    announce(`${template.name} es ahora la plantilla activa.`);
+  } catch {
+    _activationError = "No pudimos activar la plantilla. Comprueba la conexión y vuelve a intentarlo.";
+    announce("No se pudo activar la plantilla.");
+  } finally {
+    _activatingId = "";
+    renderWorkspace();
+  }
+}
 
-  `;
-
-  // Bind template buttons
-  bento.querySelectorAll(".tpl-btn").forEach(btn => {
-    btn.addEventListener("click", () => activateTemplate(btn.dataset.tplId));
+function updateFilterButtons() {
+  document.querySelectorAll(".tpl-filter-btn").forEach(button => {
+    const selected = button.dataset.filter === _filter;
+    button.setAttribute("aria-pressed", String(selected));
+    button.className = cx(
+      ui.button.base,
+      selected ? ui.button.primary : ui.button.secondary,
+      "min-h-11 px-3 text-xs tpl-filter-btn"
+    );
   });
 }
 
-async function activateTemplate(id) {
-  if (!id || id === _activeId) return;
-  try {
-    const result = await setActiveTemplate(id);
-    if (result?.success) {
-      _activeId = id;
-      _selectedId = id;
-      toast(`Plantilla "${_templates.find(t => t.id === id)?.name}" activada`, "success");
-      renderBento("all");
-    } else {
-      throw new Error(result?.message || "Error desconocido");
-    }
-  } catch (e) {
-    toast(`Error al activar: ${e}`, "error");
-  }
+function loadingState() {
+  return `
+    <div class="grid min-h-[320px] place-items-center rounded-xl border border-slate-200 bg-white p-8 text-center" role="status">
+      <div>
+        <span class="material-symbols-outlined mb-3 block animate-spin text-[34px] text-brand" aria-hidden="true">progress_activity</span>
+        <p class="text-sm font-semibold text-app-text">Preparando las vistas previas…</p>
+        <p class="mt-1 text-xs text-app-muted">Esto puede tardar unos segundos.</p>
+      </div>
+    </div>`;
+}
+
+function errorState() {
+  return `
+    <div class="grid min-h-[320px] place-items-center rounded-xl border border-red-200 bg-white p-8 text-center">
+      <div class="max-w-[48ch]">
+        <span class="material-symbols-outlined mb-3 block text-[34px] text-red-600" aria-hidden="true">error</span>
+        <h2 class="text-base font-bold text-app-text">No pudimos cargar las plantillas</h2>
+        <p class="mt-2 text-sm leading-6 text-app-muted">Comprueba la conexión con Jintia y vuelve a intentarlo.</p>
+        <button class="${cx(ui.button.base, ui.button.secondary, "mt-4 min-h-11")}" id="btn-retry-templates" type="button">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">refresh</span> Reintentar
+        </button>
+      </div>
+    </div>`;
+}
+
+function emptyState(title, description, showAll = false) {
+  return `
+    <div class="grid min-h-[280px] place-items-center rounded-xl border border-slate-200 bg-white p-8 text-center">
+      <div class="max-w-[48ch]">
+        <span class="material-symbols-outlined mb-3 block text-[34px] text-slate-400" aria-hidden="true">description</span>
+        <h2 class="text-base font-bold text-app-text">${escapeHtml(title)}</h2>
+        <p class="mt-2 text-sm leading-6 text-app-muted">${escapeHtml(description)}</p>
+        ${showAll ? `<button class="${cx(ui.button.base, ui.button.secondary, "mt-4 min-h-11 tpl-filter-btn")}" type="button" data-filter="all">Ver todas</button>` : ""}
+      </div>
+    </div>`;
+}
+
+function announce(message) {
+  const status = document.getElementById("tpl-status");
+  if (status) status.textContent = message;
 }

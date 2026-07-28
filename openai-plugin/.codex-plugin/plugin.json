@@ -1,0 +1,31 @@
+{
+  "name": "jintia",
+  "version": "10.6.0",
+  "description": "Diseña sílabos, guías semanales, actividades y evaluaciones universitarias con evidencia verificable y plantillas LaTeX.",
+  "author": {
+    "name": "Charlie Cárdenas Toledo",
+    "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill"
+  },
+  "homepage": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
+  "repository": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
+  "license": "MIT AND LPPL-1.3-or-later",
+  "keywords": ["educacion", "diseno-instruccional", "latex", "universidad"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Jintia",
+    "shortDescription": "Diseño instruccional universitario con evidencia",
+    "longDescription": "Convierte sílabos y fuentes del curso en guías didácticas, actividades, rúbricas y evaluaciones verificables con salida LaTeX.",
+    "developerName": "Charlie Cárdenas Toledo",
+    "category": "Education",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
+    "privacyPolicyURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/main/TERMS.md",
+    "defaultPrompt": [
+      "Usa Jintia para crear la guía didáctica de esta semana.",
+      "Usa Jintia para revisar la alineación entre resultados, actividades y evaluación."
+    ],
+    "brandColor": "#00796B"
+  }
+}

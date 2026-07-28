@@ -1,4 +1,4 @@
-import { createCourseStructure, pickDirectory } from "../api.js";
+import { createCourseStructure, getDefaultCourseRoot, pickDirectory } from "../api.js";
 import { escapeHtml, safeIndex } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
@@ -7,185 +7,378 @@ import { confirm } from "@tauri-apps/plugin-dialog";
 import { ui, cx } from "../uiClasses.js";
 
 let _filter = "";
+let _statusFilter = "all";
+let _sort = "recent";
 let _modalStep = 0;
 let _modalData = {};
+let _modalDirty = false;
+let _modalOpener = null;
+let _folderBusy = new Set();
+let _eventsBound = false;
+let _defaultCourseRootPromise = null;
+
+const REQUIRED_WEEK_FIELDS = ["title", "unit", "topics", "outcomes", "bibliography", "graded_activity"];
+
+function defaultCourseRoot() {
+  if (!_defaultCourseRootPromise) {
+    _defaultCourseRootPromise = getDefaultCourseRoot()
+      .then(result => result?.success ? result.path || "" : "")
+      .catch(() => "");
+  }
+  return _defaultCourseRootPromise;
+}
+
+function bindGlobalEvents() {
+  if (_eventsBound) return;
+  _eventsBound = true;
+  document.addEventListener("jintia:new-course", event => openModal(event.detail?.opener));
+}
+
+bindGlobalEvents();
+
+function courseProgress(course) {
+  const total = Math.min(52, Math.max(1, Number(course.weeks) || 16));
+  const weeks = Array.isArray(course.weeks_data) ? course.weeks_data : [];
+  const complete = Array.from({ length: total }, (_, index) => {
+    const week = weeks[index];
+    return week?.status === "complete" && REQUIRED_WEEK_FIELDS.every(key => String(week?.[key] || "").trim());
+  }).filter(Boolean).length;
+  const started = weeks.some(week => week && Object.values(week).some(value => value !== null && value !== "" && value !== undefined));
+  const status = complete === total ? "complete" : started ? "progress" : "pending";
+  return { complete, total, pct: Math.round((complete / total) * 100), status };
+}
+
+function statusView(progress) {
+  return {
+    complete: { label: "Lista", icon: "check_circle", classes: "border-green-200 bg-green-50 text-green-700" },
+    progress: { label: "En progreso", icon: "pending", classes: "border-teal-200 bg-teal-50 text-teal-700" },
+    pending: { label: "Pendiente", icon: "radio_button_unchecked", classes: "border-slate-200 bg-slate-50 text-slate-600" },
+  }[progress.status];
+}
+
+function persistCourseList(nextCourses, successMessage) {
+  const previous = state.courses;
+  state.courses = nextCourses;
+  try {
+    saveCourses();
+    if (successMessage) toast(successMessage, "success", 3200);
+    return true;
+  } catch (error) {
+    state.courses = previous;
+    toast(`No se pudieron guardar los cambios. Libera espacio e inténtalo nuevamente. (${error})`, "error", 7000);
+    return false;
+  }
+}
 
 export function renderCourses() {
   const el = document.getElementById("p-courses");
   if (!el) return;
 
-  const total   = state.courses.length;
-  const active  = state.courses.filter(c => (c.weeks_data || []).some(w => w.title)).length;
-  const pending = total - active;
+  const summaries = state.courses.map(courseProgress);
+  const total = state.courses.length;
+  const inProgress = summaries.filter(item => item.status === "progress").length;
+  const ready = summaries.filter(item => item.status === "complete").length;
 
   el.innerHTML = `
     <div class="${ui.layout.stack}">
+      <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" aria-labelledby="courses-summary-title">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 id="courses-summary-title" class="text-base font-extrabold text-app-text">Tus proyectos académicos</h2>
+            <p class="mt-1 text-xs text-app-muted">Continúa el sílabo, prepara archivos o crea una nueva asignatura.</p>
+            <p class="mt-2 inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-800">
+              <span class="material-symbols-outlined text-[15px]" aria-hidden="true">auto_awesome</span>
+              Usa tu skill con Claude, ChatGPT y Codex
+            </p>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center sm:min-w-[330px]">
+            ${summaryMetric(total, "Asignaturas", "school")}
+            ${summaryMetric(inProgress, "En progreso", "edit_note")}
+            ${summaryMetric(ready, "Listas", "check_circle")}
+          </div>
+        </div>
+      </section>
 
-      <!-- Stats -->
-      <div class="grid grid-cols-2 gap-3">
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div class="text-[11px] font-semibold uppercase tracking-wider text-app-muted">Asignaturas</div>
-          <div class="my-1 text-[26px] font-extrabold tracking-tight text-teal-700">${total}</div>
-          <div class="text-[11px] text-app-muted">Total registradas</div>
+      <section class="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center" aria-label="Buscar y filtrar asignaturas">
+        <div class="relative min-w-0 flex-1">
+          <label for="courses-search-input" class="sr-only">Buscar asignaturas</label>
+          <span class="material-symbols-outlined pointer-events-none absolute inset-y-0 left-3 flex items-center text-lg text-app-muted" aria-hidden="true">search</span>
+          <input class="h-11 pl-10 pr-10" id="courses-search-input" type="search" placeholder="Buscar por código, nombre o período" value="${escapeHtml(_filter)}">
+          <button type="button" class="${_filter ? "flex" : "hidden"} absolute inset-y-0 right-1 h-11 w-11 items-center justify-center rounded-full text-app-muted hover:text-app-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" id="courses-clear-search" aria-label="Limpiar búsqueda">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">close</span>
+          </button>
         </div>
-        <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div class="text-[11px] font-semibold uppercase tracking-wider text-app-muted">Pendientes</div>
-          <div class="my-1 text-[26px] font-extrabold tracking-tight text-teal-700">${pending}</div>
-          <div class="text-[11px] text-app-muted">Sin contenido aún</div>
+        <div class="grid grid-cols-2 gap-2 sm:flex">
+          <label for="courses-status-filter" class="sr-only">Filtrar por estado</label>
+          <select id="courses-status-filter" class="h-11 min-w-0 sm:w-[150px]">
+            <option value="all" ${_statusFilter === "all" ? "selected" : ""}>Todos los estados</option>
+            <option value="pending" ${_statusFilter === "pending" ? "selected" : ""}>Pendientes</option>
+            <option value="progress" ${_statusFilter === "progress" ? "selected" : ""}>En progreso</option>
+            <option value="complete" ${_statusFilter === "complete" ? "selected" : ""}>Listas</option>
+          </select>
+          <label for="courses-sort" class="sr-only">Ordenar asignaturas</label>
+          <select id="courses-sort" class="h-11 min-w-0 sm:w-[145px]">
+            <option value="recent" ${_sort === "recent" ? "selected" : ""}>Más recientes</option>
+            <option value="name" ${_sort === "name" ? "selected" : ""}>Nombre A–Z</option>
+            <option value="progress" ${_sort === "progress" ? "selected" : ""}>Mayor avance</option>
+          </select>
         </div>
-      </div>
-
-      <!-- Toolbar -->
-      <div class="${cx(ui.liquid.group, 'flex flex-col items-stretch gap-2.5 px-3 py-2 sm:flex-row sm:items-center')}">
-        <div class="flex flex-1 items-center gap-2 rounded-lg border border-slate-300/50 bg-slate-50/80 px-3 py-1.5">
-          <span class="material-symbols-outlined text-lg text-app-muted">search</span>
-          <input class="w-full border-0 bg-transparent p-0 text-[13px] text-app-text outline-none" id="courses-search-input" placeholder="Buscar por código o nombre…" value="${escapeHtml(_filter)}">
-        </div>
-        <button class="${cx(ui.button.base, ui.button.primary, 'sm:shrink-0')}" id="btn-new-course">
-          <span class="material-symbols-outlined text-[15px]">add</span>
+        <button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11 shrink-0')}" id="btn-new-course">
+          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">add</span>
           Nueva asignatura
         </button>
-      </div>
+      </section>
 
-      <!-- Table -->
-      <div class="${cx(ui.surface.tableWrap, 'responsive-course-region flex-1')}">
-        <div>
-        <table class="${ui.table.base}">
-          <colgroup>
-            <col class="courses-col-code">
-            <col class="courses-col-name">
-            <col class="courses-col-period">
-            <col class="courses-col-semester">
-            <col class="courses-col-credits">
-            <col class="courses-col-weeks">
-            <col class="courses-col-status">
-            <col class="courses-col-actions">
-          </colgroup>
-          <thead>
-            <tr class="${ui.table.headRow}">
-              <th class="${cx(ui.table.th, 'courses-cell-code')}">Código</th>
-              <th class="${cx(ui.table.th, 'courses-cell-name')}">Asignatura</th>
-              <th class="${cx(ui.table.th, 'courses-cell-period')}">Periodo</th>
-              <th class="${ui.table.th}">Semestre</th>
-              <th class="${cx(ui.table.th, 'text-center')}">Créditos</th>
-              <th class="${cx(ui.table.th, 'text-center')}">Semanas</th>
-              <th class="${ui.table.th}">Estado</th>
-              <th class="${ui.table.th}"></th>
-            </tr>
-          </thead>
-          <tbody id="courses-tbody">
-            ${renderTableRows()}
-          </tbody>
-        </table>
-        </div>
-        ${state.courses.length === 0 ? `
-          <div class="flex flex-col items-center justify-center p-12 text-center text-app-muted">
-            <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand">
-              <span class="material-symbols-outlined text-[32px]">school</span>
-            </div>
-            <h3 class="mb-1.5 text-base font-bold text-app-text">Aún no tienes asignaturas</h3>
-            <p class="mb-5 max-w-[380px] text-[13px] leading-normal text-app-muted">
-              Crea tu primera asignatura para estructurar sílabos, contenidos semanales y guías instruccionales en PDF.
-            </p>
-            <button class="${cx(ui.button.base, ui.button.primary)}" id="btn-empty-new-course">
-              <span class="material-symbols-outlined text-base">add</span>
-              Nueva asignatura
-            </button>
-          </div>` : ""}
-        <div class="flex items-center justify-between border-t border-slate-300/30 px-4 py-2.5 text-[12.5px] text-app-muted">
-          <span>${filteredCourses().length} de ${total} asignaturas</span>
-          <div class="flex gap-1"></div>
-        </div>
-      </div>
+      <section class="min-h-0 flex-1" id="courses-results" aria-live="polite">
+        ${renderCourseResults()}
+      </section>
     </div>
 
-    <!-- Modal -->
-    <div class="fixed inset-0 z-[5000] hidden items-center justify-center bg-slate-900/45 p-6" id="course-modal">
-      <div class="max-h-[calc(100vh-48px)] w-full max-w-[640px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl" id="course-modal-box"></div>
-    </div>
-  `;
+    <div class="fixed inset-0 z-[5000] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="course-modal">
+      <div class="max-h-[calc(100vh-24px)] w-full max-w-[680px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100vh-48px)]"
+        id="course-modal-box" role="dialog" aria-modal="true" aria-labelledby="course-modal-title" aria-describedby="course-modal-description"></div>
+    </div>`;
 
-  document.getElementById("courses-search-input")?.addEventListener("input", e => {
-    _filter = e.target.value;
-    document.getElementById("courses-tbody").innerHTML = renderTableRows();
-    bindRowActions();
-  });
+  bindPageEvents();
+}
 
-  document.getElementById("btn-new-course")?.addEventListener("click", openModal);
-  document.getElementById("btn-empty-new-course")?.addEventListener("click", openModal);
-
-  document.getElementById("course-modal")?.addEventListener("click", e => {
-    if (e.target.id === "course-modal") closeModal();
-  });
-
-  bindRowActions();
+function summaryMetric(value, label, icon) {
+  return `
+    <div class="min-w-0 rounded-lg bg-slate-50 px-2 py-2">
+      <div class="flex items-center justify-center gap-1 text-app-text">
+        <span class="material-symbols-outlined text-[16px] text-brand" aria-hidden="true">${icon}</span>
+        <strong class="text-base">${value}</strong>
+      </div>
+      <span class="block truncate text-[11px] text-app-muted">${label}</span>
+    </div>`;
 }
 
 function filteredCourses() {
-  if (!_filter) return state.courses;
-  const q = _filter.toLowerCase();
-  return state.courses.filter(c =>
-    c.code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)
-  );
+  const query = _filter.trim().toLocaleLowerCase("es");
+  const rows = state.courses
+    .map((course, index) => ({ course, index, progress: courseProgress(course) }))
+    .filter(({ course, progress }) => {
+      const textMatch = !query || [course.code, course.name, course.period, course.semester]
+        .some(value => String(value || "").toLocaleLowerCase("es").includes(query));
+      return textMatch && (_statusFilter === "all" || progress.status === _statusFilter);
+    });
+
+  return rows.sort((a, b) => {
+    if (_sort === "name") return String(a.course.name).localeCompare(String(b.course.name), "es");
+    if (_sort === "progress") return b.progress.pct - a.progress.pct;
+    return b.index - a.index;
+  });
 }
 
-function renderTableRows() {
+function renderCourseResults() {
+  if (state.courses.length === 0) return renderEmptyState();
   const rows = filteredCourses();
-  if (!rows.length) {
-    return `<tr><td colspan="8" class="p-8 text-center text-slate-400">Sin resultados</td></tr>`;
-  }
-  return rows.map((course, i) => {
-    const realIndex = state.courses.indexOf(course);
-    const hasContent = (course.weeks_data || []).some(w => w.title);
-    return `
+  if (rows.length === 0) return renderNoResults();
+
+  return `
+    <div class="${cx(ui.surface.tableWrap, 'hidden min-h-0 lg:block')}">
+      <table class="${ui.table.base}">
+        <caption class="sr-only">Asignaturas registradas y avance del sílabo</caption>
+        <thead>
+          <tr class="${ui.table.headRow}">
+            <th class="${ui.table.th}">Asignatura</th>
+            <th class="${ui.table.th}">Período</th>
+            <th class="${ui.table.th}">Avance</th>
+            <th class="${ui.table.th}">Proyecto</th>
+            <th class="${cx(ui.table.th, 'w-[164px] text-right')}">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>${rows.map(renderDesktopRow).join("")}</tbody>
+      </table>
+      <div class="border-t border-slate-200 px-4 py-3 text-xs text-app-muted">${rows.length} de ${state.courses.length} asignaturas</div>
+    </div>
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:hidden">
+      ${rows.map(renderCourseCard).join("")}
+    </div>`;
+}
+
+function renderDesktopRow({ course, index, progress }) {
+  const status = statusView(progress);
+  const prepared = course.project_status === "ready";
+  return `
     <tr class="${ui.table.row}">
-      <td class="${cx(ui.table.td, 'courses-cell-code')}"><span class="font-mono font-bold text-brand">${escapeHtml(course.code)}</span></td>
-      <td class="${cx(ui.table.td, 'courses-cell-name font-semibold leading-snug text-app-text')}">${escapeHtml(course.name)}</td>
-      <td class="${cx(ui.table.td, 'courses-cell-period text-app-muted')}">${escapeHtml(course.period || "—")}</td>
-      <td class="${cx(ui.table.td, 'text-app-muted')}">${escapeHtml(course.semester || "—")}</td>
-      <td class="${cx(ui.table.td, 'text-center')}">${Number(course.credits) || 0}</td>
-      <td class="${cx(ui.table.td, 'text-center')}">${Number(course.weeks) || 0}</td>
       <td class="${ui.table.td}">
-        <span class="${cx(ui.status.pill, hasContent ? ui.status.active : ui.status.draft)}">
-          <span class="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current"></span>
-          ${hasContent ? "Con contenido" : "Borrador"}
+        <button type="button" class="group/course min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="edit" data-index="${index}">
+          <span class="block font-bold text-app-text group-hover/course:text-brand">${escapeHtml(course.name)}</span>
+          <span class="mt-0.5 block text-xs font-semibold text-brand">${escapeHtml(course.code)}</span>
+        </button>
+      </td>
+      <td class="${ui.table.td}">
+        <span class="block text-app-text">${escapeHtml(course.period || "Sin período")}</span>
+        <span class="mt-0.5 block text-xs text-app-muted">${escapeHtml(course.semester || "Sin semestre")} · ${Number(course.credits) || 0} créditos</span>
+      </td>
+      <td class="${ui.table.td}">
+        <div class="flex items-center gap-2">
+          <div class="h-2 w-20 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="Avance de ${escapeHtml(course.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress.pct}">
+            <div class="h-full rounded-full bg-brand" style="width:${progress.pct}%"></div>
+          </div>
+          <span class="text-xs font-semibold text-app-text">${progress.complete}/${progress.total}</span>
+        </div>
+        <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold ${status.classes.split(" ").at(-1)}">
+          <span class="material-symbols-outlined text-[15px]" aria-hidden="true">${status.icon}</span>${status.label}
         </span>
       </td>
       <td class="${ui.table.td}">
-        <div class="${cx(ui.liquid.group, 'ml-auto flex w-fit items-center gap-0.5 p-0.5 opacity-65 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100')}">
-          <button class="${cx(ui.button.base, ui.button.ghost, 'row-action-edit h-7 w-7 p-0')}" data-course-action="edit" data-index="${realIndex}" aria-label="Editar sílabo" title="Editar sílabo">
-            <span class="material-symbols-outlined text-sm">edit_document</span>
+        <span class="inline-flex items-center gap-1.5 text-xs ${prepared ? "text-green-700" : "text-app-muted"}">
+          <span class="material-symbols-outlined text-[16px]" aria-hidden="true">${prepared ? "folder_check" : "folder_off"}</span>
+          ${prepared ? "Preparado" : "Sin preparar"}
+        </span>
+      </td>
+      <td class="${ui.table.td}">
+        <div class="flex justify-end gap-2">
+          <button type="button" class="${cx(ui.button.base, ui.button.secondary, 'min-h-11 px-3')}" data-course-action="edit" data-index="${index}">
+            Editar sílabo
           </button>
-          <button class="${cx(ui.button.base, ui.button.ghost, 'row-action-folders h-7 w-7 p-0')}" data-course-action="folders" data-index="${realIndex}" aria-label="Generar carpetas" title="Generar carpetas">
-            <span class="material-symbols-outlined text-sm">create_new_folder</span>
-          </button>
-          <button class="${cx(ui.button.base, ui.button.danger, 'row-action-delete h-7 w-7 p-0')}" data-course-action="delete" data-index="${realIndex}" aria-label="Eliminar asignatura" title="Eliminar">
-            <span class="material-symbols-outlined text-sm">delete</span>
-          </button>
+          ${renderMoreMenu(index, course)}
         </div>
       </td>
     </tr>`;
-  }).join("");
 }
 
-function bindRowActions() {
-  document.querySelectorAll("[data-course-action]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const index = Number(btn.dataset.index);
-      if (btn.dataset.courseAction === "edit")    editCourse(index);
-      if (btn.dataset.courseAction === "folders") generateFolders(index);
-      if (btn.dataset.courseAction === "delete")  deleteCourse(index);
+function renderCourseCard({ course, index, progress }) {
+  const status = statusView(progress);
+  return `
+    <article class="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <button type="button" class="min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="edit" data-index="${index}">
+        <span class="block truncate text-sm font-extrabold text-app-text">${escapeHtml(course.name)}</span>
+        <span class="mt-1 block text-xs font-semibold text-brand">${escapeHtml(course.code)}</span>
+      </button>
+      <p class="mt-2 text-xs text-app-muted">${escapeHtml(course.period || "Sin período")} · ${escapeHtml(course.semester || "Sin semestre")}</p>
+      <div class="mt-4">
+        <div class="mb-1.5 flex items-center justify-between text-xs">
+          <span class="font-semibold ${status.classes.split(" ").at(-1)}">${status.label}</span>
+          <span class="text-app-muted">${progress.complete} de ${progress.total} semanas</span>
+        </div>
+        <div class="h-2 overflow-hidden rounded-full bg-slate-200"><div class="h-full rounded-full bg-brand" style="width:${progress.pct}%"></div></div>
+      </div>
+      <div class="mt-4 flex gap-2">
+        <button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11 flex-1')}" data-course-action="edit" data-index="${index}">Continuar</button>
+        ${renderMoreMenu(index, course)}
+      </div>
+    </article>`;
+}
+
+function renderMoreMenu(index, course) {
+  const busy = _folderBusy.has(index);
+  return `
+    <details class="relative">
+      <summary class="${cx(ui.button.base, ui.button.ghost, 'h-11 w-11 cursor-pointer list-none p-0')}" aria-label="Más acciones para ${escapeHtml(course.name)}">
+        <span class="material-symbols-outlined" aria-hidden="true">more_horiz</span>
+      </summary>
+      <div class="absolute right-0 top-12 z-20 min-w-[205px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="folders" data-index="${index}" ${busy ? "disabled aria-busy=\"true\"" : ""}>
+          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">${busy ? "progress_activity" : "create_new_folder"}</span>
+          ${busy ? "Preparando…" : course.project_status === "ready" ? "Recrear estructura" : "Preparar proyecto"}
+        </button>
+        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600" data-course-action="delete" data-index="${index}">
+          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">delete</span>
+          Eliminar del registro
+        </button>
+      </div>
+    </details>`;
+}
+
+function renderEmptyState() {
+  return `
+    <div class="flex min-h-[360px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand">
+        <span class="material-symbols-outlined text-[32px]" aria-hidden="true">school</span>
+      </div>
+      <h3 class="text-base font-bold text-app-text">Crea tu primera asignatura</h3>
+      <p class="mt-2 max-w-[420px] text-sm leading-6 text-app-muted">Registra la información académica, prepara la estructura del proyecto y comienza el sílabo semanal.</p>
+      <button type="button" class="${cx(ui.button.base, ui.button.primary, 'mt-5 min-h-11')}" id="btn-empty-new-course">
+        <span class="material-symbols-outlined text-[17px]" aria-hidden="true">add</span>Nueva asignatura
+      </button>
+    </div>`;
+}
+
+function renderNoResults() {
+  return `
+    <div class="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+      <span class="material-symbols-outlined text-[38px] text-slate-400" aria-hidden="true">search_off</span>
+      <h3 class="mt-3 text-base font-bold text-app-text">No encontramos asignaturas</h3>
+      <p class="mt-1 text-sm text-app-muted">Prueba con otro término o elimina los filtros actuales.</p>
+      <button type="button" class="${cx(ui.button.base, ui.button.secondary, 'mt-4 min-h-11')}" id="courses-clear-filters">Limpiar búsqueda y filtros</button>
+    </div>`;
+}
+
+function bindPageEvents() {
+  const input = document.getElementById("courses-search-input");
+  input?.addEventListener("input", event => {
+    _filter = event.target.value;
+    updateResults();
+    const clear = document.getElementById("courses-clear-search");
+    clear?.classList.toggle("hidden", !_filter);
+    clear?.classList.toggle("flex", Boolean(_filter));
+  });
+  document.getElementById("courses-clear-search")?.addEventListener("click", () => {
+    _filter = "";
+    if (input) input.value = "";
+    updateResults();
+    input?.focus();
+  });
+  document.getElementById("courses-status-filter")?.addEventListener("change", event => {
+    _statusFilter = event.target.value;
+    updateResults();
+  });
+  document.getElementById("courses-sort")?.addEventListener("change", event => {
+    _sort = event.target.value;
+    updateResults();
+  });
+  document.getElementById("btn-new-course")?.addEventListener("click", event => openModal(event.currentTarget));
+  document.getElementById("btn-empty-new-course")?.addEventListener("click", event => openModal(event.currentTarget));
+  bindResultEvents();
+
+  const overlay = document.getElementById("course-modal");
+  overlay?.addEventListener("mousedown", event => {
+    if (event.target === overlay) requestCloseModal();
+  });
+  overlay?.addEventListener("keydown", handleModalKeydown);
+}
+
+function updateResults() {
+  const results = document.getElementById("courses-results");
+  if (!results) return;
+  results.innerHTML = renderCourseResults();
+  bindResultEvents();
+  document.getElementById("courses-clear-filters")?.addEventListener("click", () => {
+    _filter = "";
+    _statusFilter = "all";
+    _sort = "recent";
+    renderCourses();
+    document.getElementById("courses-search-input")?.focus();
+  });
+}
+
+function bindResultEvents() {
+  document.querySelectorAll("[data-course-action]").forEach(button => {
+    button.addEventListener("click", event => {
+      event.preventDefault();
+      const index = safeIndex(button.dataset.index, state.courses.length);
+      if (index < 0) return;
+      if (button.dataset.courseAction === "edit") editCourse(index);
+      if (button.dataset.courseAction === "folders") generateFolders(index, button);
+      if (button.dataset.courseAction === "delete") deleteCourse(index);
     });
   });
 }
 
 async function deleteCourse(index) {
   const course = state.courses[index];
-  if (!await confirm(`¿Eliminar "${course.code} — ${course.name}"?\nNo se borrarán carpetas del disco.`)) return;
-  state.courses.splice(index, 1);
-  saveCourses();
-  renderCourses();
-  toast("Asignatura eliminada del registro", "info");
+  if (!course) return;
+  if (!await confirm(`¿Eliminar “${course.code} — ${course.name}” del registro?\nLas carpetas y archivos del disco se conservarán.`)) return;
+  const next = state.courses.filter((_, courseIndex) => courseIndex !== index);
+  if (persistCourseList(next)) {
+    if (state.editingCourse === index) state.editingCourse = undefined;
+    else if (state.editingCourse > index) state.editingCourse -= 1;
+    renderCourses();
+    toast("Asignatura eliminada del registro. Los archivos permanecen en el disco.", "info", 4500);
+  }
 }
 
 function editCourse(index) {
@@ -193,174 +386,334 @@ function editCourse(index) {
   navigate("syllabus");
 }
 
-async function generateFolders(index) {
+async function generateFolders(index, button) {
+  if (_folderBusy.has(index)) return;
   const course = state.courses[index];
-  const rootPath = await pickDirectory(`Carpeta raíz para ${course.code} — ${course.name}`);
+  if (!course) return;
+  const suggestedRoot = course.project_root || await defaultCourseRoot();
+  const rootPath = await pickDirectory(
+    `Selecciona dónde preparar ${course.code} — ${course.name}`,
+    suggestedRoot || undefined,
+  );
   if (!rootPath) return;
-  toast("Creando estructura de carpetas…", "loading", 15000);
+
+  const originalHtml = button.innerHTML;
+  _folderBusy.add(index);
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  button.innerHTML = `<span class="material-symbols-outlined animate-spin text-[17px]" aria-hidden="true">progress_activity</span>Preparando proyecto…`;
+  toast("Preparando carpetas y README del proyecto…", "loading", 30000);
   try {
-    const result = await createCourseStructure({ rootPath, courseCode: course.code, courseName: course.name, weeks: course.weeks });
-    toast(result.message, result.success ? "success" : "error", 6000);
-  } catch (e) {
-    toast(`Error: ${e}`, "error");
+    const result = await createCourseStructure({
+      rootPath,
+      courseCode: course.code,
+      courseName: course.name,
+      weeks: Math.trunc(Number(course.weeks)),
+      initializeReadme: true,
+    });
+    if (!result.success) throw new Error(result.message);
+    const next = state.courses.map((item, courseIndex) => courseIndex === index
+      ? { ...item, project_status: "ready", project_root: rootPath, project_path: result.path || "", project_updated_at: new Date().toISOString() }
+      : item);
+    if (persistCourseList(next)) {
+      toast(result.message, "success", 7000);
+      renderCourses();
+    }
+  } catch (error) {
+    toast(`No se pudo preparar el proyecto. Revisa la carpeta elegida y vuelve a intentarlo. (${error})`, "error", 8000);
+  } finally {
+    _folderBusy.delete(index);
+    button.disabled = false;
+    button.removeAttribute("aria-busy");
+    button.innerHTML = originalHtml;
   }
 }
 
-// ── Modal new course ──────────────────────────────────────────────────────────
-
-function openModal() {
+function openModal(opener) {
+  _modalOpener = opener || document.activeElement;
   _modalStep = 1;
-  _modalData = { code: "", name: "", period: "", semester: "", credits: 4, weeks: 16, description: "", initReadme: true };
+  _modalDirty = false;
+  _modalData = {
+    code: "", name: "", period: "", semester: "", credits: 4, weeks: 16,
+    description: "", prepareNow: true, initializeReadme: true,
+    rootPath: "", rootPathLoading: true, rootPathCustomized: false,
+  };
+  const overlay = document.getElementById("course-modal");
+  overlay?.classList.remove("hidden");
+  overlay?.classList.add("flex");
   renderModal();
-  document.getElementById("course-modal").classList.remove("hidden");
+  queueMicrotask(() => document.getElementById("m-name")?.focus());
+  defaultCourseRoot().then(rootPath => {
+    if (_modalData.rootPathCustomized) return;
+    _modalData.rootPath = rootPath;
+    _modalData.rootPathLoading = false;
+    if (_modalStep === 2) renderModal();
+  });
 }
 
-function closeModal() {
-  document.getElementById("course-modal").classList.add("hidden");
+async function requestCloseModal(force = false) {
+  if (!force && _modalDirty && !await confirm("¿Cerrar el asistente y descartar la información escrita?")) return;
+  const overlay = document.getElementById("course-modal");
+  overlay?.classList.add("hidden");
+  overlay?.classList.remove("flex");
+  _modalDirty = false;
+  _modalOpener?.focus?.();
+}
+
+function handleModalKeydown(event) {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    requestCloseModal();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = [...document.querySelectorAll("#course-modal-box button:not([disabled]), #course-modal-box input:not([disabled]), #course-modal-box textarea:not([disabled]), #course-modal-box select:not([disabled])")];
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 function renderModal() {
   const box = document.getElementById("course-modal-box");
   if (!box) return;
+  box.innerHTML = _modalStep === 1 ? renderCourseDetailsStep() : renderCoursePreparationStep();
+  bindModalEvents();
+}
 
-  if (_modalStep === 1) {
-    box.innerHTML = `
-      <div class="flex items-center justify-between border-b border-slate-300/40 px-6 pb-3.5 pt-[18px]">
-        <div>
-          <div class="text-base font-bold text-app-text">Nueva asignatura</div>
-          <div class="mt-0.5 text-[11px] text-app-muted">Paso 1 de 2 — Información general</div>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <div class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-brand bg-brand text-[11px] font-bold text-white">1</div>
-          <div class="h-px w-6 bg-slate-300/50"></div>
-          <div class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-slate-300/60 text-[11px] font-bold text-app-muted">2</div>
-        </div>
-      </div>
-      <div class="p-5 px-6">
-        <div id="course-modal-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
-        <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-          <div class="flex flex-col gap-1.5 sm:col-span-2">
-            <label for="m-name">Nombre de la asignatura *</label>
-            <input id="m-name" placeholder="Ej: Bases de Datos" value="${escapeHtml(_modalData.name)}">
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="m-code">Código único *</label>
-            <input id="m-code" class="uppercase" placeholder="Ej: IFT200" value="${escapeHtml(_modalData.code)}">
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="m-period">Periodo académico</label>
-            <input id="m-period" placeholder="Ej: Abril–Agosto 2026" value="${escapeHtml(_modalData.period)}">
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="m-semester">Semestre / Nivel</label>
-            <input id="m-semester" placeholder="Ej: Tercero" value="${escapeHtml(_modalData.semester)}">
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="m-credits">Créditos *</label>
-            <input id="m-credits" type="number" min="1" max="20" value="${_modalData.credits}">
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label for="m-weeks">N.º de semanas</label>
-            <input id="m-weeks" type="number" min="1" max="52" value="${_modalData.weeks}">
-          </div>
-          <div class="flex flex-col gap-1.5 sm:col-span-2">
-            <label for="m-desc">Descripción (opcional)</label>
-            <textarea id="m-desc" class="h-[70px]" placeholder="Breve descripción del curso…">${escapeHtml(_modalData.description)}</textarea>
-          </div>
+function renderCourseDetailsStep() {
+  return `
+    ${modalHeader("Nueva asignatura", "Datos académicos", 1)}
+    <form id="course-details-form" class="p-5 sm:px-6" novalidate>
+      <p id="course-modal-description" class="mb-4 text-sm text-app-muted">Completa la información básica. Podrás editar el contenido semanal después.</p>
+      <div id="course-modal-error" class="mb-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert" tabindex="-1"></div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        ${modalField("m-name", "Nombre de la asignatura", _modalData.name, "Bases de Datos", "sm:col-span-2")}
+        ${modalField("m-code", "Código único", _modalData.code, "IFT200", "", "text")}
+        ${modalField("m-period", "Período académico", _modalData.period, "Abril–Agosto 2026", "", "text", false)}
+        ${modalField("m-semester", "Semestre / Nivel", _modalData.semester, "Tercero", "", "text", false)}
+        ${modalField("m-credits", "Créditos", _modalData.credits, "", "", "number")}
+        ${modalField("m-weeks", "Número de semanas", _modalData.weeks, "", "", "number")}
+        <div class="flex flex-col gap-1.5 sm:col-span-2">
+          <label for="m-desc">Descripción <span class="font-normal text-app-muted">(opcional)</span></label>
+          <textarea id="m-desc" rows="3" placeholder="Breve descripción del curso">${escapeHtml(_modalData.description)}</textarea>
         </div>
       </div>
-      <div class="flex items-center justify-between rounded-b-2xl border-t border-slate-300/40 bg-slate-100/50 px-6 py-3.5">
-        <button class="${cx(ui.button.base, ui.button.secondary)}" id="m-cancel">Cancelar</button>
-        <button class="${cx(ui.button.base, ui.button.primary)}" id="m-next">
-          Siguiente <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
-        </button>
-      </div>`;
+    </form>
+    ${modalFooter(`<button type="button" class="${cx(ui.button.base, ui.button.ghost, 'min-h-11')}" id="m-cancel">Cancelar</button>`,
+      `<button type="submit" form="course-details-form" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="m-next">Revisar y continuar<span class="material-symbols-outlined text-[17px]" aria-hidden="true">arrow_forward</span></button>`)} `;
+}
 
-    box.querySelector("#m-cancel").onclick = closeModal;
-    box.querySelector("#m-next").onclick = () => {
-      const code = box.querySelector("#m-code").value.trim().toUpperCase();
-      const name = box.querySelector("#m-name").value.trim();
-      if (!code) { showModalError("El código es obligatorio"); return; }
-      if (!name) { showModalError("El nombre es obligatorio"); return; }
-      if (state.courses.some(c => c.code.toLowerCase() === code.toLowerCase())) {
-        showModalError("Ya existe un curso con ese código"); return;
-      }
-      _modalData.code     = code;
-      _modalData.name     = name;
-      _modalData.period   = box.querySelector("#m-period").value.trim();
-      _modalData.semester = box.querySelector("#m-semester").value.trim();
-      _modalData.credits  = Math.min(20, Math.max(1, Number(box.querySelector("#m-credits").value) || 4));
-      _modalData.weeks    = Math.min(52, Math.max(1, Number(box.querySelector("#m-weeks").value) || 16));
-      _modalData.description = box.querySelector("#m-desc").value.trim();
-      _modalStep = 2;
-      renderModal();
-    };
-  } else {
-    const weeks = _modalData.weeks;
-    const weekFolders = Array.from({ length: Math.min(weeks, 6) }, (_, i) => `/week-${String(i + 1).padStart(2, "0")}/`);
-    box.innerHTML = `
-      <div class="flex items-center justify-between border-b border-slate-300/40 px-6 pb-3.5 pt-[18px]">
-        <div>
-          <div class="text-base font-bold text-app-text">Nueva asignatura</div>
-          <div class="mt-0.5 text-[11px] text-app-muted">Paso 2 de 2 — Estructura de carpetas</div>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <div class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-green-500 bg-green-500 text-[11px] font-bold text-white">
-            <span class="material-symbols-outlined text-[13px]">check</span>
+function renderCoursePreparationStep() {
+  return `
+    ${modalHeader("Nueva asignatura", "Preparar proyecto", 2)}
+    <div class="p-5 sm:px-6">
+      <p id="course-modal-description" class="text-sm text-app-muted">La asignatura se registrará en Jintia. También puedes crear ahora su estructura real en el disco.</p>
+      <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <strong class="block truncate text-sm text-app-text">${escapeHtml(_modalData.name)}</strong>
+            <span class="mt-1 block text-xs font-semibold text-brand">${escapeHtml(_modalData.code)} · ${_modalData.weeks} semanas · ${_modalData.credits} créditos</span>
           </div>
-          <div class="h-px w-6 bg-brand"></div>
-          <div class="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.5px] border-brand bg-brand text-[11px] font-bold text-white">2</div>
+          <span class="material-symbols-outlined text-brand" aria-hidden="true">school</span>
         </div>
       </div>
-      <div class="p-5 px-6">
-        <div class="mb-4 rounded-app border border-slate-200 bg-white p-3.5">
-          <div class="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-app-muted">Vista previa de carpetas</div>
-          <div class="flex flex-col gap-1.5">
-            <div class="flex items-center gap-2 text-[12.5px] font-semibold text-slate-700">
-              <span class="material-symbols-outlined text-[17px] text-brand">folder_open</span>
-              /${escapeHtml(_modalData.code)} ${escapeHtml(_modalData.name)}/
-            </div>
-            ${weekFolders.map(f => `
-              <div class="flex items-center gap-2 pl-5 text-xs text-app-muted">
-                <span class="material-symbols-outlined text-base">folder</span> ${escapeHtml(f)}
-              </div>`).join("")}
-            ${weeks > 6 ? `<div class="pl-5 text-[11.5px] text-slate-400">… y ${weeks - 6} carpetas más</div>` : ""}
+      <label class="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-4">
+        <input type="checkbox" id="m-prepare-now" ${_modalData.prepareNow ? "checked" : ""} class="mt-1">
+        <span>
+          <strong class="block text-sm text-app-text">Preparar el proyecto ahora</strong>
+          <span class="mt-1 block text-xs leading-5 text-app-muted">Al crear la asignatura, elegirás una carpeta para generar la estructura de ${_modalData.weeks} semanas.</span>
+        </span>
+      </label>
+      <label class="mt-2 flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-4" id="m-readme-option">
+        <input type="checkbox" id="m-init-readme" ${_modalData.initializeReadme ? "checked" : ""} class="mt-1" ${_modalData.prepareNow ? "" : "disabled"}>
+        <span>
+          <strong class="block text-sm text-app-text">Crear README inicial</strong>
+          <span class="mt-1 block text-xs leading-5 text-app-muted">Crea una introducción segura sin sobrescribir un README que ya exista.</span>
+        </span>
+      </label>
+      <div class="mt-2 rounded-xl border border-slate-200 p-4 ${_modalData.prepareNow ? "" : "opacity-50"}" id="m-project-location">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="min-w-0">
+            <strong class="block text-sm text-app-text">Ubicación del proyecto</strong>
+            <span class="mt-1 block break-all text-xs leading-5 text-app-muted" id="m-project-root">
+              ${_modalData.rootPathLoading ? "Localizando tu carpeta Documentos…" : escapeHtml(_modalData.rootPath || "Selecciona una carpeta")}
+            </span>
+            <span class="mt-1 block text-[11px] text-app-muted">La carpeta “${escapeHtml(_modalData.code)} ${escapeHtml(_modalData.name)}” se creará aquí.</span>
           </div>
+          <button type="button" class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'shrink-0')}" id="m-change-root" ${!_modalData.prepareNow || _modalData.rootPathLoading ? "disabled" : ""}>
+            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">folder_open</span>
+            Cambiar
+          </button>
         </div>
-        <label class="flex cursor-pointer items-start gap-2.5">
-          <input type="checkbox" id="m-init-readme" ${_modalData.initReadme ? "checked" : ""} class="mt-0.5 w-auto accent-brand">
-          <div>
-            <div class="text-[13px] font-semibold text-app-text">Inicializar con plantilla README canónica</div>
-            <div class="mt-0.5 text-[11.5px] text-app-muted">Pre-popula el README.md raíz con la estructura del sílabo y rúbricas.</div>
-          </div>
-        </label>
       </div>
-      <div class="flex items-center justify-between rounded-b-2xl border-t border-slate-300/40 bg-slate-100/50 px-6 py-3.5">
-        <button class="${cx(ui.button.base, ui.button.secondary)}" id="m-back">
-          <span class="material-symbols-outlined text-[15px]">arrow_back</span> Atrás
-        </button>
-        <button class="${cx(ui.button.base, ui.button.primary)}" id="m-create">
-          <span class="material-symbols-outlined text-[15px]">create_new_folder</span>
-          Crear asignatura
-        </button>
-      </div>`;
+      <div id="course-modal-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert" tabindex="-1"></div>
+    </div>
+    ${modalFooter(`<button type="button" class="${cx(ui.button.base, ui.button.secondary, 'min-h-11')}" id="m-back"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">arrow_back</span>Atrás</button>`,
+      `<button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="m-create"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">check</span>${_modalData.prepareNow ? "Crear y preparar" : "Registrar asignatura"}</button>`)} `;
+}
 
-    box.querySelector("#m-back").onclick = () => { _modalStep = 1; renderModal(); };
-    box.querySelector("#m-create").onclick = () => {
-      _modalData.initReadme = box.querySelector("#m-init-readme").checked;
-      saveCourse();
-    };
+function modalHeader(title, subtitle, step) {
+  return `
+    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
+      <div>
+        <h2 id="course-modal-title" class="text-base font-bold text-app-text">${title}</h2>
+        <p class="mt-0.5 text-xs text-app-muted">Paso ${step} de 2 · ${subtitle}</p>
+      </div>
+      <button type="button" class="${cx(ui.button.base, ui.button.ghost, 'h-11 w-11 p-0')}" id="m-close" aria-label="Cerrar asistente"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+    </div>`;
+}
+
+function modalFooter(left, right) {
+  return `<div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">${left}<div class="flex flex-col gap-2 sm:flex-row">${right}</div></div>`;
+}
+
+function modalField(id, label, value, placeholder, extraClass = "", type = "text", required = true) {
+  const numberAttrs = id === "m-credits" ? 'min="1" max="20" step="1" inputmode="numeric"' : id === "m-weeks" ? 'min="1" max="52" step="1" inputmode="numeric"' : "";
+  return `
+    <div class="flex flex-col gap-1.5 ${extraClass}">
+      <label for="${id}">${label} ${required ? '<span class="text-red-600">(obligatorio)</span>' : '<span class="font-normal text-app-muted">(opcional)</span>'}</label>
+      <input id="${id}" type="${type}" ${numberAttrs} placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}" ${required ? "required" : ""} aria-describedby="${id}-error">
+      <p id="${id}-error" class="hidden text-xs font-semibold text-red-700"></p>
+    </div>`;
+}
+
+function bindModalEvents() {
+  const box = document.getElementById("course-modal-box");
+  box?.querySelectorAll("input, textarea").forEach(control => {
+    control.addEventListener("input", () => {
+      _modalDirty = true;
+      clearModalFieldError(control);
+    });
+  });
+  box?.querySelector("#m-close")?.addEventListener("click", () => requestCloseModal());
+  box?.querySelector("#m-cancel")?.addEventListener("click", () => requestCloseModal());
+  box?.querySelector("#course-details-form")?.addEventListener("submit", event => {
+    event.preventDefault();
+    if (!captureAndValidateStepOne()) return;
+    _modalStep = 2;
+    renderModal();
+    queueMicrotask(() => document.getElementById("m-prepare-now")?.focus());
+  });
+  box?.querySelector("#m-back")?.addEventListener("click", () => {
+    _modalStep = 1;
+    renderModal();
+    queueMicrotask(() => document.getElementById("m-name")?.focus());
+  });
+  box?.querySelector("#m-prepare-now")?.addEventListener("change", event => {
+    _modalData.prepareNow = event.target.checked;
+    const readme = document.getElementById("m-init-readme");
+    if (readme) readme.disabled = !_modalData.prepareNow;
+    const create = document.getElementById("m-create");
+    if (create) create.lastChild.textContent = _modalData.prepareNow ? "Crear y preparar" : "Registrar asignatura";
+    renderModal();
+  });
+  box?.querySelector("#m-change-root")?.addEventListener("click", async () => {
+    const rootPath = await pickDirectory("Selecciona dónde crear la asignatura", _modalData.rootPath || undefined);
+    if (!rootPath) return;
+    _modalData.rootPath = rootPath;
+    _modalData.rootPathCustomized = true;
+    _modalData.rootPathLoading = false;
+    renderModal();
+    queueMicrotask(() => document.getElementById("m-change-root")?.focus());
+  });
+  box?.querySelector("#m-init-readme")?.addEventListener("change", event => {
+    _modalData.initializeReadme = event.target.checked;
+  });
+  box?.querySelector("#m-create")?.addEventListener("click", event => createCourse(event.currentTarget));
+}
+
+function captureAndValidateStepOne() {
+  const read = id => document.getElementById(id)?.value?.trim() || "";
+  const code = read("m-code").toUpperCase();
+  const name = read("m-name");
+  const creditsRaw = read("m-credits");
+  const weeksRaw = read("m-weeks");
+  const credits = Number(creditsRaw);
+  const weeks = Number(weeksRaw);
+  const errors = [];
+  if (!name) errors.push(["m-name", "Escribe el nombre de la asignatura."]);
+  if (!code) errors.push(["m-code", "Escribe un código único."]);
+  else if (state.courses.some(course => String(course.code).toLowerCase() === code.toLowerCase())) errors.push(["m-code", "Ya existe una asignatura con este código."]);
+  if (!Number.isInteger(credits) || credits < 1 || credits > 20) errors.push(["m-credits", "Usa un número entero entre 1 y 20."]);
+  if (!Number.isInteger(weeks) || weeks < 1 || weeks > 52) errors.push(["m-weeks", "Usa un número entero entre 1 y 52."]);
+  if (errors.length) {
+    errors.forEach(([id, message]) => showModalFieldError(id, message));
+    const summary = document.getElementById("course-modal-error");
+    if (summary) {
+      summary.textContent = `Revisa ${errors.length} ${errors.length === 1 ? "campo señalado" : "campos señalados"} antes de continuar.`;
+      summary.classList.remove("hidden");
+      summary.focus();
+    }
+    document.getElementById(errors[0][0])?.focus();
+    return false;
+  }
+  _modalData = {
+    ..._modalData,
+    code,
+    name,
+    period: read("m-period"),
+    semester: read("m-semester"),
+    credits: Math.trunc(credits),
+    weeks: Math.trunc(weeks),
+    description: read("m-desc"),
+  };
+  return true;
+}
+
+function showModalFieldError(id, message) {
+  const field = document.getElementById(id);
+  const error = document.getElementById(`${id}-error`);
+  field?.setAttribute("aria-invalid", "true");
+  field?.classList.add("border-red-500");
+  if (error) {
+    error.textContent = message;
+    error.classList.remove("hidden");
   }
 }
 
-function showModalError(message) {
-  const error = document.getElementById("course-modal-error");
-  if (error) { error.textContent = message; error.hidden = false; }
-  toast(message, "error");
+function clearModalFieldError(field) {
+  field.removeAttribute("aria-invalid");
+  field.classList.remove("border-red-500");
+  const error = document.getElementById(`${field.id}-error`);
+  if (error) {
+    error.textContent = "";
+    error.classList.add("hidden");
+  }
 }
 
-async function saveCourse() {
-  state.courses.push({
+async function createCourse(button) {
+  if (button.disabled) return;
+  _modalData.prepareNow = document.getElementById("m-prepare-now")?.checked ?? false;
+  _modalData.initializeReadme = document.getElementById("m-init-readme")?.checked ?? false;
+  if (state.courses.some(course => String(course.code).toLowerCase() === _modalData.code.toLowerCase())) {
+    showModalSummaryError("Otra asignatura utilizó este código mientras completabas el asistente. Regresa y elige uno diferente.");
+    return;
+  }
+
+  let rootPath = "";
+  if (_modalData.prepareNow) {
+    rootPath = _modalData.rootPath || await defaultCourseRoot();
+    if (!rootPath) {
+      rootPath = await pickDirectory(`Selecciona dónde preparar ${_modalData.code} — ${_modalData.name}`);
+    }
+    if (!rootPath) {
+      showModalSummaryError("No se encontró la carpeta Documentos ni se eligió otra ubicación. Puedes cambiar la ruta o desactivar “Preparar el proyecto ahora”.");
+      return;
+    }
+  }
+
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  button.innerHTML = `<span class="material-symbols-outlined animate-spin text-[17px]" aria-hidden="true">progress_activity</span>${_modalData.prepareNow ? "Preparando proyecto…" : "Guardando…"}`;
+
+  const course = {
     code: _modalData.code,
     name: _modalData.name,
     period: _modalData.period,
@@ -369,9 +722,56 @@ async function saveCourse() {
     weeks: _modalData.weeks,
     description: _modalData.description,
     weeks_data: [],
-  });
-  saveCourses();
-  closeModal();
-  renderCourses();
-  toast(`Asignatura ${_modalData.code} creada`, "success");
+    project_status: _modalData.prepareNow ? "preparing" : "pending",
+    created_at: new Date().toISOString(),
+  };
+  if (!persistCourseList([...state.courses, course])) {
+    restoreCreateButton(button);
+    return;
+  }
+  const index = state.courses.length - 1;
+
+  try {
+    if (_modalData.prepareNow) {
+      const result = await createCourseStructure({
+        rootPath,
+        courseCode: course.code,
+        courseName: course.name,
+        weeks: course.weeks,
+        initializeReadme: _modalData.initializeReadme,
+      });
+      if (!result.success) throw new Error(result.message);
+      const next = state.courses.map((item, courseIndex) => courseIndex === index
+        ? { ...item, project_status: "ready", project_root: rootPath, project_path: result.path || "", project_updated_at: new Date().toISOString() }
+        : item);
+      if (!persistCourseList(next)) throw new Error("La estructura se creó, pero no se pudo guardar su estado en Jintia.");
+    }
+    _modalDirty = false;
+    await requestCloseModal(true);
+    renderCourses();
+    toast(_modalData.prepareNow ? `Asignatura ${course.code} creada y proyecto preparado` : `Asignatura ${course.code} registrada`, "success", 5000);
+  } catch (error) {
+    const next = state.courses.map((item, courseIndex) => courseIndex === index
+      ? { ...item, project_status: "error", project_error: String(error) }
+      : item);
+    persistCourseList(next);
+    _modalDirty = false;
+    await requestCloseModal(true);
+    renderCourses();
+    toast(`La asignatura se registró, pero el proyecto no pudo prepararse. Puedes reintentarlo desde Más acciones. (${error})`, "error", 9000);
+  }
+}
+
+function restoreCreateButton(button) {
+  button.disabled = false;
+  button.removeAttribute("aria-busy");
+  button.innerHTML = `<span class="material-symbols-outlined text-[17px]" aria-hidden="true">check</span>${_modalData.prepareNow ? "Crear y preparar" : "Registrar asignatura"}`;
+}
+
+function showModalSummaryError(message) {
+  const error = document.getElementById("course-modal-error");
+  if (!error) return;
+  error.textContent = message;
+  error.classList.remove("hidden");
+  error.focus();
 }

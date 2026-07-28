@@ -11,6 +11,7 @@ use models::{
     ActionResult, DependencyStatus, InstitutionConfig, NotebookEntry, NotebookLmAuthStatus,
     SetupStatus, TemplateMeta, WeekData,
 };
+use tauri::Manager;
 
 #[tauri::command]
 async fn check_dependencies() -> Vec<DependencyStatus> {
@@ -83,6 +84,16 @@ async fn export_skill_zip(destination_dir: String) -> ActionResult {
 }
 
 #[tauri::command]
+async fn install_openai_plugin() -> ActionResult {
+    payload::install_openai_plugin()
+}
+
+#[tauri::command]
+async fn export_openai_plugin_zip(destination_dir: String) -> ActionResult {
+    payload::export_openai_plugin_zip(destination_dir)
+}
+
+#[tauri::command]
 async fn configure_mcp(target: String) -> ActionResult {
     mcp::configure_mcp(target)
 }
@@ -132,8 +143,26 @@ async fn create_course_structure(
     course_code: String,
     course_name: String,
     weeks: u32,
+    initialize_readme: Option<bool>,
 ) -> ActionResult {
-    course::create_course_structure(root_path, course_code, course_name, weeks)
+    course::create_course_structure(
+        root_path,
+        course_code,
+        course_name,
+        weeks,
+        initialize_readme.unwrap_or(true),
+    )
+}
+
+#[tauri::command]
+async fn get_default_course_root(app: tauri::AppHandle) -> ActionResult {
+    match app.path().document_dir() {
+        Ok(path) => ActionResult::ok("Carpeta Documentos disponible.")
+            .with_path(path.to_string_lossy().into_owned()),
+        Err(error) => ActionResult::error(format!(
+            "No se pudo localizar la carpeta Documentos: {error}"
+        )),
+    }
 }
 
 #[tauri::command]
@@ -161,6 +190,7 @@ async fn generate_syllabus(
 
 #[tauri::command]
 async fn compile_syllabus_pdf(
+    app: tauri::AppHandle,
     course_path: String,
     course_code: String,
     course_name: String,
@@ -171,9 +201,11 @@ async fn compile_syllabus_pdf(
     weeks_data: Vec<WeekData>,
     include_jintia_credit: Option<bool>,
     reuse_if_valid: Option<bool>,
+    preview_template_id: Option<String>,
 ) -> ActionResult {
     tauri::async_runtime::spawn_blocking(move || {
         course::compile_syllabus_pdf(
+            app,
             course_path,
             course_code,
             course_name,
@@ -184,6 +216,7 @@ async fn compile_syllabus_pdf(
             weeks_data,
             include_jintia_credit.unwrap_or(true),
             reuse_if_valid.unwrap_or(false),
+            preview_template_id,
         )
     })
     .await
@@ -221,6 +254,8 @@ pub fn run() {
             get_skill_path,
             install_skill,
             export_skill_zip,
+            install_openai_plugin,
+            export_openai_plugin_zip,
             configure_mcp,
             apply_institution_config,
             extract_site_palette,
@@ -228,6 +263,7 @@ pub fn run() {
             get_setup_status,
             check_notebooklm_auth,
             run_notebooklm_auth,
+            get_default_course_root,
             create_course_structure,
             generate_syllabus,
             compile_syllabus_pdf,

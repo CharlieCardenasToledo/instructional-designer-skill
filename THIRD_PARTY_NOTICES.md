@@ -12,6 +12,7 @@ originales.
 | React, Vite y Tailwind CSS | Interfaz web embebida | MIT |
 | Lucide | Iconos de interfaz | ISC |
 | ElegantBook | Plantilla LaTeX incluida | LPPL 1.3c o posterior |
+| Kaobook / Kaohandt 0.9.8 | Plantilla marginal LaTeX incluida; upstream `fmarotta/kaobook`, commit `22225a174f1b667a50c0a80afb48c498e8126dc1` | LPPL 1.3 o posterior |
 | Material Symbols | Iconos cargados desde Google Fonts; no se distribuye el binario tipográfico | Apache-2.0 |
 | Inter | Tipografía cargada desde Google Fonts; no se distribuye el binario tipográfico | SIL Open Font License 1.1 |
 

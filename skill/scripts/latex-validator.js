@@ -18,6 +18,13 @@ const run = (command, args, cwd) => {
     const result = spawnSync(command, args, { cwd, encoding: 'utf-8', stdio: 'inherit', timeout: 10 * 60 * 1000 });
     if (result.error || result.status !== 0) throw result.error || new Error(`${command} exit ${result.status}`);
 };
+const commandExists = (command) => {
+    const probe = spawnSync(process.platform === 'win32' ? 'where.exe' : 'which', [command], {
+        encoding: 'utf-8',
+        stdio: 'ignore'
+    });
+    return probe.status === 0;
+};
 
 try {
     run(process.execPath, [path.join(__dirname, 'latex-linter.js'), absPath], process.cwd());
@@ -30,13 +37,24 @@ try {
         ['pdflatex', ['-interaction=nonstopmode', `${baseName}.tex`]],
         ['pdflatex', ['-interaction=nonstopmode', `${baseName}.tex`]],
     ];
-    if (process.platform === 'win32') {
+    if (process.platform === 'win32' && commandExists('pdflatex') && commandExists('biber')) {
+        commands.forEach(([command, args]) => run(command, args, dir));
+        const log = fs.readFileSync(path.join(dir, `${baseName}.log`), 'utf-8');
+        if (/Label\(s\) may have changed|rerunfilecheck|There were undefined references/.test(log)) {
+            run('pdflatex', ['-interaction=nonstopmode', `${baseName}.tex`], dir);
+        }
+    } else if (process.platform === 'win32') {
         const wslDir = dir.replace(/^([A-Za-z]):\\/, (_, drive) => `/mnt/${drive.toLowerCase()}/`).replace(/\\/g, '/');
         if (wslDir.includes("'") || baseName.includes("'")) throw new Error('La ruta contiene una comilla no soportada por WSL.');
         const command = commands.map(([name, args]) => `${name} ${args.map((arg) => `'${arg}'`).join(' ')}`).join(' && ');
-        run('wsl.exe', ['bash', '-lc', `cd -- '${wslDir}' && ${command}`], dir);
+        const rerun = `if grep -Eq 'Label\\(s\\) may have changed|rerunfilecheck|There were undefined references' '${baseName}.log'; then pdflatex -interaction=nonstopmode '${baseName}.tex'; fi`;
+        run('wsl.exe', ['bash', '-lc', `cd -- '${wslDir}' && ${command} && ${rerun}`], dir);
     } else {
         commands.forEach(([command, args]) => run(command, args, dir));
+        const log = fs.readFileSync(path.join(dir, `${baseName}.log`), 'utf-8');
+        if (/Label\(s\) may have changed|rerunfilecheck|There were undefined references/.test(log)) {
+            run('pdflatex', ['-interaction=nonstopmode', `${baseName}.tex`], dir);
+        }
     }
     console.log('Compilación exitosa. PDF generado con citas resueltas.');
 } catch (error) {

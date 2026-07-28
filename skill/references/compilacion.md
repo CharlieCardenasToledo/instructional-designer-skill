@@ -7,12 +7,18 @@ Referencia de `jintia-skill`. Leer cuando haya que compilar una guía, exportar 
 `scripts/latex-validator.js` ejecuta primero el linter y después cuatro pasos:
 `pdflatex`, `biber`, `pdflatex` y `pdflatex`.
 
-- En Windows, el script requiere WSL 2 y TeX Live dentro de WSL.
+Kaohandt puede necesitar una ejecución adicional para estabilizar posiciones
+marginales. Si el log contiene `Label(s) may have changed`,
+`rerunfilecheck` o referencias indefinidas, repetir `pdflatex`.
+
+- En Windows, el script usa primero `pdflatex` y `biber` nativos para compartir
+  el entorno MiKTeX verificado por Jintia. Solo recurre a WSL 2 cuando falta
+  alguno de los dos comandos.
 - En macOS y Linux, utiliza `pdflatex` y `biber` instalados localmente.
 - La aplicación de escritorio tiene además una previsualización rápida con el
   compilador LaTeX nativo; no sustituye la validación completa de la skill.
 
-## Secuencia manual en Windows
+## Secuencia manual alternativa en Windows con WSL
 
 ```bash
 # Sustituye [RUTA_WSL_LATEX] por la ruta WSL de la carpeta latex de tu semana.
@@ -61,7 +67,8 @@ pdflatex -interaction=nonstopmode guia-semana-XX.tex
 ### `latex-validator.js` — compilación completa de una guía
 
 Ejecuta el linter y la secuencia completa de compilación sobre un archivo
-`.tex`. En Windows usa WSL; en macOS y Linux usa la instalación nativa. Si
+`.tex`. En Windows prefiere la instalación nativa y usa WSL como alternativa;
+en macOS y Linux usa la instalación nativa. Si
 detecta `figure/screenshot.mjs`, captura primero las figuras HTML.
 
 ```powershell

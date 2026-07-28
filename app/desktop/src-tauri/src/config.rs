@@ -4,17 +4,19 @@ use crate::paths::{
     claude_desktop_config_path, path_text,
 };
 use crate::payload::{
-    config_file_path, installed_skill_path, skill_is_installed, sync_user_config_to_install,
+    config_file_path, installed_skill_path, installed_skill_version, openai_plugin_is_current,
+    openai_plugin_is_installed, openai_plugin_path, skill_is_current, skill_is_installed,
+    sync_user_config_to_install, SKILL_VERSION,
 };
 use include_dir::{include_dir, Dir};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::fs;
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::sync::Mutex;
 
 static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/templates");
 const DEFAULT_TEMPLATE: &str = "elegantbook-clasico";
-const EMBEDDED_TEMPLATE_IDS: &[&str] = &["elegantbook-clasico"];
 static CONFIG_WRITE_OPERATION: Mutex<()> = Mutex::new(());
 
 fn clean(value: &str) -> String {
@@ -116,10 +118,9 @@ const TEMPLATE_CONTRACT_FILES: &[&str] = &["meta.json", "template.md", "skeleton
 /// de que el sistema del usuario ya tenga instaladas clases LaTeX poco
 /// comunes como `elegantbook`, y el PDF generado usa el mismo preámbulo
 /// visual (colores, bloques) que usa la skill para las guías reales.
-pub fn copy_active_template_assets(dest_dir: &std::path::Path) -> Result<(), String> {
-    let template_id = active_template_from_settings();
-    let Some(template_dir) = TEMPLATES.get_dir(&template_id) else {
-        return Ok(());
+pub fn copy_template_assets(template_id: &str, dest_dir: &std::path::Path) -> Result<(), String> {
+    let Some(template_dir) = TEMPLATES.get_dir(template_id) else {
+        return Err(format!("Plantilla desconocida o incompleta: {template_id}"));
     };
     let primary_rgb = active_institution().primary_rgb;
     for file in template_dir.files() {
@@ -140,6 +141,17 @@ pub fn copy_active_template_assets(dest_dir: &std::path::Path) -> Result<(), Str
             .map_err(|error| format!("No se pudo copiar {name} de la plantilla: {error}"))?;
     }
     Ok(())
+}
+
+pub fn template_assets_fingerprint(template_id: &str) -> String {
+    let mut hasher = DefaultHasher::new();
+    if let Some(template_dir) = TEMPLATES.get_dir(template_id) {
+        for file in template_dir.files() {
+            file.path().hash(&mut hasher);
+            file.contents().hash(&mut hasher);
+        }
+    }
+    format!("{:016x}", hasher.finish())
 }
 
 pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
@@ -276,9 +288,12 @@ pub fn save_notebooks(entries: Vec<NotebookEntry>) -> ActionResult {
 }
 
 pub fn list_templates() -> Vec<TemplateMeta> {
-    let mut templates = EMBEDDED_TEMPLATE_IDS
-        .iter()
-        .filter_map(|id| TEMPLATES.get_file(format!("{id}/meta.json")))
+    let mut templates = TEMPLATES
+        .dirs()
+        .filter_map(|dir| {
+            let id = dir.path().file_name()?.to_str()?;
+            TEMPLATES.get_file(format!("{id}/meta.json"))
+        })
         .filter_map(|file| serde_json::from_slice::<TemplateMeta>(file.contents()).ok())
         .filter(|meta| template_exists(&meta.id))
         .collect::<Vec<_>>();
@@ -317,7 +332,12 @@ mod tests {
 
     #[test]
     fn embedded_templates_are_available() {
-        assert!(!list_templates().is_empty(), "expected embedded templates");
+        let ids = list_templates()
+            .into_iter()
+            .map(|template| template.id)
+            .collect::<Vec<_>>();
+        assert!(ids.contains(&"elegantbook-clasico".to_string()));
+        assert!(ids.contains(&"kaohandt-marginal".to_string()));
     }
 }
 
@@ -399,6 +419,12 @@ pub fn setup_status() -> SetupStatus {
 
     SetupStatus {
         skill_installed: skill_is_installed(),
+        skill_current: skill_is_current(),
+        skill_version: installed_skill_version(),
+        available_skill_version: SKILL_VERSION.to_string(),
+        openai_plugin_installed: openai_plugin_is_installed(),
+        openai_plugin_current: openai_plugin_is_current(),
+        openai_plugin_path: openai_plugin_path(),
         mcp_configured: desktop || code,
         mcp_desktop_configured: desktop,
         mcp_claude_code_configured: code,

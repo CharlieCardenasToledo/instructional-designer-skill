@@ -34,8 +34,10 @@ Si `config/institution.json` existe, leerlo antes de redactar. Si `config/notebo
 2. Leer el `README.md` de la raíz del curso. Tratarlo como sílabo canónico.
 3. Validar su estructura con `references/esquema-silabo.md`.
 4. Leer `config/institution.json` si está disponible.
-5. Resolver `activeTemplate` y leer `templates/<activeTemplate>/template.md`.
-6. Pedir únicamente datos ausentes que cambien materialmente el resultado.
+5. Resolver `activeTemplate`.
+6. Leer `meta.json`, `template.md` y `preamble.tex` de la plantilla activa.
+7. Validar `requiredFiles` y copiar esos archivos junto a la guía.
+8. Pedir únicamente datos ausentes que cambien materialmente el resultado.
 
 No solicitar información que el sílabo o la configuración ya proporcionan.
 
@@ -156,6 +158,15 @@ Aplicar Quality Matters:
 - Usar una figura o una tabla comparativa por sección, no ambas, salvo justificación explícita.
 - Mencionar cada figura con `Figura~\ref{...}` en el párrafo previo.
 - Usar los macros y bloques de la plantilla activa; no sustituirlos por formato LaTeX genérico.
+- Encapsular todas las figuras en `guidefigure` y usar
+  `\guidefigurecaption{texto}{fig:clave}`. No usar `figure` ni `\caption`
+  directamente.
+- Encapsular todas las tablas numeradas en `guidetable` y usar
+  `\guidetablecaption{texto}{tab:clave}`. No usar `table` ni `\caption`
+  directamente.
+- Si la plantilla declara `marginNotes`, usar el margen solo para información
+  complementaria. Mantener instrucciones, resultados y criterios esenciales
+  en el flujo principal.
 
 ## Bibliografía
 
@@ -174,7 +185,7 @@ Tratar logos, socios, módulos internacionales y ecosistemas institucionales com
 
 ## Cierre obligatorio
 
-1. Ejecutar `node scripts/latex-linter.js <guia.tex>`.
+1. Ejecutar `node scripts/latex-linter.js <guia.tex> --template <activeTemplate>`.
 2. Compilar con `node scripts/latex-validator.js <guia.tex>` cuando el entorno lo permita.
 3. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
 4. Ejecutar `references/checklist.md` punto por punto.
