@@ -839,6 +839,7 @@ test('Desktop comparte la detección de harnesses con la CLI', async () => {
   assert.match(mock, /manage_harnesses/);
   assert.match(settings, /btn-detect-harnesses/);
   assert.match(settings, /detectAgentHarnesses/);
+  assert.match(settings, /data-harness-operation/);
 });
 
 test('la skill expone contratos de delegación especializados sin duplicar el router', async () => {

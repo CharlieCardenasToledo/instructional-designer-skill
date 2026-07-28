@@ -3,7 +3,7 @@ import {
   configureMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
   installSkill, exportSkillZip, installOpenAIPlugin, exportOpenAIPluginZip,
   pickDirectory, saveNotebooksConfig,
-  resetOnboarding, getSkillPath, extractSitePalette, runSkillTool, detectHarnesses
+  resetOnboarding, getSkillPath, extractSitePalette, runSkillTool, detectHarnesses, manageHarnesses
 } from "../api.js";
 import { state, getNotebooks, saveConfig, saveNotebooks } from "../state.js";
 import { escapeHtml } from "../dom.js";
@@ -316,6 +316,11 @@ export async function renderSettings() {
             <label class="mt-3 block text-xs font-semibold text-app-muted">Proyecto a inspeccionar
               <input id="harness-project-path" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-app-text" placeholder="Dejar vacío para el proyecto actual" autocomplete="off">
             </label>
+            <div class="mt-3 grid gap-2 md:grid-cols-[1fr_150px_auto]">
+              <input id="harness-providers" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-app-text" value="claude,codex,cursor" aria-label="Proveedores separados por coma">
+              <select id="harness-scope" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-app-text" aria-label="Alcance"><option value="project">Proyecto</option><option value="global">Global</option></select>
+              <div class="flex gap-2"><button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-harness-operation="install">Instalar</button><button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-harness-operation="update">Actualizar</button><button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-harness-operation="repair">Reparar</button></div>
+            </div>
             <div id="harness-detection-list" class="mt-3 space-y-2" aria-live="polite">
               <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">Aún no se ha ejecutado la detección.</div>
             </div>
@@ -468,6 +473,7 @@ export async function renderSettings() {
   el.querySelector("#btn-run-toolchain-doctor")?.addEventListener("click", runToolchainDoctor);
   el.querySelector("#btn-run-toolchain-operation")?.addEventListener("click", runToolchainOperation);
   el.querySelector("#btn-detect-harnesses")?.addEventListener("click", detectAgentHarnesses);
+  el.querySelectorAll("[data-harness-operation]").forEach(button => button.addEventListener("click", event => manageAgentHarness(event.currentTarget.dataset.harnessOperation, event)));
   loadSetupStatus();
   loadDeps();
   detectAgentHarnesses();
@@ -964,6 +970,18 @@ async function detectAgentHarnesses(event) {
     } catch (error) {
       list.innerHTML = `<div class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">No se pudo detectar: ${escapeHtml(String(error))}</div>`;
     }
+  });
+}
+
+async function manageAgentHarness(operation, event) {
+  const button = event?.currentTarget || event;
+  const projectPath = document.getElementById("harness-project-path")?.value.trim() || state.courses.find(course => course.project_path)?.project_path || ".";
+  const providers = (document.getElementById("harness-providers")?.value || "claude,codex,cursor").split(",").map(value => value.trim()).filter(Boolean);
+  const scope = document.getElementById("harness-scope")?.value || "project";
+  await runSettingsOperation(button, `harness-${operation}`, `${operation}…`, async () => {
+    const result = await manageHarnesses(operation, projectPath, providers, scope, true);
+    toast(result.message || `${operation} completado.`, result.success ? "success" : "error", 8000);
+    await detectAgentHarnesses();
   });
 }
 
