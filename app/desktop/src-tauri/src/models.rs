@@ -12,6 +12,25 @@ pub struct ActionResult {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct ToolchainReport {
+    pub success: bool,
+    pub message: String,
+    pub operation: String,
+    pub stdout: String,
+    pub stderr: String,
+    pub exit_code: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub report: Option<serde_json::Value>,
+}
+
+impl ToolchainReport {
+    pub fn error(message: impl Into<String>) -> Self {
+        Self { success: false, message: message.into(), operation: String::new(), stdout: String::new(), stderr: String::new(), exit_code: None, report: None }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct PdfProjectRoot {
     pub course_code: String,
     pub course_name: String,

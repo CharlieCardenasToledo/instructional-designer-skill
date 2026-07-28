@@ -564,6 +564,18 @@ test('Configuración protege operaciones asíncronas y el reinicio no promete bo
   assert.match(settings, /window\.location\.reload\(\)/);
 });
 
+test('Configuración ejecuta el diagnóstico de la toolchain mediante un comando Tauri seguro', async () => {
+  const settings = await readFile(new URL('src/pages/settings.js', root), 'utf8');
+  const api = await readFile(new URL('src/api.js', root), 'utf8');
+  const rust = await readFile(new URL('src-tauri/src/lib.rs', root), 'utf8');
+  const toolchain = await readFile(new URL('src-tauri/src/toolchain.rs', root), 'utf8');
+  assert.match(settings, /btn-run-toolchain-doctor/);
+  assert.match(settings, /runSkillTool\("doctor"\)/);
+  assert.match(api, /invoke\("run_skill_tool"/);
+  assert.match(rust, /run_skill_tool/);
+  assert.match(toolchain, /\["doctor", "audit", "validate", "compile"\]/);
+});
+
 test('Plantillas separa selección, vista previa y activación confirmada', async () => {
   const templates = await readFile(new URL('src/pages/templates.js', root), 'utf8');
   assert.match(templates, /compileSyllabusPdf/);

@@ -155,6 +155,10 @@ export async function setActiveTemplate(templateId) {
   return invoke("set_active_template", { templateId });
 }
 
+export async function runSkillTool(operation, target = null, strict = false) {
+  return invoke("run_skill_tool", { operation, target, json: true, strict });
+}
+
 // ── Preview LaTeX local ──────────────────────────────────────────────────
 // ── Diálogos ─────────────────────────────────────────────────────────────
 export async function pickDirectory(title, defaultPath = undefined) {

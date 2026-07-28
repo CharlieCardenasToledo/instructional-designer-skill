@@ -7,6 +7,7 @@ mod palette;
 mod paths;
 mod payload;
 mod pdfs;
+mod toolchain;
 
 use models::{
     ActionResult, DependencyStatus, GeneratedPdf, InstitutionConfig, NotebookEntry,
@@ -290,6 +291,18 @@ async fn set_active_template(template_id: String) -> ActionResult {
     config::set_active_template(template_id)
 }
 
+#[tauri::command]
+async fn run_skill_tool(
+    operation: String,
+    target: Option<String>,
+    json: Option<bool>,
+    strict: Option<bool>,
+) -> models::ToolchainReport {
+    tauri::async_runtime::spawn_blocking(move || toolchain::run(operation, target, json, strict))
+        .await
+        .unwrap_or_else(|error| models::ToolchainReport::error(format!("No se pudo ejecutar la toolchain: {error}")))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -326,6 +339,7 @@ pub fn run() {
             list_templates,
             get_active_template,
             set_active_template,
+            run_skill_tool,
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

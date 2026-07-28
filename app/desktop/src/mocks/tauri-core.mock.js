@@ -224,6 +224,15 @@ const handlers = {
     state.activeTemplateId = templateId;
     return actionResult(true, "Plantilla activada (mock).");
   },
+  run_skill_tool: ({ operation }) => ({
+    success: true,
+    message: `${operation} ejecutado correctamente (mock).`,
+    operation,
+    stdout: JSON.stringify({ tool: "jintia doctor", ok: true }),
+    stderr: "",
+    exitCode: 0,
+    report: { tool: "jintia doctor", ok: true, checks: [] }
+  }),
 };
 
 export async function invoke(cmd, args = {}) {

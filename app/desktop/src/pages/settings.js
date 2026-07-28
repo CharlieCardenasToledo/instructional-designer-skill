@@ -3,7 +3,7 @@ import {
   configureMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
   installSkill, exportSkillZip, installOpenAIPlugin, exportOpenAIPluginZip,
   pickDirectory, saveNotebooksConfig,
-  resetOnboarding, getSkillPath, extractSitePalette
+  resetOnboarding, getSkillPath, extractSitePalette, runSkillTool
 } from "../api.js";
 import { state, getNotebooks, saveConfig, saveNotebooks } from "../state.js";
 import { escapeHtml } from "../dom.js";
@@ -273,6 +273,19 @@ export async function renderSettings() {
             <div class="p-6 text-center text-slate-400">Cargando…</div>
           </div>
           <div id="deps-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
+
+          <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <div>
+                <h3 class="text-sm font-bold text-app-text">Diagnóstico de la toolchain</h3>
+                <p class="mt-1 text-xs text-app-muted">Ejecuta el mismo comando jintia doctor que usa la skill y conserva su reporte.</p>
+              </div>
+              <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-run-toolchain-doctor">
+                <span class="material-symbols-outlined text-sm">health_and_safety</span> Ejecutar diagnóstico
+              </button>
+            </div>
+            <pre id="toolchain-report" class="mt-3 max-h-64 overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-5 text-slate-100" aria-live="polite">Aún no se ha ejecutado.</pre>
+          </div>
         </section>
 
         <!-- ── Preferencias ── -->
@@ -418,6 +431,7 @@ export async function renderSettings() {
 
   // ── Environment ───────────────────────────────────────────────────────────
   el.querySelector("#btn-refresh-deps")?.addEventListener("click", loadDeps);
+  el.querySelector("#btn-run-toolchain-doctor")?.addEventListener("click", runToolchainDoctor);
   loadSetupStatus();
   loadDeps();
 
@@ -849,6 +863,24 @@ async function syncNotebooks(next, button, successMessage) {
 }
 
 // ── Environment ───────────────────────────────────────────────────────────────
+async function runToolchainDoctor(event) {
+  const button = event?.currentTarget;
+  const output = document.getElementById("toolchain-report");
+  if (!output) return;
+  await runSettingsOperation(button, "toolchain-doctor", "Diagnosticando…", async () => {
+    output.textContent = "Ejecutando jintia doctor…";
+    try {
+      const result = await runSkillTool("doctor");
+      const report = result.report || result.stdout || result.message;
+      output.textContent = typeof report === "string" ? report : JSON.stringify(report, null, 2);
+      toast(result.success ? "Diagnóstico completado" : "El diagnóstico encontró problemas", result.success ? "success" : "error", 5000);
+    } catch (error) {
+      output.textContent = `No se pudo ejecutar el diagnóstico: ${error}`;
+      toast("No se pudo ejecutar el diagnóstico", "error", 5000);
+    }
+  });
+}
+
 async function loadSetupStatus() {
   const bar = document.getElementById("setup-status-bar");
   if (!bar) return;
