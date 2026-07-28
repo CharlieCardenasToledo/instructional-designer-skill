@@ -33,6 +33,30 @@ test("init crea una estructura idempotente sin sobrescribir README", () => {
   for (const directory of ["semanas", "bibliografia", "config"]) assert.ok(fs.existsSync(path.join(course, directory)));
 });
 
+test("init --json devuelve el contrato estándar de reportes", () => {
+  const course = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-report-"));
+  const result = run(["init", course, "--code", "IFT200", "--name", "Curso JSON", "--json"]);
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.schemaVersion, "1.0.0");
+  assert.equal(report.tool, "jintia");
+  assert.equal(report.command, "init");
+  assert.equal(report.status, "success");
+  assert.ok(Array.isArray(report.checks));
+  assert.ok(Array.isArray(report.artifacts));
+  assert.deepEqual(report.errors, []);
+});
+
+test("validate --json conserva el contrato estándar cuando falla", () => {
+  const result = run(["validate", path.join(os.tmpdir(), "jintia-no-existe.tex"), "--json"]);
+  assert.notEqual(result.status, 0);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.schemaVersion, "1.0.0");
+  assert.equal(report.command, "validate");
+  assert.equal(report.status, "failed");
+  assert.ok(report.errors.length > 0);
+});
+
 test("syllabus validate detecta el contrato canónico", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-syllabus-"));
   const readme = path.join(root, "README.md");

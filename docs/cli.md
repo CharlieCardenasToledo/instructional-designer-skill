@@ -24,4 +24,7 @@ npx jintia state update ./curso 03 compiled ./curso/semanas/semana-03/README.md
 ```
 
 Los reportes de `audit` admiten `--json` para integraciones de Desktop, CI y
-editores.
+editores. Todos los comandos de la CLI admiten ahora `--json` y devuelven el
+contrato `1.0.0` con `command`, `target`, `status`, `exitCode`, `checks`,
+`artifacts`, `warnings` y `errors`. Cuando el comando produce un reporte propio,
+se conserva dentro de `data`.

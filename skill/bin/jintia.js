@@ -4,6 +4,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
+const { createReport, parseJsonOutput, printReport } = require("../scripts/report");
 
 const ROOT = path.resolve(__dirname, "..");
 const SCRIPTS = path.join(ROOT, "scripts");
@@ -34,14 +35,23 @@ function option(args, name, fallback = null) {
   return index >= 0 ? args[index + 1] || fallback : fallback;
 }
 
-function runScript(script, args) {
-  const result = spawnSync(process.execPath, [path.join(SCRIPTS, script), ...args], {
+function runScript(script, args, command = script.replace(/\.js$/, "")) {
+  const asJson = args.includes("--json");
+  const forwardedArgs = args.filter(arg => arg !== "--json");
+  const childArgs = script === "rules-runner.js" ? args : forwardedArgs;
+  const result = spawnSync(process.execPath, [path.join(SCRIPTS, script), ...childArgs], {
     cwd: process.cwd(),
     encoding: "utf8",
-    stdio: "inherit",
+    stdio: asJson ? "pipe" : "inherit",
     shell: false
   });
   if (result.error) throw result.error;
+  if (asJson) {
+    const output = `${result.stdout || ""}${result.stderr || ""}`;
+    const data = parseJsonOutput(result.stdout);
+    const target = forwardedArgs.find(arg => !arg.startsWith("--")) || null;
+    printReport(createReport({ command, target, exitCode: result.status ?? 1, data, output }));
+  }
   process.exitCode = result.status ?? 1;
 }
 
@@ -62,18 +72,28 @@ function commandExists(command) {
 }
 
 function initCourse(coursePath, args) {
+  const asJson = args.includes("--json");
   const root = path.resolve(coursePath);
   const code = option(args, "--code", path.basename(root).toUpperCase());
   const name = option(args, "--name", path.basename(root));
   const directories = ["semanas", "bibliografia", "config"];
   for (const directory of directories) fs.mkdirSync(path.join(root, directory), { recursive: true });
   const readme = path.join(root, "README.md");
-  if (!fs.existsSync(readme)) {
+  const created = !fs.existsSync(readme);
+  if (created) {
     fs.writeFileSync(readme, `# ${name}\n\n**Asignatura:** ${name}\n**Código:** ${code}\n\n## Semanas\n\nAñade aquí el sílabo canónico con una sección por semana.\n`);
-    console.log(`Creado ${readme}`);
-  } else {
-    console.log(`Conservado ${readme}; no se sobrescribió el sílabo existente.`);
   }
+  if (asJson) {
+    printReport(createReport({
+      command: "init",
+      target: root,
+      checks: [{ name: "course_structure", status: "passed", message: "Estructura Jintia disponible." }],
+      artifacts: [readme, ...directories.map(directory => path.join(root, directory))],
+      data: { createdReadme: created, code, name },
+    }));
+    return;
+  }
+  console.log(created ? `Creado ${readme}` : `Conservado ${readme}; no se sobrescribió el sílabo existente.`);
   console.log(`Estructura Jintia lista en ${root}`);
 }
 
@@ -91,7 +111,7 @@ function doctor(asJson) {
     if (!check.detail && check.command && check.ok) check.detail = check.command;
   }
   const result = { tool: "jintia doctor", version: require(path.join(ROOT, "package.json")).version, checks, ok: checks.every(check => !check.required || check.ok) };
-  if (asJson) console.log(JSON.stringify(result, null, 2));
+  if (asJson) printReport(createReport({ command: "doctor", exitCode: result.ok ? 0 : 1, checks, data: result }));
   else {
     console.log(`Jintia Doctor · ${result.version}`);
     for (const check of checks) console.log(`${check.ok ? "✓" : "✗"} ${check.label}${check.detail ? ` — ${check.detail}` : ""}`);
@@ -105,19 +125,19 @@ function main(argv) {
   if (!command || command === "help" || command === "--help") return usage();
   if (command === "init") return initCourse(subcommand, rest);
   if (command === "doctor") return doctor(argv.includes("--json"));
-  if (command === "audit" || command === "rules") return runScript("rules-runner.js", argv.slice(1));
-  if (command === "state" && subcommand === "update") return runScript("state-manager.js", rest.length ? [subcommand, ...rest] : argv.slice(1));
-  if (command === "hook") return runScript("hook-runner.js", [subcommand, ...rest]);
-  if (command === "validate") return runScript("latex-linter.js", argv.slice(1));
+  if (command === "audit" || command === "rules") return runScript("rules-runner.js", argv.slice(1), command);
+  if (command === "state" && subcommand === "update") return runScript("state-manager.js", rest.length ? [subcommand, ...rest] : argv.slice(1), "state update");
+  if (command === "hook") return runScript("hook-runner.js", [subcommand, ...rest], `hook ${subcommand}`);
+  if (command === "validate") return runScript("latex-linter.js", argv.slice(1), "validate");
   if (command === "compile") {
     const hookStatus = runHook("pre-compile", argv.slice(1));
     if (hookStatus !== 0) { process.exitCode = hookStatus; return; }
-    return runScript("latex-validator.js", argv.slice(1));
+    return runScript("latex-validator.js", argv.slice(1), "compile");
   }
-  if (command === "migrate") return runScript("legacy-manager.js", argv.slice(1));
-  if (command === "syllabus" && subcommand === "validate") return runScript("syllabus-validator.js", rest);
-  if (command === "visual" && subcommand === "render") return runScript("visual-pipeline.js", rest);
-  if (command === "visual" && subcommand === "inspect") return runScript("visual-inspector.js", rest);
+  if (command === "migrate") return runScript("legacy-manager.js", argv.slice(1), "migrate");
+  if (command === "syllabus" && subcommand === "validate") return runScript("syllabus-validator.js", rest, "syllabus validate");
+  if (command === "visual" && subcommand === "render") return runScript("visual-pipeline.js", rest, "visual render");
+  if (command === "visual" && subcommand === "inspect") return runScript("visual-inspector.js", rest, "visual inspect");
   if (["plan", "guide", "assessment"].includes(command)) {
     console.log(`El comando /jintia ${command} es un playbook de la skill. Consulta skill/commands/${command}.md y conserva la salida en el curso.`);
     return;
