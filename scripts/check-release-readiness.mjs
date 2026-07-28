@@ -61,6 +61,8 @@ for (const file of jsonFiles) {
 }
 
 const requiredScripts = [
+  "../bin/jintia.js",
+  "syllabus-validator.js",
   "schema-validator.js",
   "visual-capabilities.js",
   "visual-inspector.js",

@@ -1,9 +1,45 @@
 ---
 name: jintia-skill
 description: Diseña, redacta, edita y valida cursos, guías semanales LaTeX, módulos autoinstruccionales, rúbricas y evaluaciones de educación superior con UDL 3.0, Backward Design, Quality Matters y evidencia verificable mediante NotebookLM.
+allowed-tools:
+  - Bash(node scripts/*)
+  - Bash(node bin/jintia.js *)
+  - Bash(npx jintia *)
+  - Bash(pdflatex *)
+  - Bash(biber *)
 ---
 
 # Jintia Skill — diseño instruccional autoinstruccional basado en evidencia
+
+## Router de operaciones
+
+Jintia es una skill-orquestador: interpreta lenguaje natural y deriva cada
+petición al playbook mínimo. El usuario puede invocar las operaciones
+explícitamente con `/jintia <comando>` o usar lenguaje natural.
+
+| Intención | Operación | Playbook |
+|---|---|---|
+| Preparar un curso o instalación | `init` | `commands/init.md` |
+| Crear o validar el sílabo | `syllabus` | `commands/syllabus.md` |
+| Planificar una semana | `plan` | `commands/plan.md` |
+| Generar o revisar una guía | `guide` | `commands/guide.md` |
+| Diseñar una evaluación | `assessment` | `commands/assessment.md` |
+| Gestionar figuras | `visual` | `commands/visual.md` |
+| Validar sin compilar | `validate` | `commands/validate.md` |
+| Compilar y revisar PDF | `compile` | `commands/compile.md` |
+| Auditar calidad global | `audit` | `commands/audit.md` |
+| Migrar estructuras antiguas | `migrate` | `commands/migrate.md` |
+| Diagnosticar el entorno | `doctor` | `commands/doctor.md` |
+
+Ejemplos de routing:
+
+- “Crea la guía de la semana 3” → `guide`.
+- “Comprueba que todo compile” → `compile`.
+- “¿Qué figura conviene para explicar normalización?” → `visual`.
+- “El proyecto dejó de funcionar después de actualizar” → `doctor`.
+
+La CLI unificada vive en `bin/jintia.js` y reutiliza los scripts deterministas
+de `scripts/`; no duplica la lógica de validación ni de renderizado.
 
 ## Objetivo
 

@@ -3,6 +3,9 @@
   "version": "10.8.0",
   "description": "Jintia Skill for evidence-based self-paced instructional design with LaTeX and NotebookLM",
   "license": "MIT",
+  "bin": {
+    "jintia": "bin/jintia.js"
+  },
   "author": "Charlie Cárdenas Toledo <charlie.act7@gmail.com>",
   "homepage": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
   "repository": {
@@ -23,7 +26,10 @@
     "visual:capabilities": "node scripts/visual-capabilities.js",
     "test": "node scripts/test-runner.js",
     "validate": "node scripts/latex-validator.js",
-    "archive": "node scripts/legacy-manager.js"
+    "archive": "node scripts/legacy-manager.js",
+    "jintia": "node bin/jintia.js",
+    "doctor": "node bin/jintia.js doctor",
+    "syllabus:validate": "node bin/jintia.js syllabus validate"
   },
   "keywords": [
     "instructional-design",
