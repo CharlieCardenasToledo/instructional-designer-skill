@@ -16,6 +16,7 @@ Uso:
   jintia init <curso> [--code CODIGO] [--name NOMBRE]
   jintia syllabus validate <README.md>
   jintia doctor [--json]
+  jintia context <init|read|validate> <curso> [--json]
   jintia audit <README.md|guia.tex> [--json] [--strict]
   jintia state update <curso> <semana> <estado> [archivo-fuente]
   jintia hook post-edit --changed <archivos...>
@@ -38,7 +39,9 @@ function option(args, name, fallback = null) {
 function runScript(script, args, command = script.replace(/\.js$/, "")) {
   const asJson = args.includes("--json");
   const forwardedArgs = args.filter(arg => arg !== "--json");
-  const childArgs = script === "rules-runner.js" ? args : forwardedArgs;
+  const childArgs = script === "rules-runner.js" || script === "context-manager.js"
+    ? [...forwardedArgs, "--json"]
+    : forwardedArgs;
   const result = spawnSync(process.execPath, [path.join(SCRIPTS, script), ...childArgs], {
     cwd: process.cwd(),
     encoding: "utf8",
@@ -125,6 +128,7 @@ function main(argv) {
   if (!command || command === "help" || command === "--help") return usage();
   if (command === "init") return initCourse(subcommand, rest);
   if (command === "doctor") return doctor(argv.includes("--json"));
+  if (command === "context") return runScript("context-manager.js", [subcommand, ...rest], `context ${subcommand}`);
   if (command === "audit" || command === "rules") return runScript("rules-runner.js", argv.slice(1), command);
   if (command === "state" && subcommand === "update") return runScript("state-manager.js", rest.length ? [subcommand, ...rest] : argv.slice(1), "state update");
   if (command === "hook") return runScript("hook-runner.js", [subcommand, ...rest], `hook ${subcommand}`);

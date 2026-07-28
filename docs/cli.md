@@ -21,6 +21,8 @@ de cero cuando encuentra errores que deben bloquear el flujo.
 npx jintia visual render figure/specs/fig-id.json --template elegantbook-clasico
 npx jintia visual inspect figure/manifest.json
 npx jintia state update ./curso 03 compiled ./curso/semanas/semana-03/README.md
+npx jintia context init ./curso
+npx jintia context validate ./curso --json
 ```
 
 Los reportes de `audit` admiten `--json` para integraciones de Desktop, CI y
@@ -28,3 +30,6 @@ editores. Todos los comandos de la CLI admiten ahora `--json` y devuelven el
 contrato `1.0.0` con `command`, `target`, `status`, `exitCode`, `checks`,
 `artifacts`, `warnings` y `errors`. Cuando el comando produce un reporte propio,
 se conserva dentro de `data`.
+
+`JINTIA.md` es un contexto duradero opcional. Conserva decisiones de curso,
+pedagogía y estilo editorial sin reemplazar el `README.md` canónico.

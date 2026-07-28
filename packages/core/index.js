@@ -5,6 +5,8 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 
 const CORE_VERSION = "1.0.0";
+const CONTEXT_FILE = "JINTIA.md";
+const CONTEXT_SECTIONS = ["Course", "Pedagogy", "Editorial"];
 
 function courseRoot(course) {
   if (!course || typeof course !== "string") throw new TypeError("Se requiere la ruta del curso.");
@@ -20,7 +22,30 @@ function coursePaths(course) {
     weeks: path.join(root, "semanas"),
     bibliography: path.join(root, "bibliografia"),
     config: path.join(root, "config"),
+    context: path.join(root, CONTEXT_FILE),
   };
+}
+
+function defaultContext() {
+  return `# Jintia Context\n\n<!-- Datos duraderos del proyecto. No sustituye el README.md canónico. -->\n\n## Course\n\n- Nombre: \n- Código: \n- Periodo: \n- Plantilla: \n\n## Pedagogy\n\n- Perfil del estudiante: \n- Conocimientos previos: \n- Modalidad: \n- Restricciones: \n\n## Editorial\n\n- Idioma: español\n- Terminología: \n- Convenciones de figuras: guidefigure\n- Convenciones de tablas: guidetable\n`;
+}
+
+function initContext(course, overwrite = false) {
+  const paths = coursePaths(course);
+  if (!overwrite && fs.existsSync(paths.context)) return { path: paths.context, created: false };
+  fs.writeFileSync(paths.context, defaultContext());
+  return { path: paths.context, created: true };
+}
+
+function readContext(course) {
+  const paths = coursePaths(course);
+  return { path: paths.context, exists: fs.existsSync(paths.context), content: fs.existsSync(paths.context) ? fs.readFileSync(paths.context, "utf8") : null };
+}
+
+function validateContext(course) {
+  const context = readContext(course);
+  const missing = context.exists ? CONTEXT_SECTIONS.filter(section => !new RegExp(`^##\\s+${section}\\s*$`, "im").test(context.content)) : ["JINTIA.md", ...CONTEXT_SECTIONS];
+  return { valid: missing.length === 0, path: context.path, missing };
 }
 
 function normalizeWeek(week) {
@@ -75,4 +100,4 @@ function readCourse(course) {
   };
 }
 
-module.exports = { CORE_VERSION, courseRoot, coursePaths, normalizeWeek, hashFile, loadCourseState, saveCourseState, updateCourseState, readCourse };
+module.exports = { CORE_VERSION, CONTEXT_FILE, CONTEXT_SECTIONS, courseRoot, coursePaths, initContext, readContext, validateContext, normalizeWeek, hashFile, loadCourseState, saveCourseState, updateCourseState, readCourse };

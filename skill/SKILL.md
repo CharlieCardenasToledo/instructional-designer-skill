@@ -31,6 +31,7 @@ explícitamente con `/jintia <comando>` o usar lenguaje natural.
 | Registrar estado editorial | `state` | `commands/state.md` |
 | Migrar estructuras antiguas | `migrate` | `commands/migrate.md` |
 | Diagnosticar el entorno | `doctor` | `commands/doctor.md` |
+| Leer o validar contexto persistente | `context` | `JINTIA.md` y `packages/core` |
 
 Ejemplos de routing:
 
@@ -80,6 +81,9 @@ Leer únicamente las referencias necesarias para la tarea. Leer siempre `referen
 | Validación final obligatoria | `references/checklist.md` |
 
 Si `config/institution.json` existe, leerlo antes de redactar. Si `config/notebooks.json` existe, usarlo para resolver el notebook del curso. No editar archivos de `references/` para guardar datos del usuario.
+Si `JINTIA.md` existe en la raíz del curso, leer sus secciones `Course`, `Pedagogy`
+y `Editorial` antes de planificar. Mantener el `README.md` como sílabo canónico;
+`JINTIA.md` solo conserva decisiones duraderas y no debe sobrescribirlo.
 
 ## Flujo de trabajo
 

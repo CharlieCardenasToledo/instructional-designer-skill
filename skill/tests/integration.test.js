@@ -40,3 +40,15 @@ test("fixture legado permanece aislado hasta ejecutar una migración explícita"
   assert.deepEqual(state.state.weeks, {});
   assert.equal(fs.existsSync(path.join(course, ".jintia", "state.json")), false);
 });
+
+test("context init es idempotente y context validate exige las secciones duraderas", () => {
+  const course = copyFixture("minimal-course");
+  const init = spawnSync(process.execPath, [cli, "context", "init", course, "--json"], { encoding: "utf8" });
+  assert.equal(init.status, 0, init.stderr);
+  assert.equal(JSON.parse(init.stdout).data.created, true);
+  const second = spawnSync(process.execPath, [cli, "context", "init", course, "--json"], { encoding: "utf8" });
+  assert.equal(JSON.parse(second.stdout).data.created, false);
+  const validation = spawnSync(process.execPath, [cli, "context", "validate", course, "--json"], { encoding: "utf8" });
+  assert.equal(validation.status, 0, validation.stderr);
+  assert.equal(JSON.parse(validation.stdout).data.valid, true);
+});
