@@ -7,6 +7,7 @@ const json = async relative => JSON.parse(await read(relative));
 const failures = [];
 
 const skillPackage = await json("skill/package.json");
+const brand = await json("skill/config/brand.json");
 const claudePlugin = await json("skill/.claude-plugin/plugin.json");
 const openAiPlugin = await json("openai-plugin/.codex-plugin/plugin.json");
 const [payload, appMeta, mock, changelog, skillCheck] = await Promise.all([
@@ -18,6 +19,12 @@ const [payload, appMeta, mock, changelog, skillCheck] = await Promise.all([
 ]);
 
 const expected = skillPackage.version;
+if (brand.brandName !== "Jintia" || brand.linguisticForm !== "Jíntia" || brand.meaning !== "camino" || !brand.disclaimer) {
+  failures.push("La versión no puede publicarse porque la atribución del origen del nombre Jintia está ausente o es inconsistente.");
+}
+if (!brand.sources?.some(source => /Aarma jintia/i.test(source.claim || "") && source.page === 106)) {
+  failures.push("brand.json no contiene la fuente institucional de Aarma jintia con página 106.");
+}
 const checks = [
   ["Claude plugin", claudePlugin.version],
   ["ChatGPT/Codex plugin", openAiPlugin.version],
@@ -42,6 +49,9 @@ if (!skillCheck.scripts?.["skill:check"]?.includes("visual-pipeline.js")) {
 }
 if (!skillCheck.scripts?.["skill:check"]?.includes("test-runner.js")) {
   failures.push("skill:check no cubre test-runner.js");
+}
+if (!skillCheck.scripts?.["skill:check"]?.includes("brand-validator.js")) {
+  failures.push("skill:check no cubre brand-validator.js");
 }
 
 const jsonFiles = [
@@ -75,6 +85,7 @@ const requiredScripts = [
   "visual-selector.js",
   "visual-source-generator.js",
   "test-runner.js"
+  ,"brand-validator.js"
 ];
 for (const script of requiredScripts) {
   try {
@@ -82,6 +93,13 @@ for (const script of requiredScripts) {
   } catch {
     failures.push(`Falta skill/scripts/${script}`);
   }
+}
+
+for (const file of ["README.md", "README.en.md", "docs/brand-guidelines.md", "app/desktop/src/pages/about.js"]) {
+  try {
+    const content = await read(file);
+    if (!content.includes("Jíntia") || !content.includes("Aarma jintia")) failures.push(`${file} no contiene la atribución del origen de Jintia`);
+  } catch { failures.push(`Falta ${file}`); }
 }
 
 try {
