@@ -54,9 +54,19 @@ jobs:
         shell: pwsh
         run: |
           choco install graphviz plantuml d2 miktex --yes --no-progress
-          [Environment]::GetEnvironmentVariable("Path", "Machine").Split(";") |
-            Where-Object { $_ } |
+          $pathEntries = [Environment]::GetEnvironmentVariable("Path", "Machine").Split(";") |
+            Where-Object { $_ }
+          $pathEntries += "C:\ProgramData\chocolatey\bin"
+          $d2Files = Get-ChildItem -LiteralPath "$env:ChocolateyInstall\lib" -Filter "d2.exe" -Recurse -File -ErrorAction SilentlyContinue
+          $pathEntries += $d2Files | ForEach-Object { $_.DirectoryName }
+          $pathEntries |
+            Sort-Object -Unique |
             Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          $env:Path = (($pathEntries + $env:Path) -join ";")
+          if (-not (Get-Command d2.exe -ErrorAction SilentlyContinue)) {
+            throw "D2 quedó instalado, pero no está disponible en PATH."
+          }
+          d2 version
 
       - name: Install D2 (Linux)
         if: runner.os == 'Linux'

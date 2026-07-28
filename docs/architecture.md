@@ -58,7 +58,22 @@ de dependencias y las operaciones de GitHub.
 ## Decisiones canónicas
 
 - README principal en español y traducción inglesa separada.
-- Una plantilla embebida: `elegantbook-clasico`.
+- Catálogo de plantillas embebidas: `elegantbook-clasico` y
+  `kaohandt-marginal`. La plantilla activa se conserva en la configuración
+  institucional y se aplica al generar o compilar documentos.
 - Archivo semanal: `guia-semana-XX.tex`.
 - NotebookLM MCP: `@charlie.act7/gemini-notebook-mcp@2.0.0`.
 - La configuración generada debe validar contra los esquemas de `skill/config`.
+
+## Versionado
+
+La skill y la aplicación se versionan de forma independiente:
+
+- `skill/package.json` contiene la versión distribuible de `jintia-skill`
+  (`10.8.0` en la versión actual).
+- `package.json`, `app/desktop/package.json` y Tauri contienen la versión de
+  la aplicación (`1.0.0` en la versión actual).
+
+Esta separación permite actualizar el paquete de instrucciones sin obligar a
+publicar una nueva aplicación de escritorio, o actualizar la aplicación sin
+cambiar el contenido de la skill.
