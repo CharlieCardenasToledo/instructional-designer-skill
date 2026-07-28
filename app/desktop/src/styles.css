@@ -6,12 +6,20 @@
 
 @theme {
   --font-sans: Inter, "Segoe UI", system-ui, sans-serif;
-  --color-brand: #0f766e;
-  --color-brand-hover: #115e59;
-  --color-brand-soft: rgba(15, 118, 110, 0.08);
-  --color-app-bg: #eef2f4;
-  --color-app-text: #111827;
-  --color-app-muted: #6b7280;
+  --color-brand-950: #0d1b2a;
+  --color-brand-900: #132a43;
+  --color-brand-700: #0f7f86;
+  --color-brand-600: #0fa3a3;
+  --color-brand-500: #18b6ad;
+  --color-brand: #0fa3a3;
+  --color-brand-hover: #0f7f86;
+  --color-brand-soft: rgba(15, 163, 163, 0.10);
+  --color-path-600: #1fae6d;
+  --color-path-500: #34c37a;
+  --color-path-100: #dff7e9;
+  --color-app-bg: #f1f4f6;
+  --color-app-text: #0d1b2a;
+  --color-app-muted: #64748b;
   --color-surface: #f8fafc;
   --color-surface-raised: #ffffff;
   --color-control-tint: rgba(255, 255, 255, 0.58);
@@ -37,18 +45,28 @@
 /* ── Design system: contenido sólido + Liquid Glass en controles ── */
 
 :root {
+  /* Tipografía: roles y familias */
+  --font-display: Syne, 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-body:    Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font:         var(--font-body);
+
   /* Colores de acento */
-  --teal:        #0f766e;
-  --teal-hover:  #115e59;
-  --teal-glow:   rgba(15,118,110,0.18);
-  --teal-border: rgba(15,118,110,0.28);
-  --teal-dim:    rgba(15,118,110,0.08);
+  --brand:       #0d1b2a;
+  --brand-hover: #132a43;
+  --accent:      #0fa3a3;
+  --accent-hover:#0f7f86;
+  --progress:    #34c37a;
+  --teal:        #0fa3a3;
+  --teal-hover:  #0f7f86;
+  --teal-glow:   rgba(15,163,163,0.18);
+  --teal-border: rgba(15,163,163,0.28);
+  --teal-dim:    rgba(15,163,163,0.08);
 
   /* Texto */
-  --text:   #111827;
-  --text-2: #374151;
-  --muted:  #6b7280;
-  --dim:    #9ca3af;
+  --text:   #0d1b2a;
+  --text-2: #334155;
+  --muted:  #64748b;
+  --dim:    #94a3b8;
 
   /* Superficies sólidas y estados */
   --surface-raised: #ffffff;
@@ -58,9 +76,9 @@
   --control-active: rgba(15,118,110,0.08);
 
   /* Estados */
-  --green:      #4ade80;
-  --green-bg:   rgba(74,222,128,0.12);
-  --green-border: rgba(74,222,128,0.3);
+  --green:      #34c37a;
+  --green-bg:   rgba(52,195,122,0.12);
+  --green-border: rgba(52,195,122,0.3);
   --red:        #f87171;
   --red-bg:     rgba(248,113,113,0.12);
   --red-border: rgba(248,113,113,0.3);
@@ -70,7 +88,6 @@
   /* Sombras */
   --shadow-sm:    0 2px 8px rgba(15,23,42,0.08);
 
-  --font:   'Segoe UI', system-ui, -apple-system, sans-serif;
   --radius: 10px;
   --radius-lg: 14px;
   --titlebar-h: 34px;
@@ -87,6 +104,65 @@ body {
   overflow: hidden;
   height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Typographic roles: display (Syne) for hierarchy, body (Inter) for content */
+h1, h2, h3, [role="heading"] {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* Page titles and section headings */
+#topbar-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.title-large {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.title-medium {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* Body and labels remain Inter */
+body, p, span, label, button {
+  font-family: var(--font-body);
+}
+
+code, pre {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 11px;
 }
 
 /* Capas ambientales sólidas: crean profundidad para el vidrio sin degradados. */
