@@ -358,12 +358,12 @@ function renderMoreMenu(index, course) {
 
 function renderEmptyState() {
   return `
-    <div class="flex min-h-[360px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+    <div class="${cx(ui.surface.cardGlass, 'flex min-h-[360px] flex-col items-center justify-center p-8 text-center')}">
       <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand">
         <span class="material-symbols-outlined text-[32px]" aria-hidden="true">school</span>
       </div>
-      <h3 class="text-base font-bold text-app-text">Crea tu primera asignatura</h3>
-      <p class="mt-2 max-w-[420px] text-sm leading-6 text-app-muted">Registra la información académica, prepara la estructura del proyecto y comienza el sílabo semanal.</p>
+      <h3 class="title-medium text-app-text">Crea tu primera asignatura</h3>
+      <p class="mt-3 max-w-[420px] text-sm leading-6 text-app-muted">Registra la información académica, prepara la estructura del proyecto y comienza el sílabo semanal con guías validadas pedagógicamente.</p>
       <button type="button" class="${cx(ui.button.base, ui.button.primary, 'mt-5 min-h-11')}" id="btn-empty-new-course">
         <span class="material-symbols-outlined text-[17px]" aria-hidden="true">add</span>Nueva asignatura
       </button>
@@ -372,10 +372,10 @@ function renderEmptyState() {
 
 function renderNoResults() {
   return `
-    <div class="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+    <div class="${cx(ui.surface.cardGlass, 'flex min-h-[300px] flex-col items-center justify-center p-8 text-center')}">
       <span class="material-symbols-outlined text-[38px] text-slate-400" aria-hidden="true">search_off</span>
-      <h3 class="mt-3 text-base font-bold text-app-text">No encontramos asignaturas</h3>
-      <p class="mt-1 text-sm text-app-muted">Prueba con otro término o elimina los filtros actuales.</p>
+      <h3 class="title-medium mt-3 text-app-text">No encontramos asignaturas</h3>
+      <p class="mt-2 text-sm text-app-muted">Prueba con otro término de búsqueda o elimina los filtros actuales.</p>
       <button type="button" class="${cx(ui.button.base, ui.button.secondary, 'mt-4 min-h-11')}" id="courses-clear-filters">Limpiar búsqueda y filtros</button>
     </div>`;
 }
