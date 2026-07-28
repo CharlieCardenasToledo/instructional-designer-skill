@@ -84,10 +84,10 @@ function renderShell() {
           <div id="topbar-sub" class="text-[11px] text-slate-500"></div>
         </div>
         <div class="flex items-center gap-1">
-          <div class="${cx(ui.liquid.group, 'flex items-center gap-0.5 p-0.5')}" role="group" aria-label="Controles de ventana">
-            <button class="${ui.windowControl.base}" id="app-win-minimize" aria-label="Minimizar" title="Minimizar">${ic("minus", 16)}</button>
-            <button class="${ui.windowControl.base}" id="app-win-maximize" aria-label="Maximizar o restaurar" title="Maximizar o restaurar">${ic("square", 14)}</button>
-            <button class="${cx(ui.windowControl.base, ui.windowControl.close)}" id="app-win-close" aria-label="Cerrar" title="Cerrar">${ic("x", 16)}</button>
+          <div class="${cx(ui.liquid.group, 'flex items-center gap-0.5 p-1')}" role="group" aria-label="Controles de ventana">
+            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-600 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-minimize" aria-label="Minimizar" title="Minimizar">${ic("minus", 16)}</button>
+            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-600 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-maximize" aria-label="Maximizar o restaurar" title="Maximizar o restaurar">${ic("square", 14)}</button>
+            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-600 transition hover:border-red-300/70 hover:bg-red-500/85 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-close" aria-label="Cerrar" title="Cerrar">${ic("x", 16)}</button>
           </div>
         </div>
       </header>

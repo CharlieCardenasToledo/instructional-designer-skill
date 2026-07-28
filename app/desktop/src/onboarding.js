@@ -839,7 +839,7 @@ function profileStep() {
   const sectionHeading = (index, title) => `
     <div class="flex items-center gap-2 mb-2">
       <span class="flex-shrink-0 w-5 h-5 rounded-full bg-gray-900 text-white text-[10px] font-bold flex items-center justify-center">${index}</span>
-      <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-500">${title}</h3>
+      <h2 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-500">${title}</h2>
       <span class="text-[10px] text-gray-300 font-medium ml-auto">${index} / 3</span>
     </div>`;
 
