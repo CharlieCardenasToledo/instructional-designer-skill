@@ -1,0 +1,11 @@
+# `/jintia state`
+
+Registra el estado editorial de una semana sin sobrescribir el contenido del
+curso:
+
+```bash
+npx jintia state update ./curso 03 compiled ./curso/semanas/semana-03/README.md
+```
+
+La salida se guarda en `curso/.jintia/state.json` e incluye fecha y hash de la
+fuente cuando se proporciona.

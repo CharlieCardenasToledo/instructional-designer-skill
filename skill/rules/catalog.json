@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "rules": [
+    { "id": "JIN-SYL-001", "category": "syllabus", "severity": "error", "description": "El sílabo debe declarar un resultado de aprendizaje." },
+    { "id": "JIN-SYL-002", "category": "syllabus", "severity": "error", "description": "El sílabo debe contener al menos una semana canónica." },
+    { "id": "JIN-BIB-003", "category": "bibliography", "severity": "warning", "description": "Toda clave citada en LaTeX debería existir en reference.bib." },
+    { "id": "JIN-LTX-006", "category": "latex", "severity": "warning", "description": "Toda figura debe tener una referencia previa en el texto." },
+    { "id": "JIN-ACC-002", "category": "accessibility", "severity": "warning", "description": "Toda figura debe conservar caption y texto alternativo." },
+    { "id": "JIN-TMP-003", "category": "template", "severity": "error", "description": "La guía debe declarar una clase de documento compatible." }
+  ]
+}

@@ -15,6 +15,8 @@ Uso:
   jintia init <curso> [--code CODIGO] [--name NOMBRE]
   jintia syllabus validate <README.md>
   jintia doctor [--json]
+  jintia audit <README.md|guia.tex> [--json] [--strict]
+  jintia state update <curso> <semana> <estado> [archivo-fuente]
   jintia validate <guia.tex> [--template ID]
   jintia compile <guia.tex>
   jintia visual render <spec.json> --template ID [--guide guia.tex]
@@ -94,13 +96,15 @@ function main(argv) {
   if (!command || command === "help" || command === "--help") return usage();
   if (command === "init") return initCourse(subcommand, rest);
   if (command === "doctor") return doctor(argv.includes("--json"));
+  if (command === "audit" || command === "rules") return runScript("rules-runner.js", argv.slice(1));
+  if (command === "state" && subcommand === "update") return runScript("state-manager.js", rest.length ? [subcommand, ...rest] : argv.slice(1));
   if (command === "validate") return runScript("latex-linter.js", argv.slice(1));
   if (command === "compile") return runScript("latex-validator.js", argv.slice(1));
   if (command === "migrate") return runScript("legacy-manager.js", argv.slice(1));
   if (command === "syllabus" && subcommand === "validate") return runScript("syllabus-validator.js", rest);
   if (command === "visual" && subcommand === "render") return runScript("visual-pipeline.js", rest);
   if (command === "visual" && subcommand === "inspect") return runScript("visual-inspector.js", rest);
-  if (["plan", "guide", "assessment", "audit"].includes(command)) {
+  if (["plan", "guide", "assessment"].includes(command)) {
     console.log(`El comando /jintia ${command} es un playbook de la skill. Consulta skill/commands/${command}.md y conserva la salida en el curso.`);
     return;
   }

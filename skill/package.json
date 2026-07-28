@@ -29,7 +29,9 @@
     "archive": "node scripts/legacy-manager.js",
     "jintia": "node bin/jintia.js",
     "doctor": "node bin/jintia.js doctor",
-    "syllabus:validate": "node bin/jintia.js syllabus validate"
+    "syllabus:validate": "node bin/jintia.js syllabus validate",
+    "audit": "node bin/jintia.js audit",
+    "state": "node bin/jintia.js state update"
   },
   "keywords": [
     "instructional-design",

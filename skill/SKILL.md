@@ -28,6 +28,7 @@ explícitamente con `/jintia <comando>` o usar lenguaje natural.
 | Validar sin compilar | `validate` | `commands/validate.md` |
 | Compilar y revisar PDF | `compile` | `commands/compile.md` |
 | Auditar calidad global | `audit` | `commands/audit.md` |
+| Registrar estado editorial | `state` | `commands/state.md` |
 | Migrar estructuras antiguas | `migrate` | `commands/migrate.md` |
 | Diagnosticar el entorno | `doctor` | `commands/doctor.md` |
 
