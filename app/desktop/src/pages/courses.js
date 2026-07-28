@@ -5,6 +5,7 @@ import { toast } from "../toast.js";
 import { navigate } from "../router.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
 import { ui, cx } from "../uiClasses.js";
+import { ic } from "../icons.js";
 
 let _filter = "";
 let _statusFilter = "all";
@@ -142,10 +143,10 @@ export function renderCourses() {
       <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" aria-labelledby="courses-summary-title">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 id="courses-summary-title" class="text-base font-extrabold text-app-text">Tus proyectos académicos</h2>
-            <p class="mt-1 text-xs text-app-muted">Continúa el sílabo, prepara archivos o crea una nueva asignatura.</p>
+            <h2 id="courses-summary-title" class="text-xl font-bold leading-7 text-brand-950">Tus caminos de aprendizaje</h2>
+            <p class="mt-1 text-sm leading-5 text-slate-500">Organiza asignaturas, sílabos, semanas y materiales.</p>
             <p class="mt-2 inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-800">
-              <span class="material-symbols-outlined text-[15px]" aria-hidden="true">auto_awesome</span>
+              ${ic("sparkles", 15)}
               Usa tu skill con Claude, ChatGPT y Codex
             </p>
           </div>
@@ -160,10 +161,10 @@ export function renderCourses() {
       <section class="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center" aria-label="Buscar y filtrar asignaturas">
         <div class="relative min-w-0 flex-1">
           <label for="courses-search-input" class="sr-only">Buscar asignaturas</label>
-          <span class="material-symbols-outlined pointer-events-none absolute inset-y-0 left-3 flex items-center text-lg text-app-muted" aria-hidden="true">search</span>
+          <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500" aria-hidden="true">${ic("search", 18)}</span>
           <input class="h-11 pl-10 pr-10" id="courses-search-input" type="search" placeholder="Buscar por código, nombre o período" value="${escapeHtml(_filter)}">
           <button type="button" class="${_filter ? "flex" : "hidden"} absolute inset-y-0 right-1 h-11 w-11 items-center justify-center rounded-full text-app-muted hover:text-app-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" id="courses-clear-search" aria-label="Limpiar búsqueda">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">close</span>
+            <span class="text-[18px]">${ic("x", 18)}</span>
           </button>
         </div>
         <div class="grid grid-cols-2 gap-2 sm:flex">
@@ -182,7 +183,7 @@ export function renderCourses() {
           </select>
         </div>
         <button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11 shrink-0')}" id="btn-new-course">
-          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">add</span>
+          ${ic("plus", 17)}
           Nueva asignatura
         </button>
       </section>
@@ -308,7 +309,7 @@ function renderDesktopRow({ course, index, progress }) {
 function renderCourseCard({ course, index, progress }) {
   const status = statusView(progress);
   return `
-    <article class="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article class="${cx(ui.surface.cardGlass, 'flex min-w-0 flex-col p-4')}">
       <div class="flex min-w-0 items-center gap-3">
         ${projectBadge(course)}
         <button type="button" class="min-w-0 flex-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="edit" data-index="${index}">
