@@ -1,0 +1,9 @@
+{
+  "name": "@jintia/brand",
+  "version": "1.0.0",
+  "description": "Identidad verbal y atribución lingüística de Jintia",
+  "type": "commonjs",
+  "main": "index.js",
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" }
+}

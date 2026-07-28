@@ -1,0 +1,37 @@
+{
+  "$schemaVersion": "1.0.0",
+  "brandName": "Jintia",
+  "linguisticForm": "Jíntia",
+  "language": "Shuar Chicham",
+  "meaning": "camino",
+  "tagline": "Diseña el camino del aprendizaje.",
+  "originSummary": "Jintia toma su nombre de Jíntia, palabra registrada en Shuar Chicham con el significado de camino.",
+  "educationalConnection": "La expresión Aarma jintia se emplea en el Currículo Nacional Intercultural Bilingüe de la Nacionalidad Shuar para referirse a textos instructivos.",
+  "disclaimer": "El uso del nombre no implica representación, aprobación ni vinculación institucional con comunidades u organizaciones del pueblo Shuar.",
+  "commercialSpelling": "Jintia",
+  "attributionSpelling": "Jíntia",
+  "prohibitedClaims": [
+    "Jíntia es un símbolo ceremonial",
+    "Jintia representa oficialmente al pueblo Shuar",
+    "El nombre fue aprobado por comunidades u organizaciones Shuar",
+    "Jíntia es el nombre documentado de una pintura facial de viaje"
+  ],
+  "sources": [
+    {
+      "claim": "Jíntia significa camino",
+      "title": "Chicham: Diccionario shuar-castellano",
+      "authors": ["Siro M. Pellizzaro", "Fausto Oswaldo Náwech"],
+      "year": 2005,
+      "quote": "Jíntia ... camino.",
+      "page": null
+    },
+    {
+      "claim": "Aarma jintia se traduce como textos instructivos",
+      "title": "Currículo Nacional Intercultural Bilingüe de la Nacionalidad Shuar",
+      "institution": "Ministerio de Educación del Ecuador",
+      "year": 2017,
+      "page": 106,
+      "quote": "Aarma jintia ... Textos instructivos"
+    }
+  ]
+}
