@@ -10,7 +10,7 @@ Desktop application and skill for turning a university syllabus into a
 connected path of outcomes, content, activities, assessments, and
 publication-ready weekly learning guides.
 
-[![Version](https://img.shields.io/badge/version-10.7.0-00796b.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-10.8.0-00796b.svg)](CHANGELOG.md)
 [![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![macOS](https://img.shields.io/badge/macOS-DMG-111827.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)
@@ -117,7 +117,7 @@ practices.
 
 ### Recommended: desktop application
 
-Direct downloads for version 10.7.0:
+Direct downloads for version 10.8.0:
 
 | Platform | Installer | Download |
 |---|---|---|

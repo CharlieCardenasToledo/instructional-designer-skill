@@ -3,6 +3,19 @@
 Este archivo sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/)
 y versionado semántico.
 
+## Sin publicar
+
+- Preparada `jintia-skill` 10.8.0 con un pipeline visual único que renderiza,
+  inspecciona, valida, actualiza el manifiesto y entrega el bloque LaTeX.
+- Implementados fallbacks ejecutables para Matplotlib, GeoPandas y TikZ, más
+  generadores PlantUML, Circuitikz, Chemfig y Forest desde modelos neutrales.
+- Ampliados los gráficos Vega-Lite, las métricas de complejidad, la captura
+  selectiva de HTML y la conversión segura de SVG a PDF.
+- Endurecidos accesibilidad, procedencia, tablas equivalentes, contraste por
+  series, plantillas y pruebas recursivas multiplataforma.
+- Extendida la matriz real de motores para comprobar Graphviz, Mermaid,
+  PlantUML, D2, Vega-Lite, LaTeX, Python, Chrome y WaveDrom.
+
 ## 10.7.0 — 2026-07-28
 
 ### Añadido

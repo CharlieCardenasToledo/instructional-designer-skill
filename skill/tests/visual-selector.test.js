@@ -6,13 +6,15 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
-const { selectEngine, candidatesFor } = require("../scripts/visual-selector");
-const { validateSpec, latexBlock } = require("../scripts/visual-renderer");
+const { selectEngine, candidatesFor, analyzeModel } = require("../scripts/visual-selector");
+const { validateSpec, latexBlock, prepareHtmlCapture } = require("../scripts/visual-renderer");
 const { detectCapabilities } = require("../scripts/visual-capabilities");
 const { inspectFile } = require("../scripts/visual-inspector");
 const { hashes } = require("../scripts/visual-regression");
 const {
-  graphviz, mermaid, d2, vegaLite, forestPlot, geoMap, wavedrom, rdkit
+  graphviz, mermaid, d2, vegaLite, forestPlot, geoMap, wavedrom, rdkit,
+  matplotlib, geopandas, tikz, canGenerateFromModel,
+  plantuml, circuitikz, chemfig, forest
 } = require("../scripts/visual-source-generator");
 const { expandProgressive } = require("../scripts/visual-progressive");
 const { encodePng, decodePng, comparePng } = require("../scripts/png-compare");
@@ -27,17 +29,17 @@ test("elige Graphviz para redes y Mermaid para flujos simples", () => {
   assert.equal(selectEngine({ representation: "flowchart", complexity: "low" }), "mermaid");
 });
 
-test("elige DAGitty para causalidad y declara fallback semántico", () => {
-  assert.equal(selectEngine({ representation: "causal-diagram" }), "dagitty");
-  assert.deepEqual(candidatesFor({ representation: "causal-diagram" }), ["dagitty", "graphviz", "tikz"]);
+test("elige Graphviz para causalidad y conserva solo fallbacks ejecutables", () => {
+  assert.equal(selectEngine({ representation: "causal-diagram" }), "graphviz");
+  assert.deepEqual(candidatesFor({ representation: "causal-diagram" }), ["graphviz", "mermaid", "tikz"]);
 });
 
 test("la notación formal no se degrada a un motor distinto", () => {
   assert.deepEqual(candidatesFor({
     representation: "causal-diagram",
     formalNotationRequired: true,
-    engine: "dagitty"
-  }), ["dagitty"]);
+    engine: "graphviz"
+  }), ["graphviz"]);
 });
 
 test("respeta notación disciplinar formal", () => {
@@ -84,6 +86,7 @@ test("la especificación exige accesibilidad y tabla para gráficos", () => {
     pedagogicalIntent: "quantify",
     representation: "chart",
     altText: "Las barras muestran un aumento sostenido por categoría.",
+    provenance: "original",
     dataTable: "data/resultados.csv",
     source: { content: "{}" }
   }), []);
@@ -92,6 +95,7 @@ test("la especificación exige accesibilidad y tabla para gráficos", () => {
     pedagogicalIntent: "quantify",
     representation: "chart",
     altText: "Las barras comparan dos categorías con valores diferentes.",
+    provenance: "original",
     model: { categories: ["A", "B"], values: [2, 5] }
   }), []);
 });
@@ -106,6 +110,7 @@ test("el renderer genera una tabla CSV accesible desde el modelo", () => {
     pedagogicalIntent: "quantify",
     representation: "chart",
     altText: "Las barras comparan cinco y siete casos entre dos regiones.",
+    provenance: "original",
     model: { categories: ["Norte", "Sur"], values: [5, 7] }
   }));
   const renderer = path.resolve(__dirname, "..", "scripts", "visual-renderer.js");
@@ -150,6 +155,99 @@ test("genera Vega-Lite con eje cero y datos embebidos", () => {
   }, "Comparación de casos."));
   assert.deepEqual(spec.data.values, [{ category: "A", value: 2 }, { category: "B", value: 5 }]);
   assert.equal(spec.encoding.y.scale.zero, true);
+});
+
+test("genera líneas, histogramas y mapas de calor en Vega-Lite", () => {
+  const line = JSON.parse(vegaLite({
+    chartType: "line",
+    data: [{ periodo: 1, valor: 4 }, { periodo: 2, valor: 7 }],
+    xField: "periodo",
+    yField: "valor"
+  }, "Serie temporal."));
+  assert.equal(line.mark.type, "line");
+  assert.equal(line.encoding.x.field, "periodo");
+  const histogram = JSON.parse(vegaLite({
+    chartType: "histogram",
+    data: [{ valor: 4 }, { valor: 7 }],
+    xField: "valor"
+  }, "Distribución."));
+  assert.equal(histogram.encoding.x.bin, true);
+  const heatmap = JSON.parse(vegaLite({
+    chartType: "heatmap",
+    data: [{ fila: "A", columna: "B", valor: 2 }],
+    xField: "columna",
+    yField: "fila",
+    valueField: "valor"
+  }, "Matriz."));
+  assert.equal(heatmap.mark.type, "rect");
+  assert.equal(heatmap.encoding.color.field, "valor");
+});
+
+test("mide complejidad estructural antes de seleccionar el motor", () => {
+  const metrics = analyzeModel({
+    model: {
+      nodes: [{ id: "a", label: "Inicio principal" }, { id: "b", label: "Resultado final" }],
+      edges: [{ from: "a", to: "b" }]
+    }
+  });
+  assert.equal(metrics.nodeCount, 2);
+  assert.equal(metrics.edgeCount, 1);
+  assert.ok(metrics.averageLabelWords >= 2);
+});
+
+test("genera fallbacks reales de Matplotlib, GeoPandas y TikZ", () => {
+  const chart = { categories: ["A", "B"], values: [2, 5], chartType: "line" };
+  assert.match(matplotlib(chart, { representation: "chart" }), /ax\.plot/);
+  assert.match(tikz(chart, { representation: "chart" }), /\\begin\{axis\}/);
+  assert.match(geopandas({
+    valueField: "casos",
+    geojson: { type: "FeatureCollection", features: [] }
+  }), /GeoDataFrame\.from_features/);
+  assert.equal(canGenerateFromModel("matplotlib", "chart"), true);
+  assert.equal(canGenerateFromModel("matplotlib", "map"), false);
+});
+
+test("genera notaciones disciplinares desde modelos neutrales", () => {
+  assert.match(plantuml({
+    diagramType: "class",
+    nodes: [{ id: "curso", label: "Curso" }, { id: "unidad", label: "Unidad" }],
+    edges: [{ from: "curso", to: "unidad", label: "contiene" }]
+  }), /@startuml[\s\S]*curso --> unidad/);
+  assert.match(circuitikz({
+    components: [{ id: "r1", type: "resistor", from: [0, 0], to: [2, 0], value: "10 kΩ" }]
+  }), /to\[R,l=\{10 kΩ\}\]/);
+  assert.match(chemfig({ formula: "H-O-H" }), /\\chemfig\{H-O-H\}/);
+  assert.match(forest({
+    nodes: [
+      { id: "s", label: "S" },
+      { id: "np", label: "NP", parent: "s" },
+      { id: "vp", label: "VP", parent: "s" }
+    ]
+  }), /\[S \[NP \] \[VP \]\]/);
+});
+
+test("la plantilla rechaza placements que no soporta", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-template-"));
+  const specs = path.join(root, "figure", "specs");
+  fs.mkdirSync(specs, { recursive: true });
+  const specPath = path.join(specs, "fig-margen.json");
+  fs.writeFileSync(specPath, JSON.stringify({
+    id: "fig-margen",
+    pedagogicalIntent: "relate",
+    representation: "network",
+    placement: "margin",
+    altText: "La red muestra relaciones principales entre tres conceptos.",
+    model: {
+      nodes: [{ id: "a", label: "A" }, { id: "b", label: "B" }],
+      edges: [{ from: "a", to: "b" }]
+    }
+  }));
+  const renderer = path.resolve(__dirname, "..", "scripts", "visual-renderer.js");
+  const result = spawnSync(process.execPath, [
+    renderer, "--spec", specPath, "--template", "elegantbook-clasico", "--dry-run"
+  ], { encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /no admite figuras marginales/);
 });
 
 test("genera un adaptador RDKit reproducible desde SMILES", () => {
@@ -236,6 +334,16 @@ test("rechaza dependencias remotas en figuras HTML", () => {
   assert.ok(errors.some(error => error.includes("autosuficiente")));
 });
 
+test("prepara la captura de un elemento HTML específico", () => {
+  const html = prepareHtmlCapture(
+    "<main><section id=\"objetivo\">Contenido</section><aside>Excluir</aside></main>",
+    { selector: "#objetivo", width: 640, height: 360 }
+  );
+  assert.match(html, /querySelector\(c\.selector\)/);
+  assert.match(html, /replaceChildren\(clone\)/);
+  assert.match(html, /"width":640/);
+});
+
 test("genera el bloque LaTeX portable", () => {
   const block = latexBlock({
     rendered: "rendered/fig-red.pdf",
@@ -267,6 +375,36 @@ test("el modo dry-run crea fuente y manifiesto sin fingir renderizado", () => {
   assert.equal(manifest.figures[0].status, "planned");
   assert.ok(fs.existsSync(path.join(root, "figure", manifest.figures[0].source)));
   assert.ok(!fs.existsSync(path.join(root, "figure", manifest.figures[0].rendered)));
+});
+
+test("el pipeline completo funciona con ambas plantillas", {
+  skip: !detectCapabilities().tools.graphviz.available
+}, () => {
+  for (const template of ["elegantbook-clasico", "kaohandt-marginal"]) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), `jintia-pipeline-${template}-`));
+    const specs = path.join(root, "figure", "specs");
+    fs.mkdirSync(specs, { recursive: true });
+    const specPath = path.join(specs, "fig-ruta.json");
+    fs.writeFileSync(specPath, JSON.stringify({
+      id: "fig-ruta",
+      pedagogicalIntent: "relate",
+      representation: "network",
+      engine: "graphviz",
+      altText: "La red conecta el objetivo formativo con su evidencia observable.",
+      model: {
+        nodes: [{ id: "objetivo", label: "Objetivo" }, { id: "evidencia", label: "Evidencia" }],
+        edges: [{ from: "objetivo", to: "evidencia" }]
+      }
+    }));
+    const pipeline = path.resolve(__dirname, "..", "scripts", "visual-pipeline.js");
+    const result = spawnSync(process.execPath, [
+      pipeline, "--spec", specPath, "--template", template
+    ], { encoding: "utf8", timeout: 30000 });
+    assert.equal(result.status, 0, result.stderr);
+    const manifest = JSON.parse(fs.readFileSync(path.join(root, "figure", "manifest.json"), "utf8"));
+    assert.equal(manifest.figures[0].template, template);
+    assert.equal(manifest.figures[0].inspection.valid, true);
+  }
 });
 
 test("Chrome renderiza una figura HTML real cuando está disponible", {

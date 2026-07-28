@@ -37,6 +37,12 @@ if (!skillCheck.scripts?.["skill:check"]?.includes("visual-progressive.js")) {
 if (!skillCheck.scripts?.["skill:check"]?.includes("visual-matrix-check.js")) {
   failures.push("skill:check no cubre visual-matrix-check.js");
 }
+if (!skillCheck.scripts?.["skill:check"]?.includes("visual-pipeline.js")) {
+  failures.push("skill:check no cubre visual-pipeline.js");
+}
+if (!skillCheck.scripts?.["skill:check"]?.includes("test-runner.js")) {
+  failures.push("skill:check no cubre test-runner.js");
+}
 
 const jsonFiles = [
   "skill/config/visual-tools.json",
@@ -61,10 +67,12 @@ const requiredScripts = [
   "visual-linter.js",
   "visual-matrix-check.js",
   "visual-progressive.js",
+  "visual-pipeline.js",
   "visual-regression.js",
   "visual-renderer.js",
   "visual-selector.js",
-  "visual-source-generator.js"
+  "visual-source-generator.js",
+  "test-runner.js"
 ];
 for (const script of requiredScripts) {
   try {
@@ -91,4 +99,4 @@ if (failures.length) {
   process.exit(1);
 }
 console.log(`Release readiness OK para jintia-skill ${expected}.`);
-console.log("Pendiente antes de publicar: ejecutar la matriz real de motores en Windows, macOS y Linux.");
+console.log("La publicación aún requiere que la matriz remota de motores termine correctamente.");

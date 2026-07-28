@@ -7,7 +7,7 @@ const { spawnSync } = require("child_process");
 const { candidatesFor } = require("./visual-selector");
 const { detectCapabilities } = require("./visual-capabilities");
 const { validate } = require("./schema-validator");
-const { generateSource } = require("./visual-source-generator");
+const { generateSource, canGenerateFromModel } = require("./visual-source-generator");
 const visualSpecSchema = JSON.parse(fs.readFileSync(path.resolve(__dirname, "..", "schemas", "visual-spec.schema.json"), "utf8"));
 
 const ENGINES = {
@@ -60,7 +60,7 @@ function readArgs(argv) {
 
 function validateSpec(spec) {
   const errors = validate(spec, visualSpecSchema);
-  const modelCanCreateTable = (
+  const modelCanCreateTable = Array.isArray(spec.model?.data) || (
     Array.isArray(spec.model?.categories)
       && Array.isArray(spec.model?.values)
       && spec.model.categories.length === spec.model.values.length
@@ -69,11 +69,54 @@ function validateSpec(spec) {
   if (["chart", "forest-plot", "map"].includes(spec.representation) && !spec.dataTable && !modelCanCreateTable) {
     errors.push("la visualización cuantitativa requiere dataTable o un model convertible a tabla");
   }
+  if (spec.complexity === "high" && !spec.longDescription) {
+    errors.push("una visualización de complejidad alta requiere longDescription");
+  }
+  if (spec.complexity === "high" && (!Array.isArray(spec.readingOrder) || spec.readingOrder.length === 0)) {
+    errors.push("una visualización de complejidad alta requiere readingOrder");
+  }
+  if (["chart", "forest-plot", "map"].includes(spec.representation) && !spec.provenance) {
+    errors.push("una visualización cuantitativa requiere provenance");
+  }
+  const externalProvenance = [
+    "adapted_from_source", "reproduced_from_source", "generated_from_verified_data",
+    "generated_from_verified_content", "licensed_image", "annotation_on_external_source"
+  ];
+  if (externalProvenance.includes(spec.provenance) && (!spec.sourceAttribution || !spec.license)) {
+    errors.push("la procedencia externa requiere sourceAttribution y license");
+  }
+  if ((spec.model?.groupField || (spec.palette?.series?.length || 0) > 1) && !spec.colorEncoding) {
+    errors.push("una codificación por series requiere colorEncoding");
+  }
   const html = spec.engine === "html" || spec.representation === "interface";
   if (html && spec.source?.content && /(?:https?:)?\/\//i.test(spec.source.content)) {
     errors.push("HTML debe ser autosuficiente: no se permiten recursos HTTP, HTTPS ni CDN");
   }
   return errors;
+}
+
+function resolveTemplate(templateId, spec) {
+  const templatePath = path.resolve(__dirname, "..", "templates", templateId, "meta.json");
+  if (!fs.existsSync(templatePath)) fail(`plantilla visual desconocida: ${templateId}`);
+  const meta = JSON.parse(fs.readFileSync(templatePath, "utf8"));
+  const allowed = meta.capabilities?.visualPlacements || ["auto", "main"];
+  let placement = spec.placement || "auto";
+  if (placement === "margin" && !meta.capabilities?.marginFigures) {
+    fail(`${templateId} no admite figuras marginales`);
+  }
+  if (placement === "wide" && !meta.capabilities?.wideLayout) {
+    fail(`${templateId} no admite figuras anchas`);
+  }
+  if (placement === "auto") {
+    placement = spec.complexity === "high" && meta.capabilities?.wideLayout ? "wide" : "main";
+  }
+  if (!allowed.includes(placement) && placement !== "main") {
+    fail(`${templateId} no admite placement=${placement}`);
+  }
+  if (placement === "margin" && spec.complexity === "high") {
+    fail("una figura compleja o esencial no puede colocarse en el margen");
+  }
+  return { meta, placement };
 }
 
 function ensureInside(root, candidate) {
@@ -104,6 +147,15 @@ function latexBlock(entry) {
   ].join("\n");
 }
 
+function prepareHtmlCapture(content, capture) {
+  if (!capture) return content;
+  const payload = JSON.stringify(capture);
+  const script = `<script>
+document.addEventListener("DOMContentLoaded",()=>{const c=${payload};const target=document.querySelector(c.selector);if(!target)throw new Error("No existe el selector de captura: "+c.selector);const clone=target.cloneNode(true);document.body.replaceChildren(clone);Object.assign(document.documentElement.style,{margin:"0",width:c.width+"px",height:c.height+"px",overflow:"hidden",background:"transparent"});Object.assign(document.body.style,{margin:"0",width:c.width+"px",height:c.height+"px",overflow:"hidden",background:"transparent"});});
+</script>`;
+  return /<\/body>/i.test(content) ? content.replace(/<\/body>/i, `${script}</body>`) : `${content}${script}`;
+}
+
 function main() {
   const args = readArgs(process.argv.slice(2));
   if (!args.spec) fail("usa --spec figure/specs/fig-id.json");
@@ -111,10 +163,15 @@ function main() {
   const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
   const errors = validateSpec(spec);
   if (errors.length) fail(errors.join("; "));
+  const template = resolveTemplate(args.template, spec);
   const figureRoot = path.resolve(path.dirname(specPath), "..");
   const capabilities = detectCapabilities();
   const candidates = candidatesFor(spec);
-  const detected = candidates.map(engine => ({
+  const compatibleCandidates = candidates.filter((engine, index) => {
+    if (index === 0 && (spec.source || spec.sourceFile)) return true;
+    return spec.model ? canGenerateFromModel(engine, spec.representation) : index === 0;
+  });
+  const detected = compatibleCandidates.map(engine => ({
     engine,
     config: ENGINES[engine],
     command: ENGINES[engine]?.tool
@@ -127,10 +184,11 @@ function main() {
   const choice = args.dryRun
     ? detected.find(item => item.config)
     : detected.find(item => item.config && item.command);
-  if (!choice) fail(`ningún motor disponible: ${candidates.join(" -> ")}`);
+  if (!choice) fail(`ningún motor compatible y disponible: ${compatibleCandidates.join(" -> ") || candidates.join(" -> ")}`);
   const fallback = choice.engine === candidates[0] ? null : { from: candidates[0], to: choice.engine, reason: "motor no disponible" };
   if (fallback && !spec.model) fail(`el fallback ${fallback.from} -> ${fallback.to} requiere model para regenerar una fuente compatible`);
-  const format = choice.config.formats.includes(spec.outputFormat) ? spec.outputFormat : choice.config.formats[0];
+  const requestedFormat = spec.outputFormat || "pdf";
+  const format = choice.config.formats.includes(requestedFormat) ? requestedFormat : choice.config.formats[0];
   const sourceDir = path.join(figureRoot, "sources");
   const dataDir = path.join(figureRoot, "data");
   const renderedDir = path.join(figureRoot, "rendered");
@@ -145,7 +203,13 @@ function main() {
     };
     const tablePath = path.join(dataDir, `${spec.id}.csv`);
     let rows;
-    if (spec.representation === "forest-plot") {
+    if (Array.isArray(spec.model.data)) {
+      const fields = [...new Set(spec.model.data.flatMap(item => Object.keys(item)))];
+      rows = [
+        fields.map(csvCell).join(","),
+        ...spec.model.data.map(item => fields.map(field => csvCell(item[field] ?? "")).join(","))
+      ];
+    } else if (spec.representation === "forest-plot") {
       rows = ["label,estimate,lower,upper", ...spec.model.estimates.map(
         item => [item.label, item.estimate, item.lower, item.upper].map(csvCell).join(",")
       )];
@@ -166,12 +230,18 @@ function main() {
   const sourcePath = spec.sourceFile
     ? ensureInside(figureRoot, spec.sourceFile)
     : path.join(sourceDir, `${spec.id}.${choice.config.ext}`);
-  if (spec.source?.content || generatedContent) fs.writeFileSync(sourcePath, spec.source?.content || generatedContent);
+  let sourceContent = spec.source?.content || generatedContent;
+  if (choice.engine === "html" && sourceContent) sourceContent = prepareHtmlCapture(sourceContent, spec.capture);
+  if (sourceContent) fs.writeFileSync(sourcePath, sourceContent);
   const outputPath = path.join(renderedDir, `${spec.id}.${format}`);
   let finalOutputPath = outputPath;
   let status = fallback ? "fallback" : "valid";
   if (!args.dryRun) {
     const commandArgs = choice.config.args(sourcePath, outputPath, format);
+    if (choice.engine === "html" && spec.capture) {
+      const windowArg = commandArgs.findIndex(arg => arg.startsWith("--window-size="));
+      commandArgs[windowArg] = `--window-size=${spec.capture.width},${spec.capture.height}`;
+    }
     const options = {
       encoding: "utf8",
       shell: false,
@@ -181,15 +251,29 @@ function main() {
     const result = spawnSync(choice.command, commandArgs, options);
     if (result.error || result.status !== 0) fail(`${choice.engine} falló: ${result.stderr || result.error?.message}`);
     if (!fs.existsSync(outputPath) || fs.statSync(outputPath).size === 0) fail(`no se produjo ${outputPath}`);
-    if (format === "svg" && spec.outputFormat !== "svg" && capabilities.tools.inkscape?.available) {
+    if (format === "svg" && requestedFormat === "pdf") {
       const pdfPath = path.join(renderedDir, `${spec.id}.pdf`);
-      const conversion = spawnSync(
-        capabilities.tools.inkscape.command,
-        [outputPath, "--export-type=pdf", `--export-filename=${pdfPath}`],
-        { encoding: "utf8", shell: false }
-      );
+      const converters = [
+        capabilities.tools.inkscape?.available && {
+          command: capabilities.tools.inkscape.command,
+          args: [outputPath, "--export-type=pdf", `--export-filename=${pdfPath}`]
+        },
+        capabilities.tools.rsvgConvert?.available && {
+          command: capabilities.tools.rsvgConvert.command,
+          args: ["-f", "pdf", "-o", pdfPath, outputPath]
+        },
+        capabilities.tools.cairoSvg?.available && {
+          command: capabilities.tools.cairoSvg.command,
+          args: [outputPath, "-f", "pdf", "-o", pdfPath]
+        }
+      ].filter(Boolean);
+      if (!converters.length) {
+        fail("la salida SVG requiere Inkscape, rsvg-convert o CairoSVG para generar un PDF compatible con LaTeX");
+      }
+      const converter = converters[0];
+      const conversion = spawnSync(converter.command, converter.args, { encoding: "utf8", shell: false });
       if (conversion.status !== 0 || !fs.existsSync(pdfPath) || fs.statSync(pdfPath).size === 0) {
-        fail(`Inkscape no pudo normalizar ${outputPath} a PDF: ${conversion.stderr || "salida ausente"}`);
+        fail(`no se pudo normalizar ${outputPath} a PDF: ${conversion.stderr || "salida ausente"}`);
       }
       finalOutputPath = pdfPath;
     }
@@ -203,10 +287,15 @@ function main() {
     source: relative(sourcePath),
     rendered: relative(finalOutputPath),
     preview: null,
-    templatePlacement: spec.placement || "auto",
+    template: template.meta.id,
+    templatePlacement: template.placement,
     status,
     altText: spec.altText,
     longDescription: spec.longDescription || null,
+    readingOrder: spec.readingOrder || null,
+    colorEncoding: spec.colorEncoding || null,
+    abbreviations: spec.abbreviations || null,
+    dataNature: spec.dataNature || null,
     representation: spec.representation,
     complexity: spec.complexity || "low",
     dataTable,
@@ -215,6 +304,7 @@ function main() {
     license: spec.license || null,
     provenance: spec.provenance || null,
     palette: spec.palette || null,
+    capture: spec.capture || null,
     fallback,
     toolVersion: choice.version
   };
@@ -224,4 +314,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { validateSpec, latexBlock };
+module.exports = { validateSpec, latexBlock, prepareHtmlCapture, resolveTemplate };

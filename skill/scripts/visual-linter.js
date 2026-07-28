@@ -49,6 +49,12 @@ for (const match of figures) {
       errors.push(`${id} es cuantitativa y no declara dataTable`);
     }
     if (entry.complexity === "high" && !entry.longDescription) errors.push(`${id} es compleja y no tiene longDescription`);
+    if (entry.complexity === "high" && (!entry.readingOrder || entry.readingOrder.length === 0)) {
+      errors.push(`${id} es compleja y no declara readingOrder`);
+    }
+    if (["chart", "forest-plot", "map"].includes(entry.representation) && !entry.provenance) {
+      errors.push(`${id} es cuantitativa y no declara provenance`);
+    }
     if (entry.provenance && entry.provenance !== "original") {
       if (!entry.sourceAttribution) errors.push(`${id} no declara sourceAttribution`);
       if (!entry.license) errors.push(`${id} no declara licencia`);
@@ -56,6 +62,10 @@ for (const match of figures) {
     if (entry.palette) {
       const ratio = contrastRatio(entry.palette.foreground, entry.palette.background);
       if (ratio < 4.5) errors.push(`${id} tiene contraste ${ratio.toFixed(2)}:1; se requiere al menos 4.5:1`);
+      for (const color of entry.palette.series || []) {
+        const seriesRatio = contrastRatio(color, entry.palette.background);
+        if (seriesRatio < 3) errors.push(`${id} tiene una serie con contraste ${seriesRatio.toFixed(2)}:1; se requiere al menos 3:1`);
+      }
     }
     const quality = inspectSource(path.resolve(figureRoot, entry.source), entry.engine);
     errors.push(...quality.errors.map(error => `${id}: ${error}`));

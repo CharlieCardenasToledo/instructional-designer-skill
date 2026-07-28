@@ -17,10 +17,15 @@
           "source": { "type": "string" },
           "rendered": { "type": "string" },
           "preview": { "type": ["string", "null"] },
+          "template": { "type": "string" },
           "templatePlacement": { "enum": ["auto", "main", "wide", "margin"] },
           "status": { "enum": ["planned", "valid", "failed", "fallback"] },
           "altText": { "type": "string" },
           "longDescription": { "type": ["string", "null"] },
+          "readingOrder": { "type": ["array", "null"], "items": { "type": "string" } },
+          "colorEncoding": { "type": ["string", "null"] },
+          "abbreviations": { "type": ["object", "null"] },
+          "dataNature": { "type": ["string", "null"] },
           "representation": { "type": "string" },
           "complexity": { "type": "string" },
           "dataTable": { "type": ["string", "null"] },
@@ -28,6 +33,7 @@
           "license": { "type": ["string", "null"] },
           "provenance": { "type": ["string", "null"] },
           "palette": { "type": ["object", "null"] },
+          "capture": { "type": ["object", "null"] },
           "fallback": { "type": ["object", "null"] },
           "toolVersion": { "type": ["string", "null"] }
         }

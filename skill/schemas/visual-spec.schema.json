@@ -12,11 +12,11 @@
       "enum": ["identify", "classify", "compare", "sequence", "relate", "hierarchize", "quantify", "locate", "explain-causality", "simulate", "argue"]
     },
     "representation": {
-      "enum": ["chart", "forest-plot", "map", "table", "concept-map", "network", "flowchart", "timeline", "signal-diagram", "causal-diagram", "technical-diagram", "interface", "annotated-image", "equation", "disciplinary-notation"]
+      "enum": ["chart", "forest-plot", "map", "table", "concept-map", "network", "flowchart", "timeline", "signal-diagram", "causal-diagram", "technical-diagram", "interface", "annotated-image", "equation", "disciplinary-notation", "chemical-structure", "chemical-reaction", "syntax-tree", "electrical-circuit", "free-body-diagram", "phylogenetic-tree", "pedigree", "uml", "bpmn", "c4", "sankey", "argument-map", "curriculum-map"]
     },
     "discipline": { "type": "string" },
     "engine": {
-      "enum": ["auto", "tikz", "graphviz", "mermaid", "plantuml", "d2", "vega-lite", "html", "matplotlib", "geopandas", "dagitty", "rdkit", "circuitikz", "chemfig", "forest", "wavedrom"]
+      "enum": ["auto", "tikz", "graphviz", "mermaid", "plantuml", "d2", "vega-lite", "html", "matplotlib", "geopandas", "rdkit", "circuitikz", "chemfig", "forest", "wavedrom"]
     },
     "source": {
       "type": "object",
@@ -42,7 +42,9 @@
             "properties": {
               "id": { "type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$" },
               "label": { "type": "string", "minLength": 1 },
-              "group": { "type": "string" }
+              "group": { "type": "string" },
+              "parent": { "type": "string" },
+              "kind": { "type": "string" }
             }
           }
         },
@@ -61,7 +63,35 @@
         },
         "categories": { "type": "array", "items": { "type": "string" } },
         "values": { "type": "array", "items": { "type": "number" } },
+        "chartType": { "enum": ["bar", "line", "point", "scatter", "area", "histogram", "boxplot", "heatmap", "interval"] },
+        "data": { "type": "array", "items": { "type": "object" } },
+        "xField": { "type": "string" },
+        "yField": { "type": "string" },
+        "groupField": { "type": "string" },
+        "facetField": { "type": "string" },
+        "upperField": { "type": "string" },
+        "units": { "type": "string" },
+        "zeroBaseline": { "type": "boolean" },
         "smiles": { "type": "string", "minLength": 1 },
+        "formula": { "type": "string", "minLength": 1 },
+        "reaction": { "type": "string", "minLength": 1 },
+        "diagramType": { "enum": ["class", "sequence", "activity", "state", "component", "use-case"] },
+        "components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type", "from", "to"],
+            "properties": {
+              "id": { "type": "string" },
+              "type": { "enum": ["resistor", "capacitor", "inductor", "diode", "battery", "voltage-source", "current-source", "switch", "wire"] },
+              "from": { "type": "array", "items": { "type": "number" } },
+              "to": { "type": "array", "items": { "type": "number" } },
+              "label": { "type": "string" },
+              "value": { "type": "string" }
+            }
+          }
+        },
         "events": {
           "type": "array",
           "items": {
@@ -121,15 +151,39 @@
       }
     },
     "outputFormat": { "enum": ["pdf", "svg", "png"] },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector", "width", "height"],
+      "properties": {
+        "selector": { "type": "string", "minLength": 1 },
+        "width": { "type": "integer", "minimum": 64, "maximum": 4096 },
+        "height": { "type": "integer", "minimum": 64, "maximum": 4096 }
+      }
+    },
     "placement": { "enum": ["auto", "main", "wide", "margin"] },
     "caption": { "type": "string" },
     "altText": { "type": "string", "minLength": 12 },
     "longDescription": { "type": "string" },
+    "readingOrder": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "colorEncoding": { "type": "string" },
+    "abbreviations": { "type": "object", "additionalProperties": { "type": "string" } },
+    "dataNature": { "enum": ["observed", "estimated", "hypothetical", "mixed"] },
     "dataTable": { "type": "string" },
     "sourceAttribution": { "type": "string" },
     "license": { "type": "string" },
     "provenance": {
-      "enum": ["original", "adapted_from_source", "reproduced_from_source", "generated_from_verified_data"]
+      "enum": [
+        "original",
+        "adapted_from_source",
+        "reproduced_from_source",
+        "generated_from_verified_data",
+        "hypothetical_illustration",
+        "interface_mockup",
+        "generated_from_verified_content",
+        "licensed_image",
+        "annotation_on_external_source"
+      ]
     },
     "complexity": { "enum": ["low", "medium", "high"] },
     "formalNotationRequired": { "type": "boolean" }
@@ -140,7 +194,11 @@
       "required": ["foreground", "background"],
       "properties": {
         "foreground": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
-        "background": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+        "background": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "series": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+        }
       }
     }
   },

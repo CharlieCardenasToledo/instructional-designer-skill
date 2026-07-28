@@ -159,11 +159,13 @@ demostrar el resultado de aprendizaje:
    condiciona la representación.
 3. Elegir gráfico, mapa, tabla, diagrama, imagen o interfaz antes de elegir el
    motor.
-4. Crear una especificación en `figure/specs/` y renderizarla con
-   `scripts/visual-renderer.js`.
-5. Inspeccionar la salida con `scripts/visual-inspector.js`.
+4. Crear una especificación en `figure/specs/`.
+5. Ejecutar `scripts/visual-pipeline.js --spec <spec> --template
+   <activeTemplate> --guide <guia.tex>`. El pipeline debe renderizar, crear la
+   previsualización, inspeccionar, ejecutar el linter y actualizar el
+   manifiesto.
 6. Conservar fuente, datos, salida y procedencia en `figure/manifest.json`.
-7. Adaptar únicamente la colocación a la plantilla activa.
+7. Adaptar la colocación a las capacidades declaradas por la plantilla activa.
 
 No inventar una imagen real cuando su apariencia sea evidencia disciplinar.
 No fingir un renderizado. Registrar el fallback cuando el motor preferido no
@@ -211,7 +213,9 @@ Tratar logos, socios, módulos internacionales y ecosistemas institucionales com
 ## Cierre obligatorio
 
 1. Ejecutar `node scripts/latex-linter.js <guia.tex> --template <activeTemplate>`.
-2. Si existen figuras, ejecutar `node scripts/visual-linter.js <guia.tex>`.
+2. Si existen figuras, verificar que cada una pasó
+   `node scripts/visual-pipeline.js`; ejecutar además
+   `node scripts/visual-linter.js <guia.tex>` como comprobación global.
 3. Compilar con `node scripts/latex-validator.js <guia.tex>` cuando el entorno lo permita.
 4. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
 5. Ejecutar `references/checklist.md` punto por punto.

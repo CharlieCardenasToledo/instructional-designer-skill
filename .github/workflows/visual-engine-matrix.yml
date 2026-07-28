@@ -24,13 +24,13 @@ jobs:
   real-render:
     name: Real render (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 50
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     env:
-      JINTIA_EXPECT_VISUAL_TOOLS: graphviz,mermaid,vegaLite,python,chrome,wavedrom
+      JINTIA_EXPECT_VISUAL_TOOLS: graphviz,mermaid,plantuml,d2,vegaLite,latex,python,chrome,wavedrom
       JINTIA_REAL_RENDER_TESTS: "1"
     steps:
       - uses: actions/checkout@v5
@@ -45,13 +45,30 @@ jobs:
 
       - name: Install Graphviz (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install --yes graphviz
+        run: sudo apt-get update && sudo apt-get install --yes graphviz plantuml texlive-latex-extra texlive-pictures
       - name: Install Graphviz (macOS)
         if: runner.os == 'macOS'
-        run: brew install graphviz
+        run: brew install graphviz plantuml d2 && brew install --cask basictex
       - name: Install Graphviz (Windows)
         if: runner.os == 'Windows'
-        run: choco install graphviz --yes --no-progress
+        run: choco install graphviz plantuml d2 miktex --yes --no-progress
+
+      - name: Install D2 (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: curl -fsSL https://d2lang.com/install.sh | sh -s --
+
+      - name: Install Python visual libraries
+        run: python -m pip install matplotlib geopandas cairosvg rdkit
+
+      - name: Install LaTeX disciplinary packages (macOS)
+        if: runner.os == 'macOS'
+        run: sudo /Library/TeX/texbin/tlmgr update --self && sudo /Library/TeX/texbin/tlmgr install standalone pgfplots circuitikz chemfig forest
+
+      - name: Refresh MiKTeX packages (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: initexmf --admin --update-fndb
 
       - name: Install portable visual CLIs
         run: npm install --global @mermaid-js/mermaid-cli vega-cli vega-lite wavedrom-cli

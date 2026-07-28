@@ -10,6 +10,8 @@
     "python": { "commands": ["python3", "python", "py"], "required": false, "supports": ["matplotlib", "geopandas", "rdkit"] },
     "chrome": { "environmentVariable": "CHROME_PATH", "commands": ["chrome", "google-chrome", "chromium"], "required": false, "versionProbe": false, "supports": ["html"] },
     "wavedrom": { "commands": ["wavedrom-cli"], "required": false, "supports": ["wavedrom"] },
-    "inkscape": { "commands": ["inkscape"], "required": false, "supports": ["svg-to-pdf", "svg-preview"] }
+    "inkscape": { "commands": ["inkscape"], "required": false, "supports": ["svg-to-pdf", "svg-preview"] },
+    "rsvgConvert": { "commands": ["rsvg-convert"], "required": false, "supports": ["svg-to-pdf"] },
+    "cairoSvg": { "commands": ["cairosvg"], "required": false, "supports": ["svg-to-pdf"] }
   }
 }
