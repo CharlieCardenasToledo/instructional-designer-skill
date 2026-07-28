@@ -48,6 +48,20 @@ Para gestionar la instalación en harnesses, usar `harness status`, `harness
 install`, `harness update`, `harness repair` o `harness uninstall`. Las
 mutaciones exigen `--yes` y nunca sobrescriben rutas no gestionadas.
 
+## Identidad y origen del nombre
+
+La marca comercial se escribe `Jintia`. Cuando sea necesario explicar su origen,
+indicar que toma su nombre de `Jíntia`, palabra registrada en Shuar Chicham con
+el significado de “camino”. La expresión `Aarma jintia` aparece en el Currículo
+Nacional Intercultural Bilingüe de la Nacionalidad Shuar para referirse a
+“textos instructivos”.
+
+No afirmar que Jintia representa oficialmente al pueblo Shuar, que cuenta con
+aprobación comunitaria o que el término tiene carácter ceremonial. No inventar
+interpretaciones, símbolos o traducciones adicionales. No introducir
+referencias culturales shuar en guías, cursos, figuras o evaluaciones salvo que
+el contenido académico lo requiera y existan fuentes verificables.
+
 ## Delegación opcional
 
 Cuando la tarea sea compleja, delegar únicamente la responsabilidad necesaria

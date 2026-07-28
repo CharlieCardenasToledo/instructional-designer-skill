@@ -46,6 +46,16 @@ Work with Claude Code
 Generate and validate weekly PDF guides
 ```
 
+## The origin of the name
+
+Jintia takes its name from *Jíntia*, a word documented in Shuar Chicham meaning “path” or “way”.
+
+The name reflects the purpose of the application: helping educators turn a syllabus into a coherent learning path connecting outcomes, content, activities, assessments and resources.
+
+The expression *Aarma jintia* is used in Ecuador’s National Intercultural Bilingual Curriculum for the Shuar Nationality to refer to “instructional texts”.
+
+We expressly acknowledge the Shuar linguistic origin of the name. Its use does not imply representation, endorsement or institutional affiliation with Shuar communities or organizations.
+
 ## Application tour
 
 ### 1. Guided setup

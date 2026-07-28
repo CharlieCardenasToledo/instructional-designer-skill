@@ -95,3 +95,11 @@ La skill y la aplicación se versionan de forma independiente:
 Esta separación permite actualizar el paquete de instrucciones sin obligar a
 publicar una nueva aplicación de escritorio, o actualizar la aplicación sin
 cambiar el contenido de la skill.
+
+### Identidad de marca
+
+- El nombre comercial, técnico y distribuible es `Jintia`.
+- La forma lingüística documentada aparece como `Jíntia` únicamente al explicar el origen del nombre.
+- La explicación canónica se conserva en `skill/config/brand.json`.
+- Ninguna interfaz debe afirmar representación, autorización o aprobación de comunidades u organizaciones Shuar.
+- La identidad visual no reutiliza símbolos ceremoniales, pinturas corporales, vestimenta ni patrones culturales como decoración genérica.

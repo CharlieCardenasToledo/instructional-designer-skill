@@ -44,6 +44,16 @@ Trabajar con Claude Code
 Generar y validar las guías semanales en PDF
 ```
 
+## El origen del nombre
+
+Jintia toma su nombre de *Jíntia*, palabra registrada en Shuar Chicham con el significado de “camino”.
+
+El nombre representa el propósito de la aplicación: convertir un sílabo en una ruta coherente de resultados, contenidos, actividades, evaluaciones y recursos.
+
+En el Currículo Nacional Intercultural Bilingüe de la Nacionalidad Shuar, la expresión *Aarma jintia* se emplea para referirse a “textos instructivos”.
+
+Reconocemos expresamente la procedencia lingüística shuar del término. El uso del nombre no implica representación, aprobación ni vinculación institucional con comunidades u organizaciones del pueblo Shuar.
+
 ## Recorrido por la aplicación
 
 ### 1. Configuración guiada
