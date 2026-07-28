@@ -101,6 +101,8 @@ test("el gestor instala, actualiza, repara y desinstala sin sobrescribir rutas a
   const project = path.join(root, "project");
   fs.mkdirSync(source, { recursive: true });
   fs.writeFileSync(path.join(source, "SKILL.md"), "---\nname: jintia-skill\n---\n");
+  fs.mkdirSync(path.join(project, ".gemini"), { recursive: true });
+  assert.equal(detectInstallationStates({ projectRoot: project, providers: ["gemini"] })[0].state.status, "detected");
   const base = { projectRoot: project, sourcePath: source, providers: ["claude", "codex", "cursor"], scope: "project", version: "10.8.0", confirm: true };
   const installed = mutate("install", base);
   assert.equal(installed.results.length, 3);

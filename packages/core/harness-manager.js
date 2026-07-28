@@ -55,7 +55,10 @@ function readInstalledState(target, availableVersion) {
 function resolveTargets({ projectRoot = process.cwd(), homeDir = process.env.USERPROFILE || process.env.HOME || "", env = process.env, platform = process.platform, providers = PROVIDERS, availableVersion = "10.8.0" } = {}) {
   return providers.flatMap(provider => ["project", "global"].map(scope => {
     const target = installPath(provider, scope, path.resolve(projectRoot), homeDir, env, platform);
-    return { id: provider.id, name: provider.name, scope, target, state: readInstalledState(target, availableVersion) };
+    const state = readInstalledState(target, availableVersion);
+    const harnessPath = path.dirname(path.dirname(target));
+    if (state.status === "not-detected" && fs.existsSync(harnessPath)) state.status = "detected";
+    return { id: provider.id, name: provider.name, scope, target, state };
   }));
 }
 
