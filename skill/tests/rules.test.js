@@ -19,8 +19,9 @@ test("las reglas detectan un sílabo incompleto", () => {
   const file = path.join(root, "README.md");
   fs.writeFileSync(file, "# Curso\n");
   const report = runRules(file);
-  assert.equal(report.summary.errors, 2);
+  assert.equal(report.summary.errors, 3);
   assert.ok(report.issues.some(issue => issue.rule === "JIN-SYL-001"));
+  assert.ok(report.issues.some(issue => issue.rule === "JIN-SYL-004"));
 });
 
 test("el estado guarda semana, fecha y hash de la fuente", () => {

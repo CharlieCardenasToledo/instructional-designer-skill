@@ -42,6 +42,22 @@ Ejemplos de routing:
 La CLI unificada vive en `bin/jintia.js` y reutiliza los scripts deterministas
 de `scripts/`; no duplica la lógica de validación ni de renderizado.
 
+## Delegación opcional
+
+Cuando la tarea sea compleja, delegar únicamente la responsabilidad necesaria
+en los contratos de `agents/`:
+
+| Responsabilidad | Contrato |
+|---|---|
+| Evidencia y procedencia | `agents/jintia-researcher.md` |
+| Alineación y diseño pedagógico | `agents/jintia-instructional-reviewer.md` |
+| Figuras y representaciones | `agents/jintia-visual-producer.md` |
+| Revisión independiente de entrega | `agents/jintia-finish-reviewer.md` |
+
+El agente principal conserva la orquestación. Cada delegado devuelve su
+contrato de salida, no modifica silenciosamente el curso y deja explícitos sus
+límites o bloqueos.
+
 ## Objetivo
 
 Producir materiales académicos autosuficientes, accesibles y alineados. Priorizar la trazabilidad entre sílabo, resultados, práctica, evaluación y fuentes. Generar guías LaTeX modulares cuando el entregable solicitado sea una guía semanal.

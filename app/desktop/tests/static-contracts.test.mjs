@@ -824,6 +824,24 @@ test('Courses incorpora el estado persistente de semanas sin reemplazar el progr
   assert.match(rust, /state\.json/);
 });
 
+test('la skill expone contratos de delegación especializados sin duplicar el router', async () => {
+  const skill = await readFile(new URL('../../skill/SKILL.md', root), 'utf8');
+  const agents = await Promise.all([
+    readFile(new URL('../../skill/agents/jintia-researcher.md', root), 'utf8'),
+    readFile(new URL('../../skill/agents/jintia-instructional-reviewer.md', root), 'utf8'),
+    readFile(new URL('../../skill/agents/jintia-visual-producer.md', root), 'utf8'),
+    readFile(new URL('../../skill/agents/jintia-finish-reviewer.md', root), 'utf8'),
+  ]);
+  assert.match(skill, /Delegación opcional/);
+  assert.match(skill, /agents\/jintia-researcher\.md/);
+  for (const agent of agents) {
+    assert.match(agent, /## Misión/);
+    assert.match(agent, /## Entrada/);
+    assert.match(agent, /## Salida/);
+    assert.match(agent, /## Límites/);
+  }
+});
+
 test('las asignaturas usan Documentos por defecto y permiten cambiar la ubicación', async () => {
   const [courses, api, lib] = await Promise.all([
     readFile(new URL('src/pages/courses.js', root), 'utf8'),
