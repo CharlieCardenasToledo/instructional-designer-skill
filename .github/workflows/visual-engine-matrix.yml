@@ -51,7 +51,12 @@ jobs:
         run: brew install graphviz plantuml d2 && brew install --cask basictex
       - name: Install Graphviz (Windows)
         if: runner.os == 'Windows'
-        run: choco install graphviz plantuml d2 miktex --yes --no-progress
+        shell: pwsh
+        run: |
+          choco install graphviz plantuml d2 miktex --yes --no-progress
+          [Environment]::GetEnvironmentVariable("Path", "Machine").Split(";") |
+            Where-Object { $_ } |
+            Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install D2 (Linux)
         if: runner.os == 'Linux'
