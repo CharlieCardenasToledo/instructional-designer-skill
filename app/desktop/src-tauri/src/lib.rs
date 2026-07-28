@@ -6,12 +6,14 @@ mod onboarding;
 mod palette;
 mod paths;
 mod payload;
+mod pdfs;
 
 use models::{
-    ActionResult, DependencyStatus, InstitutionConfig, NotebookEntry, NotebookLmAuthStatus,
-    SetupStatus, TemplateMeta, WeekData,
+    ActionResult, DependencyStatus, GeneratedPdf, InstitutionConfig, NotebookEntry,
+    NotebookLmAuthStatus, PdfProjectRoot, SetupStatus, TemplateMeta, WeekData,
 };
 use tauri::Manager;
+use tauri_plugin_opener::OpenerExt;
 
 #[tauri::command]
 async fn check_dependencies() -> Vec<DependencyStatus> {
@@ -157,11 +159,53 @@ async fn create_course_structure(
 #[tauri::command]
 async fn get_default_course_root(app: tauri::AppHandle) -> ActionResult {
     match app.path().document_dir() {
-        Ok(path) => ActionResult::ok("Carpeta Documentos disponible.")
-            .with_path(path.to_string_lossy().into_owned()),
+        Ok(path) => {
+            let jintia_root = path.join("Jintia");
+            ActionResult::ok("Carpeta de proyectos Jintia disponible.")
+                .with_path(jintia_root.to_string_lossy().into_owned())
+        }
         Err(error) => ActionResult::error(format!(
             "No se pudo localizar la carpeta Documentos: {error}"
         )),
+    }
+}
+
+#[tauri::command]
+async fn list_generated_pdfs(projects: Vec<PdfProjectRoot>) -> Vec<GeneratedPdf> {
+    tauri::async_runtime::spawn_blocking(move || pdfs::list_generated_pdfs(projects))
+        .await
+        .unwrap_or_default()
+}
+
+#[tauri::command]
+async fn open_generated_pdf(
+    app: tauri::AppHandle,
+    path: String,
+    projects: Vec<PdfProjectRoot>,
+) -> ActionResult {
+    let path = match pdfs::validated_pdf_path(&path, &projects) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+    match app.opener().open_path(path.to_string_lossy(), None::<&str>) {
+        Ok(()) => ActionResult::ok("PDF abierto."),
+        Err(error) => ActionResult::error(format!("No se pudo abrir el PDF: {error}")),
+    }
+}
+
+#[tauri::command]
+async fn reveal_generated_pdf(
+    app: tauri::AppHandle,
+    path: String,
+    projects: Vec<PdfProjectRoot>,
+) -> ActionResult {
+    let path = match pdfs::validated_pdf_path(&path, &projects) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+    match app.opener().reveal_item_in_dir(path) {
+        Ok(()) => ActionResult::ok("PDF localizado en su carpeta."),
+        Err(error) => ActionResult::error(format!("No se pudo mostrar la carpeta: {error}")),
     }
 }
 
@@ -264,6 +308,9 @@ pub fn run() {
             check_notebooklm_auth,
             run_notebooklm_auth,
             get_default_course_root,
+            list_generated_pdfs,
+            open_generated_pdf,
+            reveal_generated_pdf,
             create_course_structure,
             generate_syllabus,
             compile_syllabus_pdf,

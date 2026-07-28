@@ -11,6 +11,7 @@ const PAGE_REGISTRY = {
   setup:       { title: "Dependencias del sistema",     sub: "Verifica e instala los requisitos para que el skill funcione" },
   institution: { title: "Datos institucionales",         sub: "Configura tu institución, carrera y colores LaTeX" },
   courses:     { title: "Mis cursos",                    sub: "Administra asignaturas y genera la estructura de carpetas" },
+  pdfs:        { title: "PDFs generados",                 sub: "Consulta los documentos creados dentro de tus proyectos" },
   syllabus:    { title: "Editor de sílabo",              sub: "Define el contenido semanal y genera el README.md del curso" },
   notebooklm:  { title: "NotebookLM",                    sub: "Gestiona notebooks y la sesión de autenticación Google" },
   templates:   { title: "Plantillas LaTeX",              sub: "Elige el diseño visual para tus guías de clase" },

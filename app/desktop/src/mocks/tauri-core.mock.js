@@ -195,8 +195,27 @@ const handlers = {
     return actionResult(true, "Sesión iniciada (mock).");
   },
   save_notebooks_config: () => actionResult(true, "Notebooks guardados (mock)."),
-  get_default_course_root: () => actionResult(true, "Carpeta Documentos disponible (mock).", { path: "C:\\Users\\Demo\\Documents" }),
-  create_course_structure: () => actionResult(true, "Estructura de carpetas creada (mock)."),
+  get_default_course_root: () => actionResult(true, "Carpeta de proyectos Jintia disponible (mock).", { path: "C:\\Users\\Demo\\Documents\\Jintia" }),
+  create_course_structure: ({ rootPath, courseCode, courseName }) => {
+    const slug = `${courseCode}_${courseName}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    return actionResult(true, "Estructura de carpetas creada (mock).", {
+      path: `${rootPath || "C:\\Users\\Demo\\Documents"}\\${slug}`,
+    });
+  },
+  list_generated_pdfs: ({ projects = [] }) => projects.flatMap((project, index) => [
+    {
+      courseCode: project.courseCode,
+      courseName: project.courseName,
+      name: `guia-semana-${String(index + 1).padStart(2, "0")}.pdf`,
+      path: `${project.projectPath}\\semanas\\semana-${String(index + 1).padStart(2, "0")}\\latex\\guia.pdf`,
+      relativePath: `semanas\\semana-${String(index + 1).padStart(2, "0")}\\latex\\guia.pdf`,
+      sizeBytes: 184320 + index * 4096,
+      modifiedMs: Date.now() - index * 86400000,
+    },
+  ]),
+  open_generated_pdf: () => actionResult(true, "PDF abierto (mock)."),
+  reveal_generated_pdf: () => actionResult(true, "Archivo mostrado en su carpeta (mock)."),
   generate_syllabus: () => actionResult(true, "Sílabo generado (mock)."),
   compile_syllabus_pdf: () => actionResult(true, "PDF compilado (mock).", { path: "/mock/jintia-template-preview.pdf" }),
   list_templates: () => state.templates.map(t => ({ ...t })),

@@ -759,6 +759,8 @@ test('Courses muestra progreso real y protege sus operaciones', async () => {
   assert.match(courses, /Number\.isInteger\(weeks\)/);
   assert.match(courses, /_folderBusy\.has\(index\)/);
   assert.match(courses, /persistCourseList/);
+  assert.match(courses, /ui\.surface\.card,\s*'relative hidden min-h-0 overflow-visible lg:block'/);
+  assert.match(courses, /top-12 z-50 min-w-\[205px\]/);
   assert.match(api, /initializeReadme = true/);
   assert.match(main, /data-create-course/);
   assert.match(main, /jintia:new-course/);
@@ -771,10 +773,16 @@ test('las asignaturas usan Documentos por defecto y permiten cambiar la ubicaci�
     readFile(new URL('src-tauri/src/lib.rs', root), 'utf8'),
   ]);
   assert.match(lib, /app\.path\(\)\.document_dir\(\)/);
+  assert.match(lib, /path\.join\("Jintia"\)/);
   assert.match(api, /invoke\("get_default_course_root"\)/);
   assert.match(api, /dialogOpen\(\{ directory: true, title, defaultPath \}\)/);
   assert.match(courses, /id="m-change-root"/);
   assert.match(courses, /project_root: rootPath/);
+  assert.match(courses, /Documentos\/Jintia\/codigo_nombre/);
+  assert.match(courses, /El proyecto se preparará automáticamente/);
+  assert.match(courses, /project_status: "preparing"/);
+  assert.doesNotMatch(courses, /m-prepare-now|prepareNow|Registrar asignatura/);
+  assert.match(await readFile(new URL('src-tauri/src/course.rs', root), 'utf8'), /course_folder_name/);
 });
 
 test('el sílabo reutiliza la ruta preparada antes de pedir otra carpeta', async () => {
@@ -794,4 +802,42 @@ test('la estructura del curso puede crear un README inicial sin sobrescribirlo',
   assert.match(course, /if initialize_readme/);
   assert.match(course, /if !readme\.exists\(\)/);
   assert.match(course, /Proyecto académico preparado con Jintia/);
+});
+
+test('la biblioteca muestra solo PDFs pertenecientes a proyectos registrados', async () => {
+  const [page, api, main, router, backend, lib] = await Promise.all([
+    readFile(new URL('src/pages/pdfs.js', root), 'utf8'),
+    readFile(new URL('src/api.js', root), 'utf8'),
+    readFile(new URL('src/main.js', root), 'utf8'),
+    readFile(new URL('src/router.js', root), 'utf8'),
+    readFile(new URL('src-tauri/src/pdfs.rs', root), 'utf8'),
+    readFile(new URL('src-tauri/src/lib.rs', root), 'utf8'),
+  ]);
+  assert.match(main, /registerPage\("pdfs",\s+renderPdfs\)/);
+  assert.match(main, /data-page="pdfs"/);
+  assert.match(main, /id="p-pdfs"/);
+  assert.match(router, /pdfs:\s*\{\s*title:\s*"PDFs generados"/);
+  assert.match(api, /invoke\("list_generated_pdfs"/);
+  assert.match(api, /invoke\("open_generated_pdf"/);
+  assert.match(api, /invoke\("reveal_generated_pdf"/);
+  assert.match(page, /Biblioteca de PDFs/);
+  assert.match(page, /data-pdf-action="open"/);
+  assert.match(page, /data-pdf-action="reveal"/);
+  assert.match(backend, /eq_ignore_ascii_case\("pdf"\)/);
+  assert.match(backend, /file_type\(\)\.is_symlink\(\)/);
+  assert.match(backend, /candidate\.starts_with\(root\)/);
+  assert.match(lib, /validated_pdf_path/);
+});
+
+test('cada proyecto conserva una identidad visual accesible dentro de Jintia', async () => {
+  const courses = await readFile(new URL('src/pages/courses.js', root), 'utf8');
+  assert.match(courses, /const PROJECT_COLORS = \[/);
+  assert.match(courses, /const PROJECT_ICONS = \[/);
+  assert.match(courses, /data-project-color/);
+  assert.match(courses, /data-project-icon/);
+  assert.match(courses, /aria-pressed/);
+  assert.match(courses, /Personalizar en Jintia/);
+  assert.match(courses, /No modifica el icono de la carpeta de Windows/);
+  assert.match(courses, /project_color: _modalData\.projectColor/);
+  assert.match(courses, /project_icon: _modalData\.projectIcon/);
 });

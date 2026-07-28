@@ -10,6 +10,26 @@ pub struct ActionResult {
     pub backup_path: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PdfProjectRoot {
+    pub course_code: String,
+    pub course_name: String,
+    pub project_path: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GeneratedPdf {
+    pub course_code: String,
+    pub course_name: String,
+    pub name: String,
+    pub path: String,
+    pub relative_path: String,
+    pub size_bytes: u64,
+    pub modified_ms: u64,
+}
+
 impl ActionResult {
     pub fn ok(message: impl Into<String>) -> Self {
         Self {

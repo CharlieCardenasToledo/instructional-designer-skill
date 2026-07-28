@@ -5,6 +5,7 @@ use crate::paths::{
 };
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io::{BufRead, BufReader, Read};
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::{Mutex, OnceLock};
 use std::time::{Duration, Instant};
@@ -15,6 +16,8 @@ static DEPENDENCY_CACHE: OnceLock<Mutex<Option<(Instant, Vec<DependencyStatus>)>
     OnceLock::new();
 static SYLLABUS_WRITE_OPERATION: Mutex<()> = Mutex::new(());
 static PDF_COMPILE_OPERATION: Mutex<()> = Mutex::new(());
+const COURSE_CODE_SLUG_MAX: usize = 24;
+const COURSE_NAME_SLUG_MAX: usize = 48;
 const KAOHANDT_MIKTEX_REQUIREMENTS: &[(&str, &str)] = &[
     ("abstract", "abstract.sty"),
     ("algorithm2e", "algorithm2e.sty"),
@@ -410,6 +413,87 @@ fn finish_miktex_install() -> ActionResult {
     }
 }
 
+fn slug_component(value: &str, max_len: usize) -> String {
+    let mut slug = String::new();
+    let mut separator_pending = false;
+
+    for character in value.trim().chars() {
+        let folded = match character {
+            'á' | 'à' | 'ä' | 'â' | 'ã' | 'å' | 'Á' | 'À' | 'Ä' | 'Â' | 'Ã' | 'Å' => {
+                Some('a')
+            }
+            'é' | 'è' | 'ë' | 'ê' | 'É' | 'È' | 'Ë' | 'Ê' => Some('e'),
+            'í' | 'ì' | 'ï' | 'î' | 'Í' | 'Ì' | 'Ï' | 'Î' => Some('i'),
+            'ó' | 'ò' | 'ö' | 'ô' | 'õ' | 'Ó' | 'Ò' | 'Ö' | 'Ô' | 'Õ' => Some('o'),
+            'ú' | 'ù' | 'ü' | 'û' | 'Ú' | 'Ù' | 'Ü' | 'Û' => Some('u'),
+            'ñ' | 'Ñ' => Some('n'),
+            'ç' | 'Ç' => Some('c'),
+            character if character.is_ascii_alphanumeric() => Some(character.to_ascii_lowercase()),
+            _ => None,
+        };
+
+        if let Some(character) = folded {
+            if separator_pending && !slug.is_empty() {
+                slug.push('_');
+            }
+            slug.push(character);
+            separator_pending = false;
+        } else if !slug.is_empty() {
+            separator_pending = true;
+        }
+    }
+
+    if slug.len() <= max_len {
+        return slug;
+    }
+
+    let prefix = &slug[..max_len];
+    match prefix.rfind('_') {
+        Some(position) if position >= max_len / 2 => prefix[..position].to_string(),
+        _ => prefix.to_string(),
+    }
+}
+
+fn course_folder_name(course_code: &str, course_name: &str) -> Result<String, String> {
+    if course_code.trim().is_empty() {
+        return Err("Código es obligatorio.".to_string());
+    }
+    if course_name.trim().is_empty() {
+        return Err("Nombre es obligatorio.".to_string());
+    }
+
+    let code = slug_component(course_code, COURSE_CODE_SLUG_MAX);
+    let name = slug_component(course_name, COURSE_NAME_SLUG_MAX);
+    if code.is_empty() {
+        return Err("El código debe contener al menos una letra o un número.".to_string());
+    }
+    if name.is_empty() {
+        return Err("El nombre debe contener al menos una letra o un número.".to_string());
+    }
+    Ok(format!("{code}_{name}"))
+}
+
+fn course_directory(root: &Path, course_code: &str, course_name: &str) -> Result<PathBuf, String> {
+    let canonical = root.join(course_folder_name(course_code, course_name)?);
+    if canonical.exists() {
+        return Ok(canonical);
+    }
+
+    // Las asignaturas creadas por versiones anteriores usaban "CÓDIGO Nombre".
+    // Se conservan en su ubicación original para no separar sus archivos.
+    if let (Ok(legacy_code), Ok(legacy_name)) = (
+        safe_segment(course_code, "Código"),
+        safe_segment(course_name, "Nombre"),
+    ) {
+        let legacy = root.join(format!("{legacy_code} {legacy_name}"));
+        if legacy.exists() {
+            return Ok(legacy);
+        }
+    }
+
+    Ok(canonical)
+}
+
 pub fn create_course_structure(
     root_path: String,
     course_code: String,
@@ -420,19 +504,25 @@ pub fn create_course_structure(
     if !(1..=52).contains(&weeks) {
         return ActionResult::error("El número de semanas debe estar entre 1 y 52.");
     }
+    let requested_root = PathBuf::from(root_path.trim());
+    if root_path.trim().is_empty() {
+        return ActionResult::error("Selecciona una carpeta para guardar el proyecto.");
+    }
+    if !requested_root.exists() {
+        if let Err(error) = std::fs::create_dir_all(&requested_root) {
+            return ActionResult::error(format!(
+                "No se pudo crear la carpeta de proyectos: {error}"
+            ));
+        }
+    }
     let root = match canonical_directory(&root_path) {
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
     };
-    let code = match safe_segment(&course_code, "Código") {
-        Ok(value) => value,
+    let course = match course_directory(&root, &course_code, &course_name) {
+        Ok(path) => path,
         Err(error) => return ActionResult::error(error),
     };
-    let name = match safe_segment(&course_name, "Nombre") {
-        Ok(value) => value,
-        Err(error) => return ActionResult::error(error),
-    };
-    let course = root.join(format!("{code} {name}"));
 
     let mut paths = vec![
         course.join("bibliografia").join("recortes_por_semana"),
@@ -456,13 +546,15 @@ pub fn create_course_structure(
         let readme = course.join("README.md");
         if !readme.exists() {
             let content = format!(
-                "# {code} — {name}\n\n\
+                "# {} — {}\n\n\
                 Proyecto académico preparado con Jintia.\n\n\
                 ## Sílabo\n\n\
                 El contenido semanal se completará desde el editor de sílabo.\n\n\
                 ## Estructura\n\n\
                 - `semanas/`: materiales organizados por semana.\n\
-                - `bibliografia/`: referencias y recortes del curso.\n"
+                - `bibliografia/`: referencias y recortes del curso.\n",
+                course_code.trim(),
+                course_name.trim(),
             );
             if let Err(error) = std::fs::write(&readme, content) {
                 return ActionResult::error(format!(
@@ -603,11 +695,10 @@ pub fn generate_syllabus(
         Ok(path) => path,
         Err(error) => return ActionResult::error(error),
     };
-    if let Err(error) = safe_segment(&course_code, "Código") {
-        return ActionResult::error(error);
-    }
-
-    let course = root.join(format!("{} {}", course_code, course_name));
+    let course = match course_directory(&root, &course_code, &course_name) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
     if let Err(error) = std::fs::create_dir_all(&course) {
         return ActionResult::error(format!("No se pudo crear carpeta del curso: {error}"));
     }
@@ -858,7 +949,10 @@ pub fn compile_syllabus_pdf(
         Err(error) => return ActionResult::error(error),
     };
 
-    let course_dir = course.join(format!("{} {}", course_code, course_name));
+    let course_dir = match course_directory(&course, &course_code, &course_name) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
     if !course_dir.exists() {
         return ActionResult::error(format!(
             "Carpeta del curso no encontrada: {}",
@@ -1396,6 +1490,28 @@ mod tests {
         assert!(markdown.contains("**Herramienta de aprendizaje:**"));
         assert!(markdown.contains("**Actividades calificadas:**\n- Ninguna"));
         assert!(!markdown.contains("**Resultados de aprendizaje:**"));
+    }
+
+    #[test]
+    fn course_folders_use_a_short_portable_slug() {
+        assert_eq!(
+            course_folder_name("IFT 200", "Diseño e Interacción").unwrap(),
+            "ift_200_diseno_e_interaccion"
+        );
+        assert_eq!(
+            course_folder_name(
+                "CC-05A",
+                "Fundamentos profesionales para la toma de decisiones basada en evidencia"
+            )
+            .unwrap(),
+            "cc_05a_fundamentos_profesionales_para_la_toma_de"
+        );
+    }
+
+    #[test]
+    fn course_folder_slug_rejects_empty_identifiers() {
+        assert!(course_folder_name("", "Base de datos").is_err());
+        assert!(course_folder_name("IFT200", "###").is_err());
     }
 
     #[test]

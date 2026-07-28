@@ -8,6 +8,7 @@ import { refreshIcons }       from "./icons.js";
 import { navigate, registerPage } from "./router.js";
 
 import { renderCourses }      from "./pages/courses.js";
+import { renderPdfs }         from "./pages/pdfs.js";
 import { renderSyllabus }     from "./pages/syllabus.js";
 import { renderTemplates }    from "./pages/templates.js";
 import { renderSettings }     from "./pages/settings.js";
@@ -21,6 +22,7 @@ import { ui, cx } from "./uiClasses.js";
 import { APP_META } from "./appMeta.js";
 
 registerPage("courses",   renderCourses);
+registerPage("pdfs",      renderPdfs);
 registerPage("syllabus",  renderSyllabus);
 registerPage("templates", renderTemplates);
 registerPage("settings",  renderSettings);
@@ -52,6 +54,9 @@ function renderShell() {
       <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
         <button class="${ui.nav.item}" data-nav-item data-page="courses" aria-label="Cursos">
           <span class="material-symbols-outlined">school</span> Cursos
+        </button>
+        <button class="${ui.nav.item}" data-nav-item data-page="pdfs" aria-label="PDFs generados">
+          <span class="material-symbols-outlined">picture_as_pdf</span> PDFs
         </button>
         <button class="${ui.nav.item}" data-nav-item data-page="templates" aria-label="Plantillas">
           <span class="material-symbols-outlined">dashboard_customize</span> Plantillas
@@ -93,6 +98,7 @@ function renderShell() {
 
       <div class="${cx(ui.surface.page, 'pt-[80px]')}">
         <section class="h-full min-h-0 min-w-0" id="p-courses" hidden aria-label="Cursos"></section>
+        <section class="h-full min-h-0 min-w-0" id="p-pdfs" hidden aria-label="PDFs generados"></section>
         <section class="h-full min-h-0 min-w-0" id="p-syllabus" hidden aria-label="Editor de sílabo"></section>
         <section class="h-full min-h-0 min-w-0" id="p-templates" hidden aria-label="Plantillas"></section>
         <section class="h-full min-h-0 min-w-0" id="p-settings" hidden aria-label="Configuración"></section>
