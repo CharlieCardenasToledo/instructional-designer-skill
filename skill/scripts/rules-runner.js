@@ -25,6 +25,15 @@ function runRules(file) {
   if (isSyllabus) {
     if (!/\*\*Resultado de aprendizaje:\*\*/i.test(source)) issues.push(issue(rules["JIN-SYL-001"], "Falta **Resultado de aprendizaje:**.", absolute));
     if (!/^###\s+Semana\s+\d+/im.test(source)) issues.push(issue(rules["JIN-SYL-002"], "No se detectó una sección ### Semana XX.", absolute));
+    if (!/\*\*(?:Bibliografía|Bibliografia|Recursos)[^:]*:\*\*/i.test(source) || !/\*\*Actividades calificadas:\*\*/i.test(source)) {
+      issues.push(issue(rules["JIN-SYL-004"], "Falta bibliografía/recursos o actividades calificadas.", absolute));
+    }
+    const weekBlocks = source.split(/^###\s+Semana\s+\d+[^\n]*$/im).slice(1);
+    for (const block of weekBlocks) {
+      const hasOutcome = /\*\*Resultado de aprendizaje:\*\*/i.test(block);
+      const hasEvidence = /\*\*(?:Actividades calificadas|Herramienta de aprendizaje):\*\*/i.test(block);
+      if (!hasOutcome || !hasEvidence) issues.push(issue(rules["JIN-ALN-002"], "Una semana no conecta resultado con actividad, recurso o evidencia.", absolute));
+    }
   }
 
   if (isLatex) {
@@ -49,6 +58,8 @@ function runRules(file) {
       for (const key of cited) if (!new RegExp(`@[^\\n{]+\\{\\s*${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,`, "i").test(bib)) {
         issues.push(issue(rules["JIN-BIB-003"], `La clave bibliográfica ${key} no existe en reference.bib.`, absolute));
       }
+    } else if (/\\(?:textcite|parencite|cite)\{/.test(source)) {
+      issues.push(issue(rules["JIN-TMP-004"], "La guía contiene citas, pero falta reference.bib.", absolute));
     }
   }
   return { tool: "jintia rules", catalogVersion: catalog.version, target: absolute, issues, summary: {

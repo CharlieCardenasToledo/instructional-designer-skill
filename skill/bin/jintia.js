@@ -17,6 +17,8 @@ Uso:
   jintia doctor [--json]
   jintia audit <README.md|guia.tex> [--json] [--strict]
   jintia state update <curso> <semana> <estado> [archivo-fuente]
+  jintia hook post-edit --changed <archivos...>
+  jintia hook pre-compile <guia.tex>
   jintia validate <guia.tex> [--template ID]
   jintia compile <guia.tex>
   jintia visual render <spec.json> --template ID [--guide guia.tex]
@@ -41,6 +43,13 @@ function runScript(script, args) {
   });
   if (result.error) throw result.error;
   process.exitCode = result.status ?? 1;
+}
+
+function runHook(hook, args) {
+  const result = spawnSync(process.execPath, [path.join(SCRIPTS, "hook-runner.js"), hook, ...args], {
+    cwd: process.cwd(), encoding: "utf8", stdio: "inherit", shell: false
+  });
+  return result.status ?? 1;
 }
 
 function commandExists(command) {
@@ -98,8 +107,13 @@ function main(argv) {
   if (command === "doctor") return doctor(argv.includes("--json"));
   if (command === "audit" || command === "rules") return runScript("rules-runner.js", argv.slice(1));
   if (command === "state" && subcommand === "update") return runScript("state-manager.js", rest.length ? [subcommand, ...rest] : argv.slice(1));
+  if (command === "hook") return runScript("hook-runner.js", [subcommand, ...rest]);
   if (command === "validate") return runScript("latex-linter.js", argv.slice(1));
-  if (command === "compile") return runScript("latex-validator.js", argv.slice(1));
+  if (command === "compile") {
+    const hookStatus = runHook("pre-compile", argv.slice(1));
+    if (hookStatus !== 0) { process.exitCode = hookStatus; return; }
+    return runScript("latex-validator.js", argv.slice(1));
+  }
   if (command === "migrate") return runScript("legacy-manager.js", argv.slice(1));
   if (command === "syllabus" && subcommand === "validate") return runScript("syllabus-validator.js", rest);
   if (command === "visual" && subcommand === "render") return runScript("visual-pipeline.js", rest);

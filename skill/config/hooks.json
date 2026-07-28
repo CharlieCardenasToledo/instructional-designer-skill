@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "hooks": {
+    "post-edit": {
+      "command": "node scripts/hook-runner.js post-edit --changed <files>",
+      "description": "Revisa sílabos y guías modificadas sin cambiar archivos."
+    },
+    "pre-compile": {
+      "command": "node scripts/hook-runner.js pre-compile <guia.tex>",
+      "description": "Bloquea la compilación si las reglas técnicas tienen errores."
+    }
+  }
+}

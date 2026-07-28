@@ -3,9 +3,12 @@
   "rules": [
     { "id": "JIN-SYL-001", "category": "syllabus", "severity": "error", "description": "El sílabo debe declarar un resultado de aprendizaje." },
     { "id": "JIN-SYL-002", "category": "syllabus", "severity": "error", "description": "El sílabo debe contener al menos una semana canónica." },
+    { "id": "JIN-SYL-004", "category": "syllabus", "severity": "error", "description": "Cada sílabo debe declarar bibliografía y actividades calificadas." },
+    { "id": "JIN-ALN-002", "category": "alignment", "severity": "warning", "description": "Cada semana debería conectar resultado, práctica o actividad y evidencia." },
     { "id": "JIN-BIB-003", "category": "bibliography", "severity": "warning", "description": "Toda clave citada en LaTeX debería existir en reference.bib." },
     { "id": "JIN-LTX-006", "category": "latex", "severity": "warning", "description": "Toda figura debe tener una referencia previa en el texto." },
     { "id": "JIN-ACC-002", "category": "accessibility", "severity": "warning", "description": "Toda figura debe conservar caption y texto alternativo." },
-    { "id": "JIN-TMP-003", "category": "template", "severity": "error", "description": "La guía debe declarar una clase de documento compatible." }
+    { "id": "JIN-TMP-003", "category": "template", "severity": "error", "description": "La guía debe declarar una clase de documento compatible." },
+    { "id": "JIN-TMP-004", "category": "template", "severity": "warning", "description": "Una guía con citas debería conservar reference.bib junto al archivo principal." }
   ]
 }
