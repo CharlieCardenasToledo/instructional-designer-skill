@@ -824,6 +824,17 @@ test('Courses incorpora el estado persistente de semanas sin reemplazar el progr
   assert.match(rust, /state\.json/);
 });
 
+test('Desktop comparte la detección de harnesses con la CLI', async () => {
+  const api = await readFile(new URL('src/api.js', root), 'utf8');
+  const lib = await readFile(new URL('src-tauri/src/lib.rs', root), 'utf8');
+  const backend = await readFile(new URL('src-tauri/src/harnesses.rs', root), 'utf8');
+  const mock = await readFile(new URL('src/mocks/tauri-core.mock.js', root), 'utf8');
+  assert.match(api, /detect_harnesses/);
+  assert.match(lib, /detect_harnesses/);
+  assert.match(backend, /supports_hooks/);
+  assert.match(mock, /detect_harnesses/);
+});
+
 test('la skill expone contratos de delegación especializados sin duplicar el router', async () => {
   const skill = await readFile(new URL('../../skill/SKILL.md', root), 'utf8');
   const agents = await Promise.all([

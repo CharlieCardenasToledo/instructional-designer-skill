@@ -80,3 +80,16 @@ test("la instalación de hooks queda explícitamente separada del runner", () =>
   assert.match(installer, /pre-commit/);
   assert.match(installer, /No se instaló el hook/);
 });
+
+test("detect identifica harnesses de proyecto, globales y alias explícitos", () => {
+  const project = copyFixture("minimal-course");
+  fs.mkdirSync(path.join(project, ".cursor", "skills", "jintia-skill"), { recursive: true });
+  fs.writeFileSync(path.join(project, ".cursor", "skills", "jintia-skill", "SKILL.md"), "---\nname: jintia-skill\n---\n");
+  const detected = spawnSync(process.execPath, [cli, "detect", project, "--json"], { encoding: "utf8" });
+  assert.equal(detected.status, 0, detected.stderr);
+  const report = JSON.parse(detected.stdout).data;
+  assert.equal(report.providers.find(provider => provider.id === "cursor").status, "installed");
+  const explicit = spawnSync(process.execPath, [cli, "detect", project, "--providers=claude,codex", "--json"], { encoding: "utf8" });
+  const explicitReport = JSON.parse(explicit.stdout).data;
+  assert.deepEqual(explicitReport.providers.map(provider => provider.id), ["claude", "codex"]);
+});

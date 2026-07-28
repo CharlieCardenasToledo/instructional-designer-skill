@@ -7,6 +7,7 @@ const crypto = require("node:crypto");
 const CORE_VERSION = "1.0.0";
 const CONTEXT_FILE = "JINTIA.md";
 const CONTEXT_SECTIONS = ["Course", "Pedagogy", "Editorial"];
+const harnesses = require("./harnesses");
 
 function courseRoot(course) {
   if (!course || typeof course !== "string") throw new TypeError("Se requiere la ruta del curso.");
@@ -100,4 +101,4 @@ function readCourse(course) {
   };
 }
 
-module.exports = { CORE_VERSION, CONTEXT_FILE, CONTEXT_SECTIONS, courseRoot, coursePaths, initContext, readContext, validateContext, normalizeWeek, hashFile, loadCourseState, saveCourseState, updateCourseState, readCourse };
+module.exports = { CORE_VERSION, CONTEXT_FILE, CONTEXT_SECTIONS, courseRoot, coursePaths, initContext, readContext, validateContext, normalizeWeek, hashFile, loadCourseState, saveCourseState, updateCourseState, readCourse, ...harnesses };

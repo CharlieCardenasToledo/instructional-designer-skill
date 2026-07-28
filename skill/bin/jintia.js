@@ -18,6 +18,7 @@ Uso:
   jintia doctor [--json]
   jintia context <init|read|validate> <curso> [--json]
   jintia agents plan <operación> [--json]
+  jintia detect [proyecto] [--providers=claude,codex] [--json]
   jintia audit <README.md|guia.tex> [--json] [--strict]
   jintia state update <curso> <semana> <estado> [archivo-fuente]
   jintia hook post-edit --changed <archivos...>
@@ -40,7 +41,7 @@ function option(args, name, fallback = null) {
 function runScript(script, args, command = script.replace(/\.js$/, "")) {
   const asJson = args.includes("--json");
   const forwardedArgs = args.filter(arg => arg !== "--json");
-  const childArgs = script === "rules-runner.js" || script === "context-manager.js" || script === "agent-plan.js"
+  const childArgs = script === "rules-runner.js" || script === "context-manager.js" || script === "agent-plan.js" || script === "harness-detect.js"
     ? [...forwardedArgs, "--json"]
     : forwardedArgs;
   const result = spawnSync(process.execPath, [path.join(SCRIPTS, script), ...childArgs], {
@@ -131,6 +132,7 @@ function main(argv) {
   if (command === "doctor") return doctor(argv.includes("--json"));
   if (command === "context") return runScript("context-manager.js", [subcommand, ...rest], `context ${subcommand}`);
   if (command === "agents" && subcommand === "plan") return runScript("agent-plan.js", rest, "agents plan");
+  if (command === "detect") return runScript("harness-detect.js", argv.slice(1), "detect");
   if (command === "audit" || command === "rules") return runScript("rules-runner.js", argv.slice(1), command);
   if (command === "state" && subcommand === "update") return runScript("state-manager.js", rest.length ? [subcommand, ...rest] : argv.slice(1), "state update");
   if (command === "hook" && subcommand === "install") return runScript("hook-install.js", rest, "hook install");

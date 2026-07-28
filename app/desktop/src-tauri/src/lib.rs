@@ -1,6 +1,7 @@
 mod config;
 mod course;
 mod course_state;
+mod harnesses;
 mod mcp;
 mod models;
 mod onboarding;
@@ -188,6 +189,13 @@ async fn get_course_state(project_path: String) -> serde_json::Value {
 }
 
 #[tauri::command]
+async fn detect_harnesses(project_path: String, explicit_providers: Option<Vec<String>>) -> serde_json::Value {
+    tauri::async_runtime::spawn_blocking(move || harnesses::detect(project_path, explicit_providers))
+        .await
+        .unwrap_or_else(|error| serde_json::json!({ "success": false, "message": format!("No se pudieron detectar los harnesses: {error}") }))
+}
+
+#[tauri::command]
 async fn list_generated_pdfs(projects: Vec<PdfProjectRoot>) -> Vec<GeneratedPdf> {
     tauri::async_runtime::spawn_blocking(move || pdfs::list_generated_pdfs(projects))
         .await
@@ -339,6 +347,7 @@ pub fn run() {
             run_notebooklm_auth,
             get_default_course_root,
             get_course_state,
+            detect_harnesses,
             list_generated_pdfs,
             open_generated_pdf,
             reveal_generated_pdf,

@@ -125,6 +125,10 @@ export async function getCourseState(projectPath) {
   return invoke("get_course_state", { projectPath });
 }
 
+export async function detectHarnesses(projectPath, explicitProviders = null) {
+  return invoke("detect_harnesses", { projectPath, explicitProviders });
+}
+
 // ── Biblioteca de PDFs generados ─────────────────────────────────────────
 export async function listGeneratedPdfs(projects) {
   return invoke("list_generated_pdfs", { projects });

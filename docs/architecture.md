@@ -28,6 +28,9 @@ Los paquetes `@jintia/cli`, `@jintia/rules`, `@jintia/templates` y
 delegan temporalmente en las implementaciones existentes para permitir una
 migración incremental sin duplicar lógica.
 
+`@jintia/core` también concentra el detector de harnesses, de modo que la CLI
+y Desktop puedan compartir la misma tabla de proveedores y reglas de prioridad.
+
 ## Límites de componentes
 
 ### `app/desktop`
