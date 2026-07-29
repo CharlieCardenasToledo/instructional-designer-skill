@@ -745,66 +745,66 @@ async function jumpToDependencyTool(fromStep, toolIndex) {
 function welcomeStep() {
   setFooter("Continuar", "advance", false);
   const feature = (icon, title, desc) => `
-    <article class="p-4 rounded-xl border border-gray-200 bg-white">
-      <div class="w-8 h-8 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center mb-2.5">${ic(icon, 18)}</div>
-      <h3 class="text-[13px] font-semibold text-gray-900 mb-1">${title}</h3>
-      <p class="text-xs text-gray-500 leading-relaxed">${desc}</p>
+    <article class="${ui.surface.cardGlass} p-5 transition-all duration-200 hover:bg-white/50 hover:backdrop-blur-2xl hover:shadow-md">
+      <div class="w-10 h-10 rounded-lg bg-brand/15 text-brand flex items-center justify-center mb-3 transition-transform duration-200 group-hover:scale-110">${ic(icon, 20)}</div>
+      <h3 class="text-sm font-semibold text-slate-900 mb-1.5">${title}</h3>
+      <p class="text-xs text-slate-600 leading-relaxed">${desc}</p>
     </article>`;
   const techCard = (name, src, icon) => `
-    <div class="flex items-center justify-center w-11 h-11 text-gray-700" title="${escapeHtml(name)}">
+    <div class="flex items-center justify-center w-11 h-11 text-slate-700 transition-transform duration-200 hover:scale-110" title="${escapeHtml(name)}">
       ${src ? `<img src="${src}" alt="${escapeHtml(name)}" class="w-full h-full object-contain">` : ic(icon, 40)}
     </div>`;
   const framework = (name, source, desc) => `
-    <article class="p-3.5 rounded-xl border border-gray-200 bg-white">
-      <div class="flex items-baseline gap-1.5 mb-1">
-        <h3 class="text-[13px] font-semibold text-gray-900">${escapeHtml(name)}</h3>
-        <span class="text-[10.5px] text-gray-400 font-medium">${escapeHtml(source)}</span>
+    <article class="${ui.surface.cardGlass} p-4 transition-all duration-200 hover:bg-white/50 hover:backdrop-blur-2xl hover:shadow-md">
+      <div class="flex items-baseline gap-1.5 mb-1.5">
+        <h3 class="text-sm font-semibold text-slate-900">${escapeHtml(name)}</h3>
+        <span class="text-[10px] text-slate-500 font-medium">${escapeHtml(source)}</span>
       </div>
-      <p class="text-xs text-gray-500 leading-relaxed">${escapeHtml(desc)}</p>
+      <p class="text-xs text-slate-600 leading-relaxed">${escapeHtml(desc)}</p>
     </article>`;
   const disclosure = (summaryText, bodyHtml) => `
     <details class="max-w-2xl mx-auto group">
-      <summary class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden py-2 border-t border-gray-100">
+      <summary class="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden py-3 border-t border-white/20 transition-colors duration-150">
         <span class="material-symbols-outlined text-[15px] transition-transform group-open:rotate-90">chevron_right</span>
         ${summaryText}
       </summary>
-      <div class="pt-2 pb-1">${bodyHtml}</div>
+      <div class="pt-3 pb-2">${bodyHtml}</div>
     </details>`;
 
   return `<section>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto mb-3">
-      ${feature("brain-circuit", "Convierte tu sílabo", "Sube el sílabo de tu materia y quedará estructurado como guía.")}
-      ${feature("layout-template", "Organiza por semanas", "Cada semana queda con sus temas, actividades y bibliografía.")}
-      ${feature("quote", "Genera el PDF", "Descarga la guía lista para publicar, con tu identidad institucional.")}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto mb-4">
+      ${feature("psychology", "Convierte tu sílabo", "Sube el sílabo de tu materia y quedará estructurado como guía.")}
+      ${feature("dashboard", "Organiza por semanas", "Cada semana queda con sus temas, actividades y bibliografía.")}
+      ${feature("file_download", "Genera el PDF", "Descarga la guía lista para publicar, con tu identidad institucional.")}
     </div>
 
     ${disclosure("Ver el recorrido", `
-      <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-gray-700 mb-4">
-        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Sílabo</span>
-        ${ic("chevron-right", 14)}
-        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Fuentes</span>
-        ${ic("chevron-right", 14)}
-        <span class="rounded-lg border border-gray-200 bg-white px-3 py-2">Guía</span>
-        ${ic("chevron-right", 14)}
-        <span class="rounded-lg border border-gray-900 bg-gray-900 text-white px-3 py-2">PDF</span>
+      <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-slate-700 mb-5">
+        <span class="${ui.surface.cardGlass} px-3.5 py-2 transition-all duration-200 hover:bg-white/50">Sílabo</span>
+        <span class="text-slate-400">→</span>
+        <span class="${ui.surface.cardGlass} px-3.5 py-2 transition-all duration-200 hover:bg-white/50">Fuentes</span>
+        <span class="text-slate-400">→</span>
+        <span class="${ui.surface.cardGlass} px-3.5 py-2 transition-all duration-200 hover:bg-white/50">Guía</span>
+        <span class="text-slate-400">→</span>
+        <span class="relative isolate rounded-lg border border-brand/30 bg-brand/20 text-brand px-3.5 py-2 font-semibold transition-all duration-200 hover:bg-brand/30 hover:border-brand/50">PDF</span>
       </div>
-      <div class="flex flex-wrap justify-center gap-4 mb-4">
+      <div class="flex flex-wrap justify-center gap-6 mb-5">
         ${techCard("Claude", claudeLogo)}
         ${techCard("Gemini", geminiLogo)}
         ${techCard("NotebookLM", notebookLmLogo)}
         ${techCard("LaTeX", latexLogo)}
       </div>
-      <div class="${CALLOUT}">${ic("shield-check", 16)} <span>Todo lo que configures se guarda en tu computadora. Las búsquedas bibliográficas solo se comparten con NotebookLM cuando tú lo autorizas.</span></div>
+      <div class="${CALLOUT}">${ic("verified", 16)} <span>Todo lo que configures se guarda en tu computadora. Las búsquedas bibliográficas solo se comparten con NotebookLM cuando tú lo autorizas.</span></div>
     `)}
 
     ${disclosure("Ver fundamentos pedagógicos", `
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         ${framework("UDL 3.0", "CAST, 2024", "Múltiples medios de representación, participación, acción y expresión.")}
         ${framework("Backward Design", "Wiggins & McTighe", "Primero los resultados de aprendizaje, luego la evaluación, luego el contenido.")}
         ${framework("Quality Matters", "7ª ed.", "Alineación entre resultados, actividades y materiales.")}
       </div>
-      <div class="rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-[11.5px] text-gray-600 leading-relaxed">
-        <strong class="text-gray-900">Criterios complementarios:</strong> WCAG 2.2 para accesibilidad; principios multimedia de Mayer para reducir carga cognitiva; práctica espaciada e intercalada para reforzar la retención.
+      <div class="${ui.surface.cardGlass} px-4 py-3 text-[11px] text-slate-700 leading-relaxed transition-all duration-200 hover:bg-white/50">
+        <strong class="text-slate-900 block mb-1.5">Criterios complementarios:</strong> WCAG 2.2 para accesibilidad; principios multimedia de Mayer para reducir carga cognitiva; práctica espaciada e intercalada para reforzar la retención.
       </div>
     `)}
   </section>`;
