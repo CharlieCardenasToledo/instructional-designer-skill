@@ -5,7 +5,7 @@ import { toast } from "../toast.js";
 import { navigate } from "../router.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
 import { ui, cx } from "../uiClasses.js";
-import { ic } from "../icons.js";
+import { ic, refreshIcons } from "../icons.js";
 
 let _filter = "";
 let _statusFilter = "all";
@@ -44,6 +44,9 @@ const PROJECT_ICONS = [
   { value: "psychology", label: "Ideas" },
   { value: "palette", label: "Creativo" },
 ];
+// Los valores de arriba se guardan tal cual (compatibilidad con datos existentes);
+// este mapa solo traduce el valor guardado al nombre real del ícono Lucide.
+const PROJECT_ICON_LUCIDE = { folder: "folder", school: "graduation-cap", database: "database", science: "flask-conical", psychology: "brain", palette: "palette" };
 
 function projectColor(course) {
   // Returns the hex value stored in course.project_color for use in style attributes.
@@ -56,7 +59,7 @@ function projectIcon(course) {
 }
 
 function projectBadge(course, extraClass = "") {
-  return `<span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${extraClass}" style="background:${projectColor(course)}18;color:${projectColor(course)}" aria-hidden="true"><span class="material-symbols-outlined text-[20px]">${projectIcon(course)}</span></span>`;
+  return `<span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${extraClass}" style="background:${projectColor(course)}18;color:${projectColor(course)}" aria-hidden="true">${ic(PROJECT_ICON_LUCIDE[projectIcon(course)] || "folder", 20)}</span>`;
 }
 
 function defaultCourseRoot() {
@@ -99,10 +102,10 @@ function courseProgress(course) {
 
 function statusView(progress) {
   return {
-    complete: { label: "Lista", icon: "check_circle", classes: "border-green-200 bg-green-50 text-green-700" },
-    progress: { label: "En progreso", icon: "pending", classes: "border-teal-200 bg-teal-50 text-teal-700" },
-    outdated: { label: "Desactualizado", icon: "sync_problem", classes: "border-amber-200 bg-amber-50 text-amber-700" },
-    pending: { label: "Pendiente", icon: "radio_button_unchecked", classes: "border-slate-200 bg-slate-50 text-slate-600" },
+    complete: { label: "Lista", icon: "check-circle-2", classes: "border-green-200 bg-green-50 text-green-700" },
+    progress: { label: "En progreso", icon: "loader-2", classes: "border-teal-200 bg-teal-50 text-teal-700" },
+    outdated: { label: "Desactualizado", icon: "refresh-ccw-dot", classes: "border-amber-200 bg-amber-50 text-amber-700" },
+    pending: { label: "Pendiente", icon: "circle", classes: "border-slate-200 bg-slate-50 text-slate-600" },
   }[progress.status];
 }
 
@@ -156,9 +159,9 @@ export function renderCourses() {
             </p>
           </div>
           <div class="grid grid-cols-3 gap-2 text-center sm:min-w-[330px]">
-            ${summaryMetric(total, "Asignaturas", "school")}
-            ${summaryMetric(inProgress, "En progreso", "edit_note")}
-            ${summaryMetric(ready, "Listas", "check_circle")}
+            ${summaryMetric(total, "Asignaturas", "graduation-cap")}
+            ${summaryMetric(inProgress, "En progreso", "notebook-pen")}
+            ${summaryMetric(ready, "Listas", "check-circle-2")}
           </div>
         </div>
       </section>
@@ -207,6 +210,7 @@ export function renderCourses() {
         role="dialog" aria-modal="true" aria-labelledby="project-appearance-title"></div>
     </div>`;
 
+  refreshIcons();
   bindPageEvents();
 }
 
@@ -214,7 +218,7 @@ function summaryMetric(value, label, icon) {
   return `
     <div class="min-w-0 rounded-lg bg-slate-50 px-2 py-2">
       <div class="flex items-center justify-center gap-1 text-app-text">
-        <span class="material-symbols-outlined text-[16px] text-brand" aria-hidden="true">${icon}</span>
+        <span class="text-brand-600">${ic(icon, 16)}</span>
         <strong class="text-base">${value}</strong>
       </div>
       <span class="block truncate text-[11px] text-app-muted">${label}</span>
@@ -291,12 +295,12 @@ function renderDesktopRow({ course, index, progress }) {
           <span class="text-xs font-semibold text-app-text">${progress.complete}/${progress.total}</span>
         </div>
         <span class="mt-1 inline-flex items-center gap-1 text-xs font-semibold ${status.classes.split(" ").at(-1)}">
-          <span class="material-symbols-outlined text-[15px]" aria-hidden="true">${status.icon}</span>${status.label}
+          ${ic(status.icon, 15)}${status.label}
         </span>
       </td>
       <td class="${ui.table.td}">
         <span class="inline-flex items-center gap-1.5 text-xs ${prepared ? "text-green-700" : "text-app-muted"}">
-          <span class="material-symbols-outlined text-[16px]" style="color:${projectColor(course)}" aria-hidden="true">${prepared ? projectIcon(course) : "folder_off"}</span>
+          <span style="color:${projectColor(course)}">${ic(prepared ? (PROJECT_ICON_LUCIDE[projectIcon(course)] || "folder") : "folder-x", 16)}</span>
           ${prepared ? "Preparado" : course.project_status === "error" ? "Error al crear" : "Carpeta no creada"}
         </span>
       </td>
@@ -342,19 +346,19 @@ function renderMoreMenu(index, course) {
   return `
     <details class="relative">
       <summary class="${cx(ui.button.base, ui.button.ghost, 'h-11 w-11 cursor-pointer list-none p-0')}" aria-label="Más acciones para ${escapeHtml(course.name)}">
-        <span class="material-symbols-outlined" aria-hidden="true">more_horiz</span>
+        ${ic("more-horizontal", 20)}
       </summary>
       <div class="absolute right-0 top-12 z-50 min-w-[205px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
         <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="folders" data-index="${index}" ${busy ? "disabled aria-busy=\"true\"" : ""}>
-          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">${busy ? "progress_activity" : "create_new_folder"}</span>
+          ${ic(busy ? "loader-2" : "folder-plus", 17)}
           ${busy ? "Preparando…" : course.project_status === "ready" ? "Recrear estructura" : "Crear carpeta del proyecto"}
         </button>
         <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="appearance" data-index="${index}">
-          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">palette</span>
+          ${ic("palette", 17)}
           Personalizar en Jintia
         </button>
         <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600" data-course-action="delete" data-index="${index}">
-          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">delete</span>
+          ${ic("trash-2", 17)}
           Eliminar del registro
         </button>
       </div>
@@ -365,12 +369,12 @@ function renderEmptyState() {
   return `
     <div class="${cx(ui.surface.cardGlass, 'flex min-h-[360px] flex-col items-center justify-center p-8 text-center')}">
       <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-brand/20 bg-brand-soft text-brand">
-        <span class="material-symbols-outlined text-[32px]" aria-hidden="true">school</span>
+        ${ic("graduation-cap", 32)}
       </div>
       <h3 class="title-medium text-app-text">Crea tu primera asignatura</h3>
       <p class="mt-3 max-w-[420px] text-sm leading-6 text-app-muted">Registra la información académica, prepara la estructura del proyecto y comienza el sílabo semanal con guías validadas pedagógicamente.</p>
       <button type="button" class="${cx(ui.button.base, ui.button.primary, 'mt-5 min-h-11')}" id="btn-empty-new-course">
-        <span class="material-symbols-outlined text-[17px]" aria-hidden="true">add</span>Nueva asignatura
+        ${ic("plus", 17)}Nueva asignatura
       </button>
     </div>`;
 }
@@ -378,7 +382,7 @@ function renderEmptyState() {
 function renderNoResults() {
   return `
     <div class="${cx(ui.surface.cardGlass, 'flex min-h-[300px] flex-col items-center justify-center p-8 text-center')}">
-      <span class="material-symbols-outlined text-[38px] text-slate-400" aria-hidden="true">search_off</span>
+      <span class="text-slate-400">${ic("search-x", 38)}</span>
       <h3 class="title-medium mt-3 text-app-text">No encontramos asignaturas</h3>
       <p class="mt-2 text-sm text-app-muted">Prueba con otro término de búsqueda o elimina los filtros actuales.</p>
       <button type="button" class="${cx(ui.button.base, ui.button.secondary, 'mt-4 min-h-11')}" id="courses-clear-filters">Limpiar búsqueda y filtros</button>
@@ -428,6 +432,7 @@ function updateResults() {
   const results = document.getElementById("courses-results");
   if (!results) return;
   results.innerHTML = renderCourseResults();
+  refreshIcons();
   bindResultEvents();
   document.getElementById("courses-clear-filters")?.addEventListener("click", () => {
     _filter = "";
@@ -472,7 +477,7 @@ function identityPickerMarkup(color, icon, prefix) {
       <p class="mb-3 text-xs leading-5 text-app-muted">Ayuda a reconocer el proyecto rápidamente. No modifica el icono de la carpeta de Windows.</p>
       <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
         <span class="inline-flex h-12 w-12 items-center justify-center rounded-xl" style="background:${color}18;color:${color}" aria-hidden="true">
-          <span class="material-symbols-outlined text-[25px]">${icon}</span>
+          ${ic(PROJECT_ICON_LUCIDE[icon] || "folder", 25)}
         </span>
         <div>
           <strong class="block text-sm text-app-text">Vista del proyecto</strong>
@@ -483,14 +488,14 @@ function identityPickerMarkup(color, icon, prefix) {
       <div class="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6" role="group" aria-labelledby="${prefix}-icon-label">
         ${PROJECT_ICONS.map(option => `
           <button type="button" class="flex min-h-11 items-center justify-center rounded-xl border ${option.value === icon ? "border-brand bg-brand-soft text-brand ring-2 ring-brand/20" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}" data-project-icon="${option.value}" aria-pressed="${option.value === icon}" title="${option.label}" aria-label="${option.label}">
-            <span class="material-symbols-outlined text-[20px]" aria-hidden="true">${option.value}</span>
+            ${ic(PROJECT_ICON_LUCIDE[option.value] || "folder", 20)}
           </button>`).join("")}
       </div>
       <span class="mt-4 block text-xs font-bold text-slate-700" id="${prefix}-color-label">Color</span>
       <div class="mt-2 flex flex-wrap gap-2" role="group" aria-labelledby="${prefix}-color-label">
         ${PROJECT_COLORS.map(option => `
           <button type="button" class="flex h-11 w-11 items-center justify-center rounded-full border-4 border-white shadow-sm ${option.value === color ? "ring-2 ring-slate-800 ring-offset-1" : "ring-1 ring-slate-200"}" style="background:${option.hex || option.value}" data-project-color="${option.value}" aria-pressed="${option.value === color}" title="${option.label}" aria-label="${option.label}">
-            ${option.value === color ? '<span class="material-symbols-outlined text-[18px] text-white" aria-hidden="true">check</span>' : ""}
+            ${option.value === color ? `<span class="text-white">${ic("check", 18)}</span>` : ""}
           </button>`).join("")}
       </div>
     </fieldset>`;
@@ -518,13 +523,14 @@ function renderAppearanceModal() {
         <h2 id="project-appearance-title" class="text-base font-bold text-app-text">Personalizar proyecto</h2>
         <p class="mt-1 text-xs text-app-muted">${escapeHtml(course.code)} · ${escapeHtml(course.name)}</p>
       </div>
-      <button type="button" class="${cx(ui.button.base, ui.button.ghost, "h-11 w-11 p-0")}" id="appearance-close" aria-label="Cerrar"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+      <button type="button" class="${cx(ui.button.base, ui.button.ghost, "h-11 w-11 p-0")}" id="appearance-close" aria-label="Cerrar">${ic("x", 20)}</button>
     </div>
     <div class="px-5 pb-5">${identityPickerMarkup(_appearanceDraft.color, _appearanceDraft.icon, "appearance")}</div>
     <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 sm:flex-row sm:justify-end">
       <button type="button" class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="appearance-cancel">Cancelar</button>
       <button type="button" class="${cx(ui.button.base, ui.button.primary, "min-h-11")}" id="appearance-save">Guardar apariencia</button>
     </div>`;
+  refreshIcons();
   box.querySelector("#appearance-close")?.addEventListener("click", closeAppearanceModal);
   box.querySelector("#appearance-cancel")?.addEventListener("click", closeAppearanceModal);
   box.querySelectorAll("[data-project-color]").forEach(button => button.addEventListener("click", () => {
@@ -598,7 +604,8 @@ async function generateFolders(index, button) {
   _folderBusy.add(index);
   button.disabled = true;
   button.setAttribute("aria-busy", "true");
-  button.innerHTML = `<span class="material-symbols-outlined animate-spin text-[17px]" aria-hidden="true">progress_activity</span>Preparando proyecto…`;
+  button.innerHTML = `<span class="animate-spin">${ic("loader-2", 17)}</span>Preparando proyecto…`;
+  refreshIcons();
   toast("Preparando carpetas y README del proyecto…", "loading", 30000);
   try {
     const result = await createCourseStructure({
@@ -682,6 +689,7 @@ function renderModal() {
   const box = document.getElementById("course-modal-box");
   if (!box) return;
   box.innerHTML = _modalStep === 1 ? renderCourseDetailsStep() : renderCoursePreparationStep();
+  refreshIcons();
   bindModalEvents();
 }
 
@@ -705,7 +713,7 @@ function renderCourseDetailsStep() {
       </div>
     </form>
     ${modalFooter(`<button type="button" class="${cx(ui.button.base, ui.button.ghost, 'min-h-11')}" id="m-cancel">Cancelar</button>`,
-      `<button type="submit" form="course-details-form" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="m-next">Revisar y continuar<span class="material-symbols-outlined text-[17px]" aria-hidden="true">arrow_forward</span></button>`)} `;
+      `<button type="submit" form="course-details-form" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="m-next">Revisar y continuar${ic("arrow-right", 17)}</button>`)} `;
 }
 
 function renderCoursePreparationStep() {
@@ -719,12 +727,12 @@ function renderCoursePreparationStep() {
             <strong class="block truncate text-sm text-app-text">${escapeHtml(_modalData.name)}</strong>
             <span class="mt-1 block text-xs font-semibold text-brand">${escapeHtml(_modalData.code)} · ${_modalData.weeks} semanas · ${_modalData.credits} créditos</span>
           </div>
-          <span class="material-symbols-outlined text-brand" aria-hidden="true">school</span>
+          <span class="text-brand-600">${ic("graduation-cap", 20)}</span>
         </div>
       </div>
       <div class="mt-4 rounded-xl border border-teal-200 bg-teal-50 p-4">
         <div class="flex items-start gap-3">
-          <span class="material-symbols-outlined mt-0.5 text-[18px] text-teal-700" aria-hidden="true">folder_check</span>
+          <span class="mt-0.5 text-teal-700">${ic("folder-check", 18)}</span>
           <span>
             <strong class="block text-sm text-teal-900">El proyecto se preparará automáticamente</strong>
             <span class="mt-1 block text-xs leading-5 text-teal-800">Jintia creará la estructura de ${_modalData.weeks} semanas al registrar la asignatura.</span>
@@ -748,7 +756,7 @@ function renderCoursePreparationStep() {
             <span class="mt-1 block text-[11px] text-app-muted">Por defecto: <code>Documentos/Jintia/codigo_nombre</code>. Puedes cambiar la raíz.</span>
           </div>
           <button type="button" class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'shrink-0')}" id="m-change-root" ${_modalData.rootPathLoading ? "disabled" : ""}>
-            <span class="material-symbols-outlined text-[16px]" aria-hidden="true">folder_open</span>
+            ${ic("folder-open", 16)}
             Cambiar
           </button>
         </div>
@@ -756,8 +764,8 @@ function renderCoursePreparationStep() {
       ${identityPickerMarkup(_modalData.projectColor, _modalData.projectIcon, "m")}
       <div id="course-modal-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1"></div>
     </div>
-    ${modalFooter(`<button type="button" class="${cx(ui.button.base, ui.button.secondary, 'min-h-11')}" id="m-back"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">arrow_back</span>Atrás</button>`,
-      `<button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="m-create"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">check</span>Crear asignatura y proyecto</button>`)} `;
+    ${modalFooter(`<button type="button" class="${cx(ui.button.base, ui.button.secondary, 'min-h-11')}" id="m-back">${ic("arrow-left", 17)}Atrás</button>`,
+      `<button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="m-create">${ic("check", 17)}Crear asignatura y proyecto</button>`)} `;
 }
 
 function modalHeader(title, subtitle, step) {
@@ -767,7 +775,7 @@ function modalHeader(title, subtitle, step) {
         <h2 id="course-modal-title" class="text-base font-bold text-app-text">${title}</h2>
         <p class="mt-0.5 text-xs text-app-muted">Paso ${step} de 2 · ${subtitle}</p>
       </div>
-      <button type="button" class="${cx(ui.button.base, ui.button.ghost, 'h-11 w-11 p-0')}" id="m-close" aria-label="Cerrar asistente"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+      <button type="button" class="${cx(ui.button.base, ui.button.ghost, 'h-11 w-11 p-0')}" id="m-close" aria-label="Cerrar asistente">${ic("x", 20)}</button>
     </div>`;
 }
 
@@ -910,7 +918,8 @@ async function createCourse(button) {
 
   button.disabled = true;
   button.setAttribute("aria-busy", "true");
-  button.innerHTML = `<span class="material-symbols-outlined animate-spin text-[17px]" aria-hidden="true">progress_activity</span>Preparando proyecto…`;
+  button.innerHTML = `<span class="animate-spin">${ic("loader-2", 17)}</span>Preparando proyecto…`;
+  refreshIcons();
 
   const course = {
     code: _modalData.code,
@@ -964,7 +973,8 @@ async function createCourse(button) {
 function restoreCreateButton(button) {
   button.disabled = false;
   button.removeAttribute("aria-busy");
-  button.innerHTML = `<span class="material-symbols-outlined text-[17px]" aria-hidden="true">check</span>Crear asignatura y proyecto`;
+  button.innerHTML = `${ic("check", 17)}Crear asignatura y proyecto`;
+  refreshIcons();
 }
 
 function showModalSummaryError(message) {

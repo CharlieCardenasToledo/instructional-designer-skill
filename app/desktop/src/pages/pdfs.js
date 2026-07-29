@@ -4,7 +4,7 @@ import { state } from "../state.js";
 import { toast } from "../toast.js";
 import { navigate } from "../router.js";
 import { ui, cx, projectColorMap } from "../uiClasses.js";
-import { ic } from "../icons.js";
+import { ic, refreshIcons } from "../icons.js";
 
 // Project colors are now centralized in styles.css as CSS custom properties.
 // Reference them via projectColorMap from uiClasses for maintenance.
@@ -225,6 +225,7 @@ function formatDate(ms) {
 function updateResults() {
   const results = document.getElementById("pdf-results");
   if (results) results.innerHTML = resultsMarkup();
+  refreshIcons();
   const total = document.getElementById("pdf-total");
   if (total) total.textContent = String(_pdfs.length);
   bindResultEvents();

@@ -33,7 +33,7 @@ import {
   Star, Image, MoreVertical,
   Folder, Database, FlaskConical, Brain, FolderOpen,
   Wrench, Shield, Construction, UserPen,
-  FileCode2, CircleX,
+  FileCode2, CircleX, FolderCheck,
 } from "lucide";
 
 const ICONS = {
@@ -56,7 +56,7 @@ const ICONS = {
   Star, Image, MoreVertical,
   Folder, Database, FlaskConical, Brain, FolderOpen,
   Wrench, Shield, Construction, UserPen,
-  FileCode2, CircleX,
+  FileCode2, CircleX, FolderCheck,
 };
 
 /** Re-renderiza todos los data-lucide del DOM. Llamar después de cada render dinámico. */
