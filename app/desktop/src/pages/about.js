@@ -66,11 +66,11 @@ export async function renderAbout() {
         </div>
       </div>
 
-      <nav class="sticky top-[76px] z-20 flex w-fit max-w-full gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm" aria-label="Secciones de Acerca de">
-        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-project">Proyecto</button>
-        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-origin">Origen del nombre</button>
-        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-authorship">Autoría</button>
-        <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-technology">Tecnologías</button>
+      <nav class="flex gap-5 overflow-x-auto border-b border-slate-200" aria-label="Secciones de Acerca de">
+        <button class="about-tab shrink-0 border-b-2 border-transparent px-1 py-2.5 text-sm font-semibold text-slate-500 transition hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600" data-about-section="about-project" aria-current="true">Proyecto</button>
+        <button class="about-tab shrink-0 border-b-2 border-transparent px-1 py-2.5 text-sm font-semibold text-slate-500 transition hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600" data-about-section="about-origin">Origen del nombre</button>
+        <button class="about-tab shrink-0 border-b-2 border-transparent px-1 py-2.5 text-sm font-semibold text-slate-500 transition hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600" data-about-section="about-authorship">Autoría</button>
+        <button class="about-tab shrink-0 border-b-2 border-transparent px-1 py-2.5 text-sm font-semibold text-slate-500 transition hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600" data-about-section="about-technology">Tecnologías</button>
       </nav>
 
       <section id="about-project" class="${cx(ui.surface.card, "p-6")}">
@@ -125,11 +125,32 @@ export async function renderAbout() {
       </div>
     </div>`;
 
-  el.querySelectorAll("[data-about-section]").forEach(button => {
+  const tabButtons = [...el.querySelectorAll(".about-tab")];
+  const setActiveTab = id => {
+    tabButtons.forEach(button => {
+      const active = button.dataset.aboutSection === id;
+      button.classList.toggle("border-teal-600", active);
+      button.classList.toggle("text-slate-900", active);
+      button.classList.toggle("border-transparent", !active);
+      button.classList.toggle("text-slate-500", !active);
+      button.setAttribute("aria-current", active ? "true" : "false");
+    });
+  };
+  tabButtons.forEach(button => {
     button.addEventListener("click", () => {
+      setActiveTab(button.dataset.aboutSection);
       document.getElementById(button.dataset.aboutSection)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
+  // Refleja qué sección está a la vista mientras el usuario hace scroll,
+  // no solo la que se clickeó por última vez (heurística "visibilidad del
+  // estado del sistema").
+  const sectionObserver = new IntersectionObserver(entries => {
+    const visible = entries.find(entry => entry.isIntersecting);
+    if (visible) setActiveTab(visible.target.id);
+  }, { rootMargin: "-30% 0px -60% 0px" });
+  el.querySelectorAll("section[id]").forEach(section => sectionObserver.observe(section));
+  setActiveTab("about-project");
 
   el.querySelectorAll("[data-external-url]").forEach(button => {
     button.addEventListener("click", async () => {
