@@ -311,7 +311,7 @@ function renderCurrentStep() {
     ${onboardingAmbientBackground()}
     <div class="absolute left-4 top-3 z-10 flex items-center gap-2.5" aria-label="Jintia">
       <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-950 text-white shadow-sm" aria-hidden="true">
-        <span class="material-symbols-outlined">route</span>
+        ${ic("route", 20)}
       </div>
       <div>
         <div class="text-sm font-extrabold tracking-tight text-slate-900">Jintia</div>
@@ -319,8 +319,8 @@ function renderCurrentStep() {
       </div>
     </div>
     <div class="absolute top-3 right-3 flex z-10" data-tauri-drag-region>
-      <button class="${ui.windowControl.base}" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar"><span class="material-symbols-outlined">remove</span></button>
-      <button class="${cx(ui.windowControl.base, ui.windowControl.close)}" id="onb-win-close" aria-label="Cerrar" title="Cerrar"><span class="material-symbols-outlined">close</span></button>
+      <button class="${ui.windowControl.base}" id="onb-win-minimize" aria-label="Minimizar" title="Minimizar">${ic("minus", 16)}</button>
+      <button class="${cx(ui.windowControl.base, ui.windowControl.close)}" id="onb-win-close" aria-label="Cerrar" title="Cerrar">${ic("x", 16)}</button>
     </div>
     <div class="relative z-[1] mx-auto flex h-full w-full max-w-3xl flex-col p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
       <div class="flex min-h-0 flex-1 flex-col items-center overflow-y-auto pr-2 ${SCROLL_THIN}">
@@ -415,7 +415,7 @@ function renderBottomNav(current) {
     : "";
   return `<div class="flex flex-shrink-0 flex-col items-center pt-2">
     <div id="onboarding-operation-status" class="mb-1 flex h-5 items-center justify-center gap-1.5 text-[11px] font-medium text-gray-500 transition-opacity ${onboardingActionInFlight ? "opacity-100" : "opacity-0"}" role="status" aria-live="polite" aria-atomic="true">
-      <span class="material-symbols-outlined animate-spin text-[13px]">progress_activity</span>
+      <span class="animate-spin">${ic("loader-2", 13)}</span>
       <span data-operation-message>${escapeHtml(onboardingBusyMessage || "Procesando…")}</span>
     </div>
     <div class="flex items-center justify-center gap-3">
@@ -617,7 +617,7 @@ function dependenciesStep() {
   if (sequence.length === 0) {
     setFooter("Continuar", "advance", true);
     return `<section class="flex items-center justify-center py-10" aria-live="polite">
-      <span class="material-symbols-outlined text-[26px] text-gray-700 animate-spin">progress_activity</span>
+      <span class="text-gray-700 animate-spin">${ic("loader-2", 26)}</span>
     </section>`;
   }
 
@@ -695,7 +695,7 @@ function animateDependencyFocus(dep) {
       details.className = "mt-1";
       const summary = document.createElement("summary");
       summary.className = "flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden";
-      summary.innerHTML = `<span class="material-symbols-outlined text-[13px]">terminal</span> Ver detalle avanzado`;
+      summary.innerHTML = `${ic("terminal", 13)} Ver detalle avanzado`;
       details.appendChild(summary);
       const term = document.createElement("div");
       term.className = "mt-1 px-2.5 py-2 rounded-md bg-gray-900 font-mono text-[10.5px] leading-snug";
@@ -855,9 +855,9 @@ function welcomeStep() {
 
   return `<section>
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto mb-6">
-      ${feature("psychology", "Convierte tu sílabo", "Sube el sílabo de tu materia y quedará estructurado como guía.")}
-      ${feature("dashboard", "Organiza por semanas", "Cada semana queda con sus temas, actividades y bibliografía.")}
-      ${feature("file_download", "Genera el PDF", "Descarga la guía lista para publicar, con tu identidad institucional.")}
+      ${feature("brain", "Convierte tu sílabo", "Sube el sílabo de tu materia y quedará estructurado como guía.")}
+      ${feature("layout-dashboard", "Organiza por semanas", "Cada semana queda con sus temas, actividades y bibliografía.")}
+      ${feature("download", "Genera el PDF", "Descarga la guía lista para publicar, con tu identidad institucional.")}
     </div>
 
     <div class="max-w-2xl mx-auto mb-6">
@@ -925,7 +925,7 @@ function profileStep() {
     return `
     <button class="flex flex-col gap-1.5 p-4 rounded-xl border text-left cursor-pointer transition-all ${cardCls}" data-template-id="${escapeHtml(t.id)}">
       <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px] transition-colors ${isSelected ? "text-green-600" : "text-gray-400"}">${isSelected ? "check_circle" : "radio_button_unchecked"}</span>
+        <span class="transition-colors ${isSelected ? "text-green-600" : "text-gray-400"}">${ic(isSelected ? "check-circle-2" : "circle", 18)}</span>
         <strong class="text-[13px] font-bold text-gray-900">${escapeHtml(t.name)}</strong>
       </div>
       <p class="text-[11.5px] text-gray-500 leading-relaxed m-0">${escapeHtml(t.description)}</p>
@@ -1076,16 +1076,16 @@ function connectStep() {
   // Cada destino nombra la plataforma porque usa un formato de instalación
   // distinto y el usuario debe saber exactamente cuál está preparando.
   const targets = [
-    { id: "claude-code",    title: "Usar con Claude",               icon: "terminal",        desc: "Instala la skill para Claude Code y conserva la exportación para la app de Claude." },
-    { id: "openai",         title: "Usar con ChatGPT y Codex",      icon: "auto_awesome",    desc: "Instala el plugin universal para ChatGPT desktop, Codex CLI y Codex en la app." },
-    { id: "claude-cowork",  title: "Usar solo en la app de Claude", icon: "desktop_windows", desc: "Exporta el paquete para incorporarlo manualmente en Claude." },
-    { id: "both",           title: "Usar en todos",                 icon: "devices",         desc: "Prepara Claude, ChatGPT y Codex en el mismo equipo — completa los tres pasos siguientes." },
+    { id: "claude-code",    title: "Usar con Claude",               icon: "terminal",       desc: "Instala la skill para Claude Code y conserva la exportación para la app de Claude." },
+    { id: "openai",         title: "Usar con ChatGPT y Codex",      icon: "sparkles",       desc: "Instala el plugin universal para ChatGPT desktop, Codex CLI y Codex en la app." },
+    { id: "claude-cowork",  title: "Usar solo en la app de Claude", icon: "monitor",        desc: "Exporta el paquete para incorporarlo manualmente en Claude." },
+    { id: "both",           title: "Usar en todos",                 icon: "laptop",         desc: "Prepara Claude, ChatGPT y Codex en el mismo equipo — completa los tres pasos siguientes." },
   ];
 
   // Checklist de pasos para el destino seleccionado
   function checkItem(label, done) {
     return `<div class="flex items-center gap-2 py-1.5 px-2.5 rounded-lg text-xs border ${done ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"}">
-      <span class="material-symbols-outlined text-[15px] ${done ? "text-green-600" : "text-gray-400"}">${done ? "check_circle" : "radio_button_unchecked"}</span>
+      <span class="${done ? "text-green-600" : "text-gray-400"}">${ic(done ? "check-circle-2" : "circle", 15)}</span>
       <span class="${done ? "text-green-600" : "text-gray-600"}">${escapeHtml(label)}</span>
     </div>`;
   }
@@ -1160,9 +1160,9 @@ function connectStep() {
         ${targets.map(t => `
           <label class="flex items-start sm:items-center gap-3 p-3.5 rounded-xl border cursor-pointer ${t.id === selected ? "border-gray-900 bg-gray-50" : "border-gray-200 bg-white"}">
             <input type="radio" class="accent-gray-900 flex-shrink-0 mt-1 sm:mt-0" name="onboarding-target" value="${t.id}" ${t.id === selected ? "checked" : ""}>
-            <span class="material-symbols-outlined text-[18px] flex-shrink-0 text-gray-500">${t.icon}</span>
+            <span class="flex-shrink-0 text-gray-500">${ic(t.icon, 18)}</span>
             <span class="flex-1 min-w-0 flex flex-col gap-0.5"><strong class="text-gray-900 text-sm">${t.title}</strong><small class="text-gray-500 text-xs leading-snug">${t.desc}</small></span>
-            <span class="material-symbols-outlined text-[18px] flex-shrink-0 ${targetReady(t.id) ? "text-green-600" : "text-gray-300"}">${targetReady(t.id) ? "check_circle" : "pending"}</span>
+            <span class="flex-shrink-0 ${targetReady(t.id) ? "text-green-600" : "text-gray-300"}">${ic(targetReady(t.id) ? "check-circle-2" : "circle", 18)}</span>
           </label>`).join("")}
       </div>
 
@@ -1231,7 +1231,7 @@ function finalStep() {
           <div class="absolute inset-0 rounded-full border-[3px] border-transparent border-t-gray-900 animate-spin"></div>
           <div class="absolute inset-[9px] rounded-full border-[3px] border-transparent border-t-gray-400 [animation:spin_0.85s_linear_infinite_reverse]"></div>
           <div class="absolute inset-[18px] rounded-full bg-gray-100 flex items-center justify-center">
-            <span id="gen-center-icon" class="material-symbols-outlined text-[18px] text-gray-900">auto_awesome</span>
+            <span id="gen-center-icon" class="text-gray-900">${ic("sparkles", 18)}</span>
           </div>
         </div>
 
@@ -1245,23 +1245,23 @@ function finalStep() {
 
         <div id="final-loading-steps" class="grid w-full max-w-sm grid-cols-5 gap-1" aria-label="Progreso de la prueba">
           <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="0">
-            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white" data-check-icon>${ic("hourglass", 15)}</span>
             <span>Preparar</span>
           </div>
           <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="1">
-            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white" data-check-icon>${ic("hourglass", 15)}</span>
             <span>Comprobar</span>
           </div>
           <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="2">
-            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white" data-check-icon>${ic("hourglass", 15)}</span>
             <span>Crear</span>
           </div>
           <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="3">
-            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white" data-check-icon>${ic("hourglass", 15)}</span>
             <span>Compilar</span>
           </div>
           <div class="final-check-row flex min-w-0 flex-col items-center gap-1 text-center text-[9.5px] font-medium text-gray-500 opacity-30" data-check="4">
-            <span class="material-symbols-outlined flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white text-[15px]">hourglass_empty</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 bg-white" data-check-icon>${ic("hourglass", 15)}</span>
             <span>Validar</span>
           </div>
         </div>
@@ -1269,7 +1269,7 @@ function finalStep() {
         <details id="compile-monitor" class="w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white text-left">
           <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2.5 text-[11.5px] font-semibold text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900">
             <span class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-[15px] text-gray-500">terminal</span>
+              <span class="text-gray-500">${ic("terminal", 15)}</span>
               Ver detalles técnicos
             </span>
             <span id="compile-elapsed" class="font-mono text-[10.5px] tabular-nums text-gray-400">00:00</span>
@@ -1278,7 +1278,7 @@ function finalStep() {
             <div id="compile-current" class="mb-2 text-[11px] font-medium text-gray-600">Esperando al compilador…</div>
             <pre id="compile-live-log" aria-live="polite" class="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-950 px-3 py-2.5 font-mono text-[10px] leading-relaxed text-gray-200">La actividad aparecerá aquí.</pre>
             <button type="button" id="btn-copy-live-diagnostic" class="mt-2 inline-flex items-center gap-1.5 border-0 bg-transparent p-0 text-[10.5px] font-semibold text-gray-500 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900">
-              <span class="material-symbols-outlined text-[14px]">content_copy</span>
+              ${ic("copy", 14)}
               Copiar actividad
             </button>
           </div>
@@ -1334,31 +1334,32 @@ async function animateFinalStep() {
   function setRow(i, rowState) {
     if (!checkRows[i]) return;
     const row  = checkRows[i];
-    const icon = row.querySelector(".material-symbols-outlined");
+    const icon = row.querySelector("[data-check-icon]");
     row.style.opacity = "1";
     row.style.transition = reduceMotion ? "none" : "opacity .3s, color .3s";
     if (rowState === "active") {
       row.style.color  = "#111827";
-      icon.textContent = "sync";
+      icon.innerHTML = ic("loader-2", 15);
       icon.style.animation = reduceMotion ? "none" : "spin .7s linear infinite";
       icon.style.background = "#111827";
       icon.style.borderColor = "#111827";
       icon.style.color = "#ffffff";
     } else if (rowState === "done") {
       row.style.color  = "#16a34a";
-      icon.textContent = "check_circle";
+      icon.innerHTML = ic("check-circle-2", 15);
       icon.style.animation = "none";
       icon.style.background = "#f0fdf4";
       icon.style.borderColor = "#86efac";
       icon.style.color = "#16a34a";
     } else if (rowState === "error") {
       row.style.color  = "#ef4444";
-      icon.textContent = "cancel";
+      icon.innerHTML = ic("circle-x", 15);
       icon.style.animation = "none";
       icon.style.background = "#fef2f2";
       icon.style.borderColor = "#fca5a5";
       icon.style.color = "#ef4444";
     }
+    refreshIcons();
   }
 
   function setMsg(msg) {
@@ -1378,7 +1379,7 @@ async function animateFinalStep() {
     if (loadingEl) loadingEl.style.display = "none";
     if (contentEl) contentEl.innerHTML = `
       <div class="border-[1.5px] border-red-300/60 rounded-xl p-6 text-center bg-red-50/60">
-        <span class="material-symbols-outlined text-[36px] text-red-500 block mb-2.5">error</span>
+        <span class="text-red-500 block mb-2.5">${ic("circle-alert", 36)}</span>
         <div class="text-[15px] font-bold text-red-500 mb-1.5">${escapeHtml(title)}</div>
         <div class="text-[12.5px] text-gray-700 mb-3">${escapeHtml(detail)}</div>
         ${errStr ? `
@@ -1388,19 +1389,20 @@ async function animateFinalStep() {
           </details>` : ""}
         <div class="flex justify-center gap-2 flex-wrap">
           <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-retry-gen">
-            <span class="material-symbols-outlined text-[15px]">refresh</span> Reintentar verificación
+            ${ic("refresh-cw", 15)} Reintentar verificación
           </button>
           <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-back-to-tools">
-            <span class="material-symbols-outlined text-[15px]">terminal</span> Volver a herramientas
+            ${ic("terminal", 15)} Volver a herramientas
           </button>
           <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-copy-compile-report">
-            <span class="material-symbols-outlined text-[15px]">content_copy</span> Copiar diagnóstico
+            ${ic("copy", 15)} Copiar diagnóstico
           </button>
           <button class="${BTN_SECONDARY} text-[12.5px]" id="btn-report-compile-error">
-            <span class="material-symbols-outlined text-[15px]">bug_report</span> Reportar problema
+            ${ic("bug", 15)} Reportar problema
           </button>
         </div>
       </div>`;
+    refreshIcons();
     if (wrapEl) {
       wrapEl.style.display = "block";
       wrapEl.style.opacity = "0";
@@ -1415,9 +1417,11 @@ async function animateFinalStep() {
         checkRows.forEach((r, i) => {
           r.style.opacity = i <= 1 ? "1" : ".3";
           r.style.color = "";
-          r.querySelector(".material-symbols-outlined").textContent = i <= 1 ? "check_circle" : "hourglass_empty";
-          if (i === 1) r.querySelector(".material-symbols-outlined").style.color = "#16a34a";
+          const badge = r.querySelector("[data-check-icon]");
+          badge.innerHTML = i <= 1 ? ic("check-circle-2", 15) : ic("hourglass", 15);
+          if (i === 1) badge.style.color = "#16a34a";
         });
+        refreshIcons();
         if (fillEl) fillEl.style.width = "25%";
       }
       void runOnboardingOperation(
@@ -1453,6 +1457,7 @@ async function animateFinalStep() {
     const contentEl = document.getElementById("final-result-content");
     if (loadingEl) loadingEl.style.display = "none";
     if (contentEl) contentEl.innerHTML = renderSyllabusDoc(pdfPath, message);
+    refreshIcons();
     if (wrapEl) {
       wrapEl.style.display = "block";
       wrapEl.style.opacity = "0";
@@ -1474,7 +1479,7 @@ async function animateFinalStep() {
     return `
       <div class="flex flex-col gap-4">
         <div class="flex items-start gap-3 p-4 rounded-xl bg-green-50 border border-green-200">
-          <span class="material-symbols-outlined text-2xl text-green-600 flex-shrink-0">check_circle</span>
+          <span class="text-green-600 flex-shrink-0">${ic("check-circle-2", 24)}</span>
           <div>
             <div class="font-bold text-green-600 mb-1">Documento compilado exitosamente</div>
             <div class="text-[12.5px] text-gray-700">${escapeHtml(message)}</div>
@@ -1485,10 +1490,10 @@ async function animateFinalStep() {
         </div>
         <div class="flex gap-2">
           <button class="${BTN_SECONDARY} flex-1" id="btn-open-pdf">
-            <span class="material-symbols-outlined text-[15px]">open_in_new</span> Abrir en otra pestaña
+            ${ic("external-link", 15)} Abrir en otra pestaña
           </button>
           <button class="${BTN_SECONDARY} flex-1" id="btn-copy-pdf-path">
-            <span class="material-symbols-outlined text-[15px]">content_copy</span> Copiar ruta
+            ${ic("copy", 15)} Copiar ruta
           </button>
         </div>
         <div class="text-[11px] text-gray-400 p-3 bg-black/[0.03] rounded-lg break-all">
