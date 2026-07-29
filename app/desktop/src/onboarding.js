@@ -863,7 +863,7 @@ function welcomeStep() {
     <div class="max-w-2xl mx-auto mb-6">
       <h3 class="text-sm font-semibold text-slate-900 mb-4 text-center">📚 ¿Cómo funciona el proceso?</h3>
       ${stepCarousel("recorrido", journeySteps)}
-      <div class="${CALLOUT}">${ic("verified", 16)} <span>Todo se guarda en tu computadora. Las búsquedas con NotebookLM solo se comparten cuando tú lo autorizas.</span></div>
+      <div class="${CALLOUT}">${ic("shield-check", 16)} <span>Todo se guarda en tu computadora. Las búsquedas con NotebookLM solo se comparten cuando tú lo autorizas.</span></div>
     </div>
 
     <div class="max-w-2xl mx-auto">

@@ -11,6 +11,9 @@ import { ic } from "../icons.js";
 const DEFAULT_COLOR = "#0f766e"; // var(--project-color-jintia)
 const ALLOWED_COLORS = new Set(Object.values(projectColorMap).map(c => c.hex));
 const ALLOWED_ICONS = new Set(["folder", "school", "database", "science", "psychology", "palette"]);
+// Los valores de arriba se guardan tal cual (compatibilidad con datos existentes);
+// este mapa solo traduce el valor guardado al nombre real del ícono Lucide.
+const PROJECT_ICON_LUCIDE = { folder: "folder", school: "graduation-cap", database: "database", science: "flask-conical", psychology: "brain", palette: "palette" };
 
 let _query = "";
 let _courseFilter = "all";
@@ -144,14 +147,14 @@ function pdfRow(pdf) {
     <article class="flex flex-col gap-3 p-4 transition hover:bg-slate-50 sm:flex-row sm:items-center">
       <div class="flex min-w-0 flex-1 items-start gap-3">
         <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-700" aria-hidden="true">
-          <span class="material-symbols-outlined">picture_as_pdf</span>
+          ${ic("file-text", 20)}
         </div>
         <div class="min-w-0">
           <h3 class="truncate text-sm font-bold text-app-text" title="${escapeHtml(pdf.name)}">${escapeHtml(pdf.name)}</h3>
           <p class="mt-1 truncate text-xs text-app-muted" title="${escapeHtml(pdf.relativePath)}">${escapeHtml(pdf.relativePath)}</p>
           <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
             <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 font-semibold text-slate-700">
-              <span class="material-symbols-outlined text-[14px]" style="color:${identity.color}" aria-hidden="true">${identity.icon}</span>
+              <span style="color:${identity.color}">${ic(PROJECT_ICON_LUCIDE[identity.icon] || "folder", 14)}</span>
               ${escapeHtml(pdf.courseCode)} · ${escapeHtml(pdf.courseName)}
             </span>
             <span class="text-app-muted">${formatBytes(pdf.sizeBytes)} · ${formatDate(pdf.modifiedMs)}</span>
@@ -160,10 +163,10 @@ function pdfRow(pdf) {
       </div>
       <div class="flex shrink-0 gap-2">
         <button type="button" class="${cx(ui.button.base, ui.button.primary, "min-h-11 flex-1 sm:flex-none")}" data-pdf-action="open" data-pdf-path="${escapeHtml(pdf.path)}">
-          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">open_in_new</span>Abrir
+          ${ic("external-link", 17)}Abrir
         </button>
         <button type="button" class="${cx(ui.button.base, ui.button.secondary, "min-h-11 flex-1 sm:flex-none")}" data-pdf-action="reveal" data-pdf-path="${escapeHtml(pdf.path)}">
-          <span class="material-symbols-outlined text-[17px]" aria-hidden="true">folder_open</span>Ver carpeta
+          ${ic("folder-open", 17)}Ver carpeta
         </button>
       </div>
     </article>`;
@@ -172,7 +175,7 @@ function pdfRow(pdf) {
 function loadingMarkup() {
   return `
     <div class="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm" role="status">
-      <span class="material-symbols-outlined animate-spin text-[36px] text-brand" aria-hidden="true">progress_activity</span>
+      <span class="animate-spin text-brand-600">${ic("loader-2", 36)}</span>
       <strong class="mt-3 text-sm text-app-text">Buscando PDFs en tus proyectos…</strong>
       <span class="mt-1 text-xs text-app-muted">Las carpetas se revisan sin modificar sus archivos.</span>
     </div>`;
@@ -181,7 +184,7 @@ function loadingMarkup() {
 function emptyMarkup(icon, title, description, action = "") {
   return `
     <div class="flex min-h-[320px] flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-      <div class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500"><span class="material-symbols-outlined text-[32px]" aria-hidden="true">${icon}</span></div>
+      <div class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-500">${ic(icon, 32)}</div>
       <h3 class="mt-4 text-base font-bold text-app-text">${title}</h3>
       <p class="mt-2 max-w-[460px] text-sm leading-6 text-app-muted">${description}</p>
       ${action}
@@ -189,21 +192,21 @@ function emptyMarkup(icon, title, description, action = "") {
 }
 
 function noProjectsMarkup() {
-  return emptyMarkup("create_new_folder", "Prepara una asignatura para reunir sus PDFs aquí",
+  return emptyMarkup("folder-plus", "Prepara una asignatura para reunir sus PDFs aquí",
     "Cuando una asignatura tenga su carpeta de proyecto, Jintia podrá localizar los PDFs generados por la skill.",
     `<button type="button" class="${cx(ui.button.base, ui.button.primary, "mt-5 min-h-11")}" id="pdf-go-courses">Ir a Cursos</button>`);
 }
 
 function noPdfsMarkup() {
-  return emptyMarkup("picture_as_pdf", "Todavía no hay PDFs en estos proyectos", "Genera una guía con la skill y pulsa Actualizar. Solo aparecerán archivos con extensión PDF.");
+  return emptyMarkup("file-text", "Todavía no hay PDFs en estos proyectos", "Genera una guía con la skill y pulsa Actualizar. Solo aparecerán archivos con extensión PDF.");
 }
 
 function noMatchesMarkup() {
-  return emptyMarkup("search_off", "No encontramos coincidencias", "Prueba con otro nombre o selecciona todas las asignaturas.");
+  return emptyMarkup("search-x", "No encontramos coincidencias", "Prueba con otro nombre o selecciona todas las asignaturas.");
 }
 
 function errorMarkup() {
-  return emptyMarkup("error", "No pudimos revisar los PDFs", `Revisa que las carpetas sigan disponibles y vuelve a intentarlo. ${escapeHtml(_error)}`,
+  return emptyMarkup("circle-alert", "No pudimos revisar los PDFs", `Revisa que las carpetas sigan disponibles y vuelve a intentarlo. ${escapeHtml(_error)}`,
     `<button type="button" class="${cx(ui.button.base, ui.button.secondary, "mt-5 min-h-11")}" id="pdf-retry">Reintentar</button>`);
 }
 

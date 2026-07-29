@@ -57,10 +57,10 @@ export async function renderAbout() {
           <p class="mt-5 text-sm text-slate-700">Creado y mantenido por <strong>${APP_META.creator}</strong>.</p>
           <div class="mt-4 flex flex-wrap gap-2">
             <button type="button" class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-external-url="${APP_META.repository}">
-              <span class="material-symbols-outlined text-lg">code</span> Ver proyecto
+              ${ic("code-2", 18)} Ver proyecto
             </button>
             <button type="button" class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-external-url="${APP_META.issues}">
-              <span class="material-symbols-outlined text-lg">bug_report</span> Informar un problema
+              ${ic("bug", 18)} Informar un problema
             </button>
           </div>
         </div>
