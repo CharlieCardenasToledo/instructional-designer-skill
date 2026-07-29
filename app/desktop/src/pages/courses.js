@@ -286,7 +286,7 @@ function renderDesktopRow({ course, index, progress }) {
       <td class="${ui.table.td}">
         <div class="flex items-center gap-2">
           <div class="h-2 w-20 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="Avance de ${escapeHtml(course.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress.pct}">
-            <div class="h-full rounded-full bg-brand" style="width:${progress.pct}%"></div>
+            <div class="h-full rounded-full bg-path-500" style="width:${progress.pct}%"></div>
           </div>
           <span class="text-xs font-semibold text-app-text">${progress.complete}/${progress.total}</span>
         </div>

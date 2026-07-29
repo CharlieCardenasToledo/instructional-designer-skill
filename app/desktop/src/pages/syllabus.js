@@ -203,10 +203,10 @@ export function renderSyllabus() {
               <h3 id="syl-progress-heading" class="text-sm font-bold text-app-text">Progreso del sílabo</h3>
               <p class="mt-0.5 text-xs text-app-muted">${complete} de ${count} semanas completas</p>
             </div>
-            <strong class="text-xl text-brand">${pct}%</strong>
+            <strong class="text-xl text-path-600">${pct}%</strong>
           </div>
           <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="Progreso del sílabo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}">
-            <div class="h-full rounded-full bg-brand transition-[width] duration-300" style="width:${pct}%"></div>
+            <div class="h-full rounded-full bg-path-500 transition-[width] duration-300" style="width:${pct}%"></div>
           </div>
           <div class="mt-5 border-t border-slate-100 pt-4">${ProgressPath({ items: ["Contenido", "Estructura", "Validación", "Publicación"], completed: pct === 100 ? 3 : 1, active: pct === 100 ? -1 : 2 })}</div>
           <div class="mt-3 grid grid-cols-3 gap-2 text-center">

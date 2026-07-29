@@ -1063,11 +1063,11 @@ async function loadDeps() {
         </div>
       </div>
       <div class="mb-3 flex items-center gap-3">
-        <span class="text-2xl font-extrabold text-brand">${ok}</span>
+        <span class="text-2xl font-extrabold text-path-600">${ok}</span>
         <div>
           <div class="text-[13px] font-semibold text-app-text">de ${total} dependencias instaladas</div>
           <div class="mt-1 h-1.5 w-[180px] overflow-hidden rounded-full border border-slate-900/10 bg-slate-900/[0.06]">
-            <div class="h-full rounded-full bg-teal-600 shadow-[0_0_10px_var(--teal-glow)] transition-[width] duration-500" style="width:${pct}%"></div>
+            <div class="h-full rounded-full bg-path-500 shadow-[0_0_10px_rgba(52,195,122,.35)] transition-[width] duration-500" style="width:${pct}%"></div>
           </div>
         </div>
         <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm, 'ml-auto')}" id="btn-install-all-deps">

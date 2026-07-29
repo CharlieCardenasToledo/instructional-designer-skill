@@ -39,8 +39,8 @@ export async function renderAbout() {
           </svg>
         </div>
         <div class="relative max-w-2xl">
-          <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-sm">
-            ${BrandMark({ className: "h-12 w-12", size: 48 })}
+          <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+            ${BrandMark({ className: "h-9 w-9", size: 36 })}
           </div>
           <p class="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-teal-700">Acerca del producto</p>
           <h1 class="text-3xl font-black tracking-tight text-slate-950">${APP_META.brandName}</h1>
