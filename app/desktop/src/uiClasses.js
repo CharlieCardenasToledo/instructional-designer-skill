@@ -32,7 +32,11 @@ export const ui = {
     xs: "px-2 py-1 text-[11px]",
   },
   nav: {
-    item: "relative flex w-full items-center gap-2.5 rounded-lg border border-transparent px-3 py-2 text-left text-[13px] font-medium text-slate-300 transition hover:bg-white/[.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
+    // bg-transparent es obligatorio: el proyecto desactiva Tailwind Preflight
+    // a propósito, así que sin esto un <button> sin fondo explícito hereda
+    // el "buttonface" gris nativo del navegador en vez de dejar ver el navy
+    // del sidebar detrás (mismo bug que el botón del footer, ver commit previo).
+    item: "relative flex w-full items-center gap-2.5 rounded-lg border border-transparent bg-transparent px-3 py-2 text-left text-[13px] font-medium text-slate-300 transition hover:bg-white/[.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
     // "!" fuerza la victoria sobre item's border-transparent: ambas son
     // utilidades border-color de igual especificidad, así que sin esto
     // gana la que Tailwind emita después en el CSS compilado (no
