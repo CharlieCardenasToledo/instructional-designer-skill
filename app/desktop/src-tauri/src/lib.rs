@@ -112,6 +112,11 @@ async fn configure_mcp(target: String) -> ActionResult {
 }
 
 #[tauri::command]
+async fn configure_codex_mcp() -> ActionResult {
+    mcp::configure_codex_mcp()
+}
+
+#[tauri::command]
 async fn apply_institution_config(config: InstitutionConfig) -> ActionResult {
     config::apply_institution(config)
 }
@@ -200,6 +205,13 @@ async fn get_course_state(project_path: String) -> serde_json::Value {
     tauri::async_runtime::spawn_blocking(move || course_state::read(project_path))
         .await
         .unwrap_or_else(|error| serde_json::json!({ "success": false, "message": format!("No se pudo leer el estado: {error}") }))
+}
+
+#[tauri::command]
+async fn check_week_guide_exists(project_path: String, week: u32) -> bool {
+    tauri::async_runtime::spawn_blocking(move || course_state::week_guide_exists(project_path, week))
+        .await
+        .unwrap_or(false)
 }
 
 #[tauri::command]
@@ -360,6 +372,7 @@ pub fn run() {
             install_openai_plugin,
             export_openai_plugin_zip,
             configure_mcp,
+            configure_codex_mcp,
             apply_institution_config,
             extract_site_palette,
             save_notebooks_config,
@@ -370,6 +383,7 @@ pub fn run() {
             list_account_notebooks_mcp,
             get_default_course_root,
             get_course_state,
+            check_week_guide_exists,
             detect_harnesses,
             manage_harnesses,
             list_generated_pdfs,

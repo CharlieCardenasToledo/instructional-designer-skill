@@ -1,6 +1,6 @@
 import {
   applyInstitutionConfig, checkDependencies, getVisualInstallProfiles, installDependency,
-  configureMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
+  configureMcp, configureCodexMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
   installSkill, exportSkillZip, installOpenAIPlugin, exportOpenAIPluginZip,
   pickDirectory,
   resetOnboarding, getSkillPath, extractSitePalette, runSkillTool, detectHarnesses, manageHarnesses
@@ -178,6 +178,9 @@ export async function renderSettings() {
                 </button>
                 <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)} mcp-target" data-target="both">
                   ${ic("share-2", 14)} Ambos
+                </button>
+                <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} mcp-target" data-target="codex">
+                  ${ic("code-2", 14)} Codex CLI
                 </button>
               </div>
             </div>
@@ -408,6 +411,10 @@ export async function renderSettings() {
           const success = codeResult.success && desktopResult.success;
           if (!success) setInlineError("mcp-inline-error", `${codeResult.message} / ${desktopResult.message}`);
           toast(success ? "Conectado en proyecto local y app de Claude" : `${codeResult.message} / ${desktopResult.message}`, success ? "success" : "error", 6000);
+        } else if (btn.dataset.target === "codex") {
+          const result = await configureCodexMcp();
+          if (!result.success) setInlineError("mcp-inline-error", result.message);
+          toast(result.message, result.success ? "success" : "error", 8000);
         } else {
           const result = await configureMcp(btn.dataset.target);
           if (!result.success) setInlineError("mcp-inline-error", result.message);

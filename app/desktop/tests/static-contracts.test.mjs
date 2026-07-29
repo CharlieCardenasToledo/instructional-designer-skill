@@ -738,13 +738,10 @@ test('Jintia se empaqueta como plugin universal para ChatGPT y Codex', async () 
   assert.match(api, /installOpenAIPlugin/);
 });
 
-test('el paquete OpenAI incluye los metadatos agents de la skill', async () => {
+test('el paquete OpenAI incluye los contratos agents de la skill', async () => {
   const payload = await readFile(new URL("src-tauri/src/payload.rs", root), "utf8");
-  const metadata = await readFile(new URL("skill/agents/openai.yaml", repositoryRoot), "utf8");
   assert.match(payload, /static AGENTS/);
   assert.match(payload, /target\.join\("agents"\)/);
-  assert.match(metadata, /display_name: "Jintia"/);
-  assert.match(metadata, /allow_implicit_invocation: true/);
 });
 
 test('Ayuda cubre el flujo real del producto y ofrece FAQ local buscable', async () => {

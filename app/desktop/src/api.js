@@ -94,6 +94,10 @@ export async function configureMcp(target) {
   return invoke("configure_mcp", { target });
 }
 
+export async function configureCodexMcp() {
+  return invoke("configure_codex_mcp");
+}
+
 export async function getSetupStatus() {
   return invoke("get_setup_status");
 }
@@ -138,6 +142,10 @@ export async function getDefaultCourseRoot() {
 
 export async function getCourseState(projectPath) {
   return invoke("get_course_state", { projectPath });
+}
+
+export async function checkWeekGuideExists(projectPath, week) {
+  return invoke("check_week_guide_exists", { projectPath, week });
 }
 
 export async function detectHarnesses(projectPath, explicitProviders = null) {

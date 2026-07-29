@@ -113,6 +113,130 @@ pub fn configure_mcp(target: String) -> ActionResult {
     }
 }
 
+/// Codex CLI no usa `.mcp.json`/`claude_desktop_config.json` (JSON) sino
+/// `~/.codex/config.toml` (TOML) — un archivo personal grande (proyectos de
+/// confianza, otros servidores MCP, plugins). Se edita con `toml_edit` en vez
+/// de un parser TOML "de solo lectura + reescritura" para no reordenar ni
+/// perder comentarios de secciones ajenas a `mcp_servers.notebooklm`.
+pub fn configure_codex_mcp() -> ActionResult {
+    let _operation = match MCP_CONFIG_OPERATION.lock() {
+        Ok(operation) => operation,
+        Err(_) => {
+            return ActionResult::error("El estado interno de configuración MCP está bloqueado.")
+        }
+    };
+    let path = match crate::paths::codex_config_path() {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+
+    let text = if path.exists() {
+        match fs::read_to_string(&path) {
+            Ok(text) => text,
+            Err(error) => {
+                return ActionResult::error(format!("No se pudo leer {}: {error}", path.display()))
+            }
+        }
+    } else {
+        String::new()
+    };
+
+    let mut doc = match text.parse::<toml_edit::DocumentMut>() {
+        Ok(doc) => doc,
+        Err(error) => {
+            return ActionResult::error(format!(
+                "La configuración existente no es TOML válido y no fue modificada: {error}"
+            ))
+        }
+    };
+
+    if doc.get("mcp_servers").is_some_and(|item| !item.is_table()) {
+        return ActionResult::error(
+            "La clave mcp_servers existente no es una tabla. Corrígela antes de continuar.",
+        );
+    }
+    if doc.get("mcp_servers").is_none() {
+        doc["mcp_servers"] = toml_edit::table();
+    }
+
+    // Detecta otros servidores (con cualquier otro nombre) que ya apunten a un
+    // paquete de NotebookLM, para avisar de duplicados sin tocarlos.
+    let stale_servers: Vec<String> = doc["mcp_servers"]
+        .as_table()
+        .into_iter()
+        .flat_map(|table| table.iter())
+        .filter(|(name, _)| *name != "notebooklm")
+        .filter_map(|(name, item)| {
+            let has_notebook_package = item
+                .get("args")?
+                .as_array()?
+                .iter()
+                .any(|value| {
+                    value
+                        .as_str()
+                        .is_some_and(|text| text.contains("notebooklm-mcp") || text.contains("gemini-notebook-mcp"))
+                });
+            has_notebook_package.then(|| name.to_string())
+        })
+        .collect();
+
+    let previous = doc.to_string();
+    if doc["mcp_servers"]
+        .get("notebooklm")
+        .is_some_and(|item| !item.is_table())
+    {
+        return ActionResult::error(
+            "mcp_servers.notebooklm existente no es una tabla. Corrígela antes de continuar.",
+        );
+    }
+    if doc["mcp_servers"].get("notebooklm").is_none() {
+        doc["mcp_servers"]["notebooklm"] = toml_edit::table();
+    }
+    doc["mcp_servers"]["notebooklm"]["command"] = toml_edit::value("npx");
+    let mut args = toml_edit::Array::new();
+    args.push("-y");
+    args.push(NOTEBOOKLM_MCP_PACKAGE);
+    doc["mcp_servers"]["notebooklm"]["args"] = toml_edit::value(args);
+
+    let next = doc.to_string();
+    if next == previous {
+        let mut message =
+            "NotebookLM MCP ya estaba configurado correctamente para Codex CLI; no se volvió a escribir.".to_string();
+        if !stale_servers.is_empty() {
+            message.push_str(&format!(
+                "\n\nAviso: mcp_servers.{} también apunta a un paquete de NotebookLM; revísalo manualmente si ya no lo necesitas.",
+                stale_servers.join(", mcp_servers.")
+            ));
+        }
+        return ActionResult::ok(message).with_path(path_text(&path));
+    }
+
+    let backup = match backup_file(&path) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+    if let Err(error) = atomic_write(&path, next.as_bytes()) {
+        return ActionResult::error(error);
+    }
+
+    let mut message = format!(
+        "NotebookLM MCP configurado para Codex CLI en:\n{}\n\nReinicia Codex para aplicar el cambio.",
+        path_text(&path)
+    );
+    if !stale_servers.is_empty() {
+        message.push_str(&format!(
+            "\n\nAviso: mcp_servers.{} también apunta a un paquete de NotebookLM; revísalo manualmente si ya no lo necesitas.",
+            stale_servers.join(", mcp_servers.")
+        ));
+    }
+    let result = ActionResult::ok(message).with_path(path_text(&path));
+    if let Some(backup) = backup {
+        result.with_backup(path_text(&backup))
+    } else {
+        result
+    }
+}
+
 fn npx_command() -> &'static str {
     if cfg!(target_os = "windows") {
         "npx.cmd"
@@ -707,5 +831,48 @@ mod tests {
         assert!(cached.authenticated);
         assert!(cached.message.contains("recientemente"));
         clear_auth_validation();
+    }
+
+    #[test]
+    fn configures_codex_mcp_without_disturbing_unrelated_toml_and_flags_a_stale_duplicate() {
+        let dir = std::env::temp_dir().join(format!(
+            "jintia-codex-mcp-test-{}",
+            crate::paths::timestamp()
+        ));
+        fs::create_dir_all(&dir).unwrap();
+        let previous_codex_home = std::env::var_os("CODEX_HOME");
+        std::env::set_var("CODEX_HOME", &dir);
+
+        fs::write(
+            dir.join("config.toml"),
+            "model = \"gpt-5.6-luna\"\n\n[projects.'D:\\Curso']\ntrust_level = \"trusted\"\n\n[mcp_servers.notebooklm]\ncommand = \"npx\"\nargs = [\"notebooklm-mcp@latest\"]\n\n[mcp_servers.gemini-notebook]\ncommand = \"npx\"\nargs = [\"@charlie.act7/gemini-notebook-mcp@latest\"]\n",
+        )
+        .unwrap();
+
+        let result = configure_codex_mcp();
+        assert!(result.success, "{}", result.message);
+        assert!(result.message.contains("Codex CLI"));
+        assert!(
+            result.message.contains("mcp_servers.gemini-notebook"),
+            "avisa del servidor duplicado bajo otro nombre: {}",
+            result.message
+        );
+
+        let text = fs::read_to_string(dir.join("config.toml")).unwrap();
+        assert!(text.contains("model = \"gpt-5.6-luna\""), "preserva claves ajenas");
+        assert!(text.contains("[projects.'D:\\Curso']"), "preserva otras tablas");
+        assert!(text.contains(&format!("args = [\"-y\", \"{NOTEBOOKLM_MCP_PACKAGE}\"]")));
+        assert!(!text.contains("notebooklm-mcp@latest"), "reemplaza el paquete viejo en notebooklm");
+        assert!(text.contains("[mcp_servers.gemini-notebook]"), "no toca el servidor duplicado, solo avisa");
+
+        let second = configure_codex_mcp();
+        assert!(second.success);
+        assert!(second.message.contains("ya estaba configurado"), "es idempotente");
+
+        fs::remove_dir_all(&dir).ok();
+        match previous_codex_home {
+            Some(value) => std::env::set_var("CODEX_HOME", value),
+            None => std::env::remove_var("CODEX_HOME"),
+        }
     }
 }

@@ -97,6 +97,13 @@ pub fn claude_code_config_path() -> Result<PathBuf, String> {
     Ok(home_dir()?.join(".claude.json"))
 }
 
+pub fn codex_config_path() -> Result<PathBuf, String> {
+    let base = std::env::var_os("CODEX_HOME")
+        .map(PathBuf::from)
+        .unwrap_or(home_dir()?.join(".codex"));
+    Ok(base.join("config.toml"))
+}
+
 pub fn timestamp() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)

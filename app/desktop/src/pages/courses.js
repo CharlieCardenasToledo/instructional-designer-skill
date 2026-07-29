@@ -1,4 +1,4 @@
-import { checkDependencies, checkNotebookLMAuth, createCourseStructure, getDefaultCourseRoot, getCourseState, getSetupStatus, listAccountNotebooksMcp, listNotebooksMcp, openExternal, pickDirectory, runNotebookLMAuth, saveNotebooksConfig } from "../api.js";
+import { checkDependencies, checkNotebookLMAuth, checkWeekGuideExists, createCourseStructure, getDefaultCourseRoot, getCourseState, getSetupStatus, listAccountNotebooksMcp, listNotebooksMcp, openExternal, pickDirectory, runNotebookLMAuth, saveNotebooksConfig } from "../api.js";
 import { escapeHtml, safeIndex } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
@@ -34,6 +34,23 @@ let _notebookConnectOpener = null;
 // cursos, así que se consulta una vez y se reutiliza hasta que el usuario
 // pide "Refrescar" (evita relanzar el proceso MCP en cada render).
 let _notebookLibrary = { status: "idle", entries: [], message: "" };
+let _aiTaskIndex = -1;
+let _aiTaskProvider = null;
+let _aiTaskOpener = null;
+let _aiTaskDraft = { week: 1, operation: "guide", guideExists: null, checking: false };
+
+// Operaciones de semana disponibles cuando ya existe una guía (ver la tabla
+// de routing de SKILL.md). Se excluyen init/syllabus/migrate/doctor: son de
+// curso completo o de entorno, no aplican a una semana puntual.
+const WEEK_AI_OPERATIONS = [
+  { id: "guide", label: "Revisar/actualizar guía", command: "/jintia guide" },
+  { id: "assessment", label: "Diseñar evaluación", command: "/jintia assessment" },
+  { id: "visual", label: "Gestionar figuras", command: "/jintia visual" },
+  { id: "validate", label: "Validar sin compilar", command: "/jintia validate" },
+  { id: "compile", label: "Compilar y revisar PDF", command: "/jintia compile" },
+  { id: "audit", label: "Auditar calidad", command: "/jintia audit" },
+  { id: "state", label: "Registrar estado editorial", command: "/jintia state" },
+];
 
 const REQUIRED_WEEK_FIELDS = ["title", "unit", "topics", "outcomes", "bibliography", "graded_activity"];
 // Project color palette: hex values are stored in the database for persistence,
@@ -104,6 +121,16 @@ function courseProgress(course) {
   const started = weeks.some(week => week && Object.values(week).some(value => value !== null && value !== "" && value !== undefined));
   const status = complete === total ? "complete" : started ? "progress" : "pending";
   return { complete, total, pct: Math.round((complete / total) * 100), status, outdated: 0 };
+}
+
+function nextPendingWeek(course) {
+  const total = Math.min(52, Math.max(1, Number(course.weeks) || 16));
+  const trackedWeeks = _courseStates.get(course.project_path || "");
+  for (let week = 1; week <= total; week += 1) {
+    const status = trackedWeeks?.[String(week).padStart(2, "0")]?.status;
+    if (!["compiled", "complete"].includes(status)) return week;
+  }
+  return total;
 }
 
 function statusView(progress) {
@@ -223,6 +250,10 @@ export function renderCourses() {
     <div class="fixed inset-0 z-[5150] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="notebook-connect-modal">
       <div class="w-full max-w-[480px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl" id="notebook-connect-box"
         role="dialog" aria-modal="true" aria-labelledby="notebook-connect-title"></div>
+    </div>
+    <div class="fixed inset-0 z-[5200] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="ai-task-modal">
+      <div class="w-full max-w-[480px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl" id="ai-task-box"
+        role="dialog" aria-modal="true" aria-labelledby="ai-task-title"></div>
     </div>`;
 
   refreshIcons();
@@ -471,6 +502,12 @@ function bindPageEvents() {
     if (event.target === notebookOverlay) closeNotebookConnectModal();
   });
   notebookOverlay?.addEventListener("keydown", handleNotebookConnectKeydown);
+
+  const aiTaskOverlay = document.getElementById("ai-task-modal");
+  aiTaskOverlay?.addEventListener("mousedown", event => {
+    if (event.target === aiTaskOverlay) closeAiTaskModal();
+  });
+  aiTaskOverlay?.addEventListener("keydown", handleAiTaskKeydown);
 }
 
 function updateResults() {
@@ -498,25 +535,40 @@ function bindResultEvents() {
       if (button.dataset.courseAction === "folders") generateFolders(index, button);
       if (button.dataset.courseAction === "appearance") openAppearanceModal(index, button);
       if (button.dataset.courseAction === "notebook") openNotebookConnectModal(index, button);
-      if (button.dataset.courseAction === "ai") openCourseWithAi(index, button.dataset.aiProvider);
+      if (button.dataset.courseAction === "ai") openCourseWithAi(index, button.dataset.aiProvider, button);
       if (button.dataset.courseAction === "delete") openDeleteModal(index, button);
     });
   });
 }
 
-function courseAiPrompt(course, provider) {
+function weekTaskPrompt(course, week, operationId, guideExists) {
   const folder = String(course.project_path || "").trim();
   const base = `Trabaja con la asignatura ${course.code} — ${course.name}. Carpeta local: ${folder}.`;
-  return provider === "claude"
-    ? `${base} Revisa primero la estructura del proyecto y ayúdame con la tarea que te indicaré.`
-    : `${base} Revisa el contenido de la carpeta y ayúdame con la tarea que te indicaré.`;
+  const task = operationId === "guide" && !guideExists
+    ? `Genera la guía de la semana ${week} siguiendo el flujo /jintia guide.`
+    : `${WEEK_AI_OPERATIONS.find(item => item.id === operationId)?.command || "/jintia guide"}: ${WEEK_AI_OPERATIONS.find(item => item.id === operationId)?.label.toLowerCase() || "revisar la guía"} de la semana ${week}.`;
+  return `${base} ${task}`;
 }
 
-async function openCourseWithAi(index, provider) {
+async function launchAiDeepLink(course, provider, prompt) {
+  const folder = String(course.project_path || "").trim();
+  const deepLink = provider === "claude"
+    ? `claude://code/new?q=${encodeURIComponent(prompt)}&folder=${encodeURIComponent(folder)}`
+    : `codex://threads/new?path=${encodeURIComponent(folder)}&prompt=${encodeURIComponent(prompt)}`;
+  await openExternal(deepLink);
+  toast(
+    provider === "claude"
+      ? "Claude Code se abrirá y solicitará confirmar la carpeta del proyecto."
+      : "ChatGPT se abrirá con la carpeta del proyecto cargada; confirma el mensaje para enviarlo.",
+    "success",
+    6000,
+  );
+}
+
+async function openCourseWithAi(index, provider, opener) {
   if (_aiCheckBusy.has(index)) return;
   const course = state.courses[index];
   if (!course) return;
-  const folder = String(course.project_path || "").trim();
   _aiCheckBusy.add(index);
   toast("Verificando skill, conexión y entorno…", "loading", 30000);
   try {
@@ -529,22 +581,150 @@ async function openCourseWithAi(index, provider) {
       }
       return;
     }
-    const prompt = courseAiPrompt(course, provider);
-    const deepLink = provider === "claude"
-      ? `claude://code/new?q=${encodeURIComponent(prompt)}&folder=${encodeURIComponent(folder)}`
-      : `codex://threads/new?path=${encodeURIComponent(folder)}&prompt=${encodeURIComponent(prompt)}`;
-    await openExternal(deepLink);
-    toast(
-      provider === "claude"
-        ? "Claude Code se abrirá y solicitará confirmar la carpeta del proyecto."
-        : "ChatGPT se abrirá con la carpeta del proyecto cargada; confirma el mensaje para enviarlo.",
-      "success",
-      6000,
-    );
+    openAiTaskModal(index, provider, opener);
   } catch (error) {
-    toast(`No se pudo abrir ${provider === "claude" ? "Claude Code" : "la aplicación de ChatGPT"}. (${error})`, "error", 7000);
+    toast(`No se pudo verificar el entorno. (${error})`, "error", 7000);
   } finally {
     _aiCheckBusy.delete(index);
+  }
+}
+
+function openAiTaskModal(index, provider, opener) {
+  const course = state.courses[index];
+  if (!course) return;
+  _aiTaskIndex = index;
+  _aiTaskProvider = provider;
+  _aiTaskOpener = opener || document.activeElement;
+  _aiTaskDraft = { week: nextPendingWeek(course), operation: "guide", guideExists: null, checking: true };
+  const overlay = document.getElementById("ai-task-modal");
+  overlay?.classList.remove("hidden");
+  overlay?.classList.add("flex");
+  renderAiTaskModal();
+  refreshWeekGuideState(course);
+}
+
+async function refreshWeekGuideState(course) {
+  const week = _aiTaskDraft.week;
+  _aiTaskDraft.checking = true;
+  renderAiTaskModal();
+  try {
+    const exists = await checkWeekGuideExists(course.project_path, week);
+    if (_aiTaskDraft.week !== week) return; // el usuario ya cambió de semana
+    _aiTaskDraft.guideExists = exists;
+    if (!exists) _aiTaskDraft.operation = "guide";
+  } catch {
+    _aiTaskDraft.guideExists = null;
+  } finally {
+    _aiTaskDraft.checking = false;
+    renderAiTaskModal();
+  }
+}
+
+function renderAiTaskModal() {
+  const course = state.courses[_aiTaskIndex];
+  const box = document.getElementById("ai-task-box");
+  if (!course || !box) return;
+  const total = Math.min(52, Math.max(1, Number(course.weeks) || 16));
+  const weekOptions = Array.from({ length: total }, (_, index) => index + 1)
+    .map(week => `<option value="${week}" ${week === _aiTaskDraft.week ? "selected" : ""}>Semana ${week}</option>`)
+    .join("");
+
+  let body;
+  if (_aiTaskDraft.checking) {
+    body = `<div class="mt-3 flex items-center gap-2 text-xs text-app-muted"><span class="animate-spin">${ic("loader-2", 14)}</span>Verificando si ya existe una guía para esta semana…</div>`;
+  } else if (!_aiTaskDraft.guideExists) {
+    body = `
+      <div class="mt-3 rounded-lg border border-teal-200 bg-teal-50 px-3.5 py-3 text-sm text-teal-900">
+        Todavía no existe una guía para la semana ${_aiTaskDraft.week}. Se pedirá generarla desde cero.
+      </div>`;
+  } else {
+    body = `
+      <fieldset class="mt-3">
+        <legend class="mb-2 text-xs font-bold text-app-muted">La guía ya existe. ¿Qué quieres hacer?</legend>
+        <div class="flex flex-col gap-1.5">
+          ${WEEK_AI_OPERATIONS.map(operation => `
+            <label class="flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2 text-sm ${operation.id === _aiTaskDraft.operation ? "border-brand bg-brand-soft" : ""}">
+              <input type="radio" name="ai-task-operation" value="${operation.id}" ${operation.id === _aiTaskDraft.operation ? "checked" : ""}>
+              ${escapeHtml(operation.label)}
+            </label>`).join("")}
+        </div>
+      </fieldset>`;
+  }
+
+  box.innerHTML = `
+    <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+      <div>
+        <h2 id="ai-task-title" class="text-base font-bold text-app-text">Abrir con ${_aiTaskProvider === "claude" ? "Claude Code" : "ChatGPT"}</h2>
+        <p class="mt-1 text-xs text-app-muted">${escapeHtml(course.code)} · ${escapeHtml(course.name)}</p>
+      </div>
+      <button type="button" class="${cx(ui.button.base, ui.button.ghost, "h-11 w-11 p-0")}" id="ai-task-close" aria-label="Cerrar">${ic("x", 20)}</button>
+    </div>
+    <div class="px-5 pb-5">
+      <label class="flex flex-col gap-1.5" for="ai-task-week">
+        <span class="text-xs font-bold text-app-muted">¿Qué semana quieres generar?</span>
+        <select id="ai-task-week" class="min-h-11">${weekOptions}</select>
+      </label>
+      ${body}
+    </div>
+    <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 sm:flex-row sm:justify-end">
+      <button type="button" class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="ai-task-cancel">Cancelar</button>
+      <button type="button" class="${cx(ui.button.base, ui.button.primary, "min-h-11")}" id="ai-task-confirm" ${_aiTaskDraft.checking ? "disabled" : ""}>Abrir</button>
+    </div>`;
+  refreshIcons();
+
+  box.querySelector("#ai-task-close")?.addEventListener("click", () => closeAiTaskModal());
+  box.querySelector("#ai-task-cancel")?.addEventListener("click", () => closeAiTaskModal());
+  box.querySelector("#ai-task-week")?.addEventListener("change", event => {
+    _aiTaskDraft.week = Number(event.target.value);
+    refreshWeekGuideState(course);
+  });
+  box.querySelectorAll('input[name="ai-task-operation"]').forEach(input => input.addEventListener("change", event => {
+    _aiTaskDraft.operation = event.target.value;
+  }));
+  box.querySelector("#ai-task-confirm")?.addEventListener("click", () => confirmAiTask());
+  queueMicrotask(() => box.querySelector("#ai-task-week")?.focus());
+}
+
+async function confirmAiTask() {
+  const course = state.courses[_aiTaskIndex];
+  const provider = _aiTaskProvider;
+  if (!course || !provider) return;
+  const { week, operation, guideExists } = _aiTaskDraft;
+  closeAiTaskModal(false);
+  try {
+    const prompt = weekTaskPrompt(course, week, operation, guideExists);
+    await launchAiDeepLink(course, provider, prompt);
+  } catch (error) {
+    toast(`No se pudo abrir ${provider === "claude" ? "Claude Code" : "la aplicación de ChatGPT"}. (${error})`, "error", 7000);
+  }
+}
+
+function closeAiTaskModal(restoreFocus = true) {
+  const overlay = document.getElementById("ai-task-modal");
+  overlay?.classList.add("hidden");
+  overlay?.classList.remove("flex");
+  if (restoreFocus) _aiTaskOpener?.focus?.();
+  _aiTaskIndex = -1;
+  _aiTaskProvider = null;
+}
+
+function handleAiTaskKeydown(event) {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeAiTaskModal();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = [...document.querySelectorAll("#ai-task-box button:not([disabled]), #ai-task-box select, #ai-task-box input")];
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
   }
 }
 
