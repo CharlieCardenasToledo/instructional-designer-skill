@@ -66,7 +66,7 @@ export async function renderAbout() {
         </div>
       </div>
 
-      <nav class="${cx(ui.liquid.control, "sticky top-[76px] z-20 flex w-fit max-w-full gap-1 p-1")}" aria-label="Secciones de Acerca de">
+      <nav class="sticky top-[76px] z-20 flex w-fit max-w-full gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm" aria-label="Secciones de Acerca de">
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-project">Proyecto</button>
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-origin">Origen del nombre</button>
         <button class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-about-section="about-authorship">Autoría</button>

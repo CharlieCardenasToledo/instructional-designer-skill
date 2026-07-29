@@ -81,7 +81,7 @@ function renderShell() {
 
     <!-- MAIN -->
     <main class="${ui.layout.appMain}" role="main">
-      <header class="${cx(ui.liquid.control, 'liquid-control-topbar absolute inset-x-4 top-3 z-30 flex h-[52px] items-center justify-between px-5')}" data-tauri-drag-region>
+      <header class="${cx(ui.liquid.control, 'liquid-control-topbar absolute inset-x-4 top-3 z-30 flex min-h-[52px] items-center justify-between px-5 py-2')}" data-tauri-drag-region>
         <div class="min-w-0">
           <h2 id="topbar-title" class="title-medium text-slate-800">Jintia Desktop</h2>
           <div id="topbar-sub" class="truncate text-[11px] text-slate-600"></div>
@@ -95,7 +95,7 @@ function renderShell() {
         </div>
       </header>
 
-      <div class="${cx(ui.surface.page, 'pt-[80px]')}">
+      <div class="${cx(ui.surface.page, 'pt-[96px]')}">
         <section class="h-full min-h-0 min-w-0" id="p-courses" hidden aria-label="Cursos"></section>
         <section class="h-full min-h-0 min-w-0" id="p-pdfs" hidden aria-label="PDFs generados"></section>
         <section class="h-full min-h-0 min-w-0" id="p-syllabus" hidden aria-label="Editor de sílabo"></section>
