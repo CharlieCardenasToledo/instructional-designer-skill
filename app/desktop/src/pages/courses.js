@@ -531,7 +531,7 @@ async function openCourseWithAi(index, provider) {
     }
     const prompt = courseAiPrompt(course, provider);
     const deepLink = provider === "claude"
-      ? `claude-cli://open?cwd=${encodeURIComponent(folder)}&q=${encodeURIComponent(prompt)}`
+      ? `claude://code/new?q=${encodeURIComponent(prompt)}&folder=${encodeURIComponent(folder)}`
       : `codex://threads/new?path=${encodeURIComponent(folder)}&prompt=${encodeURIComponent(prompt)}`;
     await openExternal(deepLink);
     toast(

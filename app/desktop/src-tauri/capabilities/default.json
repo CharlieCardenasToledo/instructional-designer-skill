@@ -14,7 +14,7 @@
     {
       "identifier": "opener:allow-open-url",
       "allow": [
-        { "url": "claude-cli://*" },
+        { "url": "claude://*" },
         { "url": "codex://*" },
         { "url": "https://github.com/CharlieCardenasToledo" },
         { "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill" },

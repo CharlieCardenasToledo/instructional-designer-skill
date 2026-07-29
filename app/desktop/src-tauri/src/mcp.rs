@@ -12,7 +12,7 @@ use std::sync::{mpsc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-pub const NOTEBOOKLM_MCP_PACKAGE: &str = "@charlie.act7/gemini-notebook-mcp@2.1.0";
+pub const NOTEBOOKLM_MCP_PACKAGE: &str = "@charlie.act7/gemini-notebook-mcp@2.1.1";
 const AUTH_STATE_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
 const AUTH_VALIDATION_TTL: Duration = Duration::from_secs(5 * 60);
 const GOOGLE_API_AUTH_COOKIE: &[u8] = b"SAPISID";

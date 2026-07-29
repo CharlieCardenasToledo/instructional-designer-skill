@@ -522,7 +522,7 @@ test('los enlaces externos de Acerca de usan opener con una lista cerrada', asyn
   assert.ok(opener);
   assert.ok(opener.allow.every(entry =>
     entry.url.startsWith('https://github.com/CharlieCardenasToledo') ||
-    entry.url === 'claude-cli://*' ||
+    entry.url === 'claude://*' ||
     entry.url === 'codex://*' ||
     entry.url === 'https://notebook.google.com/'
   ));

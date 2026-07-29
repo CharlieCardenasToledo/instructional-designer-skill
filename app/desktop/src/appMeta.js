@@ -39,11 +39,10 @@ export const ALLOWED_EXTERNAL_URLS = Object.freeze([
 ]);
 
 // AI launch targets are intentionally scheme constrained. Course paths are
-// encoded into each assistant's official deep link — Claude Code's
-// claude-cli://open (https://code.claude.com/docs/en/deep-links) and the
-// ChatGPT desktop app's codex://threads/new
+// encoded into each assistant's deep link — Claude Code's claude://code/new
+// and the ChatGPT desktop app's codex://threads/new
 // (https://learn.chatgpt.com/docs/reference/commands) — but arbitrary
 // external URLs must never be accepted by the opener abstraction.
 export const ALLOWED_AI_URLS = Object.freeze({
-  schemes: Object.freeze(["claude-cli:", "codex:"]),
+  schemes: Object.freeze(["claude:", "codex:"]),
 });
