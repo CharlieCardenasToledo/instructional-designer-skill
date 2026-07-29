@@ -43,7 +43,7 @@ function renderShell() {
       ${BrandLockup()}
 
       <div class="p-3">
-        <button class="${cx(ui.button.base, ui.button.primary, ui.button.xs, 'w-full !border-brand-600/30')}" data-page="courses" data-create-course>
+        <button class="${cx(ui.button.base, ui.button.primary, ui.button.xs, 'w-full !border-brand-600/30 !bg-brand-700 hover:!bg-brand-800')}" data-page="courses" data-create-course>
           ${ic("plus", 15)}
           Nueva asignatura
         </button>
@@ -69,10 +69,10 @@ function renderShell() {
       </nav>
 
       <div class="sidebar-footer border-t border-white/10 p-2">
-        <button type="button" class="group flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-slate-300 transition hover:bg-white/[.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/60" data-sidebar-page data-page="about" aria-label="Acerca de Jintia">
+        <button type="button" class="group flex w-full items-center gap-2 rounded-lg bg-transparent px-2.5 py-2 text-left text-slate-300 transition hover:bg-white/[.06] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/60" data-sidebar-page data-page="about" aria-label="Acerca de Jintia">
           ${BrandMark({ mono: true, className: "h-5 w-5", size: 20 })}
           <span class="min-w-0">
-            <span class="block truncate text-[10px] font-bold text-slate-600" data-shell-version>${APP_META.brandName} · …</span>
+            <span class="block truncate text-[10px] font-bold text-slate-300" data-shell-version>${APP_META.brandName} · …</span>
             <span class="block truncate text-[9px] text-slate-400">Por ${APP_META.creator}</span>
           </span>
         </button>
