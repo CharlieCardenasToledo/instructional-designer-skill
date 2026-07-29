@@ -121,25 +121,24 @@ No solicitar información que el sílabo o la configuración ya proporcionan.
 
 ### 2. Verificar evidencia
 
-Usar este orden:
-
-1. `README.md` del curso.
-2. Recortes en `bibliografia/recortes_por_semana/semana-XX/`.
-3. Fuentes locales verificables en `bibliografia/`.
-4. NotebookLM MCP del curso.
-
-NotebookLM es el método preferido para contrastar la cobertura bibliográfica:
+Comprobar NotebookLM primero, de forma obligatoria, antes de recurrir a cualquier otra fuente:
 
 1. Llamar `get_health`.
 2. Si `authenticated` es falso, llamar `setup_auth` y volver a verificar. La autenticación puede abrir Chrome y permanecer disponible hasta 10 minutos.
 3. Si la sesión guardada es inválida, usar `re_auth` y volver a verificar.
 4. Resolver el notebook desde `config/notebooks.json`. Usar `select_notebook`, `search_notebooks` o `list_notebooks`.
 5. Antes de `add_notebook`, solicitar confirmación explícita al usuario.
-6. Consultar con `ask_question` y `source_format: "footnotes"`.
-7. Reutilizar el `session_id` en consultas relacionadas.
-8. Conservar la procedencia devuelta por el servidor para verificar las citas.
+6. Si el curso tiene un notebook configurado y disponible, consultar con `ask_question` y `source_format: "footnotes"`; reutilizar el `session_id` en consultas relacionadas y conservar la procedencia devuelta por el servidor para verificar las citas.
 
-Si NotebookLM no está disponible, continuar solo cuando las fuentes locales permitan verificar las afirmaciones. Si tampoco existe evidencia local suficiente, detener el párrafo afectado y pedir la fuente o una respuesta manual de NotebookLM. Nunca inventar autores, años, páginas, citas o resultados.
+Solo si NotebookLM no está disponible (sin autenticación posible, sin notebook configurado para el curso, o el servidor no responde), recurrir en este orden a las fuentes locales:
+
+1. `README.md` del curso.
+2. Recortes en `bibliografia/recortes_por_semana/semana-XX/`.
+3. Fuentes locales verificables en `bibliografia/`.
+
+Antes de redactar, comprobar si existe *alguna* evidencia disponible: NotebookLM con contenido relevante, o al menos una de las tres fuentes locales. Si NotebookLM no está disponible y el sílabo no cita fuentes, no hay recortes ni bibliografía local, detener la operación por completo antes de escribir cualquier sección: informar al usuario que no hay evidencia verificable para esta semana y pedir explícitamente una fuente (bibliografía, notebook o material de referencia) antes de continuar. No generar una guía completa apoyada solo en explicaciones genéricas cuando la promesa de la skill es evidencia verificable.
+
+Si existe evidencia por al menos una vía, continuar normalmente. Si durante la redacción surge una afirmación puntual sin respaldo en ninguna de las fuentes ya verificadas, detener únicamente el párrafo afectado y pedir la fuente o una respuesta manual de NotebookLM. Nunca inventar autores, años, páginas, citas o resultados.
 
 ### 3. Extraer el contrato semanal
 

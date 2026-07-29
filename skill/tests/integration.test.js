@@ -119,3 +119,44 @@ test("el gestor instala, actualiza, repara y desinstala sin sobrescribir rutas a
   fs.writeFileSync(path.join(foreign, "SKILL.md"), "foreign");
   assert.throws(() => mutate("install", { ...base, providers: ["gemini"] }), /ruta ajena/);
 });
+
+test("Codex recibe subagentes reales en .codex/agents/, Claude conserva agents/*.md dentro de la skill", () => {
+  const { codexAgentsDir } = require("../../packages/core");
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-codex-agents-"));
+  const source = path.join(root, "source");
+  const project = path.join(root, "project");
+  fs.mkdirSync(path.join(source, "agents"), { recursive: true });
+  fs.writeFileSync(
+    path.join(source, "SKILL.md"),
+    "---\nname: jintia-skill\ndescription: prueba\nallowed-tools:\n  - Bash(node scripts/*)\n  - Bash(pdflatex *)\n---\n\n# Cuerpo\n"
+  );
+  fs.writeFileSync(
+    path.join(source, "agents", "jintia-researcher.md"),
+    "# Jintia Researcher\n\n## Misión\n\nLocalizar evidencia verificable.\n\n## Límites\n\nNo inventar fuentes.\n"
+  );
+  const base = { projectRoot: project, sourcePath: source, providers: ["claude", "codex"], scope: "project", version: "10.8.0", confirm: true };
+  mutate("install", base);
+
+  const claudeAgentsInSkill = path.join(project, ".claude", "skills", "jintia-skill", "agents", "jintia-researcher.md");
+  assert.ok(fs.existsSync(claudeAgentsInSkill), "Claude conserva el contrato dentro del paquete de la skill");
+  const claudeSkillMd = fs.readFileSync(path.join(project, ".claude", "skills", "jintia-skill", "SKILL.md"), "utf8");
+  assert.match(claudeSkillMd, /allowed-tools:/, "Claude conserva allowed-tools en su frontmatter");
+
+  const codexSkillMd = fs.readFileSync(path.join(project, ".agents", "skills", "jintia-skill", "SKILL.md"), "utf8");
+  assert.doesNotMatch(codexSkillMd, /allowed-tools/, "Codex no recibe la sintaxis de permisos específica de Claude");
+  assert.match(codexSkillMd, /^name: jintia-skill$/m);
+  assert.match(codexSkillMd, /^description: prueba$/m);
+  assert.match(codexSkillMd, /# Cuerpo/, "el cuerpo del SKILL.md se conserva íntegro");
+
+  const codexAgentToml = path.join(codexAgentsDir("project", project), "jintia-researcher.toml");
+  assert.ok(fs.existsSync(codexAgentToml), "Codex recibe el subagente como TOML en .codex/agents/");
+  const toml = fs.readFileSync(codexAgentToml, "utf8");
+  assert.match(toml, /^name = "jintia-researcher"$/m);
+  assert.match(toml, /^description = "Localizar evidencia verificable\."$/m);
+  assert.match(toml, /developer_instructions = """/);
+  assert.match(toml, /No inventar fuentes\./);
+
+  mutate("uninstall", { ...base, providers: ["codex"] });
+  assert.equal(fs.existsSync(codexAgentToml), false, "desinstalar Codex retira el TOML del subagente");
+  assert.ok(fs.existsSync(claudeAgentsInSkill), "desinstalar Codex no afecta la instalación de Claude");
+});

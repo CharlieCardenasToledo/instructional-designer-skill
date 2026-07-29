@@ -75,6 +75,95 @@ function copySkill(sourcePath, target, version) {
   fs.writeFileSync(path.join(target, MANIFEST), `${JSON.stringify({ managedBy: "jintia", version, source: path.resolve(sourcePath), files: ["SKILL.md", "VERSION"] }, null, 2)}\n`);
 }
 
+// `allowed-tools` is Claude Code's tool-permission scoping syntax. Codex's
+// own SKILL.md frontmatter only documents name/description
+// (developers.openai.com/codex/concepts/customization), and its behavior on
+// an unrecognized key isn't documented either way, so it's stripped rather
+// than left to chance.
+function stripAllowedToolsFrontmatter(skillMd) {
+  const match = skillMd.match(/^---\n([\s\S]*?)\n---\n/);
+  if (!match) return skillMd;
+  let skipping = false;
+  const kept = match[1].split("\n").filter(line => {
+    if (/^allowed-tools:\s*$/.test(line)) { skipping = true; return false; }
+    if (skipping && /^\s+-\s/.test(line)) return false;
+    skipping = false;
+    return true;
+  });
+  return skillMd.slice(0, match.index) + `---\n${kept.join("\n")}\n---\n` + skillMd.slice(match.index + match[0].length);
+}
+
+function stripCodexSkillMd(target) {
+  const skillMdPath = path.join(target, "SKILL.md");
+  if (!fs.existsSync(skillMdPath)) return;
+  const original = fs.readFileSync(skillMdPath, "utf8");
+  const stripped = stripAllowedToolsFrontmatter(original);
+  if (stripped !== original) fs.writeFileSync(skillMdPath, stripped);
+}
+
+// Codex CLI custom agents are standalone TOML files under .codex/agents/ (or
+// ~/.codex/agents/ globally) — a different location and format than Claude's
+// prose contracts in agents/*.md, which stay bundled inside the skill
+// package unchanged (see developers.openai.com/codex/subagents).
+function codexAgentsDir(scope, projectRoot, homeDir, env = process.env) {
+  const base = scope === "project" ? path.join(projectRoot, ".codex") : env.CODEX_HOME || path.join(homeDir, ".codex");
+  return path.join(base, "agents");
+}
+
+function extractMision(markdown) {
+  const heading = "## Misión";
+  const start = markdown.indexOf(heading);
+  if (start === -1) return "";
+  const afterHeading = markdown.slice(start + heading.length);
+  const next = afterHeading.search(/\n##\s/);
+  const section = next === -1 ? afterHeading : afterHeading.slice(0, next);
+  return section.trim().replace(/\s+/g, " ");
+}
+
+function tomlString(value) {
+  return `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\s+/g, " ").trim()}"`;
+}
+
+function tomlMultilineString(value) {
+  const escaped = String(value).replace(/\\/g, "\\\\").replace(/"""/g, '""\\"');
+  return `"""\n${escaped}\n"""`;
+}
+
+function agentMarkdownToToml(name, markdown) {
+  const description = extractMision(markdown) || name;
+  return [
+    `name = ${tomlString(name)}`,
+    `description = ${tomlString(description)}`,
+    `developer_instructions = ${tomlMultilineString(markdown.trim())}`,
+    "",
+  ].join("\n");
+}
+
+function syncCodexAgents(sourcePath, target, scope, options) {
+  const agentsSource = path.join(sourcePath, "agents");
+  if (!fs.existsSync(agentsSource)) return;
+  const destination = codexAgentsDir(scope, options.projectRoot, options.homeDir, options.env);
+  fs.mkdirSync(destination, { recursive: true });
+  for (const entry of fs.readdirSync(agentsSource, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const name = entry.name.slice(0, -3);
+    const markdown = fs.readFileSync(path.join(agentsSource, entry.name), "utf8");
+    fs.writeFileSync(path.join(destination, `${name}.toml`), agentMarkdownToToml(name, markdown));
+  }
+}
+
+function removeCodexAgents(sourcePath, scope, options) {
+  const agentsSource = path.join(sourcePath, "agents");
+  if (!fs.existsSync(agentsSource)) return;
+  const destination = codexAgentsDir(scope, options.projectRoot, options.homeDir, options.env);
+  for (const entry of fs.readdirSync(agentsSource, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const name = entry.name.slice(0, -3);
+    const tomlPath = path.join(destination, `${name}.toml`);
+    if (fs.existsSync(tomlPath)) fs.rmSync(tomlPath);
+  }
+}
+
 function selectTargets(options) {
   const selected = normalizeProviders(options.providers || options.explicitProviders || []);
   if (!selected.length) throw new Error("Debes indicar al menos un proveedor con --providers=claude,codex,cursor.");
@@ -93,15 +182,20 @@ function mutate(operation, options) {
     if (operation === "uninstall") {
       if (!before.managed) { results.push({ ...item, status: before.status, changed: false, message: "No se eliminó: no existe una instalación gestionada por Jintia." }); continue; }
       fs.rmSync(item.target, { recursive: true, force: false });
+      if (item.provider.id === "codex") removeCodexAgents(sourcePath, item.scope, options);
       results.push({ ...item, status: "not-detected", changed: true });
       continue;
     }
     if (before.exists && !before.managed && operation !== "repair") throw new Error(`No se sobrescribe una ruta ajena: ${item.target}`);
     if (operation === "repair" && before.exists && !before.managed) throw new Error(`No se repara una ruta no gestionada: ${item.target}`);
     copySkill(sourcePath, item.target, version);
+    if (item.provider.id === "codex") {
+      syncCodexAgents(sourcePath, item.target, item.scope, options);
+      stripCodexSkillMd(item.target);
+    }
     results.push({ ...item, status: operation === "install" ? "installed" : operation, version, changed: true });
   }
   return { operation, version, results };
 }
 
-module.exports = { MANIFEST, compareVersions, globalBase, installPath, readInstalledState, detectInstallationStates, mutate };
+module.exports = { MANIFEST, compareVersions, globalBase, installPath, readInstalledState, detectInstallationStates, mutate, codexAgentsDir, agentMarkdownToToml, stripAllowedToolsFrontmatter };

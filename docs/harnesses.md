@@ -28,3 +28,38 @@ Los estados son `not-detected`, `detected`, `installed`, `outdated`,
 `incomplete` y `repair-needed`. Las instalaciones gestionadas conservan
 `.jintia-install.json` y `VERSION`; una ruta existente sin esa marca nunca se
 sobrescribe. Las mutaciones requieren `--yes` y aceptan varios proveedores.
+
+## Diferencias por proveedor
+
+`harness install` copia el mismo paquete de la skill (`SKILL.md`, `commands/`,
+`references/`, `scripts/`, `templates/`, `rules/`, `schemas/`) a cualquier
+proveedor porque esa parte es agnóstica al agente. Dos piezas sí requieren
+adaptación por proveedor, verificada contra la documentación oficial de cada
+uno:
+
+**Subagentes.** Claude Code lee los contratos de `agents/*.md` como
+referencia de delegación dentro de la propia skill. Codex CLI define
+subagentes como archivos TOML independientes en `.codex/agents/` (proyecto) o
+`~/.codex/agents/` (global), con los campos `name`, `description` y
+`developer_instructions` — no dentro del paquete de la skill
+([developers.openai.com/codex/subagents](https://developers.openai.com/codex/subagents)).
+`harness install --providers=codex` genera automáticamente esos `.toml` a
+partir de `agents/*.md` (título → `name`, sección "Misión" → `description`,
+archivo completo → `developer_instructions`) y los coloca en la ubicación que
+Codex espera. `harness uninstall --providers=codex` los retira.
+
+**MCP de NotebookLM.** Claude Code y Claude Desktop usan `.mcp.json` /
+`claude_desktop_config.json` con una clave `mcpServers` en JSON. Codex CLI
+registra servidores MCP en `~/.codex/config.toml` (TOML), no en JSON. Jintia
+no escribe ese archivo global automáticamente porque es personal del usuario;
+agrégalo a mano una vez:
+
+```toml
+[mcp_servers.notebooklm]
+command = "npx"
+args = ["-y", "@charlie.act7/gemini-notebook-mcp@2.1.1"]
+```
+
+`openai-plugin/.mcp.json` es un archivo distinto: alimenta el plugin/conector
+de la app de ChatGPT (`~/.codex/plugins/jintia/.mcp.json` +
+`marketplace.json`), no la configuración personal de Codex CLI.
