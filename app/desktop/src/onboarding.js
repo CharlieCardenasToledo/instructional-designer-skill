@@ -335,6 +335,7 @@ function renderCurrentStep() {
   }
   document.getElementById("onboarding-bottom-nav").innerHTML = renderBottomNav(current);
   bindStepEvents(current);
+  bindStepCarousels();
   refreshIcons();
   syncOnboardingBusyState();
 }
@@ -750,64 +751,143 @@ function welcomeStep() {
       <h3 class="text-sm font-semibold text-slate-900 mb-1.5">${title}</h3>
       <p class="text-xs text-slate-600 leading-relaxed">${desc}</p>
     </article>`;
+
   const techCard = (name, src, icon) => `
     <div class="flex items-center justify-center w-11 h-11 text-slate-700 transition-transform duration-200 hover:scale-110" title="${escapeHtml(name)}">
       ${src ? `<img src="${src}" alt="${escapeHtml(name)}" class="w-full h-full object-contain">` : ic(icon, 40)}
     </div>`;
-  const framework = (name, source, desc) => `
-    <article class="${ui.surface.cardGlass} p-4 transition-all duration-200 hover:bg-white/50 hover:backdrop-blur-2xl hover:shadow-md">
-      <div class="flex items-baseline gap-1.5 mb-1.5">
-        <h3 class="text-sm font-semibold text-slate-900">${escapeHtml(name)}</h3>
-        <span class="text-[10px] text-slate-500 font-medium">${escapeHtml(source)}</span>
+
+  const stepCarousel = (title, steps) => {
+    const stepsHtml = steps.map((step, idx) => `
+      <div class="step-carousel-item hidden" data-step-index="${idx}">
+        <div class="${ui.surface.cardGlass} p-5 mb-4 transition-all duration-300">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-slate-900">${step.title}</h3>
+            <span class="text-xs font-medium text-slate-500">${idx + 1}/${steps.length}</span>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed mb-4">${step.desc}</p>
+          ${step.content || ""}
+        </div>
       </div>
-      <p class="text-xs text-slate-600 leading-relaxed">${escapeHtml(desc)}</p>
-    </article>`;
-  const disclosure = (summaryText, bodyHtml) => `
-    <details class="max-w-2xl mx-auto group">
-      <summary class="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden py-3 border-t border-white/20 transition-colors duration-150">
-        <span class="material-symbols-outlined text-[15px] transition-transform group-open:rotate-90">chevron_right</span>
-        ${summaryText}
-      </summary>
-      <div class="pt-3 pb-2">${bodyHtml}</div>
-    </details>`;
+    `).join("");
+
+    const prevBtn = `<button type="button" class="step-carousel-prev p-1.5 rounded-lg border border-white/20 bg-white/30 text-slate-700 hover:bg-white/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed" data-carousel-id="${title}" aria-label="Paso anterior">${ic("chevron_left", 16)}</button>`;
+    const nextBtn = `<button type="button" class="step-carousel-next p-1.5 rounded-lg border border-white/20 bg-white/30 text-slate-700 hover:bg-white/50 transition-all disabled:opacity-30 disabled:cursor-not-allowed" data-carousel-id="${title}" aria-label="Siguiente paso">${ic("chevron_right", 16)}</button>`;
+
+    return `
+      <div class="max-w-2xl mx-auto mb-5" data-carousel-group="${title}">
+        <div class="step-carousel-items">
+          ${stepsHtml}
+        </div>
+        <div class="flex items-center justify-center gap-2">
+          ${prevBtn}
+          <div class="flex gap-1.5">
+            ${steps.map((_, idx) => `<button type="button" class="step-carousel-dot h-2 w-2 rounded-full transition-all duration-200 ${idx === 0 ? "bg-brand scale-125" : "bg-slate-300 hover:bg-slate-400"}" data-carousel-id="${title}" data-dot-index="${idx}" aria-label="Ir al paso ${idx + 1}"></button>`).join("")}
+          </div>
+          ${nextBtn}
+        </div>
+      </div>
+    `;
+  };
+
+  const journeySteps = [
+    {
+      title: "Sílabo",
+      desc: "Sube tu sílabo en PDF, Word o texto plano. El sistema lo analiza y extrae estructura, resultados de aprendizaje y contenido temático.",
+      content: `<div class="bg-brand/10 border border-brand/20 rounded-lg px-3 py-2 text-[11px] text-slate-700">📄 Formato soportado: PDF, DOCX, TXT, enlaces compartidos</div>`
+    },
+    {
+      title: "Fuentes",
+      desc: "Integra NotebookLM para investigación verificada. Consulta literalmente tus referencias mientras diseñas: cada semana queda respaldada.",
+      content: `<div class="bg-brand/10 border border-brand/20 rounded-lg px-3 py-2 text-[11px] text-slate-700">🔍 Fuentes indexadas: libros, artículos, sitios web educativos</div>`
+    },
+    {
+      title: "Guía",
+      desc: "Cada semana toma forma automáticamente: temas, actividades, bibliografía ordenada por UDL 3.0 y Backward Design.",
+      content: `<div class="bg-brand/10 border border-brand/20 rounded-lg px-3 py-2 text-[11px] text-slate-700">✓ Validación: alineación UDL, jerarquía de resultados, actividades contextuales</div>`
+    },
+    {
+      title: "PDF",
+      desc: "Descarga tu guía compilada a PDF profesional con portada, branding institucional y metadatos pedagogía para publicar o compartir.",
+      content: `<div class="flex flex-wrap justify-center gap-4 mt-3">
+        ${techCard("Claude", claudeLogo)}
+        ${techCard("Gemini", geminiLogo)}
+        ${techCard("NotebookLM", notebookLmLogo)}
+        ${techCard("LaTeX", latexLogo)}
+      </div>`
+    }
+  ];
+
+  const foundationSteps = [
+    {
+      title: "UDL 3.0",
+      desc: "Universal Design for Learning: tres principios para múltiples formas de representación, participación y acción-expresión. Garantiza que tu guía sea accesible para todxs.",
+      content: `<div class="text-[11px] text-slate-700 space-y-1.5"><strong class="block text-slate-900">Aplicado en Jintia:</strong><div>• Representación: materiales en múltiples formatos</div><div>• Acción: actividades variadas de baja a alta complejidad</div><div>• Expresión: espacios para que estudiantes demuestren aprendizaje</div></div>`
+    },
+    {
+      title: "Backward Design",
+      desc: "Wiggins & McTighe: primero definen resultados de aprendizaje deseados, luego evaluaciones auténticas, finalmente experiencias de enseñanza.",
+      content: `<div class="text-[11px] text-slate-700 space-y-1.5"><strong class="block text-slate-900">Aplicado en Jintia:</strong><div>• Fase 1: desglosa tus objetivos de la asignatura</div><div>• Fase 2: propone actividades y rúbricas evaluativas</div><div>• Fase 3: arma la secuencia semanal coherente</div></div>`
+    },
+    {
+      title: "Quality Matters",
+      desc: "7ª edición: 41 estándares de calidad en educación en línea y presencial. Jintia valida alineación, interactividad, feedback y accesibilidad.",
+      content: `<div class="text-[11px] text-slate-700 space-y-1.5"><strong class="block text-slate-900">Validación automática:</strong><div>• Alineación clara entre objetivos, actividades, evaluación</div><div>• Instrucciones claras en cada semana</div><div>• WCAG 2.2 para accesibilidad de contenidos</div><div>• Tono inclusivo y respetuoso de diversidad</div></div>`
+    }
+  ];
 
   return `<section>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto mb-6">
       ${feature("psychology", "Convierte tu sílabo", "Sube el sílabo de tu materia y quedará estructurado como guía.")}
       ${feature("dashboard", "Organiza por semanas", "Cada semana queda con sus temas, actividades y bibliografía.")}
       ${feature("file_download", "Genera el PDF", "Descarga la guía lista para publicar, con tu identidad institucional.")}
     </div>
 
-    ${disclosure("Ver el recorrido", `
-      <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-slate-700 mb-5">
-        <span class="${ui.surface.cardGlass} px-3.5 py-2 transition-all duration-200 hover:bg-white/50">Sílabo</span>
-        <span class="text-slate-400">→</span>
-        <span class="${ui.surface.cardGlass} px-3.5 py-2 transition-all duration-200 hover:bg-white/50">Fuentes</span>
-        <span class="text-slate-400">→</span>
-        <span class="${ui.surface.cardGlass} px-3.5 py-2 transition-all duration-200 hover:bg-white/50">Guía</span>
-        <span class="text-slate-400">→</span>
-        <span class="relative isolate rounded-lg border border-brand/30 bg-brand/20 text-brand px-3.5 py-2 font-semibold transition-all duration-200 hover:bg-brand/30 hover:border-brand/50">PDF</span>
-      </div>
-      <div class="flex flex-wrap justify-center gap-6 mb-5">
-        ${techCard("Claude", claudeLogo)}
-        ${techCard("Gemini", geminiLogo)}
-        ${techCard("NotebookLM", notebookLmLogo)}
-        ${techCard("LaTeX", latexLogo)}
-      </div>
-      <div class="${CALLOUT}">${ic("verified", 16)} <span>Todo lo que configures se guarda en tu computadora. Las búsquedas bibliográficas solo se comparten con NotebookLM cuando tú lo autorizas.</span></div>
-    `)}
+    <div class="max-w-2xl mx-auto mb-6">
+      <h3 class="text-sm font-semibold text-slate-900 mb-4 text-center">📚 ¿Cómo funciona el proceso?</h3>
+      ${stepCarousel("recorrido", journeySteps)}
+      <div class="${CALLOUT}">${ic("verified", 16)} <span>Todo se guarda en tu computadora. Las búsquedas con NotebookLM solo se comparten cuando tú lo autorizas.</span></div>
+    </div>
 
-    ${disclosure("Ver fundamentos pedagógicos", `
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-        ${framework("UDL 3.0", "CAST, 2024", "Múltiples medios de representación, participación, acción y expresión.")}
-        ${framework("Backward Design", "Wiggins & McTighe", "Primero los resultados de aprendizaje, luego la evaluación, luego el contenido.")}
-        ${framework("Quality Matters", "7ª ed.", "Alineación entre resultados, actividades y materiales.")}
-      </div>
-      <div class="${ui.surface.cardGlass} px-4 py-3 text-[11px] text-slate-700 leading-relaxed transition-all duration-200 hover:bg-white/50">
-        <strong class="text-slate-900 block mb-1.5">Criterios complementarios:</strong> WCAG 2.2 para accesibilidad; principios multimedia de Mayer para reducir carga cognitiva; práctica espaciada e intercalada para reforzar la retención.
-      </div>
-    `)}
+    <div class="max-w-2xl mx-auto">
+      <h3 class="text-sm font-semibold text-slate-900 mb-4 text-center">🎓 Fundamentos pedagógicos</h3>
+      ${stepCarousel("fundamentos", foundationSteps)}
+    </div>
   </section>`;
+}
+
+// Vincula eventos del carousel de pasos
+function bindStepCarousels() {
+  const carousels = document.querySelectorAll("[data-carousel-group]");
+  carousels.forEach(carousel => {
+    const id = carousel.dataset.carouselGroup;
+    const items = carousel.querySelectorAll(".step-carousel-item");
+    const dots = carousel.querySelectorAll(".step-carousel-dot");
+    const prevBtn = carousel.querySelector(".step-carousel-prev");
+    const nextBtn = carousel.querySelector(".step-carousel-next");
+
+    let currentIndex = 0;
+
+    const showStep = (index) => {
+      items.forEach((item, i) => item.classList.toggle("hidden", i !== index));
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("bg-brand", i === index);
+        dot.classList.toggle("scale-125", i === index);
+        dot.classList.toggle("bg-slate-300", i !== index);
+      });
+      currentIndex = index;
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = currentIndex === items.length - 1;
+    };
+
+    prevBtn?.addEventListener("click", () => currentIndex > 0 && showStep(currentIndex - 1));
+    nextBtn?.addEventListener("click", () => currentIndex < items.length - 1 && showStep(currentIndex + 1));
+    dots.forEach(dot => {
+      dot.addEventListener("click", () => showStep(Number(dot.dataset.dotIndex)));
+    });
+
+    showStep(0);
+  });
 }
 
 const FIELD_INPUT = cx(ui.surface.input, "px-3 py-2 w-full");
