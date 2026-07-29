@@ -25,6 +25,10 @@ static SCRIPTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/scrip
 static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/templates");
 static CONFIG: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/config");
 static AGENTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/agents");
+static COMMANDS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/commands");
+static BIN: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/bin");
+static RULES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/rules");
+static SCHEMAS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/schemas");
 static PAYLOAD_OPERATION: Mutex<()> = Mutex::new(());
 
 fn write_embedded_dir(dir: &Dir<'_>, target: &Path) -> Result<(), String> {
@@ -62,6 +66,10 @@ fn materialize_payload(target: &Path, installed: Option<&Path>) -> Result<(), St
     write_embedded_dir(&TEMPLATES, &target.join("templates"))?;
     write_embedded_dir(&CONFIG, &target.join("config"))?;
     write_embedded_dir(&AGENTS, &target.join("agents"))?;
+    write_embedded_dir(&COMMANDS, &target.join("commands"))?;
+    write_embedded_dir(&BIN, &target.join("bin"))?;
+    write_embedded_dir(&RULES, &target.join("rules"))?;
+    write_embedded_dir(&SCHEMAS, &target.join("schemas"))?;
 
     for name in ["institution.json", "notebooks.json"] {
         if let Some(bytes) = user_config(name, installed) {
@@ -109,6 +117,10 @@ fn installed_payload_matches(target: &Path) -> bool {
         && embedded_dir_matches(&TEMPLATES, &target.join("templates"), target, false)
         && embedded_dir_matches(&CONFIG, &target.join("config"), target, true)
         && embedded_dir_matches(&AGENTS, &target.join("agents"), target, false)
+        && embedded_dir_matches(&COMMANDS, &target.join("commands"), target, false)
+        && embedded_dir_matches(&BIN, &target.join("bin"), target, false)
+        && embedded_dir_matches(&RULES, &target.join("rules"), target, false)
+        && embedded_dir_matches(&SCHEMAS, &target.join("schemas"), target, false)
 }
 
 fn materialize_openai_plugin(target: &Path, installed: Option<&Path>) -> Result<(), String> {
@@ -394,6 +406,10 @@ fn payload_fingerprint(installed: Option<&Path>) -> String {
     hash_embedded_dir(&TEMPLATES, &mut hasher, installed, false);
     hash_embedded_dir(&CONFIG, &mut hasher, installed, true);
     hash_embedded_dir(&AGENTS, &mut hasher, installed, false);
+    hash_embedded_dir(&COMMANDS, &mut hasher, installed, false);
+    hash_embedded_dir(&BIN, &mut hasher, installed, false);
+    hash_embedded_dir(&RULES, &mut hasher, installed, false);
+    hash_embedded_dir(&SCHEMAS, &mut hasher, installed, false);
     format!("{:016x}", hasher.finish())
 }
 
@@ -463,6 +479,10 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
         add_dir_to_zip(&mut zip, &TEMPLATES, "templates")?;
         add_dir_to_zip(&mut zip, &CONFIG, "config")?;
         add_dir_to_zip(&mut zip, &AGENTS, "agents")?;
+        add_dir_to_zip(&mut zip, &COMMANDS, "commands")?;
+        add_dir_to_zip(&mut zip, &BIN, "bin")?;
+        add_dir_to_zip(&mut zip, &RULES, "rules")?;
+        add_dir_to_zip(&mut zip, &SCHEMAS, "schemas")?;
 
         for name in ["institution.json", "notebooks.json"] {
             if let Some(bytes) = user_config(name, installed.as_deref()) {
@@ -565,6 +585,10 @@ pub fn export_openai_plugin_zip(destination_dir: String) -> ActionResult {
         add_dir_to_zip(&mut zip, &TEMPLATES, &format!("{prefix}/templates"))?;
         add_dir_to_zip(&mut zip, &CONFIG, &format!("{prefix}/config"))?;
         add_dir_to_zip(&mut zip, &AGENTS, &format!("{prefix}/agents"))?;
+        add_dir_to_zip(&mut zip, &COMMANDS, &format!("{prefix}/commands"))?;
+        add_dir_to_zip(&mut zip, &BIN, &format!("{prefix}/bin"))?;
+        add_dir_to_zip(&mut zip, &RULES, &format!("{prefix}/rules"))?;
+        add_dir_to_zip(&mut zip, &SCHEMAS, &format!("{prefix}/schemas"))?;
         for name in ["institution.json", "notebooks.json"] {
             if let Some(bytes) = user_config(name, installed.as_deref()) {
                 add_bytes(&mut zip, &format!("{prefix}/config/{name}"), &bytes)?;
