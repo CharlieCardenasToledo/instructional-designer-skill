@@ -32,6 +32,7 @@ import {
   CirclePlus, SearchX, NotebookPen, Key, Hourglass,
   Star, Image, MoreVertical,
   Folder, Database, FlaskConical, Brain, FolderOpen,
+  Wrench, Shield, Construction, UserPen,
 } from "lucide";
 
 const ICONS = {
@@ -53,6 +54,7 @@ const ICONS = {
   CirclePlus, SearchX, NotebookPen, Key, Hourglass,
   Star, Image, MoreVertical,
   Folder, Database, FlaskConical, Brain, FolderOpen,
+  Wrench, Shield, Construction, UserPen,
 };
 
 /** Re-renderiza todos los data-lucide del DOM. Llamar después de cada render dinámico. */

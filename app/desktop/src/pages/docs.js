@@ -1,22 +1,23 @@
 import { navigate } from "../router.js";
 import { ui, cx } from "../uiClasses.js";
+import { ic } from "../icons.js";
 
 const QUICK_ACTIONS = [
   {
-    icon: "person_edit",
+    icon: "user-pen",
     title: "Completar mi perfil",
     description: "Configura autoría, institución, carrera y color editorial.",
     page: "settings",
     section: "inst-profile",
   },
   {
-    icon: "add_circle",
+    icon: "circle-plus",
     title: "Crear una asignatura",
     description: "Registra el curso, su carpeta y el número de semanas.",
     page: "courses",
   },
   {
-    icon: "picture_as_pdf",
+    icon: "file-text",
     title: "Probar una plantilla",
     description: "Compila un PDF real antes de activar el formato.",
     page: "templates",
@@ -107,7 +108,7 @@ export function renderDocs() {
           </p>
         </div>
         <div class="relative mt-5 max-w-2xl">
-          <span class="material-symbols-outlined pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-xl text-slate-400" aria-hidden="true">search</span>
+          <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">${ic("search", 20)}</span>
           <input class="min-h-12 w-full rounded-full border border-slate-300 bg-white py-3 pl-11 pr-24 text-sm text-app-text outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15"
             id="help-search" type="search" placeholder="Buscar: PDF, NotebookLM, ChatGPT, Codex, Claude…" autocomplete="off"
             aria-describedby="help-search-status">
@@ -123,9 +124,9 @@ export function renderDocs() {
         <aside class="xl:sticky xl:top-0">
           <nav class="flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 shadow-sm xl:flex-col" aria-label="Contenido de ayuda">
             ${helpNavButton("help-start", "Primeros pasos", "route")}
-            ${helpNavButton("help-workflows", "Flujos principales", "account_tree")}
-            ${helpNavButton("help-troubleshooting", "Resolver problemas", "build")}
-            ${helpNavButton("help-faq", "Preguntas frecuentes", "quiz")}
+            ${helpNavButton("help-workflows", "Flujos principales", "network")}
+            ${helpNavButton("help-troubleshooting", "Resolver problemas", "wrench")}
+            ${helpNavButton("help-faq", "Preguntas frecuentes", "help-circle")}
             ${helpNavButton("help-privacy", "Datos y privacidad", "shield")}
           </nav>
         </aside>
@@ -137,7 +138,7 @@ export function renderDocs() {
           ${faqSection()}
           ${privacySection()}
           <div id="help-no-results" class="hidden rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm" role="status">
-            <span class="material-symbols-outlined mb-2 block text-[34px] text-slate-400" aria-hidden="true">search_off</span>
+            <span class="mb-2 block text-slate-400">${ic("search-x", 34)}</span>
             <h2 class="text-base font-bold text-app-text">No encontramos ese tema</h2>
             <p class="mt-2 text-sm text-app-muted">Prueba con “PDF”, “NotebookLM”, “plantilla”, “instalar” o “privacidad”.</p>
             <button class="${cx(ui.button.base, ui.button.secondary, "mt-4 min-h-11")}" type="button" data-clear-help-search>Mostrar toda la ayuda</button>
@@ -153,7 +154,7 @@ function helpNavButton(target, label, icon) {
   return `
     <button class="flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-app-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand xl:w-full"
       type="button" data-help-anchor="${target}">
-      <span class="material-symbols-outlined text-[18px] text-teal-700" aria-hidden="true">${icon}</span>
+      <span class="text-teal-700">${ic(icon, 18)}</span>
       ${label}
     </button>`;
 }
@@ -168,12 +169,12 @@ function startSection() {
           <button class="group flex min-h-[72px] w-full items-center gap-3 px-3.5 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand sm:px-4"
             type="button" data-doc-nav="${action.page}" ${action.section ? `data-section="${action.section}"` : ""}
             data-help-searchable data-search="${action.title} ${action.description}">
-            <span class="material-symbols-outlined grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-soft text-xl text-teal-700" aria-hidden="true">${action.icon}</span>
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-soft text-teal-700">${ic(action.icon, 20)}</span>
             <span class="min-w-0 flex-1">
               <span class="block text-sm font-bold text-app-text">${action.title}</span>
               <span class="mt-0.5 block text-xs leading-5 text-app-muted">${action.description}</span>
             </span>
-            <span class="material-symbols-outlined text-xl text-slate-400 transition group-hover:text-teal-700" aria-hidden="true">arrow_forward</span>
+            <span class="text-slate-400 transition group-hover:text-teal-700">${ic("arrow-right", 20)}</span>
           </button>`).join("")}
       </div>
     </section>`;
@@ -187,7 +188,7 @@ function workflowsSection() {
       <div class="space-y-5">
         ${workflowBlock(
           "Crear una asignatura y estructurar el sílabo",
-          "school",
+          "graduation-cap",
           [
             "Crea la asignatura y elige una carpeta raíz.",
             "Completa cada semana: unidad, temas, resultados, bibliografía, horas y actividades.",
@@ -199,7 +200,7 @@ function workflowsSection() {
         )}
         ${workflowBlock(
           "Elegir una plantilla editorial",
-          "dashboard_customize",
+          "layout-dashboard",
           [
             "Selecciona una plantilla del catálogo.",
             "Jintia construye una guía de muestra con tu información preliminar.",
@@ -211,7 +212,7 @@ function workflowsSection() {
         )}
         ${workflowBlock(
           "Trabajar con Claude y jintia-skill",
-          "smart_toy",
+          "bot",
           [
             "Para Claude Code, instala la skill en la carpeta local y reinicia Claude Code.",
             "Abre Claude Code dentro de la carpeta de la asignatura.",
@@ -230,11 +231,11 @@ function workflowsSection() {
             "Activa Jintia y solicita una guía, revisión de sílabo o actividad evaluativa.",
             "Para ChatGPT web público, prepara el paquete y completa el proceso de envío y revisión de OpenAI.",
           ],
-          "extension"
+          "puzzle"
         )}
         ${workflowBlock(
           "Contrastar bibliografía con NotebookLM",
-          "menu_book",
+          "book-open",
           [
             "Autentica NotebookLM desde Configuración → Conexiones.",
             "Registra el código, nombre, carpeta e ID o URL del notebook del curso.",
@@ -253,7 +254,7 @@ function workflowBlock(title, icon, steps, actionLabel, page, section = "") {
   return `
     <article data-help-searchable data-search="${title} ${steps.join(" ")}">
       <div class="mb-3 flex items-start gap-3">
-        <span class="material-symbols-outlined mt-0.5 text-xl text-teal-700" aria-hidden="true">${icon}</span>
+        <span class="mt-0.5 text-teal-700">${ic(icon, 20)}</span>
         <div>
           <h3 class="text-[15px] font-bold text-app-text">${title}</h3>
           <ol class="mt-2 space-y-2 text-[13px] leading-5 text-app-muted">
@@ -261,8 +262,25 @@ function workflowBlock(title, icon, steps, actionLabel, page, section = "") {
           </ol>
           <button class="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-xs font-bold text-teal-700 hover:bg-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
             type="button" data-doc-nav="${page}" ${section ? `data-section="${section}"` : ""}>
-            ${actionLabel}<span class="material-symbols-outlined text-[17px]" aria-hidden="true">arrow_forward</span>
+            ${actionLabel}${ic("arrow-right", 17)}
           </button>
+        </div>
+      </div>
+    </article>`;
+}
+
+// Igual que workflowBlock, pero sin botón de acción: se usa para flujos que no
+// enlazan a una sola pantalla de Configuración (ChatGPT/Codex requiere varios pasos).
+function workflowCard(title, steps, icon) {
+  return `
+    <article data-help-searchable data-search="${title} ${steps.join(" ")}">
+      <div class="mb-3 flex items-start gap-3">
+        <span class="mt-0.5 text-teal-700">${ic(icon, 20)}</span>
+        <div>
+          <h3 class="text-[15px] font-bold text-app-text">${title}</h3>
+          <ol class="mt-2 space-y-2 text-[13px] leading-5 text-app-muted">
+            ${steps.map((step, index) => `<li class="flex gap-2.5"><span class="font-bold text-teal-700">${index + 1}.</span><span>${step}</span></li>`).join("")}
+          </ol>
         </div>
       </div>
     </article>`;
@@ -309,7 +327,7 @@ function troubleRow(title, description, section) {
       <p class="mt-1.5 text-[13px] leading-5 text-app-muted">${description}</p>
       <button class="mt-2 inline-flex min-h-11 items-center gap-1 text-xs font-bold text-teal-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         type="button" data-doc-nav="settings" data-section="${section}">
-        Abrir configuración relacionada<span class="material-symbols-outlined text-[16px]" aria-hidden="true">arrow_forward</span>
+        Abrir configuración relacionada${ic("arrow-right", 16)}
       </button>
     </article>`;
 }
@@ -324,7 +342,7 @@ function faqSection() {
           <details class="group" data-help-searchable data-faq-item data-search="${faq.question} ${faq.answer}">
             <summary class="flex min-h-14 cursor-pointer list-none items-center gap-3 py-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand">
               <span class="min-w-0 flex-1 text-sm font-bold text-app-text">${faq.question}</span>
-              <span class="material-symbols-outlined shrink-0 text-xl text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true">expand_more</span>
+              <span class="shrink-0 text-slate-400 transition-transform group-open:rotate-180">${ic("chevron-down", 20)}</span>
             </summary>
             <div class="max-w-[72ch] pb-4 pr-8 text-[13px] leading-6 text-app-muted" id="faq-answer-${index}">
               ${faq.answer}
@@ -361,10 +379,10 @@ function privacySection() {
       </div>
       <div class="mt-5 flex flex-wrap gap-2 border-t border-slate-200 pt-4">
         <button class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" type="button" data-doc-nav="about">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">info</span> Autoría, licencias y privacidad
+          ${ic("info", 18)} Autoría, licencias y privacidad
         </button>
         <button class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" type="button" data-doc-nav="settings" data-section="app-prefs">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">restart_alt</span> Volver a mostrar el asistente
+          ${ic("rotate-ccw", 18)} Volver a mostrar el asistente
         </button>
       </div>
     </section>`;
