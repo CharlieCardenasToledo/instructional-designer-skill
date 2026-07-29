@@ -143,11 +143,16 @@ const SCROLL_THIN = "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webki
 const CARD_LEAD = "max-w-md mx-auto mb-5 text-center text-gray-600 text-sm leading-relaxed";
 const CALLOUT = "flex gap-2.5 items-start max-w-lg mx-auto mt-4 p-3.5 rounded-xl bg-gray-100 text-gray-600 text-xs leading-relaxed";
 const INLINE_ERROR = "max-w-lg mx-auto mt-3 p-3 rounded-lg bg-red-50 border border-red-300 text-red-600 text-xs flex items-center gap-2";
-const DEP_ROW_CHECKING = "border-gray-200";
+// "Checking" usa vidrio (igual que las tarjetas del paso de bienvenida,
+// ui.surface.cardGlass) para que ambos pasos compartan el mismo lenguaje
+// visual. Ready/Missing quedan sólidos a propósito: son indicadores
+// cruciales de estado (Translucent Restraint Rule, DESIGN.md), no
+// contenido de paso — igual que el resto de badges de estado de la app.
+const DEP_ROW_CHECKING = "border-white/20 bg-white/40";
 const DEP_ROW_READY = "border-gray-900 bg-gray-50";
 const DEP_ROW_MISSING = "border-red-300 bg-red-50";
 // Paso 2: una tarjeta grande por herramienta (ver dependenciesStep), no una cuadrícula.
-const DEP_CARD_BASE = "flex flex-col gap-2.5 p-4 rounded-xl bg-white border transition-colors min-w-0";
+const DEP_CARD_BASE = "relative isolate flex flex-col gap-2.5 overflow-hidden p-4 rounded-xl border backdrop-blur-xl backdrop-saturate-125 shadow-sm transition-colors min-w-0 will-change-[backdrop-filter]";
 const DEP_CARD_STATUS_BASE = "w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center";
 const LOADING_PALETTE = [
   { hex: "#4893FC", rgb: [72, 147, 252] },
