@@ -3,7 +3,7 @@ import { escapeHtml } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
 import { ui, cx } from "../uiClasses.js";
-import { ic } from "../icons.js";
+import { ic, refreshIcons } from "../icons.js";
 import { PathStepper } from "../components/PathStepper.js";
 import { ProgressPath } from "../components/ProgressPath.js";
 
@@ -74,6 +74,7 @@ function setSaveState(label, tone = "muted") {
       : "border-slate-200 bg-slate-50 text-slate-600";
   badge.className = `inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold ${toneClass}`;
   badge.innerHTML = `${ic(tone === "working" ? "refresh-cw" : "cloud-check", 16)}${escapeHtml(label)}`;
+  refreshIcons();
 }
 
 function announce(message) {
@@ -102,10 +103,11 @@ export function renderSyllabus() {
   if (!course) {
     el.innerHTML = `
       <div class="rounded-app-lg border border-slate-200 bg-white p-10 text-center text-app-muted shadow-sm">
-        <span class="material-symbols-outlined mb-3 block text-[40px]" aria-hidden="true">description</span>
+        <span class="mb-3 block">${ic("file-text", 40)}</span>
         <div class="mb-1.5 text-base font-bold text-slate-700">Sin asignatura seleccionada</div>
         <div class="text-sm">Selecciona una asignatura en Cursos para editar su sílabo.</div>
       </div>`;
+    refreshIcons();
     return;
   }
 
@@ -138,11 +140,11 @@ export function renderSyllabus() {
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <span id="syl-save-state" class="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-600">
-              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">cloud_done</span>
+              ${ic("cloud-check", 16)}
               Guardado
             </span>
             <span class="inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold ${activeStatus.classes}">
-              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">${activeStatus.icon}</span>
+              ${ic(activeStatus.icon, 16)}
               ${activeStatus.label}
             </span>
           </div>
@@ -156,7 +158,7 @@ export function renderSyllabus() {
           <div class="border-b border-slate-200 bg-slate-50/80 p-3 sm:p-4">
             <div class="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
               <button type="button" class="${cx(ui.button.base, ui.button.secondary, 'h-11 w-11 p-0')}" id="syl-prev" ${_activeWeek === 0 ? "disabled" : ""} aria-label="Semana anterior">
-                <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+                ${ic("arrow-left", 20)}
               </button>
               <div class="min-w-0">
                 <label for="syl-week-select" class="sr-only">Seleccionar semana</label>
@@ -169,7 +171,7 @@ export function renderSyllabus() {
                 </select>
               </div>
               <button type="button" class="${cx(ui.button.base, ui.button.secondary, 'h-11 w-11 p-0')}" id="syl-next" ${_activeWeek === count - 1 ? "disabled" : ""} aria-label="Semana siguiente">
-                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                ${ic("arrow-right", 20)}
               </button>
             </div>
           </div>
@@ -184,11 +186,11 @@ export function renderSyllabus() {
             </button>
             <div class="flex flex-col gap-2 sm:flex-row">
               <button type="button" class="${cx(ui.button.base, ui.button.secondary, 'min-h-11')}" id="syl-save-draft">
-                <span class="material-symbols-outlined text-[17px]" aria-hidden="true">save</span>
+                ${ic("save", 17)}
                 Guardar borrador
               </button>
               <button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="syl-mark-complete">
-                <span class="material-symbols-outlined text-[17px]" aria-hidden="true">check_circle</span>
+                ${ic("check-circle-2", 17)}
                 Marcar como completa
               </button>
             </div>
@@ -235,7 +237,7 @@ export function renderSyllabus() {
           <h3 class="text-sm font-bold text-app-text">Documento del curso</h3>
           <p class="mt-1 text-xs leading-5 text-app-muted">${pct < 100 ? "Puedes generar un borrador ahora. Completa todas las semanas para obtener la versión final." : "El sílabo está completo y listo para generar."}</p>
           <button type="button" class="${cx(ui.button.base, pct === 100 ? ui.button.primary : ui.button.secondary, 'mt-3 min-h-11 w-full')}" id="syl-generate">
-            <span class="material-symbols-outlined text-[17px]" aria-hidden="true">markdown</span>
+            ${ic("file-code-2", 17)}
             ${pct === 100 ? "Generar README.md final" : "Generar borrador README.md"}
           </button>
         </section>
@@ -244,6 +246,7 @@ export function renderSyllabus() {
     </div>`;
 
   bindEditorEvents(count);
+  refreshIcons();
 }
 
 function fieldMarkup({ id, label, value = "", placeholder = "", hint = "", textarea = false, rows = 3, required = true }) {
@@ -488,7 +491,8 @@ async function generateReadme() {
   if (button) {
     button.disabled = true;
     button.setAttribute("aria-busy", "true");
-    button.innerHTML = `<span class="material-symbols-outlined animate-spin text-[17px]" aria-hidden="true">progress_activity</span>Generando documento…`;
+    button.innerHTML = `<span class="animate-spin">${ic("loader-2", 17)}</span>Generando documento…`;
+    refreshIcons();
   }
   announce("Generando el documento del sílabo");
   toast("Generando el sílabo canónico…", "loading", 15000);
