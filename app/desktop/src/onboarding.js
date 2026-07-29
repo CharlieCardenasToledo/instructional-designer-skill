@@ -793,27 +793,36 @@ function welcomeStep() {
   const journeySteps = [
     {
       title: "Sílabo",
-      desc: "Sube tu sílabo en PDF, Word o texto plano. El sistema lo analiza y extrae estructura, resultados de aprendizaje y contenido temático.",
-      content: `<div class="bg-brand/10 border border-brand/20 rounded-lg px-3 py-2 text-[11px] text-slate-700">📄 Formato soportado: PDF, DOCX, TXT, enlaces compartidos</div>`
+      desc: "Sube tu sílabo.",
+      content: `<div class="text-xs text-slate-600 space-y-2"><div class="font-semibold text-slate-700">Formatos:</div><div>PDF, Word, texto plano, Google Docs</div></div>`
+    },
+    {
+      title: "Análisis",
+      desc: "Sistema extrae estructura pedagógica.",
+      content: `<div class="text-xs text-slate-600 space-y-2"><div class="font-semibold text-slate-700">Se detecta:</div><div>Resultados de aprendizaje, temas, contenido temático</div></div>`
     },
     {
       title: "Fuentes",
-      desc: "Integra NotebookLM para investigación verificada. Consulta literalmente tus referencias mientras diseñas: cada semana queda respaldada.",
-      content: `<div class="bg-brand/10 border border-brand/20 rounded-lg px-3 py-2 text-[11px] text-slate-700">🔍 Fuentes indexadas: libros, artículos, sitios web educativos</div>`
+      desc: "Integra NotebookLM para investigación.",
+      content: `<div class="text-xs text-slate-600 space-y-2"><div class="font-semibold text-slate-700">Indexa:</div><div>Libros, artículos, sitios web educativos, fuentes verificadas</div></div>`
     },
     {
-      title: "Guía",
-      desc: "Cada semana toma forma automáticamente: temas, actividades, bibliografía ordenada por UDL 3.0 y Backward Design.",
-      content: `<div class="bg-brand/10 border border-brand/20 rounded-lg px-3 py-2 text-[11px] text-slate-700">✓ Validación: alineación UDL, jerarquía de resultados, actividades contextuales</div>`
+      title: "Estructura",
+      desc: "Cada semana se organiza automáticamente.",
+      content: `<div class="text-xs text-slate-600 space-y-2"><div class="font-semibold text-slate-700">Componentes:</div><div>Temas, actividades, bibliografía por semana</div></div>`
     },
     {
-      title: "PDF",
-      desc: "Descarga tu guía compilada a PDF profesional con portada, branding institucional y metadatos pedagogía para publicar o compartir.",
-      content: `<div class="flex flex-wrap justify-center gap-4 mt-3">
+      title: "Validación",
+      desc: "Se verifican criterios pedagógicos.",
+      content: `<div class="text-xs text-slate-600 space-y-2"><div class="font-semibold text-slate-700">Estándares:</div><div>UDL 3.0, Backward Design, Quality Matters, WCAG 2.2</div></div>`
+    },
+    {
+      title: "Compilación",
+      desc: "LaTeX genera PDF profesional.",
+      content: `<div class="flex flex-wrap justify-center gap-4 mt-2">
+        ${techCard("LaTeX", latexLogo)}
         ${techCard("Claude", claudeLogo)}
         ${techCard("Gemini", geminiLogo)}
-        ${techCard("NotebookLM", notebookLmLogo)}
-        ${techCard("LaTeX", latexLogo)}
       </div>`
     }
   ];
@@ -821,18 +830,18 @@ function welcomeStep() {
   const foundationSteps = [
     {
       title: "UDL 3.0",
-      desc: "Universal Design for Learning: tres principios para múltiples formas de representación, participación y acción-expresión. Garantiza que tu guía sea accesible para todxs.",
-      content: `<div class="text-[11px] text-slate-700 space-y-1.5"><strong class="block text-slate-900">Aplicado en Jintia:</strong><div>• Representación: materiales en múltiples formatos</div><div>• Acción: actividades variadas de baja a alta complejidad</div><div>• Expresión: espacios para que estudiantes demuestren aprendizaje</div></div>`
+      desc: "Múltiples modos de representación, acción y expresión.",
+      content: `<div class="text-xs text-slate-600"><strong class="text-slate-700 block mb-1">Implementado como:</strong><div>✓ Materiales en múltiples formatos</div><div>✓ Actividades variadas por nivel</div><div>✓ Espacios para que estudiantes demuestren lo aprendido</div></div>`
     },
     {
       title: "Backward Design",
-      desc: "Wiggins & McTighe: primero definen resultados de aprendizaje deseados, luego evaluaciones auténticas, finalmente experiencias de enseñanza.",
-      content: `<div class="text-[11px] text-slate-700 space-y-1.5"><strong class="block text-slate-900">Aplicado en Jintia:</strong><div>• Fase 1: desglosa tus objetivos de la asignatura</div><div>• Fase 2: propone actividades y rúbricas evaluativas</div><div>• Fase 3: arma la secuencia semanal coherente</div></div>`
+      desc: "Resultados → Evaluación → Contenido.",
+      content: `<div class="text-xs text-slate-600"><strong class="text-slate-700 block mb-1">Tres fases:</strong><div>1. Desglosar objetivos de la asignatura</div><div>2. Proponer actividades y evaluación</div><div>3. Armar secuencia semanal coherente</div></div>`
     },
     {
       title: "Quality Matters",
-      desc: "7ª edición: 41 estándares de calidad en educación en línea y presencial. Jintia valida alineación, interactividad, feedback y accesibilidad.",
-      content: `<div class="text-[11px] text-slate-700 space-y-1.5"><strong class="block text-slate-900">Validación automática:</strong><div>• Alineación clara entre objetivos, actividades, evaluación</div><div>• Instrucciones claras en cada semana</div><div>• WCAG 2.2 para accesibilidad de contenidos</div><div>• Tono inclusivo y respetuoso de diversidad</div></div>`
+      desc: "Estándares de calidad educativa verificados.",
+      content: `<div class="text-xs text-slate-600"><strong class="text-slate-700 block mb-1">Se valida:</strong><div>✓ Alineación objetivos-actividades-evaluación</div><div>✓ Instrucciones claras por semana</div><div>✓ Accesibilidad WCAG 2.2</div><div>✓ Inclusión y diversidad</div></div>`
     }
   ];
 
