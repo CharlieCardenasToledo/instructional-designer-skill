@@ -964,7 +964,7 @@ async function detectAgentHarnesses(event) {
         const ok = provider.status === "installed";
         const detected = provider.status !== "not-detected";
         const label = ok ? "Instalada" : detected ? "Detectado" : "No detectado";
-        const classes = ok ? "border-green-200 bg-green-50 text-green-700" : detected ? "border-teal-200 bg-teal-50 text-teal-700" : "border-slate-200 bg-slate-50 text-slate-500";
+        const classes = ok ? "border-green-200 bg-green-50 text-green-700" : detected ? "border-teal-200 bg-teal-50 text-teal-700" : "border-slate-200 bg-slate-50 text-slate-700";
         return `<div class="flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 ${classes}"><span class="font-semibold">${escapeHtml(provider.name)}</span><span class="ml-auto text-[11px] font-bold uppercase tracking-wide">${label}</span><span class="basis-full text-[11px] opacity-80">${escapeHtml(provider.foundPath || "No se encontró la carpeta de configuración")}</span></div>`;
       }).join("") || `<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">No se encontraron entornos.</div>`;
     } catch (error) {

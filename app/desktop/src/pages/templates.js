@@ -45,7 +45,7 @@ function pageShell() {
     <div class="flex min-h-full min-w-0 flex-col gap-4">
       <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div class="min-w-0">
-          <h1 class="text-[22px] font-extrabold tracking-tight text-app-text">Plantillas</h1>
+          <h1 class="text-2xl font-bold leading-[30px] text-brand-950">Plantillas de publicación</h1>
           <p class="mt-1 max-w-[68ch] text-[13px] leading-5 text-app-muted">
             Compara el resultado antes de elegir el formato de tus próximas guías.
           </p>

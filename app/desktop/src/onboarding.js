@@ -156,9 +156,21 @@ const LOADING_PALETTE = [
   { hex: "#BD99FE", rgb: [189, 153, 254] },
 ];
 
+// Paleta propia del fondo ambiental del onboarding: antes reutilizaba
+// LOADING_PALETTE (azules/morados de Google, pensados para el orbe de
+// Gemini/NotebookLM). El primer momento de marca que ve un docente debe
+// verse en el teal de Jintia (DESIGN.md), no en los colores de un servicio
+// de terceros.
+const ONBOARDING_AMBIENT_PALETTE = [
+  { hex: "#0fa3a3" },
+  { hex: "#18b6ad" },
+  { hex: "#0f7f86" },
+  { hex: "#34c37a" },
+];
+
 function onboardingAmbientBackground() {
   return `<div class="onboarding-ambient" aria-hidden="true">
-    ${LOADING_PALETTE.map(({ hex }, index) => `<span class="onboarding-blob onboarding-blob--${index + 1}" style="--blob-color:${hex}"></span>`).join("")}
+    ${ONBOARDING_AMBIENT_PALETTE.map(({ hex }, index) => `<span class="onboarding-blob onboarding-blob--${index + 1}" style="--blob-color:${hex}"></span>`).join("")}
   </div>`;
 }
 
@@ -293,12 +305,12 @@ function renderCurrentStep() {
   root.innerHTML = `
     ${onboardingAmbientBackground()}
     <div class="absolute left-4 top-3 z-10 flex items-center gap-2.5" aria-label="Jintia">
-      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-white shadow-sm" aria-hidden="true">
+      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-950 text-white shadow-sm" aria-hidden="true">
         <span class="material-symbols-outlined">route</span>
       </div>
       <div>
         <div class="text-sm font-extrabold tracking-tight text-slate-900">Jintia</div>
-        <div class="text-[10px] text-slate-500">Diseña el camino del aprendizaje</div>
+        <div class="text-xs text-slate-500">Diseña el camino del aprendizaje</div>
       </div>
     </div>
     <div class="absolute top-3 right-3 flex z-10" data-tauri-drag-region>
@@ -747,7 +759,7 @@ function welcomeStep() {
   setFooter("Continuar", "advance", false);
   const feature = (icon, title, desc) => `
     <article class="${ui.surface.cardGlass} p-5 transition-all duration-200 hover:bg-white/50 hover:backdrop-blur-2xl hover:shadow-md">
-      <div class="w-10 h-10 rounded-lg bg-brand/15 text-brand flex items-center justify-center mb-3 transition-transform duration-200 group-hover:scale-110">${ic(icon, 20)}</div>
+      <div class="w-10 h-10 rounded-lg bg-brand/15 text-brand-950 flex items-center justify-center mb-3 transition-transform duration-200 group-hover:scale-110">${ic(icon, 20)}</div>
       <h3 class="text-sm font-semibold text-slate-900 mb-1.5">${title}</h3>
       <p class="text-xs text-slate-600 leading-relaxed">${desc}</p>
     </article>`;
@@ -1071,7 +1083,7 @@ function connectStep() {
     { id: "claude-code",    title: "Usar con Claude",               icon: "terminal",        desc: "Instala la skill para Claude Code y conserva la exportación para la app de Claude." },
     { id: "openai",         title: "Usar con ChatGPT y Codex",      icon: "auto_awesome",    desc: "Instala el plugin universal para ChatGPT desktop, Codex CLI y Codex en la app." },
     { id: "claude-cowork",  title: "Usar solo en la app de Claude", icon: "desktop_windows", desc: "Exporta el paquete para incorporarlo manualmente en Claude." },
-    { id: "both",           title: "Usar en todos",                 icon: "devices",         desc: "Prepara Claude, ChatGPT y Codex en el mismo equipo." },
+    { id: "both",           title: "Usar en todos",                 icon: "devices",         desc: "Prepara Claude, ChatGPT y Codex en el mismo equipo — completa los tres pasos siguientes." },
   ];
 
   // Checklist de pasos para el destino seleccionado
@@ -1088,10 +1100,10 @@ function connectStep() {
 
   if (selected === "claude-code") {
     checklist = checkItem(skillReady ? `Skill ${setup.skill_version || ""} actualizada`.trim() : "Skill pendiente de instalar o actualizar", skillReady) +
-                checkItem("Proyecto local conectado", setup.mcp_claude_code_configured);
+                checkItem("Claude Code puede abrir Jintia", setup.mcp_claude_code_configured);
     allReady  = !!(skillReady && setup.mcp_claude_code_configured);
     actions   = actionButton(setup.skill_installed ? "1. Actualizar skill" : "1. Instalar", "install-local", skillReady, true) +
-                actionButton("2. Conectar proyecto local", "configure-code", !skillReady || setup.mcp_claude_code_configured, true);
+                actionButton("2. Conectar con Claude Code", "configure-code", !skillReady || setup.mcp_claude_code_configured, true);
 
   } else if (selected === "claude-cowork") {
     checklist = checkItem("Paquete listo para importar en Claude", zipOk) +
@@ -1114,7 +1126,7 @@ function connectStep() {
     );
   } else { // all
     checklist = checkItem(skillReady ? `Skill ${setup.skill_version || ""} actualizada`.trim() : "Skill pendiente de instalar o actualizar", skillReady) +
-                checkItem("Proyecto local conectado", setup.mcp_claude_code_configured) +
+                checkItem("Claude Code puede abrir Jintia", setup.mcp_claude_code_configured) +
                 checkItem("Paquete listo para importar en Claude", zipOk) +
                 checkItem("App de Claude conectada", setup.mcp_desktop_configured) +
                 checkItem("Plugin ChatGPT/Codex preparado", setup.openai_plugin_current);
@@ -1122,7 +1134,7 @@ function connectStep() {
     actions   = actionButton(setup.skill_installed ? "Actualizar (proyecto local)" : "Instalar (proyecto local)", "install-local", skillReady, true) +
                 actionButton("Exportar archivo (app de Claude)", "export-zip", zipOk, true) +
                 actionButton(setup.openai_plugin_installed ? "Actualizar ChatGPT/Codex" : "Preparar ChatGPT/Codex", "install-openai", setup.openai_plugin_current, true) +
-                actionButton("Conectar proyecto local", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true) +
+                actionButton("Conectar con Claude Code", "configure-code", !setup.skill_installed || setup.mcp_claude_code_configured, true) +
                 actionButton("Conectar app de Claude", "configure-desktop", !zipOk || setup.mcp_desktop_configured, true);
   }
 
@@ -1147,6 +1159,7 @@ function connectStep() {
 
     <div class="max-w-lg mx-auto pt-5 border-t border-gray-200">
       <h3 class="text-[11.5px] font-bold uppercase tracking-wide text-gray-400 mb-2">Dónde trabajarás</h3>
+      <p class="${CARD_LEAD} !max-w-lg !mb-3 !mt-0 text-left">Elige desde dónde usarás Jintia para generar tus guías. Puedes cambiarlo después desde Ajustes.</p>
       <div class="grid gap-2">
         ${targets.map(t => `
           <label class="flex items-start sm:items-center gap-3 p-3.5 rounded-xl border cursor-pointer ${t.id === selected ? "border-gray-900 bg-gray-50" : "border-gray-200 bg-white"}">

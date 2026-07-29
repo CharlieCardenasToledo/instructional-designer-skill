@@ -39,7 +39,7 @@ export async function renderActivate() {
   const completed = steps.filter(step => step.ok).length;
   container.innerHTML = steps.map((step, index) => `
     <div class="mb-2 flex items-center gap-3.5 rounded-app border border-slate-200 bg-white p-3">
-      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold ${step.ok ? "border-green-600 bg-green-700/[0.08] text-green-700 shadow-[0_0_10px_rgba(74,222,128,0.3)]" : "border-slate-300 bg-white text-slate-400"}">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold ${step.ok ? "border-green-600 bg-green-700/[0.08] text-green-700 shadow-[0_0_10px_rgba(74,222,128,0.3)]" : "border-slate-300 bg-white text-slate-700"}">
         ${step.ok ? ic("check-circle-2", 14) : index + 1}
       </div>
       <div class="flex-1">

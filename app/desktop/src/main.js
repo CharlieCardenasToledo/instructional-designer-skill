@@ -7,6 +7,8 @@ import { state }              from "./state.js";
 import { refreshIcons, ic }       from "./icons.js";
 import { navigate, registerPage } from "./router.js";
 
+refreshIcons();
+
 import { renderCourses }      from "./pages/courses.js";
 import { renderPdfs }         from "./pages/pdfs.js";
 import { renderSyllabus }     from "./pages/syllabus.js";
@@ -35,7 +37,7 @@ function renderShell() {
   document.getElementById("app").innerHTML = `
 
     <!-- SIDEBAR -->
-    <aside class="flex w-[216px] shrink-0 flex-col bg-brand-950 text-slate-300 xl:w-[240px]" role="navigation" aria-label="Menú principal">
+    <aside class="hidden flex-col bg-brand-950 text-slate-300 sm:flex sm:w-[216px] shrink-0 xl:w-[240px]" role="navigation" aria-label="Menú principal">
       <span class="sr-only">Jintia</span>
       <span class="sr-only">Diseña el camino del aprendizaje</span>
       ${BrandLockup()}
@@ -81,13 +83,13 @@ function renderShell() {
       <header class="${cx(ui.liquid.control, 'absolute inset-x-4 top-3 z-30 flex h-[52px] items-center justify-between px-5')}" data-tauri-drag-region>
         <div>
           <h2 id="topbar-title" class="title-medium text-slate-800">Jintia Desktop</h2>
-          <div id="topbar-sub" class="text-[11px] text-slate-500"></div>
+          <div id="topbar-sub" class="text-[11px] text-slate-600"></div>
         </div>
         <div class="flex items-center gap-1">
           <div class="${cx(ui.liquid.group, 'flex items-center gap-0.5 p-1')}" role="group" aria-label="Controles de ventana">
-            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-600 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-minimize" aria-label="Minimizar" title="Minimizar">${ic("minus", 16)}</button>
-            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-600 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-maximize" aria-label="Maximizar o restaurar" title="Maximizar o restaurar">${ic("square", 14)}</button>
-            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-600 transition hover:border-red-300/70 hover:bg-red-500/85 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-close" aria-label="Cerrar" title="Cerrar">${ic("x", 16)}</button>
+            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-700 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-minimize" aria-label="Minimizar ventana (WCAG 44×44px touch target)" title="Minimizar">${ic("minus", 16)}</button>
+            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-700 transition hover:border-white/55 hover:bg-white/55 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-maximize" aria-label="Maximizar o restaurar ventana (WCAG 44×44px touch target)" title="Maximizar o restaurar">${ic("square", 14)}</button>
+            <button class="relative isolate inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-transparent bg-white/10 text-slate-700 transition hover:border-red-300/70 hover:bg-red-500/85 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1" id="app-win-close" aria-label="Cerrar ventana (WCAG 44×44px touch target)" title="Cerrar">${ic("x", 16)}</button>
           </div>
         </div>
       </header>

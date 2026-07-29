@@ -2,22 +2,24 @@ import { APP_META } from "../appMeta.js";
 import { getRuntimeAppMeta, openExternal } from "../api.js";
 import { toast } from "../toast.js";
 import { ui, cx } from "../uiClasses.js";
+import { ic } from "../icons.js";
+import { BrandMark } from "../components/BrandMark.js";
 
 const technologyGroups = [
   {
     title: "Aplicación de escritorio",
-    icon: "desktop_windows",
+    icon: "monitor",
     items: ["Tauri 2", "Rust", "React", "Vite", "Tailwind CSS 4"],
   },
   {
     title: "Documentos académicos",
-    icon: "description",
+    icon: "file-text",
     items: ["LaTeX", "ElegantBook", "Jintia Skill"],
   },
   {
     title: "Interfaz y tipografía",
     icon: "palette",
-    items: ["Lucide", "Material Symbols", "Inter"],
+    items: ["Lucide", "Inter", "Tailwind CSS"],
   },
 ];
 
@@ -30,15 +32,15 @@ export async function renderAbout() {
       <div class="${cx(ui.surface.card, "relative overflow-hidden p-7")}">
         <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-2/5 opacity-60 md:block" aria-hidden="true">
           <svg viewBox="0 0 420 220" class="h-full w-full" fill="none">
-            <path d="M24 176C104 176 85 54 171 54c80 0 63 108 139 108 45 0 62-42 86-86" stroke="#0f766e" stroke-opacity=".18" stroke-width="2"/>
-            <circle cx="24" cy="176" r="5" fill="#0f766e" fill-opacity=".22"/>
-            <circle cx="171" cy="54" r="5" fill="#0f766e" fill-opacity=".22"/>
-            <circle cx="310" cy="162" r="5" fill="#0f766e" fill-opacity=".22"/>
+            <path d="M24 176C104 176 85 54 171 54c80 0 63 108 139 108 45 0 62-42 86-86" stroke="#0fa3a3" stroke-opacity=".18" stroke-width="2"/>
+            <circle cx="24" cy="176" r="5" fill="#0fa3a3" fill-opacity=".22"/>
+            <circle cx="171" cy="54" r="5" fill="#0fa3a3" fill-opacity=".22"/>
+            <circle cx="310" cy="162" r="5" fill="#0fa3a3" fill-opacity=".22"/>
           </svg>
         </div>
         <div class="relative max-w-2xl">
           <div class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-sm">
-            <span class="material-symbols-outlined text-[30px]" aria-hidden="true">route</span>
+            ${BrandMark({ className: "h-12 w-12", size: 48 })}
           </div>
           <p class="mb-1 text-[11px] font-bold uppercase tracking-[0.18em] text-teal-700">Acerca del producto</p>
           <h1 class="text-3xl font-black tracking-tight text-slate-950">${APP_META.brandName}</h1>
@@ -105,7 +107,7 @@ export async function renderAbout() {
         <div class="mt-4 grid gap-3 md:grid-cols-3">
           ${technologyGroups.map(group => `
             <article class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <span class="material-symbols-outlined text-xl text-teal-700" aria-hidden="true">${group.icon}</span>
+              <span class="text-brand-600" aria-hidden="true">${ic(group.icon, 22)}</span>
               <h3 class="mt-2 text-sm font-bold text-slate-900">${group.title}</h3>
               <p class="mt-1 text-xs leading-5 text-slate-600">${group.items.join(" · ")}</p>
             </article>`).join("")}

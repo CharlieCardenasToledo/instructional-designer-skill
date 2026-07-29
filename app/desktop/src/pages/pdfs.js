@@ -3,10 +3,13 @@ import { escapeHtml } from "../dom.js";
 import { state } from "../state.js";
 import { toast } from "../toast.js";
 import { navigate } from "../router.js";
-import { ui, cx } from "../uiClasses.js";
+import { ui, cx, projectColorMap } from "../uiClasses.js";
+import { ic } from "../icons.js";
 
-const DEFAULT_COLOR = "#0f766e";
-const ALLOWED_COLORS = new Set(["#0f766e", "#2563eb", "#7c3aed", "#c2410c", "#be123c", "#475569"]);
+// Project colors are now centralized in styles.css as CSS custom properties.
+// Reference them via projectColorMap from uiClasses for maintenance.
+const DEFAULT_COLOR = "#0f766e"; // var(--project-color-jintia)
+const ALLOWED_COLORS = new Set(Object.values(projectColorMap).map(c => c.hex));
 const ALLOWED_ICONS = new Set(["folder", "school", "database", "science", "psychology", "palette"]);
 
 let _query = "";
@@ -46,10 +49,11 @@ function shellMarkup() {
   return `
     <div class="${ui.layout.stack}">
       <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" aria-labelledby="pdf-library-title">
+        <span class="sr-only">Biblioteca de PDFs</span>
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 id="pdf-library-title" class="text-base font-extrabold text-app-text">Biblioteca de PDFs</h2>
-            <p class="mt-1 text-xs leading-5 text-app-muted">Reúne únicamente los documentos PDF encontrados dentro de tus proyectos preparados.</p>
+            <h2 id="pdf-library-title" class="text-xl font-bold leading-7 text-brand-950">Documentos listos para publicar</h2>
+            <p class="mt-1 text-sm leading-5 text-slate-500">Reúne las guías PDF encontradas dentro de tus proyectos preparados.</p>
           </div>
           <div class="flex items-center gap-3">
             <div class="rounded-lg bg-slate-50 px-3 py-2 text-center">
@@ -57,7 +61,7 @@ function shellMarkup() {
               <span class="text-[11px] text-app-muted">documentos</span>
             </div>
             <button type="button" class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="pdf-refresh">
-              <span class="material-symbols-outlined text-[17px]" aria-hidden="true">refresh</span>Actualizar
+              ${ic("refresh-cw", 17)}Actualizar
             </button>
           </div>
         </div>
@@ -66,7 +70,7 @@ function shellMarkup() {
       <section class="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row" aria-label="Buscar y filtrar PDFs">
         <div class="relative min-w-0 flex-1">
           <label for="pdf-search" class="sr-only">Buscar PDF</label>
-          <span class="material-symbols-outlined pointer-events-none absolute inset-y-0 left-3 flex items-center text-lg text-app-muted" aria-hidden="true">search</span>
+          <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500" aria-hidden="true">${ic("search", 18)}</span>
           <input class="h-11 pl-10" id="pdf-search" type="search" placeholder="Buscar por archivo, carpeta o asignatura" value="${escapeHtml(_query)}">
         </div>
         <label for="pdf-course-filter" class="sr-only">Filtrar por asignatura</label>

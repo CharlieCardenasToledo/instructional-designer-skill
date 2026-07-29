@@ -91,14 +91,14 @@ function previewKaohandtMarginal(hex, textOnPrimary, author, degree, career, ins
       <div class="grid grid-cols-[minmax(0,1fr)_30%] gap-4">
         <main>
           <div class="mb-1 text-[9px] font-bold uppercase tracking-[.1em]" style="color:${hex}">Semana ${week}</div>
-          <div class="mb-3 border-l-[3px] pl-2.5 text-[15px] font-bold" style="border-color:${hex}">Propósito y ruta de estudio</div>
-          <div class="${PREVIEW.block}" style="background:${dim};border-left:3px solid ${hex}">
+          <div class="mb-3 border-t-2 pt-2.5 text-[15px] font-bold" style="border-color:${hex}">Propósito y ruta de estudio</div>
+          <div class="${PREVIEW.block}" style="background:${dim};border-top:2px solid ${hex}">
             <div class="${PREVIEW.blockTitle}" style="color:${hex}">Orientación</div>
             <div class="${PREVIEW.blockBody}">${LOREM.intro.slice(0, 190)}…</div>
           </div>
           <div class="${PREVIEW.sectionTitle}">Marco conceptual</div>
           <div class="${PREVIEW.paragraph}">${LOREM.body1}</div>
-          <div class="${PREVIEW.block}" style="background:#e8f7f0;border-left:3px solid #3d8b70">
+          <div class="${PREVIEW.block}" style="background:#e8f7f0;border-top:2px solid #3d8b70">
             <div class="${PREVIEW.blockTitle}" style="color:#2f765f">Práctica guiada</div>
             <div class="${PREVIEW.blockBody}">${LOREM.activity.slice(0, 150)}…</div>
           </div>
@@ -150,13 +150,13 @@ function previewElegantbookClasico(hex, textOnPrimary, author, degree, career, i
       <!-- Capítulo -->
       <div class="${PREVIEW.chapter}">
         <div class="${PREVIEW.chapterNum}" style="color:${hex}">Capítulo 1</div>
-        <div class="${PREVIEW.chapterTitle}" style="border-left:3px solid ${hex}">
+        <div class="${PREVIEW.chapterTitle}" style="border-top:2px solid ${hex}">
           Fundamentos Conceptuales
         </div>
       </div>
 
       <!-- Bloque softblock -->
-      <div class="${PREVIEW.block}" style="background:${dim};border-left:3px solid ${hex}">
+      <div class="${PREVIEW.block}" style="background:${dim};border-top:2px solid ${hex}">
         <div class="${PREVIEW.blockTitle}" style="color:${hex}">Orientación · Semana ${week}</div>
         <div class="${PREVIEW.blockBody}">
           <div class="${PREVIEW.topicRow}">
@@ -189,7 +189,7 @@ function previewElegantbookClasico(hex, textOnPrimary, author, degree, career, i
       <div class="${PREVIEW.paragraph}">${LOREM.body2}</div>
 
       <!-- Bloque mintblock -->
-      <div class="${PREVIEW.block}" style="background:#e8f7f0;border-left:3px solid #12b76a">
+      <div class="${PREVIEW.block}" style="background:#e8f7f0;border-top:2px solid #12b76a">
         <div class="${PREVIEW.blockTitle}" style="color:#16a34a">Guía Práctica</div>
         <div class="${PREVIEW.blockBody}">
           <div class="${PREVIEW.topicRow}"><span class="${PREVIEW.dot}" style="background:#12b76a"></span><span>${OUTCOMES[0]}</span></div>
@@ -198,7 +198,7 @@ function previewElegantbookClasico(hex, textOnPrimary, author, degree, career, i
       </div>
 
       <!-- Bloque sandblock -->
-      <div class="${PREVIEW.block}" style="background:#fdf5e6;border-left:3px solid #f79009">
+      <div class="${PREVIEW.block}" style="background:#fdf5e6;border-top:2px solid #f79009">
         <div class="${PREVIEW.blockTitle}" style="color:#b45309">Actividad Calificada · 20%</div>
         <div class="${PREVIEW.blockBody}">${LOREM.activity}</div>
       </div>
@@ -243,12 +243,12 @@ function previewMinimalista(hex, textOnPrimary, author, degree, career, inst, we
         <span>${career}</span>
       </div>
 
-      <div style="font-size:15px;font-weight:700;color:#1a1a1a;border-left:3px solid ${hex};padding-left:10px;margin:14px 0 8px">
+      <div style="font-size:15px;font-weight:700;color:#1a1a1a;border-top:2px solid ${hex};padding-top:8px;margin:14px 0 8px">
         Fundamentos Conceptuales
       </div>
 
       <!-- Concepto clave -->
-      <div style="border-left:2px solid ${hex};padding:8px 12px;margin:8px 0;background:#fafafa">
+      <div style="border-top:2px solid ${hex};padding:8px 12px;margin:8px 0;background:#fafafa">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:4px">Concepto clave</div>
         <div style="font-size:11px;font-style:italic;color:#333">${LOREM.intro.slice(0, 140)}…</div>
       </div>

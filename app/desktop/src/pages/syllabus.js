@@ -3,6 +3,9 @@ import { escapeHtml } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
 import { ui, cx } from "../uiClasses.js";
+import { ic } from "../icons.js";
+import { PathStepper } from "../components/PathStepper.js";
+import { ProgressPath } from "../components/ProgressPath.js";
 
 const REQUIRED_FIELDS = [
   ["title", "Título de la semana"],
@@ -55,9 +58,9 @@ function weekStatus(week) {
 
 function statusPresentation(status) {
   return {
-    complete: { icon: "check_circle", label: "Completa", classes: "border-green-200 bg-green-50 text-green-700" },
-    draft: { icon: "edit_note", label: "Borrador", classes: "border-teal-200 bg-teal-50 text-teal-700" },
-    pending: { icon: "radio_button_unchecked", label: "Pendiente", classes: "border-slate-200 bg-slate-50 text-slate-500" },
+    complete: { icon: "check", label: "Completa", classes: "border-green-200 bg-green-50 text-green-700" },
+    draft: { icon: "pencil", label: "Borrador", classes: "border-teal-200 bg-teal-50 text-teal-700" },
+    pending: { icon: "circle", label: "Pendiente", classes: "border-slate-200 bg-slate-50 text-slate-500" },
   }[status];
 }
 
@@ -70,7 +73,7 @@ function setSaveState(label, tone = "muted") {
       ? "border-amber-200 bg-amber-50 text-amber-700"
       : "border-slate-200 bg-slate-50 text-slate-600";
   badge.className = `inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold ${toneClass}`;
-  badge.innerHTML = `<span class="material-symbols-outlined text-[16px]" aria-hidden="true">${tone === "working" ? "sync" : "cloud_done"}</span>${escapeHtml(label)}`;
+  badge.innerHTML = `${ic(tone === "working" ? "refresh-cw" : "cloud-check", 16)}${escapeHtml(label)}`;
 }
 
 function announce(message) {
@@ -145,6 +148,10 @@ export function renderSyllabus() {
           </div>
         </header>
 
+        <section class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm" aria-label="Etapas del editor">
+          ${PathStepper(["Datos generales", "Resultados", "Semanas", "Evaluación"], 2)}
+        </section>
+
         <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm" aria-labelledby="syl-week-heading">
           <div class="border-b border-slate-200 bg-slate-50/80 p-3 sm:p-4">
             <div class="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
@@ -201,6 +208,7 @@ export function renderSyllabus() {
           <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="Progreso del sílabo" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}">
             <div class="h-full rounded-full bg-brand transition-[width] duration-300" style="width:${pct}%"></div>
           </div>
+          <div class="mt-5 border-t border-slate-100 pt-4">${ProgressPath({ items: ["Contenido", "Estructura", "Validación", "Publicación"], completed: pct === 100 ? 3 : 1, active: pct === 100 ? -1 : 2 })}</div>
           <div class="mt-3 grid grid-cols-3 gap-2 text-center">
             <div class="rounded-lg bg-green-50 px-2 py-2"><strong class="block text-sm text-green-700">${complete}</strong><span class="text-[11px] text-green-700">Completas</span></div>
             <div class="rounded-lg bg-teal-50 px-2 py-2"><strong class="block text-sm text-teal-700">${drafts}</strong><span class="text-[11px] text-teal-700">Borradores</span></div>
@@ -214,7 +222,7 @@ export function renderSyllabus() {
                 const status = statusPresentation(statuses[index]);
                 const title = weeksData[index]?.title || `Semana ${index + 1}`;
                 return `<button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg border border-transparent px-2.5 text-left text-xs transition hover:border-slate-200 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-week-jump="${index}" ${index === _activeWeek ? 'aria-current="step"' : ""}>
-                  <span class="material-symbols-outlined text-[17px] ${status.classes.split(" ").at(-1)}" aria-hidden="true">${status.icon}</span>
+                  <span class="${status.classes.split(" ").at(-1)}" aria-hidden="true">${ic(status.icon, 17)}</span>
                   <span class="min-w-0 flex-1 truncate">${escapeHtml(title)}</span>
                   <span class="font-semibold">${status.label}</span>
                 </button>`;

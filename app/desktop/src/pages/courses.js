@@ -25,13 +25,16 @@ let _statesLoading = false;
 let _statesLoaded = false;
 
 const REQUIRED_WEEK_FIELDS = ["title", "unit", "topics", "outcomes", "bibliography", "graded_activity"];
+// Project color palette: hex values are stored in the database for persistence,
+// but CSS custom properties (styles.css) define the actual rendered colors,
+// allowing theme changes without modifying stored data.
 const PROJECT_COLORS = [
-  { value: "#0f766e", label: "Verde Jintia" },
-  { value: "#2563eb", label: "Azul" },
-  { value: "#7c3aed", label: "Violeta" },
-  { value: "#c2410c", label: "Naranja" },
-  { value: "#be123c", label: "Rosa" },
-  { value: "#475569", label: "Grafito" },
+  { value: "#0f766e", cssVar: "--project-color-jintia", label: "Verde Jintia" },
+  { value: "#2563eb", cssVar: "--project-color-blue", label: "Azul" },
+  { value: "#7c3aed", cssVar: "--project-color-purple", label: "Violeta" },
+  { value: "#c2410c", cssVar: "--project-color-orange", label: "Naranja" },
+  { value: "#be123c", cssVar: "--project-color-rose", label: "Rosa" },
+  { value: "#475569", cssVar: "--project-color-slate", label: "Grafito" },
 ];
 const PROJECT_ICONS = [
   { value: "folder", label: "Carpeta" },
@@ -43,6 +46,8 @@ const PROJECT_ICONS = [
 ];
 
 function projectColor(course) {
+  // Returns the hex value stored in course.project_color for use in style attributes.
+  // The actual rendered color is controlled by CSS custom properties in styles.css.
   return PROJECT_COLORS.some(option => option.value === course?.project_color) ? course.project_color : PROJECT_COLORS[0].value;
 }
 
@@ -195,7 +200,7 @@ export function renderCourses() {
 
     <div class="fixed inset-0 z-[5000] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="course-modal">
       <div class="max-h-[calc(100vh-24px)] w-full max-w-[680px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100vh-48px)]"
-        id="course-modal-box" role="dialog" aria-modal="true" aria-labelledby="course-modal-title" aria-describedby="course-modal-description"></div>
+        id="course-modal-box" role="dialog" aria-modal="true" aria-labelledby="course-modal-title"></div>
     </div>
     <div class="fixed inset-0 z-[5100] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="project-appearance-modal">
       <div class="max-h-[calc(100vh-24px)] w-full max-w-[560px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100vh-48px)]" id="project-appearance-box"
@@ -484,7 +489,7 @@ function identityPickerMarkup(color, icon, prefix) {
       <span class="mt-4 block text-xs font-bold text-slate-700" id="${prefix}-color-label">Color</span>
       <div class="mt-2 flex flex-wrap gap-2" role="group" aria-labelledby="${prefix}-color-label">
         ${PROJECT_COLORS.map(option => `
-          <button type="button" class="flex h-11 w-11 items-center justify-center rounded-full border-4 border-white shadow-sm ${option.value === color ? "ring-2 ring-slate-800 ring-offset-1" : "ring-1 ring-slate-200"}" style="background:${option.value}" data-project-color="${option.value}" aria-pressed="${option.value === color}" title="${option.label}" aria-label="${option.label}">
+          <button type="button" class="flex h-11 w-11 items-center justify-center rounded-full border-4 border-white shadow-sm ${option.value === color ? "ring-2 ring-slate-800 ring-offset-1" : "ring-1 ring-slate-200"}" style="background:${option.hex || option.value}" data-project-color="${option.value}" aria-pressed="${option.value === color}" title="${option.label}" aria-label="${option.label}">
             ${option.value === color ? '<span class="material-symbols-outlined text-[18px] text-white" aria-hidden="true">check</span>' : ""}
           </button>`).join("")}
       </div>
@@ -685,7 +690,7 @@ function renderCourseDetailsStep() {
     ${modalHeader("Nueva asignatura", "Datos académicos", 1)}
     <form id="course-details-form" class="p-5 sm:px-6" novalidate>
       <p id="course-modal-description" class="mb-4 text-sm text-app-muted">Completa la información básica. Podrás editar el contenido semanal después.</p>
-      <div id="course-modal-error" class="mb-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert" tabindex="-1"></div>
+      <div id="course-modal-error" class="mb-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1"></div>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         ${modalField("m-name", "Nombre de la asignatura", _modalData.name, "Bases de Datos", "sm:col-span-2")}
         ${modalField("m-code", "Código único", _modalData.code, "IFT200", "", "text")}
@@ -707,7 +712,7 @@ function renderCoursePreparationStep() {
   return `
     ${modalHeader("Nueva asignatura", "Preparar proyecto", 2)}
     <div class="p-5 sm:px-6">
-      <p id="course-modal-description" class="text-sm text-app-muted">La asignatura se registrará en Jintia. También puedes crear ahora su estructura real en el disco.</p>
+      <p id="course-modal-description-2" class="text-sm text-app-muted">La asignatura se registrará en Jintia. También puedes crear ahora su estructura real en el disco.</p>
       <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <div class="flex items-start justify-between gap-4">
           <div class="min-w-0">
@@ -749,7 +754,7 @@ function renderCoursePreparationStep() {
         </div>
       </div>
       ${identityPickerMarkup(_modalData.projectColor, _modalData.projectIcon, "m")}
-      <div id="course-modal-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert" tabindex="-1"></div>
+      <div id="course-modal-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1"></div>
     </div>
     ${modalFooter(`<button type="button" class="${cx(ui.button.base, ui.button.secondary, 'min-h-11')}" id="m-back"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">arrow_back</span>Atrás</button>`,
       `<button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="m-create"><span class="material-symbols-outlined text-[17px]" aria-hidden="true">check</span>Crear asignatura y proyecto</button>`)} `;
