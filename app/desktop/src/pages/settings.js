@@ -8,7 +8,7 @@ import {
 import { state, getNotebooks, saveConfig, saveNotebooks } from "../state.js";
 import { escapeHtml } from "../dom.js";
 import { toast } from "../toast.js";
-import { refreshIcons } from "../icons.js";
+import { ic, refreshIcons } from "../icons.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
 import { ui, cx, liquidForBackground } from "../uiClasses.js";
 
@@ -29,7 +29,8 @@ async function runSettingsOperation(button, key, busyLabel, operation) {
   if (button) {
     button.disabled = true;
     button.setAttribute("aria-busy", "true");
-    button.innerHTML = `<span class="material-symbols-outlined animate-spin text-[17px]" aria-hidden="true">progress_activity</span>${escapeHtml(busyLabel)}`;
+    button.innerHTML = `<span class="animate-spin">${ic("loader-2", 17)}</span>${escapeHtml(busyLabel)}`;
+    refreshIcons();
   }
   try {
     return await operation();
@@ -61,19 +62,19 @@ export async function renderSettings() {
       <div class="rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
         <nav class="grid grid-cols-2 gap-2 p-1 sm:grid-cols-3 xl:grid-cols-5" aria-label="Secciones de configuración">
           <a class="${cx(ui.settingsNav.item, _settingsSection === "inst-profile" && ui.settingsNav.active)}" data-settings-nav data-section="inst-profile" href="#inst-profile" ${_settingsSection === "inst-profile" ? 'aria-current="page"' : ""}>
-            <span class="material-symbols-outlined">domain</span> Perfil institucional
+            ${ic("building-2", 18)} Perfil institucional
           </a>
           <a class="${cx(ui.settingsNav.item, _settingsSection === "mcp-config" && ui.settingsNav.active)}" data-settings-nav data-section="mcp-config" href="#mcp-config" ${_settingsSection === "mcp-config" ? 'aria-current="page"' : ""}>
-            <span class="material-symbols-outlined">hub</span> Conexiones
+            ${ic("share-2", 18)} Conexiones
           </a>
           <a class="${cx(ui.settingsNav.item, _settingsSection === "notebooks-section" && ui.settingsNav.active)}" data-settings-nav data-section="notebooks-section" href="#notebooks-section" ${_settingsSection === "notebooks-section" ? 'aria-current="page"' : ""}>
-            <span class="material-symbols-outlined">menu_book</span> Notebooks
+            ${ic("book-open", 18)} Notebooks
           </a>
           <a class="${cx(ui.settingsNav.item, _settingsSection === "environment" && ui.settingsNav.active)}" data-settings-nav data-section="environment" href="#environment" ${_settingsSection === "environment" ? 'aria-current="page"' : ""}>
-            <span class="material-symbols-outlined">terminal</span> Entorno
+            ${ic("terminal", 18)} Entorno
           </a>
           <a class="${cx(ui.settingsNav.item, _settingsSection === "app-prefs" && ui.settingsNav.active)}" data-settings-nav data-section="app-prefs" href="#app-prefs" ${_settingsSection === "app-prefs" ? 'aria-current="page"' : ""}>
-            <span class="material-symbols-outlined">tune</span> Preferencias
+            ${ic("sliders-horizontal", 18)} Preferencias
           </a>
         </nav>
       </div>
@@ -85,7 +86,7 @@ export async function renderSettings() {
         <!-- ── Institutional Profile ── -->
         <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("inst-profile"))}" id="inst-profile" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
-            <span class="material-symbols-outlined text-xl text-teal-600">domain</span> Perfil institucional
+            <span class="text-teal-600">${ic("building-2", 20)}</span> Perfil institucional
           </div>
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-4">
             <div class="flex flex-col gap-1.5 sm:col-span-2">
@@ -132,7 +133,7 @@ export async function renderSettings() {
                 <input id="cfg-website" type="url" placeholder="https://www.uide.edu.ec/"
                   value="${escapeHtml(state.config?.website || "")}">
                 <button class="${cx(ui.button.base, ui.button.secondary)}" id="btn-extract-palette" type="button">
-                  <span class="material-symbols-outlined text-[15px]">palette</span>
+                  ${ic("palette", 15)}
                   Extraer paleta
                 </button>
               </div>
@@ -148,7 +149,7 @@ export async function renderSettings() {
           </div>
           <div class="flex items-center justify-end gap-2">
             <button class="${cx(ui.button.base, ui.button.primary)}" id="btn-save-institution">
-              <span class="material-symbols-outlined text-[15px]">save</span> Guardar perfil
+              ${ic("save", 15)} Guardar perfil
             </button>
           </div>
             <div id="institution-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
@@ -157,7 +158,7 @@ export async function renderSettings() {
         <!-- ── Conexiones ── -->
         <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("mcp-config"))}" id="mcp-config" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
-            <span class="material-symbols-outlined text-xl text-teal-600">hub</span> Conexiones
+            <span class="text-teal-600">${ic("share-2", 20)}</span> Conexiones
             <span id="mcp-status-badge" class="ml-auto inline-flex items-center gap-1.5 rounded-full border border-slate-300/50 bg-slate-200/20 px-2.5 py-0.5 text-[11px] font-bold text-app-muted" role="status" aria-live="polite">
               <span class="inline-block h-1.5 w-1.5 rounded-full bg-current"></span> Verificando…
             </span>
@@ -169,20 +170,20 @@ export async function renderSettings() {
               <div class="mb-2 text-[11.5px] font-semibold text-app-muted">Conectar con:</div>
               <div class="flex flex-wrap gap-2">
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} mcp-target" data-target="claude-code">
-                  <span class="material-symbols-outlined text-sm">terminal</span> Proyecto local
+                  ${ic("terminal", 14)} Proyecto local
                 </button>
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)} mcp-target" data-target="desktop">
-                  <span class="material-symbols-outlined text-sm">group</span> App de Claude
+                  ${ic("users", 14)} App de Claude
                 </button>
                 <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)} mcp-target" data-target="both">
-                  <span class="material-symbols-outlined text-sm">hub</span> Ambos
+                  ${ic("share-2", 14)} Ambos
                 </button>
               </div>
             </div>
             <div id="mcp-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
 
             <div class="mb-3.5 flex items-start gap-2 rounded-app border border-teal-600/25 bg-teal-600/[0.08] px-3.5 py-2.5 text-xs leading-relaxed text-app-text-2">
-              <span class="material-symbols-outlined mt-px shrink-0 text-[15px]">info</span>
+              <span class="mt-px shrink-0">${ic("info", 15)}</span>
               <span>Combina la conexión de NotebookLM con tu configuración existente y guarda un respaldo automático.</span>
             </div>
 
@@ -194,10 +195,10 @@ export async function renderSettings() {
               </div>
               <div class="flex gap-2">
                 <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-verify-nlm">
-                  <span class="material-symbols-outlined text-sm">refresh</span> Verificar
+                  ${ic("refresh-cw", 14)} Verificar
                 </button>
                 <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-auth-nlm">
-                  <span class="material-symbols-outlined text-sm">key</span> Iniciar sesión
+                  ${ic("key", 14)} Iniciar sesión
                 </button>
               </div>
             </div>
@@ -207,9 +208,9 @@ export async function renderSettings() {
         <!-- ── Notebooks ── -->
         <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("notebooks-section"))}" id="notebooks-section" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
-            <span class="material-symbols-outlined text-xl text-teal-600">menu_book</span> Notebooks de NotebookLM
+            <span class="text-teal-600">${ic("book-open", 20)}</span> Notebooks de NotebookLM
             <span class="ml-auto inline-flex min-h-8 items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 text-xs font-semibold text-green-700" id="notebooks-save-state" role="status" aria-live="polite">
-              <span class="material-symbols-outlined text-[16px]" aria-hidden="true">cloud_done</span> Guardado automático
+              ${ic("cloud-check", 16)} Guardado automático
             </span>
           </div>
 
@@ -245,7 +246,7 @@ export async function renderSettings() {
             </div>
             <div class="flex items-center justify-end gap-2">
               <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-add-notebook">
-                <span class="material-symbols-outlined text-sm">add</span> Registrar
+                ${ic("plus", 14)} Registrar
               </button>
             </div>
           </div>
@@ -259,9 +260,9 @@ export async function renderSettings() {
         <!-- ── Environment ── -->
         <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("environment"))}" id="environment" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
-            <span class="material-symbols-outlined text-xl text-teal-600">terminal</span> Entorno del sistema
+            <span class="text-teal-600">${ic("terminal", 20)}</span> Entorno del sistema
             <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-refresh-deps">
-              <span class="material-symbols-outlined text-sm">refresh</span> Recargar
+              ${ic("refresh-cw", 14)} Recargar
             </button>
           </div>
 
@@ -281,7 +282,7 @@ export async function renderSettings() {
                 <p class="mt-1 text-xs text-app-muted">Ejecuta el mismo comando jintia doctor que usa la skill y conserva su reporte.</p>
               </div>
               <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-run-toolchain-doctor">
-                <span class="material-symbols-outlined text-sm">health_and_safety</span> Ejecutar diagnóstico
+                ${ic("shield-check", 14)} Ejecutar diagnóstico
               </button>
             </div>
             <pre id="toolchain-report" class="mt-3 max-h-64 overflow-auto rounded-lg bg-slate-900 p-3 text-[11px] leading-5 text-slate-100" aria-live="polite">Aún no se ha ejecutado.</pre>
@@ -299,7 +300,7 @@ export async function renderSettings() {
               <label class="flex items-end gap-2 pb-2 text-xs font-semibold text-app-muted"><input id="toolchain-strict" type="checkbox" class="h-4 w-4 accent-teal-700"> Estricto</label>
             </div>
             <button class="${cx(ui.button.base, ui.button.primary, 'mt-3 min-h-11')}" id="btn-run-toolchain-operation">
-              <span class="material-symbols-outlined text-[17px]">play_arrow</span> Ejecutar operación
+              ${ic("play", 17)} Ejecutar operación
             </button>
           </div>
 
@@ -310,7 +311,7 @@ export async function renderSettings() {
                 <p class="mt-1 text-xs text-app-muted">Busca carpetas de Claude, Codex, Cursor y otros harnesses en el proyecto y en tu perfil.</p>
               </div>
               <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm, 'ml-auto')}" id="btn-detect-harnesses">
-                <span class="material-symbols-outlined text-sm">radar</span> Detectar
+                ${ic("radar", 14)} Detectar
               </button>
             </div>
             <label class="mt-3 block text-xs font-semibold text-app-muted">Proyecto a inspeccionar
@@ -330,7 +331,7 @@ export async function renderSettings() {
         <!-- ── Preferencias ── -->
         <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("app-prefs"))}" id="app-prefs" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
-            <span class="material-symbols-outlined text-xl text-teal-600">tune</span> Preferencias
+            <span class="text-teal-600">${ic("sliders-horizontal", 20)}</span> Preferencias
           </div>
 
           <!-- Skill path -->
@@ -353,7 +354,7 @@ export async function renderSettings() {
                 <div class="mt-0.5 text-[11.5px] text-app-muted">Copia la skill a <code>~/.claude/skills/</code></div>
               </div>
               <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-install-skill">
-                <span class="material-symbols-outlined text-sm">download</span> Instalar
+                ${ic("download", 14)} Instalar
               </button>
             </div>
             <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
@@ -362,7 +363,7 @@ export async function renderSettings() {
                 <div class="mt-0.5 text-[11.5px] text-app-muted">Registra el plugin universal en <code>~/.codex/plugins/</code></div>
               </div>
               <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-install-openai-plugin">
-                <span class="material-symbols-outlined text-sm">extension</span> Preparar
+                ${ic("puzzle", 14)} Preparar
               </button>
             </div>
             <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
@@ -371,7 +372,7 @@ export async function renderSettings() {
                 <div class="mt-0.5 text-[11.5px] text-app-muted">Paquete para ChatGPT y Codex; la publicación web requiere revisión de OpenAI</div>
               </div>
               <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-export-openai-plugin">
-                <span class="material-symbols-outlined text-sm">archive</span> Exportar
+                ${ic("archive", 14)} Exportar
               </button>
             </div>
             <div class="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3.5 py-3">
@@ -380,7 +381,7 @@ export async function renderSettings() {
                 <div class="mt-0.5 text-[11.5px] text-app-muted">Para instalar manualmente en la app de Claude</div>
               </div>
               <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-export-skill">
-                <span class="material-symbols-outlined text-sm">archive</span> Exportar ZIP
+                ${ic("archive", 14)} Exportar ZIP
               </button>
             </div>
             <div class="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3">
@@ -388,7 +389,7 @@ export async function renderSettings() {
               <div class="flex flex-wrap items-center justify-between gap-2">
                 <div class="max-w-[62ch] text-xs leading-5 text-app-muted">No elimina el perfil, las asignaturas, los notebooks ni los archivos generados. Solo vuelve a abrir el recorrido inicial.</div>
                 <button class="${cx(ui.button.base, ui.button.secondary, 'min-h-11')}" id="btn-reset-onboarding">
-                  <span class="material-symbols-outlined text-[17px]">restart_alt</span> Mostrar asistente
+                  ${ic("rotate-ccw", 17)} Mostrar asistente
                 </button>
               </div>
             </div>
@@ -668,7 +669,8 @@ async function loadInstitutionPalette() {
 
   button.disabled = true;
   container.classList.remove("hidden");
-  container.innerHTML = `<div class="flex items-center gap-1.5 text-xs text-app-muted"><span class="material-symbols-outlined">progress_activity</span> Analizando sitio y hojas de estilo…</div>`;
+  container.innerHTML = `<div class="flex items-center gap-1.5 text-xs text-app-muted">${ic("loader-2", 16)} Analizando sitio y hojas de estilo…</div>`;
+  refreshIcons();
   try {
     const result = await extractSitePalette(url);
     if (!state.config) state.config = {};
@@ -806,7 +808,7 @@ function renderNotebookList() {
   list.innerHTML = notebooks.map((nb, i) => `
     <div class="${ui.list.item}">
       <div class="${ui.list.left}">
-        <span class="material-symbols-outlined text-lg text-brand">menu_book</span>
+        <span class="text-brand-600">${ic("book-open", 18)}</span>
         <div>
           <div class="${ui.list.label}">${escapeHtml(nb.code)} — ${escapeHtml(nb.courseName)}</div>
           <div class="${ui.list.sub}">${escapeHtml(nb.root)}${nb.notebookId ? ` · ID: ${escapeHtml(nb.notebookId.slice(0,8))}…` : ""}</div>
@@ -814,10 +816,11 @@ function renderNotebookList() {
       </div>
       <div class="${ui.list.right}">
         <button class="${cx(ui.button.base, ui.button.danger, 'h-11 w-11 p-0')}" data-nb-delete="${i}" aria-label="Eliminar notebook ${escapeHtml(nb.code)}" title="Eliminar notebook">
-          <span class="material-symbols-outlined text-[13px]">delete</span>
+          ${ic("trash-2", 13)}
         </button>
       </div>
     </div>`).join("");
+  refreshIcons();
 
   list.querySelectorAll("[data-nb-delete]").forEach(btn => {
     btn.addEventListener("click", async () => {
@@ -893,7 +896,7 @@ async function syncNotebooks(next, button, successMessage) {
       if (!result.success) throw new Error(result.message);
       saveNotebooks(next);
       renderNotebookList();
-      if (status) status.innerHTML = `<span class="material-symbols-outlined text-[16px]" aria-hidden="true">cloud_done</span> Guardado automático`;
+      if (status) { status.innerHTML = `${ic("cloud-check", 16)} Guardado automático`; refreshIcons(); }
       toast(successMessage, "success", 3200);
       return true;
     });
@@ -1016,10 +1019,11 @@ async function loadSetupStatus() {
       <div class="mb-3 flex flex-wrap gap-2">
         ${items.map(({ label, ok }) => `
           <span class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-semibold ${ok ? "border-green-200 bg-green-50 text-green-600" : "border-red-200 bg-red-50 text-red-500"}">
-            <span class="material-symbols-outlined text-sm">${ok ? "check_circle" : "cancel"}</span>
+            ${ic(ok ? "check-circle-2" : "circle-x", 14)}
             ${escapeHtml(label)}
           </span>`).join("")}
       </div>`;
+    refreshIcons();
   } catch {
     bar.innerHTML = "";
   }
@@ -1071,7 +1075,7 @@ async function loadDeps() {
           </div>
         </div>
         <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm, 'ml-auto')}" id="btn-install-all-deps">
-            <span class="material-symbols-outlined text-sm">download</span> Instalar herramientas necesarias
+            ${ic("download", 14)} Instalar herramientas necesarias
         </button>
       </div>
       ${deps.map(dep => `
@@ -1091,6 +1095,7 @@ async function loadDeps() {
                 : `<span class="${ui.badge.muted}">Instalación manual</span>`}
           </div>
         </div>`).join("")}`;
+    refreshIcons();
 
     container.querySelectorAll("[data-dep-name]").forEach(btn => {
       btn.addEventListener("click", async () => {

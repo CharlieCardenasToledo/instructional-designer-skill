@@ -179,24 +179,6 @@ code, pre {
   font-size: 11px;
 }
 
-/* Material Symbols Outlined icon font configuration */
-.material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
-  font-weight: normal;
-  font-style: normal;
-  font-size: inherit;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  letter-spacing: normal;
-  text-transform: none;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: 'liga';
-  -webkit-font-smoothing: antialiased;
-}
-
 /* Capas ambientales sólidas: crean profundidad para el vidrio sin degradados. */
 body::before {
   content: '';
@@ -770,8 +752,7 @@ code {
   padding: 5px 0;
   transition: color 0.25s;
 }
-.final-check-row .material-symbols-outlined {
-  font-size: 16px;
+.final-check-row [data-check-icon] {
   flex-shrink: 0;
   transition: color 0.25s;
 }
