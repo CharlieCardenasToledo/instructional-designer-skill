@@ -267,85 +267,25 @@ body::after {
   position: relative;
   z-index: 1;
 }
-.onboarding-progress-worm {
+/* Nodo de progreso: cápsula turquesa que recorre el camino entre dos pasos
+   (isotipo "J-camino", manual de marca sección 13). Sustituye a la oruga
+   verde multi-segmento anterior — un solo elemento, sin partes ni "ojo". */
+.onboarding-progress-node {
   position: absolute;
   z-index: 2;
   top: 50%;
-  width: 28px;
+  width: 14px;
   height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-brand-600, #0fa3a3);
+  box-shadow: 0 1px 3px rgba(15, 163, 163, .35);
   pointer-events: none;
   transform: translate(-50%, -50%);
   will-change: left, transform;
 }
-.onboarding-progress-worm--backward {
-  flex-direction: row-reverse;
-}
-.onboarding-worm-segment {
-  width: 8px;
-  height: 8px;
-  margin-left: -2px;
-  flex: 0 0 auto;
-  border: 1px solid rgba(21, 128, 61, .22);
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 1px 1px rgba(17, 24, 39, .12);
-  animation: onboarding-worm-walk .32s ease-in-out infinite alternate;
-}
-.onboarding-worm-segment:first-child {
-  margin-left: 0;
-}
-.onboarding-progress-worm--backward .onboarding-worm-segment:first-child {
-  margin-left: -2px;
-}
-.onboarding-progress-worm--backward .onboarding-worm-segment:last-child {
-  margin-left: 0;
-}
-.onboarding-worm-segment:nth-child(2) {
-  background: #16a34a;
-  animation-delay: -.08s;
-}
-.onboarding-worm-segment:nth-child(3) {
-  background: #15803d;
-  animation-delay: -.16s;
-}
-.onboarding-worm-segment--tail {
-  width: 6px;
-  height: 6px;
-  background: #4ade80;
-}
-.onboarding-worm-segment--head {
-  position: relative;
-  width: 11px;
-  height: 11px;
-  z-index: 1;
-  background: #166534;
-  animation-delay: -.24s;
-}
-.onboarding-worm-segment--head::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 4px 0 #fff;
-}
-.onboarding-progress-worm--backward .onboarding-worm-segment--head::before {
-  right: auto;
-  left: 2px;
-}
-@keyframes onboarding-worm-walk {
-  from { transform: translateY(2px) rotate(-4deg); }
-  to { transform: translateY(-2px) rotate(4deg); }
-}
 
-/* Pista de progreso de "Instalar dependencia": el mismo gusanito del
-   stepper, pero en bucle indeterminado (winget no reporta % real). */
+/* Pista de progreso de "Instalar dependencia": bucle indeterminado
+   (winget no reporta % real) con el mismo lenguaje turquesa/verde. */
 .dep-progress-track {
   position: relative;
   display: flex;
@@ -371,24 +311,24 @@ body::after {
 .dep-progress-dot:nth-child(6) { animation-delay: .6s; }
 @keyframes dep-progress-dot-eat {
   0%, 100% { background: #e5e7eb; transform: scale(1); }
-  15% { background: #16a34a; transform: scale(1.4); }
-  30% { background: #bbf7d0; transform: scale(1); }
+  15% { background: var(--color-path-600, #1fae6d); transform: scale(1.4); }
+  30% { background: var(--color-path-100, #dff7e9); transform: scale(1); }
 }
-.dep-progress-worm {
+.dep-progress-node {
   position: absolute;
   z-index: 2;
-  left: -24px;
+  left: -14px;
   top: 50%;
-  width: 24px;
-  height: 12px;
-  display: flex;
-  align-items: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-brand-600, #0fa3a3);
   pointer-events: none;
   transform: translateY(-50%);
-  animation: dep-progress-worm-slide 1.8s linear infinite;
+  animation: dep-progress-node-slide 1.8s linear infinite;
 }
-@keyframes dep-progress-worm-slide {
-  0% { left: -24px; opacity: 0; }
+@keyframes dep-progress-node-slide {
+  0% { left: -14px; opacity: 0; }
   8% { opacity: 1; }
   92% { opacity: 1; }
   100% { left: 100%; opacity: 0; }
@@ -397,9 +337,9 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .onboarding-nav-arrow,
   .onboarding-progress-dot,
-  .onboarding-worm-segment,
+  .onboarding-progress-node,
   .dep-progress-dot,
-  .dep-progress-worm {
+  .dep-progress-node {
     transition: none;
     animation: none;
   }

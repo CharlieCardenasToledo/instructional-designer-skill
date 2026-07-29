@@ -361,10 +361,10 @@ function progressDots(current) {
     const isActive = step === current;
     const isCompleted = !isActive && step <= maxDone;
     const available = stepAvailable(step);
-    const color = isCompleted ? "bg-green-600" : isActive ? "bg-gray-900" : "bg-gray-300";
+    const color = isCompleted ? "bg-path-500" : isActive ? "bg-brand-600" : "bg-gray-300";
     const interactive = available ? "cursor-pointer hover:opacity-80" : "cursor-default";
     return `<button type="button" class="onboarding-progress-dot-hit w-8 h-8 flex items-center justify-center border-0 bg-transparent p-0 ${interactive}" data-step-index="${step}" ${available ? `data-onboarding-step="${step}"` : "disabled"} aria-label="Ir al paso ${step}" aria-current="${isActive ? "step" : "false"}">
-      <span class="onboarding-progress-dot h-2.5 w-2.5 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}"></span>
+      <span class="onboarding-progress-dot h-2.5 w-2.5 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-brand-600/15" : ""}"></span>
     </button>`;
   };
 
@@ -372,10 +372,10 @@ function progressDots(current) {
     const available = stepAvailable(2);
     return sequence.map((dep, index) => {
       const isActive = current === 2 && index === runtime.depFocusIndex;
-      const color = dep.installed ? "bg-green-600" : isActive ? "bg-gray-900" : "bg-gray-300";
+      const color = dep.installed ? "bg-path-500" : isActive ? "bg-brand-600" : "bg-gray-300";
       const interactive = available ? "cursor-pointer hover:opacity-80" : "cursor-default";
       return `<button type="button" class="onboarding-progress-dot-hit w-8 h-8 flex items-center justify-center border-0 bg-transparent p-0 ${interactive}" data-dep-step-index="${index}" ${available ? "data-onboarding-dep-step" : "disabled"} aria-label="Ver ${escapeHtml(dep.name)}" aria-current="${isActive ? "step" : "false"}">
-        <span class="onboarding-progress-dot h-2 w-2 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-gray-900/10" : ""}"></span>
+        <span class="onboarding-progress-dot h-2 w-2 rounded-full ${color} transition-transform duration-200 ${isActive ? "scale-110 ring-4 ring-brand-600/15" : ""}"></span>
       </button>`;
     }).join("");
   };
@@ -517,7 +517,9 @@ function stepperDotFor(track, step) {
   return track.querySelector(`[data-step-index="${step}"]`);
 }
 
-// Anima el indicador entre dos puntos del stepper (paso macro o herramienta).
+// Anima el nodo activo desplazándose entre dos puntos del stepper (paso
+// macro o herramienta): una cápsula turquesa que recorre el camino, sin la
+// oruga multi-segmento anterior — coherente con el isotipo "J-camino".
 function animateDotWorm(track, origin, destination) {
   if (!track || !origin || !destination || origin === destination || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     return Promise.resolve();
@@ -529,30 +531,24 @@ function animateDotWorm(track, origin, destination) {
   const start = originRect.left + originRect.width / 2 - trackRect.left;
   const end = destinationRect.left + destinationRect.width / 2 - trackRect.left;
   const distance = Math.abs(end - start);
-  const worm = document.createElement("span");
-  const direction = end > start ? "forward" : "backward";
-  worm.className = `onboarding-progress-worm onboarding-progress-worm--${direction}`;
-  worm.setAttribute("aria-hidden", "true");
-  worm.innerHTML = `
-    <span class="onboarding-worm-segment onboarding-worm-segment--tail"></span>
-    <span class="onboarding-worm-segment"></span>
-    <span class="onboarding-worm-segment"></span>
-    <span class="onboarding-worm-segment onboarding-worm-segment--head"></span>`;
-  worm.style.left = `${start}px`;
-  track.appendChild(worm);
+  const node = document.createElement("span");
+  node.className = "onboarding-progress-node";
+  node.setAttribute("aria-hidden", "true");
+  node.style.left = `${start}px`;
+  track.appendChild(node);
   origin.style.opacity = "0";
 
   const keyframes = [
-    { left: `${start}px`, transform: "translate(-50%, -50%) scaleX(.92)" },
-    { left: `${start + (end - start) * 0.45}px`, transform: "translate(-50%, -50%) scaleX(1.1)", offset: 0.48 },
-    { left: `${end}px`, transform: "translate(-50%, -50%) scaleX(.92)" },
+    { left: `${start}px`, transform: "translate(-50%, -50%) scaleX(1)" },
+    { left: `${start + (end - start) * 0.5}px`, transform: "translate(-50%, -50%) scaleX(1.35)", offset: 0.5 },
+    { left: `${end}px`, transform: "translate(-50%, -50%) scaleX(1)" },
   ];
-  const animation = worm.animate(keyframes, {
-    duration: Math.min(760, 430 + distance * 2.4),
+  const animation = node.animate(keyframes, {
+    duration: Math.min(240, 180 + distance * 0.25),
     easing: "cubic-bezier(.45, .05, .25, 1)",
     fill: "forwards",
   });
-  return animation.finished.catch(() => {}).finally(() => worm.remove());
+  return animation.finished.catch(() => {}).finally(() => node.remove());
 }
 
 async function showPreparedStep(fromStep, destination, { force = false, depFocusIndex } = {}) {
@@ -655,12 +651,7 @@ function beginDependencyInstallProgress(row, statusEl, detailEl, installButton) 
   track.setAttribute("role", "status");
   track.setAttribute("aria-label", "Instalando…");
   const dots = Array.from({ length: DEP_PROGRESS_DOTS }, () => `<span class="dep-progress-dot"></span>`).join("");
-  track.innerHTML = `${dots}<span class="dep-progress-worm" aria-hidden="true">
-    <span class="onboarding-worm-segment onboarding-worm-segment--tail"></span>
-    <span class="onboarding-worm-segment"></span>
-    <span class="onboarding-worm-segment"></span>
-    <span class="onboarding-worm-segment onboarding-worm-segment--head"></span>
-  </span>`;
+  track.innerHTML = `${dots}<span class="dep-progress-node" aria-hidden="true"></span>`;
   row.appendChild(track);
 }
 
