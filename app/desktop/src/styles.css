@@ -100,6 +100,11 @@
   --radius: 10px;
   --radius-lg: 14px;
   --titlebar-h: 34px;
+
+  /* Superficie base de la app (manual de marca, sección 2). Antes el body
+     usaba un gris (#eef2f4) distinto al token --color-app-bg de Tailwind
+     (#f1f4f6); un solo valor evita que ambos sistemas diverjan. */
+  --app-bg: #f1f4f6;
 }
 
 /* ── Reset & Base ─────────────────────────────────────────────────────────── */
@@ -109,7 +114,7 @@ body {
   font-family: var(--font);
   font-size: 13px;
   color: var(--text);
-  background: #eef2f4;
+  background: var(--app-bg);
   overflow: hidden;
   height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -461,6 +466,18 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea {
 .liquid-control-brand-soft {
   --liquid-fill: rgba(204, 251, 241, .48);
   --liquid-border: rgba(94, 234, 212, .46);
+}
+
+/* Topbar sobria (manual de marca, sección 4): mismo mecanismo de vidrio que
+   .liquid-control, pero con los valores específicos del manual — blanco
+   88%, borde azul 8%, radio 16px — en vez de la cápsula translúcida
+   genérica que usan botones/popovers. Solo aplica aquí; el resto de los
+   controles Liquid Glass no cambia. */
+.liquid-control-topbar {
+  --liquid-fill: rgba(255, 255, 255, .88);
+  --liquid-border: rgba(13, 27, 42, .08);
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(13, 27, 42, .08);
 }
 
 .liquid-control-danger {

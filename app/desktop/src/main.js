@@ -80,10 +80,10 @@ function renderShell() {
 
     <!-- MAIN -->
     <main class="${ui.layout.appMain}" role="main">
-      <header class="${cx(ui.liquid.control, 'absolute inset-x-4 top-3 z-30 flex h-[52px] items-center justify-between px-5')}" data-tauri-drag-region>
-        <div>
+      <header class="${cx(ui.liquid.control, 'liquid-control-topbar absolute inset-x-4 top-3 z-30 flex h-[52px] items-center justify-between px-5')}" data-tauri-drag-region>
+        <div class="min-w-0">
           <h2 id="topbar-title" class="title-medium text-slate-800">Jintia Desktop</h2>
-          <div id="topbar-sub" class="text-[11px] text-slate-600"></div>
+          <div id="topbar-sub" class="truncate text-[11px] text-slate-600"></div>
         </div>
         <div class="flex items-center gap-1">
           <div class="${cx(ui.liquid.group, 'flex items-center gap-0.5 p-1')}" role="group" aria-label="Controles de ventana">
