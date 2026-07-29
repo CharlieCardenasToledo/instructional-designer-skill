@@ -43,6 +43,7 @@ import notebookLmWordmark from "./assets/notebooklm-wordmark.svg";
 import { ui, cx } from "./uiClasses.js";
 import { buildSampleGuideData } from "./sampleGuide.js";
 import { APP_META } from "./appMeta.js";
+import { BrandMark } from "./components/BrandMark.js";
 
 // Esquema de 5 pasos (v3 en el backend; ver migrate_status en onboarding.rs).
 const TOTAL_STEPS = 5;
@@ -310,8 +311,8 @@ function renderCurrentStep() {
   root.innerHTML = `
     ${onboardingAmbientBackground()}
     <div class="absolute left-4 top-3 z-10 flex items-center gap-2.5" aria-label="Jintia">
-      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-950 text-white shadow-sm" aria-hidden="true">
-        ${ic("route", 20)}
+      <div class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm" aria-hidden="true">
+        ${BrandMark({ className: "h-6 w-6", size: 24 })}
       </div>
       <div>
         <div class="text-sm font-extrabold tracking-tight text-slate-900">Jintia</div>
