@@ -13,6 +13,7 @@ import { appLocalDataDir } from "@tauri-apps/api/path";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { buildSampleGuideData } from "../sampleGuide.js";
+import { ic, refreshIcons } from "../icons.js";
 
 let _templates = [];
 let _activeId = "";
@@ -117,6 +118,7 @@ async function loadTemplates() {
   if (!workspace) return;
   workspace.setAttribute("aria-busy", "true");
   workspace.innerHTML = loadingState();
+  refreshIcons();
   announce("Cargando plantillas…");
 
   try {
@@ -129,6 +131,7 @@ async function loadTemplates() {
     void ensurePdfPreview(_selectedId);
   } catch {
     workspace.innerHTML = errorState();
+    refreshIcons();
     announce("No se pudieron cargar las plantillas.");
   } finally {
     workspace.removeAttribute("aria-busy");
@@ -151,6 +154,7 @@ function renderWorkspace() {
       "Aún no hay plantillas disponibles",
       "Cuando se incorpore una plantilla compatible aparecerá aquí."
     );
+    refreshIcons();
     return;
   }
 
@@ -160,6 +164,7 @@ function renderWorkspace() {
       "Elige otro filtro para continuar comparando.",
       true
     );
+    refreshIcons();
     return;
   }
 
@@ -182,6 +187,7 @@ function renderWorkspace() {
         ${detailPanel(selectedTemplate())}
       </aside>
     </div>`;
+  refreshIcons();
 }
 
 function templateCard(template) {
@@ -217,7 +223,7 @@ function templateCard(template) {
             <h3 class="truncate text-[14px] font-bold text-app-text">${escapeHtml(template.name)}</h3>
             <p class="mt-1 line-clamp-2 text-xs leading-[1.55] text-app-muted">${escapeHtml(template.description || "Sin descripción disponible.")}</p>
           </div>
-          ${active ? `<span class="${ui.badge.success} shrink-0"><span class="material-symbols-outlined text-sm" aria-hidden="true">check_circle</span>Activa</span>` : ""}
+          ${active ? `<span class="${ui.badge.success} shrink-0">${ic("check-circle-2", 14)}Activa</span>` : ""}
         </div>
         <div class="mt-3 flex min-h-6 flex-wrap gap-1.5">
           ${(template.tags || []).slice(0, 3).map(tag => `<span class="${ui.badge.muted}">${escapeHtml(tag)}</span>`).join("")}
@@ -257,7 +263,7 @@ function detailPanel(template) {
         <p class="mb-3 text-xs leading-5 text-app-muted">${escapeHtml(template.description || "")}</p>
         <button class="${cx(ui.button.base, active ? ui.button.secondary : ui.button.primary, "min-h-11 w-full")}"
           id="btn-activate-template" type="button" ${active || activating ? "disabled" : ""} aria-busy="${activating}">
-          <span class="material-symbols-outlined text-[18px] ${activating ? "animate-spin" : ""}" aria-hidden="true">${activating ? "progress_activity" : active ? "check_circle" : "check"}</span>
+          <span class="${activating ? "animate-spin" : ""}">${ic(activating ? "loader-2" : active ? "check-circle-2" : "check", 18)}</span>
           ${activating ? "Aplicando plantilla…" : active ? "Plantilla activa" : "Usar esta plantilla"}
         </button>
         <div id="tpl-activation-error" class="${_activationError ? "" : "hidden "}mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700" role="alert">${escapeHtml(_activationError)}</div>
@@ -350,7 +356,7 @@ function previewLoadingState() {
   return `
     <div class="grid min-h-[420px] place-items-center p-6 text-center text-white" role="status">
       <div class="max-w-[34ch]">
-        <span class="material-symbols-outlined mb-3 block animate-spin text-[38px]" aria-hidden="true">progress_activity</span>
+        <span class="mb-3 block animate-spin">${ic("loader-2", 38)}</span>
         <p class="font-semibold">Compilando un PDF real…</p>
         <p id="tpl-preview-progress" class="mt-2 text-xs leading-5 text-slate-200">${escapeHtml(_previewProgress || "Preparando LaTeX…")}</p>
         <p class="mt-3 text-[11px] leading-5 text-slate-300">La primera compilación puede tardar mientras se preparan los componentes de la plantilla.</p>
@@ -362,7 +368,7 @@ function previewWaitingState() {
   return `
     <div class="grid min-h-[420px] place-items-center p-6 text-center text-white">
       <div>
-        <span class="material-symbols-outlined mb-3 block text-[38px] text-slate-300" aria-hidden="true">picture_as_pdf</span>
+        <span class="mb-3 block text-slate-300">${ic("file-text", 38)}</span>
         <p class="text-sm font-semibold">Preparando la vista previa PDF…</p>
       </div>
     </div>`;
@@ -372,15 +378,15 @@ function previewErrorState(diagnostic) {
   return `
     <div class="grid min-h-[420px] place-items-center p-5 text-center text-white">
       <div class="max-w-[48ch]">
-        <span class="material-symbols-outlined mb-3 block text-[38px] text-red-300" aria-hidden="true">error</span>
+        <span class="mb-3 block text-red-300">${ic("circle-alert", 38)}</span>
         <h3 class="font-bold">No pudimos compilar esta vista previa</h3>
         <p class="mt-2 text-xs leading-5 text-slate-200">Verifica el compilador LaTeX en Configuración → Entorno y vuelve a intentarlo.</p>
         <div class="mt-4 flex flex-wrap justify-center gap-2">
           <button class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="btn-retry-template-preview" type="button">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">refresh</span> Reintentar
+            ${ic("refresh-cw", 18)} Reintentar
           </button>
           <button class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="btn-copy-template-diagnostic" type="button">
-            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">content_copy</span> Copiar diagnóstico
+            ${ic("copy", 18)} Copiar diagnóstico
           </button>
         </div>
         <details class="mt-4 text-left">
@@ -430,7 +436,7 @@ function loadingState() {
   return `
     <div class="grid min-h-[320px] place-items-center rounded-xl border border-slate-200 bg-white p-8 text-center" role="status">
       <div>
-        <span class="material-symbols-outlined mb-3 block animate-spin text-[34px] text-brand" aria-hidden="true">progress_activity</span>
+        <span class="mb-3 block animate-spin text-brand-600">${ic("loader-2", 34)}</span>
         <p class="text-sm font-semibold text-app-text">Preparando las vistas previas…</p>
         <p class="mt-1 text-xs text-app-muted">Esto puede tardar unos segundos.</p>
       </div>
@@ -441,11 +447,11 @@ function errorState() {
   return `
     <div class="grid min-h-[320px] place-items-center rounded-xl border border-red-200 bg-white p-8 text-center">
       <div class="max-w-[48ch]">
-        <span class="material-symbols-outlined mb-3 block text-[34px] text-red-600" aria-hidden="true">error</span>
+        <span class="mb-3 block text-red-600">${ic("circle-alert", 34)}</span>
         <h2 class="text-base font-bold text-app-text">No pudimos cargar las plantillas</h2>
         <p class="mt-2 text-sm leading-6 text-app-muted">Comprueba la conexión con Jintia y vuelve a intentarlo.</p>
         <button class="${cx(ui.button.base, ui.button.secondary, "mt-4 min-h-11")}" id="btn-retry-templates" type="button">
-          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">refresh</span> Reintentar
+          ${ic("refresh-cw", 18)} Reintentar
         </button>
       </div>
     </div>`;
@@ -455,7 +461,7 @@ function emptyState(title, description, showAll = false) {
   return `
     <div class="grid min-h-[280px] place-items-center rounded-xl border border-slate-200 bg-white p-8 text-center">
       <div class="max-w-[48ch]">
-        <span class="material-symbols-outlined mb-3 block text-[34px] text-slate-400" aria-hidden="true">description</span>
+        <span class="mb-3 block text-slate-400">${ic("file-text", 34)}</span>
         <h2 class="text-base font-bold text-app-text">${escapeHtml(title)}</h2>
         <p class="mt-2 text-sm leading-6 text-app-muted">${escapeHtml(description)}</p>
         ${showAll ? `<button class="${cx(ui.button.base, ui.button.secondary, "mt-4 min-h-11 tpl-filter-btn")}" type="button" data-filter="all">Ver todas</button>` : ""}
