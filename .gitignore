@@ -1,5 +1,7 @@
 # Compiled LaTeX artifacts
 *.pdf
+# Except the mock fixture the template-preview iframe needs in web/mock dev mode
+!app/desktop/public/mock/jintia-template-preview.pdf
 *.log
 *.aux
 *.bbl
