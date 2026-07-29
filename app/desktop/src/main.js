@@ -43,7 +43,7 @@ function renderShell() {
       ${BrandLockup()}
 
       <div class="p-3">
-        <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm, ui.button.xs, 'w-full border-brand-600/30')}" data-page="courses" data-create-course>
+        <button class="${cx(ui.button.base, ui.button.primary, ui.button.xs, 'w-full !border-brand-600/30')}" data-page="courses" data-create-course>
           ${ic("plus", 15)}
           Nueva asignatura
         </button>
@@ -59,6 +59,7 @@ function renderShell() {
         <button class="${ui.nav.item}" data-nav-item data-page="templates" aria-label="Plantillas">
           ${ic("layout-template", 18)} Plantillas
         </button>
+        <div class="mt-auto border-t border-white/10 pt-1" role="separator" aria-hidden="true"></div>
         <button class="${ui.nav.item}" data-nav-item data-page="docs" aria-label="Ayuda">
           ${ic("help-circle", 18)} Ayuda
         </button>
@@ -115,6 +116,17 @@ document.addEventListener("click", event => {
       document.dispatchEvent(new CustomEvent("jintia:new-course", { detail: { opener: nav } }));
     }
   }
+});
+
+// Alt+1..5 salta entre las secciones del sidebar en el orden en que aparecen
+// (affordance mínima de power user; no compite con atajos del navegador/SO).
+document.addEventListener("keydown", event => {
+  if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  const index = Number(event.key) - 1;
+  const items = document.querySelectorAll("[data-nav-item][data-page]");
+  if (index < 0 || index >= items.length) return;
+  event.preventDefault();
+  navigate(items[index].dataset.page);
 });
 
 // El onboarding es una página independiente: la app principal (sidebar,

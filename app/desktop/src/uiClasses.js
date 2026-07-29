@@ -33,7 +33,11 @@ export const ui = {
   },
   nav: {
     item: "relative flex w-full items-center gap-2.5 rounded-lg border border-transparent px-3 py-2 text-left text-[13px] font-medium text-slate-300 transition hover:bg-white/[.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60",
-    active: "border-brand-600/20 bg-brand-600/10 font-semibold text-white",
+    // "!" fuerza la victoria sobre item's border-transparent: ambas son
+    // utilidades border-color de igual especificidad, así que sin esto
+    // gana la que Tailwind emita después en el CSS compilado (no
+    // necesariamente esta), dejando el borde activo invisible en runtime.
+    active: "!border-brand-600/20 bg-brand-600/10 font-semibold text-white",
   },
   settingsNav: {
     item: "relative isolate flex w-auto shrink-0 items-center gap-2.5 overflow-hidden rounded-full border border-transparent bg-transparent px-3 py-2.5 text-xs font-medium text-slate-700 no-underline transition hover:bg-slate-900/[0.045] hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 lg:w-full",

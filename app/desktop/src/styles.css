@@ -661,6 +661,21 @@ code {
   will-change: transform;
 }
 
+/* Marcador vertical turquesa del ítem activo del sidebar (manual de marca,
+   sección 4). ui.nav.item ya es position:relative, así que el pseudo-elemento
+   se posiciona contra el propio botón sin envoltorio extra. */
+[data-nav-item][aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-brand-600, #0fa3a3);
+}
+
 /* ── Mobile Responsiveness (Touch & Small Viewport Adaptation) ──────────── */
 
 /* Mobile: Increase spacing and touch targets (max-width: 640px) */
@@ -696,6 +711,7 @@ code {
       min-height: 48px;
       padding: 12px 12px;
     }
+
 
     /* Window control buttons stay round but maintain 44px minimum */
     .rounded-full {

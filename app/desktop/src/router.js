@@ -36,7 +36,10 @@ export function navigate(page) {
 
   // Gestalt: resaltar solo el ítem activo en sidebar (consistencia visual)
   document.querySelectorAll("[data-nav-item]").forEach(el => {
-    el.className = cx(ui.nav.item, el.dataset.page === page && ui.nav.active);
+    const isActive = el.dataset.page === page;
+    el.className = cx(ui.nav.item, isActive && ui.nav.active);
+    if (isActive) el.setAttribute("aria-current", "page");
+    else el.removeAttribute("aria-current");
   });
 
   // Mostrar la página correcta, ocultar el resto
