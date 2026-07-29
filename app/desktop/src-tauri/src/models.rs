@@ -164,6 +164,18 @@ pub struct NotebookLmAuthStatus {
     pub message: String,
 }
 
+/// Entrada de la biblioteca de gemini-notebook-mcp (ver `NotebookEntry` en
+/// https://github.com/CharlieCardenasToledo/gemini-notebook-mcp/blob/main/src/library/types.ts).
+/// Solo se exponen los campos que la UI necesita para el selector.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct NotebookLmEntry {
+    pub id: String,
+    pub name: String,
+    pub url: String,
+    #[serde(default)]
+    pub description: String,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct SetupStatus {
     pub skill_installed: bool,

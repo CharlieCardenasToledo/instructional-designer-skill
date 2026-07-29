@@ -245,7 +245,13 @@ pub fn save_notebooks(entries: Vec<NotebookEntry>) -> ActionResult {
                 "Cada notebook requiere código, nombre y carpeta del curso.",
             );
         }
-        if !url.is_empty() && !url.starts_with("https://notebooklm.google.com/notebook/") {
+        // Google renombró NotebookLM a "Gemini Notebook" en 2026-07 y movió su
+        // dominio canónico a notebook.google.com; notebooklm.google.com sigue
+        // resolviendo (redirige), así que ambos se aceptan aquí.
+        if !url.is_empty()
+            && !url.starts_with("https://notebook.google.com/notebook/")
+            && !url.starts_with("https://notebooklm.google.com/notebook/")
+        {
             return ActionResult::error(format!("La URL de {code} no pertenece a NotebookLM."));
         }
         if !seen.insert(code.to_lowercase()) {

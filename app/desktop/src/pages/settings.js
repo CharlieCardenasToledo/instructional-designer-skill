@@ -2,10 +2,11 @@ import {
   applyInstitutionConfig, checkDependencies, getVisualInstallProfiles, installDependency,
   configureMcp, getSetupStatus, checkNotebookLMAuth, runNotebookLMAuth,
   installSkill, exportSkillZip, installOpenAIPlugin, exportOpenAIPluginZip,
-  pickDirectory, saveNotebooksConfig,
+  pickDirectory,
   resetOnboarding, getSkillPath, extractSitePalette, runSkillTool, detectHarnesses, manageHarnesses
 } from "../api.js";
-import { state, getNotebooks, saveConfig, saveNotebooks } from "../state.js";
+import { state, saveConfig } from "../state.js";
+import { navigate } from "../router.js";
 import { escapeHtml } from "../dom.js";
 import { toast } from "../toast.js";
 import { ic, refreshIcons } from "../icons.js";
@@ -205,56 +206,19 @@ export async function renderSettings() {
           </div>
         </section>
 
-        <!-- ── Notebooks ── -->
+        <!-- ── Notebooks (solo lectura) ── -->
         <section class="${cx(ui.surface.card, 'p-4 sm:p-5', sectionHidden("notebooks-section"))}" id="notebooks-section" data-settings-panel>
           <div class="mb-4 flex items-center gap-2.5 border-b border-slate-300/40 pb-3.5 text-[15px] font-bold text-app-text">
             <span class="text-teal-600">${ic("book-open", 20)}</span> Notebooks de NotebookLM
-            <span class="ml-auto inline-flex min-h-8 items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 text-xs font-semibold text-green-700" id="notebooks-save-state" role="status" aria-live="polite">
-              ${ic("cloud-check", 16)} Guardado automático
-            </span>
           </div>
-
-          <!-- Notebook list -->
+          <p class="mb-3.5 text-xs leading-5 text-app-muted">
+            El vínculo entre una asignatura y su notebook se gestiona desde <strong>Cursos</strong> (al crearla o desde su menú "···"). Aquí solo se muestra el estado general.
+          </p>
+          <div id="notebook-status-summary" class="mb-3"></div>
           <div id="notebook-list" class="mb-3.5 flex flex-col gap-1.5"></div>
-
-          <!-- Add notebook form -->
-          <div class="rounded-app border border-slate-200 bg-white p-3.5">
-            <div class="mb-2.5 text-xs font-bold uppercase tracking-wider text-app-muted">
-              Registrar notebook
-            </div>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mb-3">
-              <div class="flex flex-col gap-1.5">
-                <label for="nb-code">Código *</label>
-                <input id="nb-code" placeholder="IFT200">
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <label for="nb-course-name">Asignatura *</label>
-                <input id="nb-course-name" placeholder="Interacción Persona Computador">
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <label for="nb-root">Carpeta raíz *</label>
-                <input id="nb-root" placeholder="01 IFT200">
-              </div>
-              <div class="flex flex-col gap-1.5">
-                <label for="nb-id">Notebook ID <span class="text-app-muted">(opcional)</span></label>
-                <input id="nb-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" class="mono">
-              </div>
-              <div class="flex flex-col gap-1.5 sm:col-span-2">
-                <label for="nb-url">URL de compartir <span class="text-app-muted">(opcional)</span></label>
-                <input id="nb-url" placeholder="https://notebooklm.google.com/notebook/…">
-              </div>
-            </div>
-            <div class="flex items-center justify-end gap-2">
-              <button class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" id="btn-add-notebook">
-                ${ic("plus", 14)} Registrar
-              </button>
-            </div>
-          </div>
-
-          <div class="mt-3 text-[11.5px] text-app-muted">
-            El Notebook ID se encuentra en la URL: <code>notebooklm.google.com/notebook/<strong>ID</strong></code>
-          </div>
-          <div id="notebooks-inline-error" class="mt-2.5 rounded-[7px] border border-red-700/25 bg-red-700/[0.06] px-3 py-2 text-xs text-red-700" role="alert" hidden></div>
+          <button class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" id="btn-go-to-courses">
+            Ir a Cursos ${ic("arrow-right", 14)}
+          </button>
         </section>
 
         <!-- ── Environment ── -->
@@ -467,7 +431,7 @@ export async function renderSettings() {
 
   // ── Notebooks ─────────────────────────────────────────────────────────────
   renderNotebookList();
-  el.querySelector("#btn-add-notebook")?.addEventListener("click", addNotebook);
+  el.querySelector("#btn-go-to-courses")?.addEventListener("click", () => navigate("courses"));
 
   // ── Environment ───────────────────────────────────────────────────────────
   el.querySelector("#btn-refresh-deps")?.addEventListener("click", loadDeps);
@@ -796,116 +760,34 @@ async function runNlmAuth() {
   } catch (e) { toast(`Error: ${e}`, "error"); }
 }
 
-// ── Notebooks ─────────────────────────────────────────────────────────────────
+// ── Notebooks (solo lectura: el vínculo curso↔notebook se gestiona en Cursos) ──
 function renderNotebookList() {
   const list = document.getElementById("notebook-list");
+  const summary = document.getElementById("notebook-status-summary");
   if (!list) return;
-  const notebooks = getNotebooks();
-  if (!notebooks.length) {
-    list.innerHTML = `<div class="py-4 text-center text-[13px] text-slate-400">Sin notebooks registrados aún.</div>`;
+  const courses = state.courses;
+  const connected = courses.filter(course => String(course.notebook_id || "").trim());
+  if (summary) {
+    summary.innerHTML = courses.length
+      ? `<span class="inline-flex items-center gap-1.5 rounded-full border border-slate-300/50 bg-slate-200/20 px-2.5 py-0.5 text-[11px] font-bold text-app-muted">${ic("book-open", 14)} ${connected.length} de ${courses.length} asignaturas conectadas</span>`
+      : "";
+    refreshIcons();
+  }
+  if (!courses.length) {
+    list.innerHTML = `<div class="py-4 text-center text-[13px] text-slate-400">Aún no hay asignaturas registradas.</div>`;
     return;
   }
-  list.innerHTML = notebooks.map((nb, i) => `
+  list.innerHTML = courses.map(course => `
     <div class="${ui.list.item}">
       <div class="${ui.list.left}">
-        <span class="text-brand-600">${ic("book-open", 18)}</span>
+        <span class="${course.notebook_id ? "text-brand-600" : "text-slate-300"}">${ic("book-open", 18)}</span>
         <div>
-          <div class="${ui.list.label}">${escapeHtml(nb.code)} — ${escapeHtml(nb.courseName)}</div>
-          <div class="${ui.list.sub}">${escapeHtml(nb.root)}${nb.notebookId ? ` · ID: ${escapeHtml(nb.notebookId.slice(0,8))}…` : ""}</div>
+          <div class="${ui.list.label}">${escapeHtml(course.code)} — ${escapeHtml(course.name)}</div>
+          <div class="${ui.list.sub}">${course.notebook_id ? escapeHtml(course.notebook_name || course.notebook_id) : "Sin conectar"}</div>
         </div>
-      </div>
-      <div class="${ui.list.right}">
-        <button class="${cx(ui.button.base, ui.button.danger, 'h-11 w-11 p-0')}" data-nb-delete="${i}" aria-label="Eliminar notebook ${escapeHtml(nb.code)}" title="Eliminar notebook">
-          ${ic("trash-2", 13)}
-        </button>
       </div>
     </div>`).join("");
   refreshIcons();
-
-  list.querySelectorAll("[data-nb-delete]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const nbs = getNotebooks();
-      const index = Number(btn.dataset.nbDelete);
-      const notebook = nbs[index];
-      if (!notebook || !await confirm(`¿Eliminar el notebook ${notebook.code} — ${notebook.courseName}?`)) return;
-      await syncNotebooks(
-        nbs.filter((_, notebookIndex) => notebookIndex !== index),
-        btn,
-        `Notebook ${notebook.code} eliminado`,
-      );
-    });
-  });
-}
-
-// ── Notebook registry ─────────────────────────────────────────────────────────
-async function addNotebook() {
-  const get = id => document.getElementById(id)?.value?.trim() || "";
-  const code = get("nb-code").toUpperCase();
-  const courseName = get("nb-course-name");
-  const root = get("nb-root");
-  let notebookId = get("nb-id");
-  const url = get("nb-url");
-  setInlineError("notebooks-inline-error", "");
-
-  if (!code || !courseName || !root) {
-    setInlineError("notebooks-inline-error", "Completa código, asignatura y carpeta raíz.");
-    document.getElementById(!code ? "nb-code" : !courseName ? "nb-course-name" : "nb-root")?.focus();
-    return;
-  }
-  if (!notebookId && url) notebookId = notebookIdFromUrl(url);
-  if (!notebookId && !url) {
-    setInlineError("notebooks-inline-error", "Añade el Notebook ID o la URL de compartir.");
-    document.getElementById("nb-id")?.focus();
-    return;
-  }
-  if (url && !/^https:\/\/notebooklm\.google\.com\/notebook\//i.test(url)) {
-    setInlineError("notebooks-inline-error", "La URL debe pertenecer a notebooklm.google.com/notebook/.");
-    document.getElementById("nb-url")?.focus();
-    return;
-  }
-
-  const notebooks = getNotebooks();
-  if (notebooks.some(notebook => String(notebook.code).toLowerCase() === code.toLowerCase())) {
-    setInlineError("notebooks-inline-error", "Ya existe un notebook con este código.");
-    document.getElementById("nb-code")?.focus();
-    return;
-  }
-  const saved = await syncNotebooks(
-    [...notebooks, { code, courseName, root, notebookId, url }],
-    document.getElementById("btn-add-notebook"),
-    `Notebook ${code} registrado`,
-  );
-  if (!saved) return;
-  ["nb-code", "nb-course-name", "nb-root", "nb-id", "nb-url"].forEach(id => {
-    const field = document.getElementById(id);
-    if (field) field.value = "";
-  });
-}
-
-function notebookIdFromUrl(url) {
-  return String(url || "").match(/notebooklm\.google\.com\/notebook\/([^/?#]+)/i)?.[1] || "";
-}
-
-async function syncNotebooks(next, button, successMessage) {
-  setInlineError("notebooks-inline-error", "");
-  const status = document.getElementById("notebooks-save-state");
-  if (status) status.textContent = "Sincronizando…";
-  try {
-    return await runSettingsOperation(button, "notebooks", "Guardando…", async () => {
-      const result = await saveNotebooksConfig(next);
-      if (!result.success) throw new Error(result.message);
-      saveNotebooks(next);
-      renderNotebookList();
-      if (status) { status.innerHTML = `${ic("cloud-check", 16)} Guardado automático`; refreshIcons(); }
-      toast(successMessage, "success", 3200);
-      return true;
-    });
-  } catch (error) {
-    if (status) status.textContent = "No se pudo sincronizar";
-    setInlineError("notebooks-inline-error", `No se guardaron los cambios. Vuelve a intentarlo. (${error})`);
-    toast("No se pudieron sincronizar los notebooks", "error", 6000);
-    return false;
-  }
 }
 
 // ── Environment ───────────────────────────────────────────────────────────────

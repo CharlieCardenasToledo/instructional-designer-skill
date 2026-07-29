@@ -18,10 +18,3 @@ export const state = {
 
 export function saveConfig()  { localStorage.setItem("ids_config",  JSON.stringify(state.config)); }
 export function saveCourses() { localStorage.setItem("ids_courses", JSON.stringify(state.courses)); }
-
-export function getNotebooks() {
-  return load("ids_notebooks", []);
-}
-export function saveNotebooks(list) {
-  localStorage.setItem("ids_notebooks", JSON.stringify(list));
-}

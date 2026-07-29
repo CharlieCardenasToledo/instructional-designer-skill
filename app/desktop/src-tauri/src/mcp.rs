@@ -1,4 +1,4 @@
-use crate::models::{ActionResult, NotebookLmAuthStatus};
+use crate::models::{ActionResult, NotebookLmAuthStatus, NotebookLmEntry};
 use crate::paths::{
     atomic_write, backup_file, claude_code_config_path, claude_desktop_config_path, path_text,
 };
@@ -12,7 +12,7 @@ use std::sync::{mpsc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 
-pub const NOTEBOOKLM_MCP_PACKAGE: &str = "@charlie.act7/gemini-notebook-mcp@2.0.0";
+pub const NOTEBOOKLM_MCP_PACKAGE: &str = "@charlie.act7/gemini-notebook-mcp@2.1.0";
 const AUTH_STATE_MAX_AGE: Duration = Duration::from_secs(24 * 60 * 60);
 const AUTH_VALIDATION_TTL: Duration = Duration::from_secs(5 * 60);
 const GOOGLE_API_AUTH_COOKIE: &[u8] = b"SAPISID";
@@ -369,6 +369,26 @@ fn find_string_field(value: &Value, field: &str) -> Option<String> {
     }
 }
 
+/// Recorre el mismo sobre MCP que `find_string_field`/`find_bool_field`
+/// (result.content[].text con JSON serializado adentro) buscando un array
+/// bajo la clave dada. Ver `handleListNotebooks` en gemini-notebook-mcp:
+/// responde `{ success, data: { notebooks: NotebookEntry[] } }`.
+fn find_array_field(value: &Value, field: &str) -> Option<Vec<Value>> {
+    match value {
+        Value::Object(map) => {
+            if let Some(Value::Array(items)) = map.get(field) {
+                return Some(items.clone());
+            }
+            map.values().find_map(|value| find_array_field(value, field))
+        }
+        Value::Array(items) => items.iter().find_map(|value| find_array_field(value, field)),
+        Value::String(text) => serde_json::from_str::<Value>(text)
+            .ok()
+            .and_then(|value| find_array_field(&value, field)),
+        _ => None,
+    }
+}
+
 fn is_tool_error(value: &Value) -> bool {
     value.get("error").is_some()
         || value
@@ -566,6 +586,51 @@ pub fn start_auth() -> ActionResult {
     }
 }
 
+fn parse_notebook_entries(value: &Value) -> Vec<NotebookLmEntry> {
+    find_array_field(value, "notebooks")
+        .unwrap_or_default()
+        .iter()
+        .filter_map(|entry| {
+            let id = find_string_field(entry, "id")?;
+            if id.is_empty() {
+                return None;
+            }
+            let url = find_string_field(entry, "url")
+                .filter(|url| !url.is_empty())
+                .unwrap_or_else(|| format!("https://notebook.google.com/notebook/{id}"));
+            let name = find_string_field(entry, "name")
+                .filter(|name| !name.is_empty())
+                .unwrap_or_else(|| id.clone());
+            let description = find_string_field(entry, "description").unwrap_or_default();
+            Some(NotebookLmEntry {
+                id,
+                name,
+                url,
+                description,
+            })
+        })
+        .collect()
+}
+
+pub fn list_notebooks() -> Result<Vec<NotebookLmEntry>, String> {
+    let value = call_tool("list_notebooks", json!({}), Duration::from_secs(30))?;
+    if is_tool_error(&value) {
+        return Err(tool_error_message(&value));
+    }
+    Ok(parse_notebook_entries(&value))
+}
+
+/// A diferencia de `list_notebooks` (biblioteca local curada), esta consulta
+/// el grid real de notebooks.google.com abriendo cada tarjeta para leer su id
+/// desde la URL — por eso el timeout es mucho más generoso.
+pub fn list_account_notebooks() -> Result<Vec<NotebookLmEntry>, String> {
+    let value = call_tool("list_account_notebooks", json!({}), Duration::from_secs(300))?;
+    if is_tool_error(&value) {
+        return Err(tool_error_message(&value));
+    }
+    Ok(parse_notebook_entries(&value))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -606,6 +671,29 @@ mod tests {
         let data = b"sqlite-prefix-SAPISID-value-__Secure-1PSID-suffix";
         assert!(contains_bytes(data, b"SAPISID"));
         assert!(!contains_bytes(data, b"APISID3"));
+    }
+
+    #[test]
+    fn finds_notebooks_array_nested_inside_mcp_text_content() {
+        let value = json!({
+            "result": {
+                "content": [{
+                    "type": "text",
+                    "text": "{\"success\":true,\"data\":{\"notebooks\":[{\"id\":\"n8n-docs\",\"url\":\"https://notebooklm.google.com/notebook/n8n-docs\",\"name\":\"n8n Workflow Automation\",\"description\":\"docs\"}]}}"
+                }],
+                "isError": false
+            }
+        });
+        let entries = find_array_field(&value, "notebooks").expect("notebooks array");
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0]["id"], "n8n-docs");
+        assert!(!is_tool_error(&value));
+    }
+
+    #[test]
+    fn find_array_field_does_not_match_unrelated_arrays() {
+        let value = json!({ "result": { "content": [{ "type": "text", "text": "{}" }] } });
+        assert_eq!(find_array_field(&value, "notebooks"), None);
     }
 
     #[test]

@@ -520,7 +520,12 @@ test('los enlaces externos de Acerca de usan opener con una lista cerrada', asyn
   assert.match(api, /openUrl\(url\)/);
   const opener = capability.permissions.find(permission => permission?.identifier === 'opener:allow-open-url');
   assert.ok(opener);
-  assert.ok(opener.allow.every(entry => entry.url.startsWith('https://github.com/CharlieCardenasToledo')));
+  assert.ok(opener.allow.every(entry =>
+    entry.url.startsWith('https://github.com/CharlieCardenasToledo') ||
+    entry.url === 'claude-cli://*' ||
+    entry.url === 'codex://*' ||
+    entry.url === 'https://notebook.google.com/'
+  ));
 });
 
 test('el crédito opcional de Jintia no sustituye la autoría académica', async () => {
@@ -549,13 +554,17 @@ test('Configuración muestra una sola sección y conserva navegación accesible'
   assert.match(settings, /aria-current/);
 });
 
-test('Configuración guarda notebooks automáticamente en backend y almacenamiento local', async () => {
+test('Configuración muestra Notebooks como panel de solo lectura derivado de Cursos', async () => {
   const settings = await readFile(new URL('src/pages/settings.js', root), 'utf8');
-  assert.match(settings, /Guardado automático/);
-  assert.match(settings, /async function syncNotebooks/);
-  assert.match(settings, /await saveNotebooksConfig\(next\)/);
-  assert.match(settings, /saveNotebooks\(next\)/);
-  assert.doesNotMatch(settings, /btn-save-notebooks|persistNotebooksLegacy|addNotebookLegacy/);
+  const courses = await readFile(new URL('src/pages/courses.js', root), 'utf8');
+  assert.match(settings, /function renderNotebookList/);
+  assert.match(settings, /state\.courses/);
+  assert.match(settings, /btn-go-to-courses/);
+  assert.doesNotMatch(settings, /nb-code|nb-course-name|nb-root|btn-add-notebook|async function addNotebook|async function syncNotebooks/);
+  assert.doesNotMatch(settings, /getNotebooks|saveNotebooks\(/);
+  assert.match(courses, /function syncNotebooksFromCourses/);
+  assert.match(courses, /await saveNotebooksConfig\(entries\)/);
+  assert.match(courses, /listNotebooksMcp/);
 });
 
 test('Configuración protege operaciones asíncronas y el reinicio no promete borrar datos', async () => {
@@ -810,7 +819,7 @@ test('Courses muestra progreso real y protege sus operaciones', async () => {
   assert.match(courses, /Number\.isInteger\(weeks\)/);
   assert.match(courses, /_folderBusy\.has\(index\)/);
   assert.match(courses, /persistCourseList/);
-  assert.match(courses, /ui\.surface\.card,\s*'relative hidden min-h-0 overflow-visible lg:block'/);
+  assert.match(courses, /ui\.surface\.cardGlass,\s*'relative hidden min-h-0 overflow-visible lg:block'/);
   assert.match(courses, /top-12 z-50 min-w-\[205px\]/);
   assert.match(api, /initializeReadme = true/);
   assert.match(main, /data-create-course/);
@@ -826,6 +835,23 @@ test('Courses incorpora el estado persistente de semanas sin reemplazar el progr
   assert.match(courses, /_courseStates/);
   assert.match(api, /get_course_state/);
   assert.match(rust, /state\.json/);
+});
+
+test('Courses valida skill, conexión y dependencias antes de abrir una IA', async () => {
+  const [courses, api] = await Promise.all([
+    readFile(new URL('src/pages/courses.js', root), 'utf8'),
+    readFile(new URL('src/api.js', root), 'utf8'),
+  ]);
+  assert.match(courses, /getSetupStatus/);
+  assert.match(courses, /checkDependencies/);
+  assert.match(courses, /validateAiReadiness/);
+  assert.match(courses, /skill_current/);
+  assert.match(courses, /mcp_claude_code_configured/);
+  assert.match(courses, /openai_plugin_current/);
+  assert.match(courses, /codex:\/\/threads\/new/);
+  assert.equal(courses.includes("https://chatgpt.com/"), false);
+  assert.match(courses, /navigate\("settings"\)/);
+  assert.match(api, /export async function getSetupStatus/);
 });
 
 test('Desktop comparte la detección de harnesses con la CLI', async () => {
@@ -929,7 +955,9 @@ test('la biblioteca muestra solo PDFs pertenecientes a proyectos registrados', a
 
 test('cada proyecto conserva una identidad visual accesible dentro de Jintia', async () => {
   const courses = await readFile(new URL('src/pages/courses.js', root), 'utf8');
-  assert.match(courses, /const PROJECT_COLORS = \[/);
+  const uiClasses = await readFile(new URL('src/uiClasses.js', root), 'utf8');
+  assert.match(courses, /const PROJECT_COLORS = Object\.values\(projectColorMap\)/);
+  assert.match(uiClasses, /export const projectColorMap = \{/);
   assert.match(courses, /const PROJECT_ICONS = \[/);
   assert.match(courses, /data-project-color/);
   assert.match(courses, /data-project-icon/);
@@ -938,4 +966,14 @@ test('cada proyecto conserva una identidad visual accesible dentro de Jintia', a
   assert.match(courses, /No modifica el icono de la carpeta de Windows/);
   assert.match(courses, /project_color: _modalData\.projectColor/);
   assert.match(courses, /project_icon: _modalData\.projectIcon/);
+});
+
+test('eliminar una asignatura usa un modal propio de Jintia, no un diálogo nativo del SO', async () => {
+  const courses = await readFile(new URL('src/pages/courses.js', root), 'utf8');
+  assert.match(courses, /function openDeleteModal/);
+  assert.match(courses, /id="course-delete-modal"/);
+  assert.match(courses, /role="dialog" aria-modal="true" aria-labelledby="course-delete-title"/);
+  assert.match(courses, /function handleDeleteKeydown/);
+  assert.match(courses, /function confirmDelete/);
+  assert.doesNotMatch(courses, /await confirm\(`¿Eliminar/);
 });

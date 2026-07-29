@@ -151,6 +151,20 @@ async fn run_notebooklm_auth() -> ActionResult {
 }
 
 #[tauri::command]
+async fn list_notebooks_mcp() -> Result<Vec<models::NotebookLmEntry>, String> {
+    tauri::async_runtime::spawn_blocking(mcp::list_notebooks)
+        .await
+        .map_err(|error| format!("No se pudo listar los notebooks: {error}"))?
+}
+
+#[tauri::command]
+async fn list_account_notebooks_mcp() -> Result<Vec<models::NotebookLmEntry>, String> {
+    tauri::async_runtime::spawn_blocking(mcp::list_account_notebooks)
+        .await
+        .map_err(|error| format!("No se pudo listar los notebooks de la cuenta: {error}"))?
+}
+
+#[tauri::command]
 async fn create_course_structure(
     root_path: String,
     course_code: String,
@@ -352,6 +366,8 @@ pub fn run() {
             get_setup_status,
             check_notebooklm_auth,
             run_notebooklm_auth,
+            list_notebooks_mcp,
+            list_account_notebooks_mcp,
             get_default_course_root,
             get_course_state,
             detect_harnesses,

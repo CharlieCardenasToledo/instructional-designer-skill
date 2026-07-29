@@ -14,11 +14,14 @@
     {
       "identifier": "opener:allow-open-url",
       "allow": [
+        { "url": "claude-cli://*" },
+        { "url": "codex://*" },
         { "url": "https://github.com/CharlieCardenasToledo" },
         { "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill" },
         { "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/issues" },
         { "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/master/LICENSE" },
-        { "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/master/PRIVACY.md" }
+        { "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/master/PRIVACY.md" },
+        { "url": "https://notebook.google.com/" }
       ]
     }
   ]

@@ -7,7 +7,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { getName, getTauriVersion, getVersion } from "@tauri-apps/api/app";
 import { open as dialogOpen } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { ALLOWED_EXTERNAL_URLS, APP_META } from "./appMeta.js";
+import { ALLOWED_AI_URLS, ALLOWED_EXTERNAL_URLS, APP_META } from "./appMeta.js";
 
 export async function getRuntimeAppMeta() {
   try {
@@ -23,7 +23,14 @@ export async function getRuntimeAppMeta() {
 }
 
 export async function openExternal(url) {
-  if (!ALLOWED_EXTERNAL_URLS.includes(url)) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("Enlace externo no válido");
+  }
+  const isAllowedAiUrl = ALLOWED_AI_URLS.schemes.includes(parsed.protocol);
+  if (!ALLOWED_EXTERNAL_URLS.includes(url) && !isAllowedAiUrl) {
     throw new Error("Enlace externo no permitido");
   }
   return openUrl(url);
@@ -110,6 +117,14 @@ export async function runNotebookLMAuth() {
 
 export async function saveNotebooksConfig(entries) {
   return invoke("save_notebooks_config", { entries });
+}
+
+export async function listNotebooksMcp() {
+  return invoke("list_notebooks_mcp");
+}
+
+export async function listAccountNotebooksMcp() {
+  return invoke("list_account_notebooks_mcp");
 }
 
 // ── Estructura de carpetas y sílabo ──────────────────────────────────────

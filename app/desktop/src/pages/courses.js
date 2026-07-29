@@ -1,11 +1,12 @@
-import { createCourseStructure, getDefaultCourseRoot, getCourseState, pickDirectory } from "../api.js";
+import { checkDependencies, checkNotebookLMAuth, createCourseStructure, getDefaultCourseRoot, getCourseState, getSetupStatus, listAccountNotebooksMcp, listNotebooksMcp, openExternal, pickDirectory, runNotebookLMAuth, saveNotebooksConfig } from "../api.js";
 import { escapeHtml, safeIndex } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
 import { navigate } from "../router.js";
 import { confirm } from "@tauri-apps/plugin-dialog";
-import { ui, cx } from "../uiClasses.js";
-import { ic, refreshIcons } from "../icons.js";
+import { ui, cx, projectColorMap } from "../uiClasses.js";
+import { ic, brandIcon, refreshIcons } from "../icons.js";
+import { APP_META } from "../appMeta.js";
 
 let _filter = "";
 let _statusFilter = "all";
@@ -23,19 +24,24 @@ let _appearanceOpener = null;
 let _courseStates = new Map();
 let _statesLoading = false;
 let _statesLoaded = false;
+let _aiCheckBusy = new Set();
+let _deleteIndex = -1;
+let _deleteOpener = null;
+let _notebookConnectIndex = -1;
+let _notebookConnectDraft = {};
+let _notebookConnectOpener = null;
+// Caché de sesión: la biblioteca de NotebookLM es la misma para todos los
+// cursos, así que se consulta una vez y se reutiliza hasta que el usuario
+// pide "Refrescar" (evita relanzar el proceso MCP en cada render).
+let _notebookLibrary = { status: "idle", entries: [], message: "" };
 
 const REQUIRED_WEEK_FIELDS = ["title", "unit", "topics", "outcomes", "bibliography", "graded_activity"];
 // Project color palette: hex values are stored in the database for persistence,
 // but CSS custom properties (styles.css) define the actual rendered colors,
 // allowing theme changes without modifying stored data.
-const PROJECT_COLORS = [
-  { value: "#0f766e", cssVar: "--project-color-jintia", label: "Verde Jintia" },
-  { value: "#2563eb", cssVar: "--project-color-blue", label: "Azul" },
-  { value: "#7c3aed", cssVar: "--project-color-purple", label: "Violeta" },
-  { value: "#c2410c", cssVar: "--project-color-orange", label: "Naranja" },
-  { value: "#be123c", cssVar: "--project-color-rose", label: "Rosa" },
-  { value: "#475569", cssVar: "--project-color-slate", label: "Grafito" },
-];
+// Single source of truth: derived from projectColorMap (uiClasses.js) so this
+// list can't drift out of sync with the documented design system palette.
+const PROJECT_COLORS = Object.values(projectColorMap).map(({ hex, cssVar, label }) => ({ value: hex, cssVar, label }));
 const PROJECT_ICONS = [
   { value: "folder", label: "Carpeta" },
   { value: "school", label: "Académico" },
@@ -116,6 +122,7 @@ function persistCourseList(nextCourses, successMessage) {
   _courseStates = new Map();
   try {
     saveCourses();
+    syncNotebooksFromCourses();
     if (successMessage) toast(successMessage, "success", 3200);
     return true;
   } catch (error) {
@@ -148,7 +155,7 @@ export function renderCourses() {
 
   el.innerHTML = `
     <div class="${ui.layout.stack}">
-      <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" aria-labelledby="courses-summary-title">
+      <section class="${cx(ui.surface.cardGlass, 'p-4')}" aria-labelledby="courses-summary-title">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 id="courses-summary-title" class="text-xl font-bold leading-7 text-brand-950">Tus caminos de aprendizaje</h2>
@@ -166,12 +173,12 @@ export function renderCourses() {
         </div>
       </section>
 
-      <section class="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center" aria-label="Buscar y filtrar asignaturas">
+      <section class="${cx(ui.surface.cardGlass, 'flex flex-col gap-3 p-3 sm:flex-row sm:items-center')}" aria-label="Buscar y filtrar asignaturas">
         <div class="relative min-w-0 flex-1">
           <label for="courses-search-input" class="sr-only">Buscar asignaturas</label>
           <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-500" aria-hidden="true">${ic("search", 18)}</span>
           <input class="h-11 pl-10 pr-10" id="courses-search-input" type="search" placeholder="Buscar por código, nombre o período" value="${escapeHtml(_filter)}">
-          <button type="button" class="${_filter ? "flex" : "hidden"} absolute inset-y-0 right-1 h-11 w-11 items-center justify-center rounded-full text-app-muted hover:text-app-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" id="courses-clear-search" aria-label="Limpiar búsqueda">
+          <button type="button" class="${_filter ? "flex" : "hidden"} absolute inset-y-0 right-1 h-11 w-11 items-center justify-center rounded-full border-transparent bg-transparent text-app-muted hover:text-app-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" id="courses-clear-search" aria-label="Limpiar búsqueda">
             <span class="text-[18px]">${ic("x", 18)}</span>
           </button>
         </div>
@@ -208,6 +215,14 @@ export function renderCourses() {
     <div class="fixed inset-0 z-[5100] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="project-appearance-modal">
       <div class="max-h-[calc(100vh-24px)] w-full max-w-[560px] overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100vh-48px)]" id="project-appearance-box"
         role="dialog" aria-modal="true" aria-labelledby="project-appearance-title"></div>
+    </div>
+    <div class="fixed inset-0 z-[5150] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="course-delete-modal">
+      <div class="w-full max-w-[440px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl" id="course-delete-box"
+        role="dialog" aria-modal="true" aria-labelledby="course-delete-title"></div>
+    </div>
+    <div class="fixed inset-0 z-[5150] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="notebook-connect-modal">
+      <div class="w-full max-w-[480px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl" id="notebook-connect-box"
+        role="dialog" aria-modal="true" aria-labelledby="notebook-connect-title"></div>
     </div>`;
 
   refreshIcons();
@@ -248,7 +263,7 @@ function renderCourseResults() {
   if (rows.length === 0) return renderNoResults();
 
   return `
-    <div class="${cx(ui.surface.card, 'relative hidden min-h-0 overflow-visible lg:block')}">
+    <div class="${cx(ui.surface.cardGlass, 'relative hidden min-h-0 overflow-visible lg:block')}">
       <table class="${ui.table.base}">
         <caption class="sr-only">Asignaturas registradas y avance del sílabo</caption>
         <thead>
@@ -257,7 +272,7 @@ function renderCourseResults() {
             <th class="${ui.table.th}">Período</th>
             <th class="${ui.table.th}">Avance</th>
             <th class="${ui.table.th}">Proyecto</th>
-            <th class="${cx(ui.table.th, 'w-[164px] text-right')}">Acciones</th>
+            <th class="${cx(ui.table.th, 'w-[228px] text-right')}">Acciones</th>
           </tr>
         </thead>
         <tbody>${rows.map(renderDesktopRow).join("")}</tbody>
@@ -277,7 +292,7 @@ function renderDesktopRow({ course, index, progress }) {
       <td class="${ui.table.td}">
         <div class="flex min-w-0 items-center gap-3">
           ${projectBadge(course)}
-          <button type="button" class="group/course min-w-0 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="edit" data-index="${index}">
+          <button type="button" class="group/course min-w-0 border-transparent bg-transparent text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="edit" data-index="${index}">
             <span class="block font-bold text-app-text group-hover/course:text-brand">${escapeHtml(course.name)}</span>
             <span class="mt-0.5 block text-xs font-semibold text-brand">${escapeHtml(course.code)}</span>
           </button>
@@ -305,9 +320,10 @@ function renderDesktopRow({ course, index, progress }) {
         </span>
       </td>
       <td class="${ui.table.td}">
-        <div class="flex justify-end gap-2">
+        <div class="flex justify-end gap-1.5">
+          ${renderAiButtons(index, course)}
           <button type="button" class="${cx(ui.button.base, ui.button.secondary, 'min-h-11 px-3')}" data-course-action="edit" data-index="${index}">
-            Editar sílabo
+            Editar
           </button>
           ${renderMoreMenu(index, course)}
         </div>
@@ -321,7 +337,7 @@ function renderCourseCard({ course, index, progress }) {
     <article class="${cx(ui.surface.cardGlass, 'flex min-w-0 flex-col p-4')}">
       <div class="flex min-w-0 items-center gap-3">
         ${projectBadge(course)}
-        <button type="button" class="min-w-0 flex-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="edit" data-index="${index}">
+        <button type="button" class="min-w-0 flex-1 border-transparent bg-transparent text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="edit" data-index="${index}">
           <span class="block truncate text-sm font-extrabold text-app-text">${escapeHtml(course.name)}</span>
           <span class="mt-1 block text-xs font-semibold text-brand">${escapeHtml(course.code)}</span>
         </button>
@@ -334,11 +350,23 @@ function renderCourseCard({ course, index, progress }) {
         </div>
         <div class="h-2 overflow-hidden rounded-full bg-slate-200"><div class="h-full rounded-full bg-brand" style="width:${progress.pct}%"></div></div>
       </div>
-      <div class="mt-4 flex gap-2">
+      <div class="mt-4 flex gap-1.5">
         <button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11 flex-1')}" data-course-action="edit" data-index="${index}">Continuar</button>
+        ${renderAiButtons(index, course)}
         ${renderMoreMenu(index, course)}
       </div>
     </article>`;
+}
+
+function renderAiButtons(index, course) {
+  const prepared = Boolean(String(course.project_path || "").trim());
+  return `
+    <button type="button" class="${cx(ui.button.base, ui.button.ghost, 'h-11 w-11 p-0')}" data-course-action="ai" data-ai-provider="chatgpt" data-index="${index}" aria-label="Abrir ${escapeHtml(course.name)} con ChatGPT" title="Abrir con ChatGPT">
+      ${brandIcon("openai", 18)}
+    </button>
+    <button type="button" class="${cx(ui.button.base, ui.button.ghost, 'h-11 w-11 p-0')}" data-course-action="ai" data-ai-provider="claude" data-index="${index}" aria-label="Abrir ${escapeHtml(course.name)} con Claude Code" title="${prepared ? "Abrir con Claude Code" : "Primero prepara la carpeta del proyecto"}" ${prepared ? "" : "disabled"}>
+      ${brandIcon("claude", 18)}
+    </button>`;
 }
 
 function renderMoreMenu(index, course) {
@@ -349,15 +377,20 @@ function renderMoreMenu(index, course) {
         ${ic("more-horizontal", 20)}
       </summary>
       <div class="absolute right-0 top-12 z-50 min-w-[205px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="folders" data-index="${index}" ${busy ? "disabled aria-busy=\"true\"" : ""}>
+        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg border-transparent bg-transparent px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="folders" data-index="${index}" ${busy ? "disabled aria-busy=\"true\"" : ""}>
           ${ic(busy ? "loader-2" : "folder-plus", 17)}
           ${busy ? "Preparando…" : course.project_status === "ready" ? "Recrear estructura" : "Crear carpeta del proyecto"}
         </button>
-        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="appearance" data-index="${index}">
+        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg border-transparent bg-transparent px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="appearance" data-index="${index}">
           ${ic("palette", 17)}
           Personalizar en Jintia
         </button>
-        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg px-3 text-left text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600" data-course-action="delete" data-index="${index}">
+        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg border-transparent bg-transparent px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="notebook" data-index="${index}">
+          ${ic("book-open", 17)}
+          ${course.notebook_id ? "Cambiar NotebookLM" : "Conectar NotebookLM"}
+        </button>
+        <div class="my-1 border-t border-slate-100"></div>
+        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg border-transparent bg-transparent px-3 text-left text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600" data-course-action="delete" data-index="${index}">
           ${ic("trash-2", 17)}
           Eliminar del registro
         </button>
@@ -426,6 +459,18 @@ function bindPageEvents() {
     if (event.target === appearanceOverlay) closeAppearanceModal();
   });
   appearanceOverlay?.addEventListener("keydown", handleAppearanceKeydown);
+
+  const deleteOverlay = document.getElementById("course-delete-modal");
+  deleteOverlay?.addEventListener("mousedown", event => {
+    if (event.target === deleteOverlay) closeDeleteModal();
+  });
+  deleteOverlay?.addEventListener("keydown", handleDeleteKeydown);
+
+  const notebookOverlay = document.getElementById("notebook-connect-modal");
+  notebookOverlay?.addEventListener("mousedown", event => {
+    if (event.target === notebookOverlay) closeNotebookConnectModal();
+  });
+  notebookOverlay?.addEventListener("keydown", handleNotebookConnectKeydown);
 }
 
 function updateResults() {
@@ -452,15 +497,157 @@ function bindResultEvents() {
       if (button.dataset.courseAction === "edit") editCourse(index);
       if (button.dataset.courseAction === "folders") generateFolders(index, button);
       if (button.dataset.courseAction === "appearance") openAppearanceModal(index, button);
-      if (button.dataset.courseAction === "delete") deleteCourse(index);
+      if (button.dataset.courseAction === "notebook") openNotebookConnectModal(index, button);
+      if (button.dataset.courseAction === "ai") openCourseWithAi(index, button.dataset.aiProvider);
+      if (button.dataset.courseAction === "delete") openDeleteModal(index, button);
     });
   });
 }
 
-async function deleteCourse(index) {
+function courseAiPrompt(course, provider) {
+  const folder = String(course.project_path || "").trim();
+  const base = `Trabaja con la asignatura ${course.code} — ${course.name}. Carpeta local: ${folder}.`;
+  return provider === "claude"
+    ? `${base} Revisa primero la estructura del proyecto y ayúdame con la tarea que te indicaré.`
+    : `${base} Revisa el contenido de la carpeta y ayúdame con la tarea que te indicaré.`;
+}
+
+async function openCourseWithAi(index, provider) {
+  if (_aiCheckBusy.has(index)) return;
   const course = state.courses[index];
   if (!course) return;
-  if (!await confirm(`¿Eliminar “${course.code} — ${course.name}” del registro?\nLas carpetas y archivos del disco se conservarán.`)) return;
+  const folder = String(course.project_path || "").trim();
+  _aiCheckBusy.add(index);
+  toast("Verificando skill, conexión y entorno…", "loading", 30000);
+  try {
+    const readiness = await validateAiReadiness(course, provider);
+    if (!readiness.ready) {
+      toast(`${readiness.title} ${readiness.missing.join(" ")}`, "error", 9000);
+      if (readiness.settingsSection) {
+        navigate("settings");
+        queueMicrotask(() => document.querySelector(`[data-settings-nav][data-section="${readiness.settingsSection}"]`)?.click());
+      }
+      return;
+    }
+    const prompt = courseAiPrompt(course, provider);
+    const deepLink = provider === "claude"
+      ? `claude-cli://open?cwd=${encodeURIComponent(folder)}&q=${encodeURIComponent(prompt)}`
+      : `codex://threads/new?path=${encodeURIComponent(folder)}&prompt=${encodeURIComponent(prompt)}`;
+    await openExternal(deepLink);
+    toast(
+      provider === "claude"
+        ? "Claude Code se abrirá y solicitará confirmar la carpeta del proyecto."
+        : "ChatGPT se abrirá con la carpeta del proyecto cargada; confirma el mensaje para enviarlo.",
+      "success",
+      6000,
+    );
+  } catch (error) {
+    toast(`No se pudo abrir ${provider === "claude" ? "Claude Code" : "la aplicación de ChatGPT"}. (${error})`, "error", 7000);
+  } finally {
+    _aiCheckBusy.delete(index);
+  }
+}
+
+async function validateAiReadiness(course, provider) {
+  const missing = [];
+  const folder = String(course.project_path || "").trim();
+  if (!folder) {
+    missing.push("Prepara primero la carpeta del proyecto desde el menú de la asignatura.");
+    return { ready: false, title: "No se puede abrir la IA.", missing, settingsSection: null };
+  }
+
+  const [setup, dependencies] = await Promise.all([getSetupStatus(), checkDependencies()]);
+  const requiredMissing = (dependencies || [])
+    .filter(dependency => dependency.required && !dependency.installed)
+    .map(dependency => dependency.name);
+  if (requiredMissing.length) {
+    missing.push(`Faltan herramientas requeridas: ${requiredMissing.join(", ")}.`);
+    return { ready: false, title: "El entorno todavía no está listo.", missing, settingsSection: "environment" };
+  }
+
+  if (provider === "claude") {
+    if (!setup?.skill_installed || !setup?.skill_current) missing.push("Instala o actualiza jintia-skill.");
+    if (!setup?.mcp_claude_code_configured) missing.push("Configura la conexión de Claude Code.");
+    return {
+      ready: missing.length === 0,
+      title: "Claude Code todavía no está listo.",
+      missing,
+      settingsSection: missing.some(item => item.includes("conexión")) ? "mcp-config" : "app-prefs",
+    };
+  }
+
+  if (!setup?.openai_plugin_installed || !setup?.openai_plugin_current) {
+    missing.push("Instala o actualiza el plugin de Jintia para ChatGPT y Codex.");
+  }
+  return {
+    ready: missing.length === 0,
+    title: "ChatGPT todavía no está listo.",
+    missing,
+    settingsSection: "app-prefs",
+  };
+}
+
+function openDeleteModal(index, opener) {
+  const course = state.courses[index];
+  if (!course) return;
+  _deleteIndex = index;
+  _deleteOpener = opener || document.activeElement;
+  const overlay = document.getElementById("course-delete-modal");
+  const box = document.getElementById("course-delete-box");
+  if (!overlay || !box) return;
+  box.innerHTML = `
+    <div class="flex items-start gap-3 border-b border-slate-200 px-5 py-4">
+      <span class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600" aria-hidden="true">${ic("trash-2", 20)}</span>
+      <div>
+        <h2 id="course-delete-title" class="text-base font-bold text-app-text">Eliminar del registro</h2>
+        <p class="mt-1 text-sm text-app-muted">¿Eliminar <strong class="font-semibold text-app-text">"${escapeHtml(course.code)} — ${escapeHtml(course.name)}"</strong> del registro? Las carpetas y archivos del disco se conservarán.</p>
+      </div>
+    </div>
+    <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 sm:flex-row sm:justify-end">
+      <button type="button" class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="delete-cancel">Cancelar</button>
+      <button type="button" class="${cx(ui.button.base, ui.button.danger, "min-h-11")}" id="delete-confirm">${ic("trash-2", 17)}Eliminar del registro</button>
+    </div>`;
+  refreshIcons();
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+  box.querySelector("#delete-cancel")?.addEventListener("click", () => closeDeleteModal());
+  box.querySelector("#delete-confirm")?.addEventListener("click", () => confirmDelete());
+  queueMicrotask(() => box.querySelector("#delete-cancel")?.focus());
+}
+
+function closeDeleteModal(restoreFocus = true) {
+  const overlay = document.getElementById("course-delete-modal");
+  overlay?.classList.add("hidden");
+  overlay?.classList.remove("flex");
+  if (restoreFocus) _deleteOpener?.focus?.();
+  _deleteIndex = -1;
+}
+
+function handleDeleteKeydown(event) {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeDeleteModal();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = [...document.querySelectorAll("#course-delete-box button:not([disabled])")];
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function confirmDelete() {
+  const index = _deleteIndex;
+  const course = state.courses[index];
+  closeDeleteModal(false);
+  if (!course) return;
   const next = state.courses.filter((_, courseIndex) => courseIndex !== index);
   if (persistCourseList(next)) {
     if (state.editingCourse === index) state.editingCourse = undefined;
@@ -494,7 +681,7 @@ function identityPickerMarkup(color, icon, prefix) {
       <span class="mt-4 block text-xs font-bold text-slate-700" id="${prefix}-color-label">Color</span>
       <div class="mt-2 flex flex-wrap gap-2" role="group" aria-labelledby="${prefix}-color-label">
         ${PROJECT_COLORS.map(option => `
-          <button type="button" class="flex h-11 w-11 items-center justify-center rounded-full border-4 border-white shadow-sm ${option.value === color ? "ring-2 ring-slate-800 ring-offset-1" : "ring-1 ring-slate-200"}" style="background:${option.hex || option.value}" data-project-color="${option.value}" aria-pressed="${option.value === color}" title="${option.label}" aria-label="${option.label}">
+          <button type="button" class="flex h-11 w-11 items-center justify-center rounded-full border-4 border-white shadow-sm ${option.value === color ? "ring-2 ring-slate-800 ring-offset-1" : "ring-1 ring-slate-200"}" style="background:${option.value}" data-project-color="${option.value}" aria-pressed="${option.value === color}" title="${option.label}" aria-label="${option.label}">
             ${option.value === color ? `<span class="text-white">${ic("check", 18)}</span>` : ""}
           </button>`).join("")}
       </div>
@@ -584,6 +771,85 @@ function handleAppearanceKeydown(event) {
   }
 }
 
+function openNotebookConnectModal(index, opener) {
+  const course = state.courses[index];
+  if (!course) return;
+  _notebookConnectIndex = index;
+  _notebookConnectOpener = opener || document.activeElement;
+  _notebookConnectDraft = {
+    notebook_id: course.notebook_id || "",
+    notebook_name: course.notebook_name || "",
+    notebook_url: course.notebook_url || "",
+  };
+  const overlay = document.getElementById("notebook-connect-modal");
+  overlay?.classList.remove("hidden");
+  overlay?.classList.add("flex");
+  renderNotebookConnectModal();
+}
+
+function renderNotebookConnectModal() {
+  const course = state.courses[_notebookConnectIndex];
+  const box = document.getElementById("notebook-connect-box");
+  if (!course || !box) return;
+  box.innerHTML = `
+    <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+      <div>
+        <h2 id="notebook-connect-title" class="text-base font-bold text-app-text">Conectar NotebookLM</h2>
+        <p class="mt-1 text-xs text-app-muted">${escapeHtml(course.code)} · ${escapeHtml(course.name)}</p>
+      </div>
+      <button type="button" class="${cx(ui.button.base, ui.button.ghost, "h-11 w-11 p-0")}" id="notebook-connect-close" aria-label="Cerrar">${ic("x", 20)}</button>
+    </div>
+    <div class="px-5 pb-5">${notebookPickerMarkup(_notebookConnectDraft)}</div>
+    <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 sm:flex-row sm:justify-end">
+      <button type="button" class="${cx(ui.button.base, ui.button.secondary, "min-h-11")}" id="notebook-connect-cancel">Cancelar</button>
+      <button type="button" class="${cx(ui.button.base, ui.button.primary, "min-h-11")}" id="notebook-connect-save">Guardar</button>
+    </div>`;
+  refreshIcons();
+  box.querySelector("#notebook-connect-close")?.addEventListener("click", () => closeNotebookConnectModal());
+  box.querySelector("#notebook-connect-cancel")?.addEventListener("click", () => closeNotebookConnectModal());
+  box.querySelector("#notebook-connect-save")?.addEventListener("click", saveNotebookConnection);
+  bindNotebookPickerEvents(box, _notebookConnectDraft, renderNotebookConnectModal);
+  ensureNotebookLibrary(false, renderNotebookConnectModal);
+  queueMicrotask(() => box.querySelector("#notebook-connect-close")?.focus());
+}
+
+function saveNotebookConnection() {
+  const next = state.courses.map((course, index) => index === _notebookConnectIndex
+    ? { ...course, notebook_id: _notebookConnectDraft.notebook_id, notebook_name: _notebookConnectDraft.notebook_name, notebook_url: _notebookConnectDraft.notebook_url }
+    : course);
+  if (!persistCourseList(next, _notebookConnectDraft.notebook_id ? "NotebookLM conectado" : "NotebookLM desconectado")) return;
+  closeNotebookConnectModal(false);
+  renderCourses();
+}
+
+function closeNotebookConnectModal(restoreFocus = true) {
+  const overlay = document.getElementById("notebook-connect-modal");
+  overlay?.classList.add("hidden");
+  overlay?.classList.remove("flex");
+  if (restoreFocus) _notebookConnectOpener?.focus?.();
+  _notebookConnectIndex = -1;
+}
+
+function handleNotebookConnectKeydown(event) {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeNotebookConnectModal();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const focusable = [...document.querySelectorAll("#notebook-connect-box button:not([disabled]), #notebook-connect-box select:not([disabled])")];
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 function editCourse(index) {
   state.editingCourse = index;
   navigate("syllabus");
@@ -633,6 +899,175 @@ async function generateFolders(index, button) {
   }
 }
 
+// ── Selector de NotebookLM (compartido entre el asistente de creación y el
+// modal "Conectar NotebookLM" de un curso existente) ────────────────────────
+async function ensureNotebookLibrary(force, rerender) {
+  if (_notebookLibrary.status !== "idle" && !force) return;
+  _notebookLibrary = { status: "checking", entries: [], message: "" };
+  rerender();
+  try {
+    const auth = await checkNotebookLMAuth();
+    if (!auth.authenticated) {
+      _notebookLibrary = { status: "no-auth", entries: [], message: auth.message };
+      rerender();
+      return;
+    }
+    const entries = await listNotebooksMcp();
+    _notebookLibrary = { status: entries.length ? "ready" : "empty", entries, message: "" };
+  } catch (error) {
+    _notebookLibrary = { status: "error", entries: [], message: String(error) };
+  }
+  rerender();
+}
+
+function notebookPickerMarkup(draft) {
+  const connected = Boolean(draft.notebook_id);
+  return `
+    <div class="mt-4 rounded-xl border border-slate-200 p-4" id="notebook-picker">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <strong class="block text-sm text-app-text">NotebookLM <span class="font-normal text-app-muted">(opcional)</span></strong>
+          <span class="mt-1 block text-xs leading-5 text-app-muted">Vincula un notebook para que la skill investigue fuentes reales al generar las guías.</span>
+        </div>
+        <span class="mt-0.5 shrink-0 text-teal-600">${ic("book-open", 20)}</span>
+      </div>
+      <div class="mt-3">${notebookPickerBody(draft, connected)}</div>
+    </div>`;
+}
+
+function notebookPickerBody(draft, connected) {
+  if (connected) {
+    return `
+      <div class="flex items-center justify-between gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2.5">
+        <div class="min-w-0">
+          <div class="truncate text-sm font-semibold text-teal-900">${escapeHtml(draft.notebook_name || draft.notebook_id)}</div>
+          ${draft.notebook_url ? `<div class="mt-0.5 truncate text-xs text-teal-700">${escapeHtml(draft.notebook_url)}</div>` : ""}
+        </div>
+        <button type="button" class="${cx(ui.button.base, ui.button.ghost, ui.button.sm, "shrink-0")}" data-notebook-action="disconnect">${ic("x", 14)}Quitar</button>
+      </div>`;
+  }
+  const lib = _notebookLibrary;
+  if (lib.status === "idle" || lib.status === "checking") {
+    return `<div class="flex items-center gap-2 text-xs text-app-muted"><span class="animate-spin">${ic("loader-2", 14)}</span>Verificando conexión con NotebookLM…</div>`;
+  }
+  if (lib.status === "no-auth") {
+    return `
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+        <span class="text-xs text-app-muted">Inicia sesión con NotebookLM para ver tus notebooks.</span>
+        <button type="button" class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-notebook-action="auth">${ic("key", 14)}Conectar sesión</button>
+      </div>`;
+  }
+  if (lib.status === "error") {
+    return `
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
+        <span class="text-xs text-red-700">${escapeHtml(lib.message || "No se pudo consultar NotebookLM.")}</span>
+        <button type="button" class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-notebook-action="refresh">${ic("refresh-cw", 14)}Reintentar</button>
+      </div>`;
+  }
+  if (lib.status === "scanning-account") {
+    return `<div class="flex items-center gap-2 text-xs text-app-muted"><span class="animate-spin">${ic("loader-2", 14)}</span>Abriendo cada notebook de tu cuenta para leer su id real (puede tardar 1–2 minutos)…</div>`;
+  }
+  if (lib.status === "empty") {
+    return `
+      <div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+        <p class="text-xs text-app-muted">No tienes notebooks en NotebookLM todavía.</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button type="button" class="${cx(ui.button.base, ui.button.primary, ui.button.sm)}" data-notebook-action="create">${ic("external-link", 14)}Crear notebook</button>
+          <button type="button" class="${cx(ui.button.base, ui.button.secondary, ui.button.sm)}" data-notebook-action="refresh">${ic("refresh-cw", 14)}Refrescar lista</button>
+        </div>
+        <button type="button" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline" data-notebook-action="scan-account">${ic("search", 12)}Buscar en toda mi cuenta de NotebookLM</button>
+      </div>`;
+  }
+  return `
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <label class="sr-only" for="notebook-select">Seleccionar notebook</label>
+      <select id="notebook-select" class="min-h-11 flex-1">
+        <option value="">Seleccionar notebook…</option>
+        ${lib.entries.map(entry => `<option value="${escapeHtml(entry.id)}">${escapeHtml(entry.name)}</option>`).join("")}
+      </select>
+      <button type="button" class="${cx(ui.button.base, ui.button.ghost, ui.button.sm)}" data-notebook-action="refresh" title="Refrescar biblioteca local" aria-label="Refrescar biblioteca local de notebooks">${ic("refresh-cw", 14)}</button>
+    </div>
+    <div class="mt-2 flex flex-wrap gap-3">
+      <button type="button" class="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline" data-notebook-action="create">${ic("external-link", 12)}Crear uno nuevo</button>
+      <button type="button" class="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline" data-notebook-action="scan-account">${ic("search", 12)}¿No está en la lista? Buscar en toda mi cuenta</button>
+    </div>`;
+}
+
+function bindNotebookPickerEvents(scope, draft, rerender) {
+  const picker = scope?.querySelector("#notebook-picker");
+  if (!picker) return;
+  picker.querySelector("#notebook-select")?.addEventListener("change", event => {
+    const entry = _notebookLibrary.entries.find(item => item.id === event.target.value);
+    draft.notebook_id = entry?.id || "";
+    draft.notebook_name = entry?.name || "";
+    draft.notebook_url = entry?.url || "";
+    rerender();
+  });
+  picker.querySelector('[data-notebook-action="disconnect"]')?.addEventListener("click", () => {
+    draft.notebook_id = "";
+    draft.notebook_name = "";
+    draft.notebook_url = "";
+    rerender();
+  });
+  picker.querySelector('[data-notebook-action="refresh"]')?.addEventListener("click", () => ensureNotebookLibrary(true, rerender));
+  picker.querySelector('[data-notebook-action="create"]')?.addEventListener("click", async () => {
+    try { await openExternal(APP_META.notebookLmUrl); }
+    catch (error) { toast(`No se pudo abrir NotebookLM: ${error}`, "error", 6000); }
+  });
+  picker.querySelector('[data-notebook-action="auth"]')?.addEventListener("click", async () => {
+    toast("Abriendo Chrome para autenticación…", "loading", 30000);
+    try {
+      const result = await runNotebookLMAuth();
+      toast(result.message, result.success ? "success" : "error", 6000);
+    } catch (error) {
+      toast(`No se pudo iniciar la autenticación: ${error}`, "error", 7000);
+    }
+    await ensureNotebookLibrary(true, rerender);
+  });
+  picker.querySelector('[data-notebook-action="scan-account"]')?.addEventListener("click", () => scanAccountNotebooks(rerender));
+}
+
+// Busca en todo notebooklm.google.com, no solo en la biblioteca local del MCP
+// (que solo conoce lo que se registró antes con add_notebook). Es lenta a
+// propósito: abre cada notebook para leer su id real en la URL en vez de
+// adivinarlo del HTML de la tarjeta.
+async function scanAccountNotebooks(rerender) {
+  const previousEntries = _notebookLibrary.entries;
+  _notebookLibrary = { status: "scanning-account", entries: previousEntries, message: "" };
+  rerender();
+  try {
+    const accountEntries = await listAccountNotebooksMcp();
+    const merged = new Map(previousEntries.map(entry => [entry.id, entry]));
+    accountEntries.forEach(entry => merged.set(entry.id, entry));
+    const entries = [...merged.values()];
+    _notebookLibrary = { status: entries.length ? "ready" : "empty", entries, message: "" };
+  } catch (error) {
+    _notebookLibrary = { status: previousEntries.length ? "ready" : "error", entries: previousEntries, message: String(error) };
+    toast(`No se pudo buscar en tu cuenta de NotebookLM: ${error}`, "error", 7000);
+  }
+  rerender();
+}
+
+// Deriva config/notebooks.json a partir de state.courses: el curso es la
+// única fuente de verdad, así que este archivo nunca se edita a mano y no
+// puede desincronizarse del registro real de asignaturas.
+async function syncNotebooksFromCourses() {
+  const entries = state.courses
+    .filter(course => String(course.notebook_id || "").trim() && String(course.project_path || "").trim())
+    .map(course => ({
+      courseCode: course.code,
+      courseName: course.name,
+      rootPath: course.project_path,
+      notebookId: course.notebook_id,
+      notebookUrl: course.notebook_url || "",
+    }));
+  try {
+    await saveNotebooksConfig(entries);
+  } catch {
+    // Sincronización best-effort: un fallo aquí no debe interrumpir el guardado del curso.
+  }
+}
+
 function openModal(opener) {
   _modalOpener = opener || document.activeElement;
   _modalStep = 1;
@@ -642,6 +1077,7 @@ function openModal(opener) {
     description: "", initializeReadme: true,
     rootPath: "", rootPathLoading: true, rootPathCustomized: false,
     projectColor: PROJECT_COLORS[0].value, projectIcon: PROJECT_ICONS[0].value,
+    notebook_id: "", notebook_name: "", notebook_url: "",
   };
   const overlay = document.getElementById("course-modal");
   overlay?.classList.remove("hidden");
@@ -762,6 +1198,7 @@ function renderCoursePreparationStep() {
         </div>
       </div>
       ${identityPickerMarkup(_modalData.projectColor, _modalData.projectIcon, "m")}
+      ${notebookPickerMarkup(_modalData)}
       <div id="course-modal-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1"></div>
     </div>
     ${modalFooter(`<button type="button" class="${cx(ui.button.base, ui.button.secondary, 'min-h-11')}" id="m-back">${ic("arrow-left", 17)}Atrás</button>`,
@@ -838,6 +1275,10 @@ function bindModalEvents() {
     queueMicrotask(() => document.querySelector(`[data-project-icon="${_modalData.projectIcon}"]`)?.focus());
   }));
   box?.querySelector("#m-create")?.addEventListener("click", event => createCourse(event.currentTarget));
+  if (_modalStep === 2) {
+    bindNotebookPickerEvents(box, _modalData, renderModal);
+    ensureNotebookLibrary(false, renderModal);
+  }
 }
 
 function captureAndValidateStepOne() {
@@ -933,6 +1374,9 @@ async function createCourse(button) {
     project_status: "preparing",
     project_color: _modalData.projectColor,
     project_icon: _modalData.projectIcon,
+    notebook_id: _modalData.notebook_id || "",
+    notebook_name: _modalData.notebook_name || "",
+    notebook_url: _modalData.notebook_url || "",
     created_at: new Date().toISOString(),
   };
   if (!persistCourseList([...state.courses, course])) {

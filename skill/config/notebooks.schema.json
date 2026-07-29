@@ -20,7 +20,7 @@
           "notebookId": { "type": "string" },
           "notebookUrl": {
             "type": "string",
-            "pattern": "^(|https://notebooklm\\.google\\.com/notebook/.+)$"
+            "pattern": "^(|https://(notebook|notebooklm)\\.google\\.com/notebook/.+)$"
           }
         }
       }

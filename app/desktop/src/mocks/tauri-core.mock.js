@@ -54,6 +54,17 @@ const state = {
     ? { authenticated: true, message: "Sesión activa — demo@uide.edu.ec" }
     : { authenticated: false, message: "Sin sesión activa. El skill no podrá consultar NotebookLM." },
   lastSkillZip: BYPASS ? "/mock/exports/jintia-skill.zip" : null,
+  notebooksLibrary: BYPASS ? [
+    { id: "ift200-fuentes", name: "IFT200 — Interacción Persona Computador", url: "https://notebook.google.com/notebook/ift200-fuentes", description: "Fuentes curadas para el curso de IPC." },
+  ] : [],
+  // Simula la cuenta REAL de NotebookLM (más notebooks que la biblioteca local
+  // curada arriba), para poder probar "Buscar en toda mi cuenta" sin conexión real.
+  accountNotebooksLibrary: [
+    { id: "ift200-fuentes", name: "IFT200 — Interacción Persona Computador", url: "https://notebook.google.com/notebook/ift200-fuentes", description: "" },
+    { id: "bases-datos-2026", name: "IFT 200 - Estructura, modelado, almacenamiento de base de datos", url: "https://notebook.google.com/notebook/bases-datos-2026", description: "" },
+    { id: "cosmovision-shuar", name: "Cosmovision and Grammar of the Shuar People", url: "https://notebook.google.com/notebook/cosmovision-shuar", description: "" },
+    { id: "tesis-2026", name: "Tesis", url: "https://notebook.google.com/notebook/tesis-2026", description: "" },
+  ],
   templates: [
     { id: "elegantbook-clasico", name: "ElegantBook Clásico", description: "Portada institucional con bloques pedagógicos numerados y bibliografía APA.", tags: ["Institucional", "Formal"], previewType: "elegantbook-clasico", featured: true, documentClass: "elegantbook" },
     { id: "kaohandt-marginal", name: "Kaohandt Marginal", description: "Diseño editorial con notas laterales para conceptos, preguntas y evidencias.", tags: ["Personal", "Marginal"], previewType: "kaohandt-marginal", featured: false, documentClass: "kaobook" },
@@ -192,9 +203,26 @@ const handlers = {
   check_notebooklm_auth: () => ({ ...state.auth }),
   run_notebooklm_auth: () => {
     state.auth = { authenticated: true, message: "Sesión activa — demo@example.com" };
+    if (!state.notebooksLibrary.length) {
+      state.notebooksLibrary = [
+        { id: "ift200-fuentes", name: "IFT200 — Interacción Persona Computador", url: "https://notebook.google.com/notebook/ift200-fuentes", description: "Fuentes curadas para el curso de IPC." },
+      ];
+    }
     return actionResult(true, "Sesión iniciada (mock).");
   },
   save_notebooks_config: () => actionResult(true, "Notebooks guardados (mock)."),
+  list_notebooks_mcp: () => {
+    if (!state.auth.authenticated) {
+      throw new Error("Inicia sesión con NotebookLM antes de listar tus notebooks.");
+    }
+    return state.notebooksLibrary.map(entry => ({ ...entry }));
+  },
+  list_account_notebooks_mcp: () => {
+    if (!state.auth.authenticated) {
+      throw new Error("Inicia sesión con NotebookLM antes de listar tus notebooks.");
+    }
+    return state.accountNotebooksLibrary.map(entry => ({ ...entry }));
+  },
   get_default_course_root: () => actionResult(true, "Carpeta de proyectos Jintia disponible (mock).", { path: "C:\\Users\\Demo\\Documents\\Jintia" }),
   get_course_state: () => ({ success: true, exists: false, message: "El proyecto aún no tiene estado Jintia (mock)." }),
   detect_harnesses: () => ({ schemaVersion: "1.0.0", projectRoot: "C:\\Users\\Demo\\Documents\\Jintia", providers: [{ id: "claude", name: "Claude Code", scope: "global", status: "detected", installed: false, hasSkills: false, supportsHooks: true }] }),
