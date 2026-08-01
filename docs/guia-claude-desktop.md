@@ -141,7 +141,7 @@ versión que este proyecto ha verificado:
   "mcpServers": {
     "notebooklm": {
       "command": "npx",
-      "args": ["-y", "@charlie.act7/gemini-notebook-mcp@2.0.0"]
+      "args": ["-y", "@charlie.act7/gemini-notebook-mcp@2.3.3"]
     }
   }
 }

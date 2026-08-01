@@ -728,7 +728,7 @@ test('Jintia se empaqueta como plugin universal para ChatGPT y Codex', async () 
   const manifest = JSON.parse(manifestText);
   const mcp = JSON.parse(mcpText);
   assert.equal(manifest.name, "jintia");
-  assert.equal(manifest.version, "10.8.0");
+  assert.equal(manifest.version, "10.9.0");
   assert.equal(manifest.skills, "./skills/");
   assert.equal(manifest.mcpServers, "./.mcp.json");
   assert.equal(mcp.notebooklm.command, "npx");

@@ -83,7 +83,7 @@ de dependencias y las operaciones de GitHub.
   `kaohandt-marginal`. La plantilla activa se conserva en la configuración
   institucional y se aplica al generar o compilar documentos.
 - Archivo semanal: `guia-semana-XX.tex`.
-- NotebookLM MCP: `@charlie.act7/gemini-notebook-mcp@2.0.0`.
+- NotebookLM MCP: `@charlie.act7/gemini-notebook-mcp@2.3.3`.
 - La configuración generada debe validar contra los esquemas de `skill/config`.
 
 ## Versionado
@@ -91,7 +91,7 @@ de dependencias y las operaciones de GitHub.
 La skill y la aplicación se versionan de forma independiente:
 
 - `skill/package.json` contiene la versión distribuible de `jintia-skill`
-  (`10.8.0` en la versión actual).
+  (`10.9.0` en la versión actual).
 - `package.json`, `app/desktop/package.json` y Tauri contienen la versión de
   la aplicación (`1.0.0` en la versión actual).
 

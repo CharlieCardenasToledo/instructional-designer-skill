@@ -32,6 +32,7 @@ env/
 node_modules/
 app/desktop/dist/
 app/desktop/src-tauri/target/
+dist/
 
 # OS artifacts
 .DS_Store

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/master/release/release-manifest.schema.json",
+  "title": "Jintia Skill release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "skillVersion", "minimumDesktopVersion", "source", "compatibility", "mcp", "artifacts"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "skillVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "minimumDesktopVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "compatibility": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["claude", "codex", "chatgpt"] }
+    },
+    "mcp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package", "version", "node", "npmIntegrity"],
+      "properties": {
+        "package": { "const": "@charlie.act7/gemini-notebook-mcp" },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "node": { "type": "string", "minLength": 1 },
+        "npmIntegrity": { "type": "string", "pattern": "^sha512-" }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill", "openaiPlugin"],
+      "properties": {
+        "skill": { "$ref": "#/$defs/artifact" },
+        "openaiPlugin": { "$ref": "#/$defs/artifact" }
+      }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256", "bytes", "installRoot"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^[^/]+\\.zip$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "installRoot": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

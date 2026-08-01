@@ -1,0 +1,11 @@
+{
+  "$schemaVersion": "1.0.0",
+  "repository": "CharlieCardenasToledo/instructional-designer-skill",
+  "minimumDesktopVersion": "1.1.0",
+  "mcp": {
+    "package": "@charlie.act7/gemini-notebook-mcp",
+    "version": "2.3.3",
+    "node": ">=22.13.0",
+    "npmIntegrity": "sha512-+USWTG9F07fWz6qxamEXk16Btt6ME/KJxihZJPCB5ODVoNRnxx9cPOAyujcHF4bHvzDRkLrhKtvKBzbs+nzjeA=="
+  }
+}

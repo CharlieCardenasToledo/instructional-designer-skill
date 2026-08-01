@@ -89,7 +89,7 @@ Competidores ofrecen LMS genéricos (Moodle, Canvas) o herramientas pedagógicas
 ## Evidence on Hand
 
 **Published artifacts:**
-- Aplicación v10.8.0 (descargable: Windows .exe/.msi, macOS .dmg).
+- Aplicación Desktop 1.0.0 publicada inicialmente en la release monorepo v10.8.0.
 - README principal: propósito, instalación, uso, estructura.
 - Documentación técnica: guía Claude Desktop, arquitectura, design system, proceso de release.
 - DESIGN.md: sistema visual completo (colores, tipografía, componentes glassmorphic).

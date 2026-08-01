@@ -7,6 +7,11 @@
 - Mantener el significado en “camino” o “vía”.
 - No afirmar representación, aprobación o autorización de comunidades u organizaciones Shuar.
 
+La marca toma su nombre de `Jíntia`, voz documentada en Shuar Chicham con el
+significado de “camino”. La expresión `Aarma jintia` aparece como “textos
+instructivos” en el *Currículo Nacional Intercultural Bilingüe de la
+Nacionalidad Shuar* del Ministerio de Educación del Ecuador (2017, p. 106).
+
 ## Permitido
 
 Usar caminos abstractos, conexiones, nodos, progresión, capas, módulos, mapas conceptuales, orientación y geometría contemporánea no atribuida culturalmente.

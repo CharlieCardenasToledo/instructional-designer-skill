@@ -57,7 +57,7 @@ agrégalo a mano una vez:
 ```toml
 [mcp_servers.notebooklm]
 command = "npx"
-args = ["-y", "@charlie.act7/gemini-notebook-mcp@2.1.1"]
+args = ["-y", "@charlie.act7/gemini-notebook-mcp@2.3.3"]
 ```
 
 `openai-plugin/.mcp.json` es un archivo distinto: alimenta el plugin/conector

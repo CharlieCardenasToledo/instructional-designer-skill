@@ -10,6 +10,8 @@ const skillPackage = await json("skill/package.json");
 const brand = await json("skill/config/brand.json");
 const claudePlugin = await json("skill/.claude-plugin/plugin.json");
 const openAiPlugin = await json("openai-plugin/.codex-plugin/plugin.json");
+const openAiMcp = await json("openai-plugin/.mcp.json");
+const releaseConfig = await json("release/release-config.json");
 const [payload, appMeta, mock, changelog, skillCheck] = await Promise.all([
   read("app/desktop/src-tauri/src/payload.rs"),
   read("app/desktop/src/appMeta.js"),
@@ -35,6 +37,14 @@ const checks = [
 for (const [label, actual] of checks) {
   if (actual !== expected) failures.push(`${label}: ${actual || "ausente"}; esperado ${expected}`);
 }
+const expectedMcp = `${releaseConfig.mcp.package}@${releaseConfig.mcp.version}`;
+if (openAiMcp.notebooklm?.args?.at(-1) !== expectedMcp) {
+  failures.push(`Plugin OpenAI: MCP distinto de ${expectedMcp}`);
+}
+if (!payload.includes("SKILL_VERSION")) failures.push("Desktop no declara la versión disponible de la skill");
+const mcpSource = await read("app/desktop/src-tauri/src/mcp.rs");
+if (!mcpSource.includes(expectedMcp)) failures.push(`Desktop no fija ${expectedMcp}`);
+if (releaseConfig.minimumDesktopVersion !== "1.1.0") failures.push("minimumDesktopVersion debe declarar 1.1.0 para la primera release separada");
 if (!changelog.includes(`jintia-skill\` ${expected}`)) {
   failures.push(`CHANGELOG.md no declara jintia-skill ${expected} en Sin publicar`);
 }

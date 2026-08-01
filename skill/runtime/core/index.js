@@ -9,6 +9,7 @@ const CONTEXT_FILE = "JINTIA.md";
 const CONTEXT_SECTIONS = ["Course", "Pedagogy", "Editorial"];
 const harnesses = require("./harnesses");
 const harnessManager = require("./harness-manager");
+const SKILL_VERSION = require("../../package.json").version;
 
 function courseRoot(course) {
   if (!course || typeof course !== "string") throw new TypeError("Se requiere la ruta del curso.");
@@ -79,7 +80,7 @@ function updateCourseState(course, week, status, source, now = new Date()) {
   const paths = coursePaths(course);
   const state = loadCourseState(course);
   state.schemaVersion ||= "1.0";
-  state.jintiaVersion ||= "10.8.0";
+  state.jintiaVersion ||= SKILL_VERSION;
   state.weeks[normalizeWeek(week)] = {
     status,
     updatedAt: now.toISOString(),

@@ -3,6 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { PROVIDERS, providerById, normalizeProviders } = require("./harnesses");
+const SKILL_VERSION = require("../../package.json").version;
 
 const MANIFEST = ".jintia-install.json";
 
@@ -52,7 +53,7 @@ function readInstalledState(target, availableVersion) {
   return { exists, installed, managed: Boolean(manifest?.managedBy === "jintia"), manifest, version, availableVersion, status };
 }
 
-function resolveTargets({ projectRoot = process.cwd(), homeDir = process.env.USERPROFILE || process.env.HOME || "", env = process.env, platform = process.platform, providers = PROVIDERS, availableVersion = "10.8.0" } = {}) {
+function resolveTargets({ projectRoot = process.cwd(), homeDir = process.env.USERPROFILE || process.env.HOME || "", env = process.env, platform = process.platform, providers = PROVIDERS, availableVersion = SKILL_VERSION } = {}) {
   return providers.flatMap(provider => ["project", "global"].map(scope => {
     const target = installPath(provider, scope, path.resolve(projectRoot), homeDir, env, platform);
     const state = readInstalledState(target, availableVersion);
@@ -171,7 +172,7 @@ function selectTargets(options) {
 function mutate(operation, options) {
   if (!options.confirm) throw new Error("La operación modifica archivos. Confirma explícitamente con --yes.");
   const sourcePath = path.resolve(options.sourcePath || path.join(__dirname, "..", ".."));
-  const version = options.version || "10.8.0";
+  const version = options.version || SKILL_VERSION;
   const results = [];
   for (const item of selectTargets(options)) {
     const before = readInstalledState(item.target, version);

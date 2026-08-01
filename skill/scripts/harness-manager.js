@@ -3,6 +3,7 @@
 
 const path = require("node:path");
 const { detectInstallationStates, mutate } = require("../runtime/core");
+const skillVersion = require("../package.json").version;
 
 const args = process.argv.slice(2);
 const operation = args.find(arg => !arg.startsWith("--")) || "status";
@@ -19,7 +20,7 @@ const options = {
   projectRoot,
   scope,
   sourcePath: value("--source"),
-  version: value("--version") || "10.8.0",
+  version: value("--version") || skillVersion,
   confirm: args.includes("--yes")
 };
 

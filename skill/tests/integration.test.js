@@ -12,6 +12,7 @@ const { readCourse } = require("../../packages/core");
 const root = path.resolve(__dirname, "..");
 const cli = path.join(root, "bin", "jintia.js");
 const fixtures = path.join(__dirname, "fixtures");
+const skillVersion = require("../package.json").version;
 function copyFixture(name) {
   const target = fs.mkdtempSync(path.join(os.tmpdir(), `jintia-${name}-`));
   fs.cpSync(path.join(fixtures, name), target, { recursive: true });
@@ -103,7 +104,7 @@ test("el gestor instala, actualiza, repara y desinstala sin sobrescribir rutas a
   fs.writeFileSync(path.join(source, "SKILL.md"), "---\nname: jintia-skill\n---\n");
   fs.mkdirSync(path.join(project, ".gemini"), { recursive: true });
   assert.equal(detectInstallationStates({ projectRoot: project, providers: ["gemini"] })[0].state.status, "detected");
-  const base = { projectRoot: project, sourcePath: source, providers: ["claude", "codex", "cursor"], scope: "project", version: "10.8.0", confirm: true };
+  const base = { projectRoot: project, sourcePath: source, providers: ["claude", "codex", "cursor"], scope: "project", version: skillVersion, confirm: true };
   const installed = mutate("install", base);
   assert.equal(installed.results.length, 3);
   assert.ok(installed.results.every(result => fs.existsSync(path.join(result.target, "VERSION"))));
@@ -134,7 +135,7 @@ test("Codex recibe subagentes reales en .codex/agents/, Claude conserva agents/*
     path.join(source, "agents", "jintia-researcher.md"),
     "# Jintia Researcher\n\n## Misión\n\nLocalizar evidencia verificable.\n\n## Límites\n\nNo inventar fuentes.\n"
   );
-  const base = { projectRoot: project, sourcePath: source, providers: ["claude", "codex"], scope: "project", version: "10.8.0", confirm: true };
+  const base = { projectRoot: project, sourcePath: source, providers: ["claude", "codex"], scope: "project", version: skillVersion, confirm: true };
   mutate("install", base);
 
   const claudeAgentsInSkill = path.join(project, ".claude", "skills", "jintia-skill", "agents", "jintia-researcher.md");
@@ -183,7 +184,7 @@ test("la copia instalada en Codex conserva un runtime autocontenido y ejecutable
     sourcePath: root,
     providers: ["codex"],
     scope: "project",
-    version: "10.8.0",
+    version: skillVersion,
     confirm: true,
   }).results[0].target;
 

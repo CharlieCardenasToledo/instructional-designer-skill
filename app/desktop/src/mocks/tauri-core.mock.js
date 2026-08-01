@@ -38,8 +38,8 @@ const state = {
   setup: {
     skill_installed: BYPASS,
     skill_current: BYPASS,
-    skill_version: BYPASS ? "10.8.0" : "",
-    available_skill_version: "10.8.0",
+    skill_version: BYPASS ? "10.9.0" : "",
+    available_skill_version: "10.9.0",
     openai_plugin_installed: BYPASS,
     openai_plugin_current: BYPASS,
     openai_plugin_path: BYPASS ? "/mock/home/.codex/plugins/jintia" : "",
@@ -169,7 +169,7 @@ const handlers = {
     });
   },
   export_openai_plugin_zip: ({ destinationDir }) => {
-    const path = `${destinationDir || "/mock/exports"}/jintia-openai-plugin-10.8.0.zip`;
+    const path = `${destinationDir || "/mock/exports"}/jintia-openai-plugin-10.9.0.zip`;
     return actionResult(true, "Plugin universal exportado (mock).", { path });
   },
   configure_mcp: ({ target }) => {

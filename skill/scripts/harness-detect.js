@@ -4,10 +4,11 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { detectInstallationStates } = require("../runtime/core");
+const skillVersion = require("../package.json").version;
 const args = process.argv.slice(2);
 const projectRoot = args.find(arg => !arg.startsWith("--")) || process.cwd();
 const explicit = args.filter(arg => arg.startsWith("--providers=")).flatMap(arg => arg.slice("--providers=".length).split(","));
-const states = detectInstallationStates({ projectRoot, explicitProviders: explicit, availableVersion: "10.8.0" });
+const states = detectInstallationStates({ projectRoot, explicitProviders: explicit, availableVersion: skillVersion });
 const report = {
   schemaVersion: "1.1.0",
   projectRoot,

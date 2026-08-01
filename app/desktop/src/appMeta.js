@@ -8,7 +8,7 @@ export const APP_META = Object.freeze({
   brandName: "Jintia",
   desktopName: "Jintia Desktop",
   skillName: "Jintia Skill",
-  skillVersion: "10.8.0",
+  skillVersion: "10.9.0",
   creator: "Charlie Cárdenas Toledo",
   creatorUrl: "https://github.com/CharlieCardenasToledo",
   tagline: "Diseña el camino del aprendizaje.",

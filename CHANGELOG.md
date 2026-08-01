@@ -5,7 +5,12 @@ y versionado semántico.
 
 ## Sin publicar
 
-- Preparada `jintia-skill` 10.8.0 con un pipeline visual único que renderiza,
+- Separada la distribución de la skill mediante ZIPs reproducibles, manifiesto
+  versionado, SHA-256 y attestations de procedencia para que Jintia Desktop la
+  consuma sin importar archivos fuente entre repositorios.
+- Actualizada la integración oficial con
+  `@charlie.act7/gemini-notebook-mcp@2.3.3` y Node.js `>=22.13.0`.
+- Preparada `jintia-skill` 10.9.0 con un pipeline visual único que renderiza,
   inspecciona, valida, actualiza el manifiesto y entrega el bloque LaTeX.
 - Implementados fallbacks ejecutables para Matplotlib, GeoPandas y TikZ, más
   generadores PlantUML, Circuitikz, Chemfig y Forest desde modelos neutrales.

@@ -3,7 +3,7 @@ name: Release Windows
 on:
   workflow_dispatch:
   push:
-    tags: ["v*"]
+    tags: ["desktop-v*"]
 
 permissions:
   actions: read

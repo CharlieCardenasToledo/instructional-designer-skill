@@ -24,7 +24,7 @@ NotebookLM contrasta la cobertura y facilita localizar fuentes. No sustituye la 
 La aplicación y esta skill usan la versión verificada:
 
 ```text
-npx -y @charlie.act7/gemini-notebook-mcp@2.0.0
+npx -y @charlie.act7/gemini-notebook-mcp@2.3.3
 ```
 
 Flujo:

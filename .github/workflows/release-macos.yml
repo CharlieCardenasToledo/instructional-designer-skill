@@ -3,7 +3,7 @@ name: Release macOS
 on:
   workflow_dispatch:
   push:
-    tags: ["v*"]
+    tags: ["desktop-v*"]
 
 permissions:
   contents: write

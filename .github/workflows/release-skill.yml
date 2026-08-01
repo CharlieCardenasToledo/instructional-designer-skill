@@ -1,0 +1,56 @@
+name: Release Jintia Skill
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: release-skill-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.13.0"
+          cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npm run skill:check
+      - name: Build release artifacts
+        run: npm run release:skill
+      - run: npm run release:skill:check
+      - name: Ensure tag matches skill version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: test "${GITHUB_REF_NAME}" = "v$(node -p "require('./skill/package.json').version")"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jintia-skill-release
+          path: dist/release/v*/**
+      - name: Attest release ZIPs
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/release/v*/*.zip
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/release/v*/*.zip
+            dist/release/v*/jintia-release-manifest.json
+            dist/release/v*/SHA256SUMS
+          generate_release_notes: true
