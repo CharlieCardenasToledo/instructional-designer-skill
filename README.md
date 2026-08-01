@@ -10,7 +10,7 @@ Aplicación de escritorio y skill para convertir un sílabo universitario en una
 ruta conectada de resultados, contenidos, actividades, evaluaciones y guías
 semanales listas para publicar.
 
-[![Version](https://img.shields.io/badge/version-10.9.0-00796b.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-10.9.1-00796b.svg)](CHANGELOG.md)
 [![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![macOS](https://img.shields.io/badge/macOS-DMG-111827.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)

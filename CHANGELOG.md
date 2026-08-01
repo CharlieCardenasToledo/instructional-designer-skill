@@ -10,7 +10,7 @@ y versionado semántico.
   consuma sin importar archivos fuente entre repositorios.
 - Actualizada la integración oficial con
   `@charlie.act7/gemini-notebook-mcp@2.3.3` y Node.js `>=22.13.0`.
-- Preparada `jintia-skill` 10.9.0 con un pipeline visual único que renderiza,
+- Preparada `jintia-skill` 10.9.1 con un pipeline visual único que renderiza,
   inspecciona, valida, actualiza el manifiesto y entrega el bloque LaTeX.
 - Implementados fallbacks ejecutables para Matplotlib, GeoPandas y TikZ, más
   generadores PlantUML, Circuitikz, Chemfig y Forest desde modelos neutrales.

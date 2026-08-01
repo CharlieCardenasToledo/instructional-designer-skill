@@ -16,7 +16,7 @@ const SKILL_MD: &[u8] = include_bytes!("../../../../skill/SKILL.md");
 const LICENSE: &[u8] = include_bytes!("../../../../LICENSE");
 const REQUIREMENTS: &[u8] = include_bytes!("../../../../skill/requirements.txt");
 const SKILL_PACKAGE_JSON: &[u8] = include_bytes!("../../../../skill/package.json");
-pub const SKILL_VERSION: &str = "10.9.0";
+pub const SKILL_VERSION: &str = "10.9.1";
 const OPENAI_PLUGIN_MANIFEST: &[u8] =
     include_bytes!("../../../../openai-plugin/.codex-plugin/plugin.json");
 const OPENAI_PLUGIN_MCP: &[u8] = include_bytes!("../../../../openai-plugin/.mcp.json");

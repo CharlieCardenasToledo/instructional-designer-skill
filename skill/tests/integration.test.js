@@ -13,6 +13,7 @@ const root = path.resolve(__dirname, "..");
 const cli = path.join(root, "bin", "jintia.js");
 const fixtures = path.join(__dirname, "fixtures");
 const skillVersion = require("../package.json").version;
+const updateVersion = skillVersion.replace(/(\d+)$/, value => String(Number(value) + 1));
 function copyFixture(name) {
   const target = fs.mkdtempSync(path.join(os.tmpdir(), `jintia-${name}-`));
   fs.cpSync(path.join(fixtures, name), target, { recursive: true });
@@ -109,8 +110,8 @@ test("el gestor instala, actualiza, repara y desinstala sin sobrescribir rutas a
   assert.equal(installed.results.length, 3);
   assert.ok(installed.results.every(result => fs.existsSync(path.join(result.target, "VERSION"))));
   assert.ok(detectInstallationStates(base).filter(item => item.scope === "project").every(item => item.state.status === "installed"));
-  assert.equal(mutate("update", { ...base, version: "10.9.0" }).results[0].status, "update");
-  assert.equal(detectInstallationStates({ ...base, version: "10.9.0" }).find(item => item.id === "cursor" && item.scope === "project").state.status, "installed");
+  assert.equal(mutate("update", { ...base, version: updateVersion }).results[0].status, "update");
+  assert.equal(detectInstallationStates({ ...base, version: updateVersion }).find(item => item.id === "cursor" && item.scope === "project").state.status, "installed");
   fs.rmSync(path.join(project, ".cursor", "skills", "jintia-skill", "SKILL.md"));
   assert.equal(detectInstallationStates({ ...base, providers: ["cursor"] })[0].state.status, "repair-needed");
   mutate("repair", { ...base, providers: ["cursor"] });

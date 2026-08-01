@@ -91,7 +91,7 @@ de dependencias y las operaciones de GitHub.
 La skill y la aplicación se versionan de forma independiente:
 
 - `skill/package.json` contiene la versión distribuible de `jintia-skill`
-  (`10.9.0` en la versión actual).
+  (`10.9.1` en la versión actual).
 - `package.json`, `app/desktop/package.json` y Tauri contienen la versión de
   la aplicación (`1.0.0` en la versión actual).
 

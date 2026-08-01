@@ -16,6 +16,8 @@ const privateConfigNames = new Set(["config/institution.json", "config/notebooks
 
 const json = async path => JSON.parse(await readFile(path, "utf8"));
 const posix = value => value.split(sep).join("/");
+const gitBlob = repoPath => execFileSync("git", ["show", `HEAD:${repoPath}`], { cwd: root, maxBuffer: 32 * 1024 * 1024 });
+const archivedFile = (source, archive) => ({ source, repoPath: posix(relative(root, source)), archive });
 
 async function filesBelow(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -31,12 +33,12 @@ async function filesBelow(directory) {
 
 async function skillEntries(prefix) {
   const entries = [];
-  for (const name of skillFiles) entries.push({ source: join(skillRoot, name), archive: `${prefix}/${name}` });
-  entries.push({ source: join(root, "LICENSE"), archive: `${prefix}/LICENSE` });
+  for (const name of skillFiles) entries.push(archivedFile(join(skillRoot, name), `${prefix}/${name}`));
+  entries.push(archivedFile(join(root, "LICENSE"), `${prefix}/LICENSE`));
   for (const directory of skillDirectories) {
     for (const source of await filesBelow(join(skillRoot, directory))) {
       const local = posix(relative(skillRoot, source));
-      if (!privateConfigNames.has(local)) entries.push({ source, archive: `${prefix}/${local}` });
+      if (!privateConfigNames.has(local)) entries.push(archivedFile(source, `${prefix}/${local}`));
     }
   }
   return entries.sort((left, right) => left.archive.localeCompare(right.archive));
@@ -45,7 +47,7 @@ async function skillEntries(prefix) {
 async function writeZip(destination, entries, extra = []) {
   const zip = new yazl.ZipFile();
   for (const entry of [...entries, ...extra].sort((left, right) => left.archive.localeCompare(right.archive))) {
-    const bytes = entry.bytes ?? await readFile(entry.source);
+    const bytes = entry.bytes ?? (entry.repoPath ? gitBlob(entry.repoPath) : await readFile(entry.source));
     const executable = bytes.subarray(0, 2).toString() === "#!";
     zip.addBuffer(bytes, entry.archive, { mtime: fixedMtime, mode: executable ? 0o100755 : 0o100644 });
   }
@@ -92,9 +94,9 @@ const versionEntry = prefix => ({ archive: `${prefix}/VERSION`, bytes: Buffer.fr
 
 await writeZip(skillPath, await skillEntries("jintia-skill"), [versionEntry("jintia-skill")]);
 const pluginEntries = [
-  { source: join(pluginRoot, ".codex-plugin", "plugin.json"), archive: "jintia/.codex-plugin/plugin.json" },
-  { source: join(pluginRoot, ".mcp.json"), archive: "jintia/.mcp.json" },
-  { source: join(pluginRoot, "README.md"), archive: "jintia/README.md" },
+  archivedFile(join(pluginRoot, ".codex-plugin", "plugin.json"), "jintia/.codex-plugin/plugin.json"),
+  archivedFile(join(pluginRoot, ".mcp.json"), "jintia/.mcp.json"),
+  archivedFile(join(pluginRoot, "README.md"), "jintia/README.md"),
   ...await skillEntries("jintia/skills/jintia-skill")
 ];
 await writeZip(pluginPath, pluginEntries, [versionEntry("jintia/skills/jintia-skill")]);
