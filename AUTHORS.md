@@ -2,11 +2,11 @@
 
 ## Autor principal
 
-**Charlie Cárdenas Toledo** creó Jintia y mantiene tanto la aplicación de
-escritorio como la skill de diseño instruccional.
+**Charlie Cárdenas Toledo** creó Jintia y mantiene la skill de diseño instruccional.
 
 - GitHub: [@CharlieCardenasToledo](https://github.com/CharlieCardenasToledo)
 - Proyecto: [Jintia](https://github.com/CharlieCardenasToledo/instructional-designer-skill)
+- Aplicación: [Jintia Desktop](https://github.com/CharlieCardenasToledo/jintia-desktop)
 
 ## Contribuciones
 

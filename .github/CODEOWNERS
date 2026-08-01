@@ -1,9 +1,7 @@
 # Release integrity and signing policy
 /.github/workflows/ @CharlieCardenasToledo
-/CODE_SIGNING_POLICY.md @CharlieCardenasToledo
 /PRIVACY.md @CharlieCardenasToledo
 /SECURITY.md @CharlieCardenasToledo
 
 # Application and bundled skill
-/app/desktop/ @CharlieCardenasToledo
 /skill/ @CharlieCardenasToledo

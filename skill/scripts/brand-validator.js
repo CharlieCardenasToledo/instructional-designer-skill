@@ -19,16 +19,16 @@ else {
   if (!brand.sources?.some(source => /Aarma jintia/i.test(source.claim || "") && source.page === 106)) failures.push("Falta fuente institucional de Aarma jintia con página 106");
 }
 
-for (const file of ["README.md", "README.en.md", "skill/SKILL.md", "app/desktop/src/pages/about.js"]) {
+for (const file of ["README.md", "README.en.md", "skill/SKILL.md"]) {
   const content = read(file);
   if (!content.includes("Jíntia") || !content.includes("Aarma jintia")) failures.push(`${file} no contiene la atribución canónica`);
 }
 const prohibitedPatterns = [/representa oficialmente al pueblo shuar/i, /aprobado por (?:el|la|las) .*shuar/i, /símbolo ceremonial de jintia/i, /diseño facial de viaje/i, /\bjíbaro\b/i];
-for (const file of ["README.md", "README.en.md", "skill/SKILL.md", "app/desktop/src/pages/about.js"]) {
+for (const file of ["README.md", "README.en.md", "skill/SKILL.md"]) {
   const content = read(file);
   for (const pattern of prohibitedPatterns) if (pattern.test(content)) failures.push(`${file} contiene una afirmación cultural prohibida: ${pattern}`);
 }
-for (const file of ["package.json", "skill/package.json", "packages/brand/package.json", "app/desktop/src/appMeta.js", "skill/bin/jintia.js"]) {
+for (const file of ["package.json", "skill/package.json", "packages/brand/package.json", "skill/bin/jintia.js"]) {
   if (/(?:name|bin|brandName)\s*[:=][^\n]*Jíntia/.test(read(file))) failures.push(`${file} usa Jíntia en un identificador técnico`);
 }
 if (failures.length) { failures.forEach(failure => console.error(`[ERROR] ${failure}`)); process.exit(1); }

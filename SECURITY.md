@@ -18,17 +18,14 @@ propuesta de mitigación si la tienes.
 
 ## Límites de confianza
 
-- La app escribe en rutas seleccionadas por el usuario y en su directorio de
-  configuración.
+- La skill escribe únicamente en el proyecto y las rutas autorizadas por el usuario.
 - NotebookLM MCP autentica y consulta servicios externos de Google.
-- La extracción de paleta solicita una URL institucional.
-- `winget`, Homebrew, gestores de paquetes, npm y LaTeX son dependencias
-  externas.
-- Los ZIP exportados pueden incluir configuración institucional y referencias
-  de notebooks.
+- npm, Python, LaTeX y los motores visuales opcionales son dependencias externas.
+- Los proyectos y ZIP que el usuario prepare pueden incluir configuración
+  institucional y referencias de notebooks.
 
 Revisa los ZIP antes de compartirlos y conserva secretos fuera del
 repositorio.
 
-La respuesta específica ante uso indebido de firmas se encuentra en
-[CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md).
+Los problemas de seguridad exclusivos de la aplicación deben reportarse en
+[`jintia-desktop`](https://github.com/CharlieCardenasToledo/jintia-desktop/security).

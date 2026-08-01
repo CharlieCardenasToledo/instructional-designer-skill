@@ -11,6 +11,7 @@ const ignored = new Set([
   "node_modules",
   "dist",
   "target",
+  "tmp",
 ]);
 const errors = [];
 const requiredProjectFiles = [
@@ -19,10 +20,9 @@ const requiredProjectFiles = [
   "LICENSE",
   "PRIVACY.md",
   "THIRD_PARTY_NOTICES.md",
-  "docs/design-system.md",
-  "app/desktop/public/legal/project-license.txt",
-  "app/desktop/public/legal/third-party-notices.json",
-  "app/desktop/public/legal/trademarks.md",
+  "docs/brand-guidelines.md",
+  "skill/SKILL.md",
+  "skill/agents/openai.yaml",
 ];
 
 for (const relative of requiredProjectFiles) {
@@ -80,20 +80,12 @@ if (example.branding.logoPath && !existsSync(join(root, "skill", example.brandin
 
 const plugin = JSON.parse(readFileSync(join(root, "skill/.claude-plugin/plugin.json"), "utf8"));
 const skillPackage = JSON.parse(readFileSync(join(root, "skill/package.json"), "utf8"));
-const desktopPackage = JSON.parse(readFileSync(join(root, "app/desktop/package.json"), "utf8"));
-const appMeta = readFileSync(join(root, "app/desktop/src/appMeta.js"), "utf8");
 const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
 if (plugin.version !== skillPackage.version) {
   errors.push(`Versiones distintas: plugin ${plugin.version}, skill ${skillPackage.version}`);
 }
 if (!changelog.includes(`jintia-skill\` ${plugin.version}`)) {
   errors.push(`CHANGELOG.md no contiene la versión ${plugin.version} del plugin`);
-}
-if (desktopPackage.author !== "Charlie Cárdenas Toledo" || desktopPackage.license !== "MIT") {
-  errors.push("app/desktop/package.json no declara la autoría o licencia canónicas");
-}
-for (const canonical of ["Jintia Desktop", "Jintia Skill", "Charlie Cárdenas Toledo"]) {
-  if (!appMeta.includes(canonical)) errors.push(`appMeta.js no contiene el valor canónico: ${canonical}`);
 }
 
 if (errors.length) {

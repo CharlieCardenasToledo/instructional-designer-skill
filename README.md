@@ -1,293 +1,96 @@
-# Jintia
+# Jintia Skill
 
-<p align="right">
-  <a href="README.en.md">🇺🇸 English</a>
-</p>
+Skill abierta de diseño instruccional para producir guías académicas completas,
+verificables y compilables con Claude, ChatGPT y Codex.
 
-**Diseña el camino del aprendizaje.**
+La aplicación instaladora vive ahora en un repositorio independiente:
+[`jintia-desktop`](https://github.com/CharlieCardenasToledo/jintia-desktop).
+Este repositorio contiene únicamente la skill, sus plantillas, runtime, pruebas
+y artefactos de distribución.
 
-Aplicación de escritorio y skill para convertir un sílabo universitario en una
-ruta conectada de resultados, contenidos, actividades, evaluaciones y guías
-semanales listas para publicar.
+## Qué hace
 
-[![Version](https://img.shields.io/badge/version-10.9.1-00796b.svg)](CHANGELOG.md)
-[![Windows](https://img.shields.io/badge/Windows-EXE%20%7C%20MSI-2563eb.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
-[![macOS](https://img.shields.io/badge/macOS-DMG-111827.svg)](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
-[![License: MIT](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)
+Jintia transforma el sílabo, la configuración institucional y fuentes
+verificables en guías semanales LaTeX. Incluye:
 
-## El objetivo
-
-Preparar un entorno de diseño instruccional suele exigir instalar herramientas,
-editar archivos de configuración, conectar NotebookLM y organizar manualmente
-cada curso. Este proyecto reúne ese proceso en un solo producto:
-
-- **Jintia Desktop** instala y configura el entorno mediante una interfaz
-  gráfica.
-- **`jintia-skill`** guía a Claude Code para producir sílabos,
-  guías LaTeX, actividades y evaluaciones con criterios pedagógicos verificables.
-
-La aplicación no sustituye a la skill. Es su instalador, configurador y centro
-de gestión. La skill sigue siendo el motor que interpreta el curso y produce el
-material académico.
-
-```text
-Descargar e instalar la aplicación
-                ↓
-Configurar institución, herramientas y NotebookLM
-                ↓
-Crear la asignatura y estructurar el sílabo
-                ↓
-Instalar o exportar la skill
-                ↓
-Trabajar con Claude Code
-                ↓
-Generar y validar las guías semanales en PDF
-```
-
-## El origen del nombre
-
-Jintia toma su nombre de *Jíntia*, palabra registrada en Shuar Chicham con el significado de “camino”.
-
-El nombre representa el propósito de la aplicación: convertir un sílabo en una ruta coherente de resultados, contenidos, actividades, evaluaciones y recursos.
-
-En el Currículo Nacional Intercultural Bilingüe de la Nacionalidad Shuar, la expresión *Aarma jintia* se emplea para referirse a “textos instructivos”.
-
-Reconocemos expresamente la procedencia lingüística shuar del término. El uso del nombre no implica representación, aprobación ni vinculación institucional con comunidades u organizaciones del pueblo Shuar.
-
-## Recorrido por la aplicación
-
-### 1. Configuración guiada
-
-El onboarding explica el resultado esperado y verifica cada requisito antes de
-habilitar el panel principal.
-
-![Onboarding de Jintia Desktop](docs/images/app/onboarding.png)
-
-### 2. Gestión de asignaturas
-
-Desde el panel se registran asignaturas y se crea su estructura de carpetas. El
-panel muestra un resumen local —`Borrador` o `Con contenido`— a partir de los
-datos semanales guardados; no sustituye un sistema de seguimiento editorial.
-
-![Panel de asignaturas](docs/images/app/dashboard.png)
-
-### 3. Identidad institucional
-
-La aplicación conserva el nombre del docente, la institución, la carrera y la
-paleta visual que utilizarán los documentos.
-
-![Configuración institucional](docs/images/app/settings.png)
-
-### 4. Plantilla editorial
-
-La versión actual incluye `ElegantBook Clásico` para un flujo técnico de ancho
-principal y `Kaohandt Marginal` para guías con columna pedagógica lateral. Las
-dos comparten contratos portables para figuras, tablas, bloques y metadatos.
-
-![Selector de plantillas LaTeX](docs/images/app/templates.png)
-
-## Qué resuelve la aplicación
-
-- Comprueba Node.js, Python, Git y un compilador LaTeX.
-- En Windows, solicita autorización antes de iniciar una instalación con
-  `winget`; en macOS y Linux muestra instrucciones manuales.
-- Configura los datos institucionales y la identidad visual.
-- Conecta NotebookLM MCP sin sobrescribir otras configuraciones.
-- Instala la skill para Claude Code o la exporta para otros destinos.
-- Crea la estructura canónica de una asignatura.
-- Convierte el contenido semanal del sílabo en un `README.md` estructurado.
-- Permite activar y previsualizar la plantilla LaTeX incluida.
-- Mantiene localmente cursos, configuraciones, archivos y compilación.
-
-## Qué produce la skill
-
-Una vez instalada, la skill guía la creación de:
-
-- guías semanales modulares en LaTeX;
-- resultados, actividades y evaluaciones alineados;
-- gráficos, mapas, redes, procesos, interfaces y diagramas disciplinares
-  seleccionados por intención pedagógica;
-- fuentes visuales editables, manifiesto de procedencia y renderizado
-  reproducible mediante motores locales disponibles;
-- bibliografía en APA 7 mediante `biblatex` y `biber`;
-- secciones de recuperación, transferencia y aplicación profesional;
-- documentos validados antes de la compilación final.
-
-El flujo editorial aplica UDL 3.0, Backward Design, Quality Matters 7, WCAG
-2.2, los principios multimedia de Mayer y prácticas de espaciado e
-intercalado.
+- planificación instruccional y trazabilidad de evidencia;
+- plantillas ElegantBook y Kaohandt;
+- validación de esquemas, LaTeX y calidad visual;
+- generación visual con fallbacks reproducibles;
+- integración opcional con NotebookLM;
+- contratos de agentes especializados para investigación, revisión y acabado.
 
 ## Instalación
 
-### Opción recomendada: aplicación de escritorio
+### Con Jintia Desktop
 
-Descargas directas de la última versión monorepo del Desktop:
+Descarga el instalador desde las
+[releases de Jintia Desktop](https://github.com/CharlieCardenasToledo/jintia-desktop/releases).
+La aplicación instala y actualiza una release verificada de la skill, conservando
+la configuración personal.
 
-| Sistema | Instalador | Descarga |
-|---|---|---|
-| Windows 10/11 x64 | NSIS `.exe` — recomendado | [Ver descargas](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
-| Windows 10/11 x64 | Windows Installer `.msi` | [Ver descargas](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
-| macOS Apple Silicon | Imagen de disco `.dmg` | [Ver descargas](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest) |
+### Manual
 
-También puedes consultar la
-[release más reciente](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases/latest).
-Después de instalar la aplicación, completa el onboarding y elige si quieres
-instalar la skill localmente o exportarla.
+Cada [release](https://github.com/CharlieCardenasToledo/instructional-designer-skill/releases)
+publica tres archivos verificables:
 
-> El DMG actual no está firmado ni notarizado y puede activar una advertencia
-> de Gatekeeper. La firma requiere credenciales de Apple y todavía no forma
-> parte del workflow público.
+- `jintia-skill-X.Y.Z.zip`, para Claude;
+- `jintia-openai-plugin-X.Y.Z.zip`, para ChatGPT y Codex;
+- `jintia-release-manifest.json`, con compatibilidad, versiones y SHA-256.
 
-### Opción avanzada: instalación manual
+Extrae el primer ZIP como `~/.claude/skills/jintia-skill`, o importa el plugin
+universal mediante el gestor de plugins compatible. `SKILL.md` debe quedar en
+la raíz de la skill instalada.
 
-Esta ruta está pensada para desarrollo o para usuarios que prefieren gestionar
-la skill directamente.
+## NotebookLM MCP
 
-```bash
-git clone https://github.com/CharlieCardenasToledo/instructional-designer-skill.git
-```
+La integración usa la versión fijada de
+[`@charlie.act7/gemini-notebook-mcp`](https://www.npmjs.com/package/@charlie.act7/gemini-notebook-mcp),
+también mantenida por Charlie Cárdenas Toledo. La release 10.9.2 fija la versión
+2.3.3 y requiere Node.js 22.13 o superior. No se usa `@latest`.
 
-Después, copia o enlaza **el contenido de `skill/`** dentro de:
-
-```text
-Windows: %USERPROFILE%\.claude\skills\jintia-skill
-macOS:   ~/.claude/skills/jintia-skill
-Linux:   ~/.claude/skills/jintia-skill
-```
-
-La carpeta instalada debe contener `SKILL.md`, `config/`, `references/`,
-`scripts/` y `templates/` directamente en su raíz. `agents/` y
-`.claude-plugin/` son metadatos del repositorio y no son necesarios para
-ejecutar la skill en Claude Code. La carpeta `app/` no debe copiarse.
-
-## Uso
-
-Cuando la skill ya está instalada, Claude Code puede activarla automáticamente
-al reconocer una petición compatible:
-
-```text
-Crea la guía de la semana 3 para Bases de Datos.
-Genera el módulo autoinstruccional de la unidad 2.
-Estructura el sílabo y sus actividades por semana.
-Valida y compila la guía en PDF.
-```
-
-También puede invocarse explícitamente como
-`/jintia-skill`.
-
-## Flujo editorial
-
-1. Leer el `README.md` canónico del curso.
-2. Identificar temas, resultados, actividades y bibliografía de la semana.
-3. Consultar las fuentes disponibles mediante NotebookLM MCP.
-4. Proponer la estructura de secciones y confirmar datos faltantes.
-5. Generar archivos LaTeX modulares.
-6. Ejecutar las reglas editoriales y de accesibilidad.
-7. Compilar y revisar el PDF.
-
-La estructura resultante mantiene una secuencia predecible:
-
-```text
-semanas/semana-XX/latex/
-├── guia-semana-XX.tex
-├── sections/
-│   ├── 01-introduccion.tex
-│   ├── 02-tema-principal.tex
-│   ├── 03-tema-relacionado.tex
-│   ├── 04-escenario.tex
-│   ├── 05-aplicacion.tex
-│   └── 06-bibliografia.tex
-└── figure/
-```
-
-## Desarrollo de la aplicación
-
-La aplicación utiliza Tauri 2, Rust, Vite y Tailwind CSS 4.
+## Desarrollo
 
 ```bash
-cd app/desktop
 npm ci
-npm test
-npm run tauri:dev
+npm run docs:check
+npm run skill:check
+npm run release:check
+npm run release:skill
+npm run release:skill:check
 ```
 
-Para generar instaladores localmente:
+Validación estructural para Codex:
 
 ```bash
-npm run tauri:build
+python -X utf8 ~/.codex/skills/.system/skill-creator/scripts/quick_validate.py skill
 ```
 
-Tauri produce los artefactos de cada plataforma dentro de
-`app/desktop/src-tauri/target/release/bundle/`.
+Los tags `v*` ejecutan las pruebas, construyen los dos ZIP desde los blobs
+canónicos de Git y publican el manifest, checksums y attestations de procedencia.
 
-## Publicación automatizada
-
-Los workflows de GitHub Actions ejecutan tests antes de construir:
-
-- `release-windows.yml`: genera NSIS `.exe` y Windows Installer `.msi`.
-- `release-macos.yml`: genera `.dmg` y el paquete de la aplicación.
-
-Al crear un tag `v*`, los artefactos se adjuntan a la GitHub Release
-correspondiente. Una ejecución manual valida la compilación y conserva sus
-artefactos en GitHub Actions, pero no publica una Release.
-
-## Estructura del repositorio
+## Estructura
 
 ```text
-jintia/
-├── app/
-│   └── desktop/            Aplicación Tauri y frontend
-├── skill/                  Paquete instalable de la skill
-│   ├── SKILL.md            Flujo principal
-│   ├── agents/             Configuración para otros agentes
-│   ├── config/             Esquemas de configuración
-│   ├── references/         Reglas pedagógicas y editoriales
-│   ├── scripts/            Linter, validadores y utilidades
-│   └── templates/          Plantillas editoriales LaTeX
-├── docs/                   Guías y capturas de la aplicación
-└── .github/workflows/      Construcción de instaladores
+skill/          Skill autocontenida, runtime, plantillas y pruebas
+openai-plugin/  Empaque universal para ChatGPT y Codex
+packages/       Fachadas y utilidades compartidas de la toolchain
+release/        Esquema y configuración del contrato de publicación
+scripts/        Verificación y construcción reproducible
 ```
 
-## Privacidad
+## Origen del nombre
 
-La aplicación no incorpora telemetría ni envía cursos a un servidor del
-proyecto. Los archivos, la validación y la compilación se procesan localmente.
-Las consultas a NotebookLM se envían a los servicios de Google mediante el MCP
-configurado por el usuario. Extraer una paleta desde un sitio web e instalar
-dependencias también requiere conexión. Un ZIP exportado puede incluir la
-configuración institucional y las referencias de notebooks; revísalo antes de
-compartirlo.
+Jintia toma su nombre de **Jíntia**, palabra registrada en Shuar Chicham con el
+significado de «camino». **Aarma jintia** aparece en el Currículo Nacional
+Intercultural Bilingüe de la Nacionalidad Shuar para referirse a textos
+instructivos. El uso del nombre no implica representación, aprobación ni
+vinculación institucional con comunidades u organizaciones del pueblo Shuar.
 
-Consulta la [política de privacidad completa](PRIVACY.md).
+Consulta [`docs/brand-guidelines.md`](docs/brand-guidelines.md) para la
+atribución y fuentes completas.
 
-## Code signing policy
+## Licencia
 
-Los instaladores Windows de la release actual no están firmados. El proyecto
-está preparando su incorporación al programa open source de SignPath
-Foundation. Después de la aprobación, solo se publicarán como firmados los
-artifacts construidos, verificados y aprobados mediante GitHub Actions.
-
-Free code signing provided by [SignPath.io](https://signpath.io/), certificate
-by [SignPath Foundation](https://signpath.org/).
-
-Consulta la [política de firma](CODE_SIGNING_POLICY.md) y el
-[estado de la solicitud](docs/signpath-application.md).
-
-## Documentación adicional
-
-- [Manual técnico de la aplicación](app/desktop/README.md)
-- [Uso con Claude Code, Claude Skills, Projects y Cowork](docs/guia-claude-desktop.md)
-- [Arquitectura](docs/architecture.md)
-- [Sistema visual de Jintia](docs/design-system.md)
-- [Proceso de publicación](docs/releasing.md)
-- [Cómo contribuir](CONTRIBUTING.md)
-- [Autoría y mantenimiento](AUTHORS.md)
-- [Cómo citar Jintia](CITATION.cff)
-- [Avisos de terceros](THIRD_PARTY_NOTICES.md)
-- [Política de seguridad](SECURITY.md)
-- [Política de privacidad](PRIVACY.md)
-- [Política de firma](CODE_SIGNING_POLICY.md)
-- [Historial de versiones](CHANGELOG.md)
-- [Licencia MIT](LICENSE)
-
-MIT © 2026 Charlie Cárdenas Toledo.
+MIT © 2026 Charlie Cárdenas Toledo. Las plantillas y recursos de terceros
+conservan sus licencias propias; consulta [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

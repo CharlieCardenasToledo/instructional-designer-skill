@@ -1,23 +1,17 @@
 # Pruebas
 
-## Aplicación Desktop
-
 ```bash
-cd app/desktop
-npm test
-npm run build
+npm run docs:check
+npm run skill:check
+npm run release:check
 ```
 
-## Skill y toolchain
+Para comprobar el artefacto exacto que se publicará:
 
 ```bash
-npm --prefix skill test
-node --check skill/bin/jintia.js
-node --check skill/scripts/rules-runner.js
-node --check skill/scripts/state-manager.js
-node --check skill/scripts/hook-runner.js
+npm run release:skill
+npm run release:skill:check
 ```
 
-La matriz visual de GitHub Actions valida los motores reales en Ubuntu, macOS
-y Windows. Si Windows falla durante la instalación de MiKTeX, el fallo ocurre
-antes de las pruebas de la skill y debe distinguirse de un error del código.
+La matriz `visual-engine-matrix.yml` ejecuta motores reales en Ubuntu, macOS y
+Windows. La aplicación Desktop mantiene sus propias pruebas en su repositorio.

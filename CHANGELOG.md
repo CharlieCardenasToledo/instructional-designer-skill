@@ -5,6 +5,20 @@ y versionado semántico.
 
 ## Sin publicar
 
+## 10.9.2 — 2026-08-01
+
+### Cambiado
+
+- Separada definitivamente Jintia Desktop en su propio repositorio con historial
+  preservado y contrato de releases bloqueado por SHA-256.
+- Eliminadas las dependencias de validación y documentación de la skill hacia el
+  árbol fuente de la aplicación.
+- Preparada `jintia-skill` 10.9.2 como primera release del repositorio dedicado.
+
+## 10.9.1 — 2026-08-01
+
+### Añadido
+
 - Separada la distribución de la skill mediante ZIPs reproducibles, manifiesto
   versionado, SHA-256 y attestations de procedencia para que Jintia Desktop la
   consuma sin importar archivos fuente entre repositorios.

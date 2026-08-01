@@ -33,7 +33,7 @@ test("la atribución y el disclaimer están presentes en ambos README", () => {
 });
 
 test("los identificadores técnicos conservan la forma comercial sin tilde", () => {
-  for (const file of ["package.json", "skill/package.json", "packages/brand/package.json", "app/desktop/src/appMeta.js"]) {
+  for (const file of ["package.json", "skill/package.json", "packages/brand/package.json"]) {
     const content = fs.readFileSync(path.join(root, file), "utf8");
     assert.doesNotMatch(content, /(?:name|bin|brandName)\s*[:=][^\n]*Jíntia/);
   }
