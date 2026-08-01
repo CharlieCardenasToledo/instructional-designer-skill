@@ -84,7 +84,7 @@ export async function renderAbout() {
 
       <section id="about-origin" class="${cx(ui.surface.card, "p-6")}">
         <h2 class="text-lg font-extrabold text-slate-900">El origen de nuestro nombre</h2>
-        <p class="mt-2 text-sm leading-6 text-slate-700">${APP_META.originAttribution}</p>
+        <p class="mt-2 text-sm leading-6 text-slate-700">Jintia toma su nombre de <em>Jíntia</em>, palabra registrada en Shuar Chicham con el significado de camino.</p>
         <p class="mt-3 text-sm leading-6 text-slate-600">La elección expresa el propósito de la aplicación: ayudar a docentes a convertir un sílabo en una ruta de aprendizaje coherente, conectando resultados, contenidos, actividades, evaluaciones y recursos.</p>
         <p class="mt-3 text-sm leading-6 text-slate-600">En el Currículo Nacional Intercultural Bilingüe de la Nacionalidad Shuar, la expresión <em>Aarma jintia</em> se emplea para referirse a “textos instructivos”.</p>
         <div class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><strong>Reconocimiento:</strong> ${APP_META.originDisclaimer}</div>

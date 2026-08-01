@@ -19,9 +19,9 @@ Claude + jintia-skill
 
 La app administra el entorno; la skill ejecuta el razonamiento instruccional.
 
-La extracción incremental de lógica compartida comienza en `packages/core`.
-Este paquete contiene contratos de ruta, lectura del curso y estado editorial;
-la CLI lo consume antes de migrar más scripts.
+El runtime canónico vive en `skill/runtime/core` para que cada instalación sea
+autocontenida. `packages/core` conserva una fachada CommonJS para los demás
+paquetes del monorepo sin duplicar esa lógica.
 
 Los paquetes `@jintia/cli`, `@jintia/rules`, `@jintia/templates` y
 `@jintia/skill` ya tienen límites de distribución explícitos; sus entradas
@@ -46,16 +46,17 @@ Paquete autocontenido con:
 - `references/`: conocimiento cargado bajo demanda;
 - `templates/`: contrato y assets LaTeX;
 - `scripts/`: validación, compilación y utilidades;
+- `runtime/`: contratos de curso, estado e instalación de harnesses;
 - `config/`: ejemplos y esquemas.
 
-`agents/` y `.claude-plugin/` describen integraciones, pero no forman parte del
-payload mínimo exportado por la app.
+`agents/` contiene contratos de delegación y los metadatos `openai.yaml` que se
+incluyen en el payload. `.claude-plugin/` describe la distribución para Claude.
 
 ### `packages/core`
 
-Paquete CommonJS independiente de Desktop y de los agentes. Expone
-`readCourse`, `coursePaths`, `loadCourseState` y `updateCourseState` para que la
-CLI y futuras capas compartan el mismo contrato.
+Fachada CommonJS de `skill/runtime/core`. Expone `readCourse`, `coursePaths`,
+`loadCourseState` y `updateCourseState` para que la CLI y futuras capas
+compartan el mismo contrato sin impedir que la skill instalada funcione sola.
 
 ## Persistencia
 
@@ -66,6 +67,8 @@ CLI y futuras capas compartan el mismo contrato.
 | Institución y notebooks | Directorio de configuración y skill instalada |
 | Curso, sílabo y guías | Carpeta elegida por el usuario |
 | Skill local | `~/.claude/skills/jintia-skill` |
+| Skill personal de Codex | `~/.agents/skills/jintia-skill` |
+| Agentes personalizados de Codex | `~/.codex/agents/*.toml` |
 
 ## Red
 

@@ -24,7 +24,6 @@
   },
   "activeTemplate": "elegantbook-clasico",
   "options": {
-    "evidenceMode": "notebooklm-preferred",
-    "includeGradedActivities": false
+    "evidenceMode": "notebooklm-preferred"
   }
 }

@@ -150,7 +150,7 @@ function main(argv) {
   if (command === "visual" && subcommand === "render") return runScript("visual-pipeline.js", rest, "visual render");
   if (command === "visual" && subcommand === "inspect") return runScript("visual-inspector.js", rest, "visual inspect");
   if (["plan", "guide", "assessment"].includes(command)) {
-    console.log(`El comando /jintia ${command} es un playbook de la skill. Consulta skill/commands/${command}.md y conserva la salida en el curso.`);
+    console.log(`La operación ${command} es un playbook de la skill. Consulta ${path.join(ROOT, "commands", `${command}.md`)} y conserva la salida en el curso.`);
     return;
   }
   console.error(`Comando desconocido: ${command}`);

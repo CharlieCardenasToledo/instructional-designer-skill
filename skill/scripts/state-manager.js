@@ -3,7 +3,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const core = require("../../packages/core");
+const core = require("../runtime/core");
 const { loadCourseState, saveCourseState, updateCourseState, coursePaths } = core;
 function statePath(course) { return coursePaths(course).state; }
 function load(course) { return loadCourseState(course); }

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 "use strict";
 
-const core = require("../../packages/core");
+const core = require("../runtime/core");
 
 const [command, course, ...args] = process.argv.slice(2);
 const asJson = args.includes("--json");

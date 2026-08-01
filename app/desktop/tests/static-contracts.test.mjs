@@ -95,6 +95,7 @@ test('la configuración institucional generada coincide con el esquema público'
   assert.equal(example.branding.logoPath, '');
   assert.match(configSource, /"website": clean\(&config\.website\)/);
   assert.match(configSource, /"logoPath": ""/);
+  assert.doesNotMatch(configSource, /"includeGradedActivities": config\.include_graded_activities/);
 });
 
 test('el único degradado CSS es el highlight refractivo del control Liquid', async () => {
@@ -158,6 +159,7 @@ test('institución, perfil académico y plantilla viven en un solo paso fusionad
   assert.match(profile, /onb-faculty/);
   assert.match(profile, /onb-career/);
   assert.match(profile, /onb-author/);
+  assert.doesNotMatch(profile, /onb-include-graded-activities/);
   // El campo de ecosistema digital se quitó del onboarding por redundante
   // para la primera configuración; sigue existiendo en Configuración.
   assert.doesNotMatch(profile, /onb-ecosystem/);
@@ -169,7 +171,7 @@ test('institución, perfil académico y plantilla viven en un solo paso fusionad
 
 test('el onboarding presenta el flujo de producción editorial aprobado', async () => {
   const source = await readFile(new URL('src/onboarding.js', root), 'utf8');
-  assert.match(source, /Sílabo[\s\S]*Fuentes[\s\S]*Guía[\s\S]*PDF/);
+  assert.match(source, /Sílabo[\s\S]*Análisis[\s\S]*Fuentes[\s\S]*Estructura[\s\S]*Validación[\s\S]*Compilación[\s\S]*PDF/);
   assert.match(source, /No diseña la guía ni reemplaza tu criterio docente/);
   assert.match(source, /Preparando la prueba/);
   assert.match(source, /Preparar[\s\S]*Comprobar[\s\S]*Crear[\s\S]*Compilar[\s\S]*Validar/);
@@ -197,7 +199,7 @@ test('el copy visible no reintroduce jerga técnica ya eliminada por auditoría 
   assert.doesNotMatch(settings, banned);
 });
 
-test('el stepper conserva el gusanito y usa controles Liquid Glass', async () => {
+test('el stepper usa el nodo de camino Jintia y controles Liquid Glass', async () => {
   const [source, css] = await Promise.all([
     readFile(new URL('src/onboarding.js', root), 'utf8'),
     readFile(new URL('src/styles.css', root), 'utf8'),
@@ -206,17 +208,16 @@ test('el stepper conserva el gusanito y usa controles Liquid Glass', async () =>
   const bottomNavEnd = source.indexOf('function loadingStep', bottomNavStart);
   const bottomNav = source.slice(bottomNavStart, bottomNavEnd);
   assert.match(source, /function animateStepTransition/);
-  assert.match(source, /onboarding-progress-worm/);
-  assert.match(source, /onboarding-worm-segment--head/);
-  assert.match(source, /onboarding-progress-worm--\$\{direction\}/);
+  assert.match(source, /function animateDotWorm/);
+  assert.match(source, /onboarding-progress-node/);
+  assert.match(source, /node\.animate\(keyframes/);
   assert.match(source, /function showPreparedStep/);
   assert.doesNotMatch(bottomNav, /data-tauri-drag-region/);
   assert.match(bottomNav, /onboarding-nav-arrow[\s\S]*liquid-control/);
   assert.match(bottomNav, /ui\.liquid\.group/);
   assert.match(css, /\.liquid-control/);
-  assert.match(css, /\.onboarding-progress-worm/);
-  assert.match(css, /@keyframes onboarding-worm-walk/);
-  assert.match(css, /\.onboarding-worm-segment--head::before/);
+  assert.match(css, /\.onboarding-progress-node/);
+  assert.match(css, /var\(--color-brand-600/);
 });
 
 test('el onboarding bloquea clics repetidos y explica la operación activa', async () => {
@@ -451,7 +452,7 @@ test('la UI compartida usa recetas Tailwind v4 y no reintroduce componentes CSS 
   assert.match(css, /prefers-reduced-transparency/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(recipes, /export const ui/);
-  assert.match(recipes, /backdrop-blur-2xl/);
+  assert.match(recipes, /backdrop-blur-xl/);
   assert.match(recipes, /backdrop-saturate-150/);
   assert.match(recipes, /surface:\s*\{/);
 });
@@ -744,6 +745,20 @@ test('el paquete OpenAI incluye los contratos agents de la skill', async () => {
   assert.match(payload, /target\.join\("agents"\)/);
 });
 
+test('los payloads incluyen el runtime autocontenido y metadatos de Codex', async () => {
+  const [payload, openaiYaml] = await Promise.all([
+    readFile(new URL("src-tauri/src/payload.rs", root), "utf8"),
+    readFile(new URL("skill/agents/openai.yaml", repositoryRoot), "utf8"),
+  ]);
+  assert.match(payload, /static RUNTIME/);
+  assert.match(payload, /SKILL_PACKAGE_JSON/);
+  assert.match(payload, /target\.join\("runtime"\)/);
+  assert.match(payload, /target\.join\("package\.json"\)/);
+  assert.match(payload, /add_dir_to_zip\(&mut zip, &RUNTIME/);
+  assert.match(openaiYaml, /display_name: "Jintia"/);
+  assert.match(openaiYaml, /\$jintia-skill/);
+});
+
 test('Ayuda cubre el flujo real del producto y ofrece FAQ local buscable', async () => {
   const docs = await readFile(new URL('src/pages/docs.js', root), 'utf8');
   assert.match(docs, /const FAQS = \[/);
@@ -795,7 +810,9 @@ test('el editor de silabo protege borradores y usa estados editoriales explicito
 test('el formulario del silabo exige bibliografia y actividad con validacion accesible', async () => {
   const syllabus = await readFile(new URL('src/pages/syllabus.js', root), 'utf8');
   assert.match(syllabus, /\["bibliography", "Bibliografía \/ Recursos"\]/);
-  assert.match(syllabus, /\["graded_activity", "Actividad calificada"\]/);
+  assert.match(syllabus, /GRADED_ACTIVITY_FIELD = \["graded_activity", "Actividades calificadas"\]/);
+  assert.match(syllabus, /id: "wf-activity"[\s\S]*textarea: true/);
+  assert.match(syllabus, /include_graded_activities === true/);
   assert.match(syllabus, /<label for="\$\{id\}"/);
   assert.match(syllabus, /<fieldset[\s\S]*<legend/);
   assert.match(syllabus, /aria-invalid/);
@@ -811,6 +828,9 @@ test('Courses muestra progreso real y protege sus operaciones', async () => {
   ]);
   assert.match(courses, /week\?\.status === "complete"/);
   assert.match(courses, /role="dialog" aria-modal="true"/);
+  assert.match(courses, /id="course-settings-modal"/);
+  assert.match(courses, /include_graded_activities/);
+  assert.match(api, /save_course_settings/);
   assert.match(courses, /event\.key === "Escape"/);
   assert.match(courses, /step="1"/);
   assert.match(courses, /Number\.isInteger\(weeks\)/);

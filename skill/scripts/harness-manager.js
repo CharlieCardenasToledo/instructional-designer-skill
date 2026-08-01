@@ -2,7 +2,7 @@
 "use strict";
 
 const path = require("node:path");
-const { detectInstallationStates, mutate } = require("../../packages/core");
+const { detectInstallationStates, mutate } = require("../runtime/core");
 
 const args = process.argv.slice(2);
 const operation = args.find(arg => !arg.startsWith("--")) || "status";

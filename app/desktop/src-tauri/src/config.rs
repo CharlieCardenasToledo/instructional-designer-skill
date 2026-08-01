@@ -195,8 +195,7 @@ pub fn apply_institution(config: InstitutionConfig) -> ActionResult {
         },
         "activeTemplate": active_template,
         "options": {
-            "evidenceMode": "notebooklm-preferred",
-            "includeGradedActivities": false
+            "evidenceMode": "notebooklm-preferred"
         }
     });
 

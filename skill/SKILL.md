@@ -14,8 +14,9 @@ allowed-tools:
 ## Router de operaciones
 
 Jintia es una skill-orquestador: interpreta lenguaje natural y deriva cada
-petición al playbook mínimo. El usuario puede invocar las operaciones
-explícitamente con `/jintia <comando>` o usar lenguaje natural.
+petición al playbook mínimo. En Claude, el usuario puede invocar las operaciones
+con `/jintia <comando>`. En Codex, debe invocar `$jintia-skill` y expresar la
+operación en lenguaje natural; `/jintia` no es un comando nativo de Codex.
 
 | Intención | Operación | Playbook |
 |---|---|---|
@@ -32,7 +33,7 @@ explícitamente con `/jintia <comando>` o usar lenguaje natural.
 | Migrar estructuras antiguas | `migrate` | `commands/migrate.md` |
 | Diagnosticar el entorno | `doctor` | `commands/doctor.md` |
 | Detectar o gestionar harnesses | `harness` | `references/harnesses.md` |
-| Leer o validar contexto persistente | `context` | `JINTIA.md` y `packages/core` |
+| Leer o validar contexto persistente | `context` | `JINTIA.md` y `runtime/core` |
 
 Ejemplos de routing:
 
@@ -42,7 +43,10 @@ Ejemplos de routing:
 - “El proyecto dejó de funcionar después de actualizar” → `doctor`.
 
 La CLI unificada vive en `bin/jintia.js` y reutiliza los scripts deterministas
-de `scripts/`; no duplica la lógica de validación ni de renderizado.
+de `scripts/`; no duplica la lógica de validación ni de renderizado. Resolver
+`<skill-root>` como la carpeta que contiene este `SKILL.md`. Ejecutar la CLI
+incluida con `node "<skill-root>/bin/jintia.js" <comando>`; no asumir que la
+carpeta de trabajo es la raíz de la skill ni descargar un paquete con `npx`.
 
 Para gestionar la instalación en harnesses, usar `harness status`, `harness
 install`, `harness update`, `harness repair` o `harness uninstall`. Las
@@ -56,8 +60,8 @@ el significado de “camino”. La expresión `Aarma jintia` aparece en el Curr�
 Nacional Intercultural Bilingüe de la Nacionalidad Shuar para referirse a
 “textos instructivos”.
 
-No afirmar que Jintia representa oficialmente al pueblo Shuar, que cuenta con
-aprobación comunitaria o que el término tiene carácter ceremonial. No inventar
+No atribuir a Jintia representación oficial del pueblo Shuar, aprobación
+comunitaria ni carácter ceremonial. No inventar
 interpretaciones, símbolos o traducciones adicionales. No introducir
 referencias culturales shuar en guías, cursos, figuras o evaluaciones salvo que
 el contenido académico lo requiera y existan fuentes verificables.
@@ -76,7 +80,9 @@ en los contratos de `agents/`:
 
 El agente principal conserva la orquestación. Cada delegado devuelve su
 contrato de salida, no modifica silenciosamente el curso y deja explícitos sus
-límites o bloqueos.
+límites o bloqueos. Si el harness registra los agentes personalizados, usar sus
+nombres. Si la superficie solo carga la skill, delegar con un subagente genérico
+y proporcionarle únicamente el contrato Markdown correspondiente.
 
 ## Objetivo
 
@@ -99,7 +105,7 @@ Leer únicamente las referencias necesarias para la tarea. Leer siempre `referen
 | Compilación y scripts auxiliares | `references/compilacion.md` |
 | Validación final obligatoria | `references/checklist.md` |
 
-Si `config/institution.json` existe, leerlo antes de redactar. Si `config/notebooks.json` existe, usarlo para resolver el notebook del curso. No editar archivos de `references/` para guardar datos del usuario.
+Si `config/institution.json` existe, leerlo antes de redactar. Si `.jintia/course.json` existe, leerlo también y usar su configuración específica para esta asignatura. Si `config/notebooks.json` existe, usarlo para resolver el notebook del curso. No editar archivos de `references/` para guardar datos del usuario.
 Si `JINTIA.md` existe en la raíz del curso, leer sus secciones `Course`, `Pedagogy`
 y `Editorial` antes de planificar. Mantener el `README.md` como sílabo canónico;
 `JINTIA.md` solo conserva decisiones duraderas y no debe sobrescribirlo.
@@ -112,10 +118,11 @@ y `Editorial` antes de planificar. Mantener el `README.md` como sílabo canónic
 2. Leer el `README.md` de la raíz del curso. Tratarlo como sílabo canónico.
 3. Validar su estructura con `references/esquema-silabo.md`.
 4. Leer `config/institution.json` si está disponible.
-5. Resolver `activeTemplate`.
-6. Leer `meta.json`, `template.md` y `preamble.tex` de la plantilla activa.
-7. Validar `requiredFiles` y copiar esos archivos junto a la guía.
-8. Pedir únicamente datos ausentes que cambien materialmente el resultado.
+5. Leer `.jintia/course.json` si está disponible. Su configuración pertenece a esta asignatura y prevalece sobre la configuración institucional heredada.
+6. Resolver `activeTemplate`.
+7. Leer `meta.json`, `template.md` y `preamble.tex` de la plantilla activa.
+8. Validar `requiredFiles` y copiar esos archivos junto a la guía.
+9. Pedir únicamente datos ausentes que cambien materialmente el resultado.
 
 No solicitar información que el sílabo o la configuración ya proporcionan.
 
@@ -208,7 +215,7 @@ Aplicar Backward Design:
 3. Diseñar práctica guiada y recuperación.
 4. Redactar teoría suficiente para ejecutar esa práctica.
 
-La guía incluye recuperación y transferencia no calificadas. Incluir actividades calificadas solo cuando `options.includeGradedActivities` sea `true` o el usuario lo solicite. En ese caso, conservar código, nombre y ponderación del sílabo.
+La guía incluye recuperación y transferencia no calificadas. Incluir actividades calificadas solo cuando `.jintia/course.json` tenga `includeGradedActivities: true`; para cursos antiguos sin ese archivo, aceptar también `options.includeGradedActivities: true`; o cuando el usuario lo solicite explícitamente. En ese caso, conservar código, nombre y ponderación del sílabo.
 
 Aplicar UDL 3.0:
 
@@ -235,8 +242,8 @@ demostrar el resultado de aprendizaje:
 3. Elegir gráfico, mapa, tabla, diagrama, imagen o interfaz antes de elegir el
    motor.
 4. Crear una especificación en `figure/specs/`.
-5. Ejecutar `scripts/visual-pipeline.js --spec <spec> --template
-   <activeTemplate> --guide <guia.tex>`. El pipeline debe renderizar, crear la
+5. Ejecutar `node "<skill-root>/scripts/visual-pipeline.js" --spec <spec>
+   --template <activeTemplate> --guide <guia.tex>`. El pipeline debe renderizar, crear la
    previsualización, inspeccionar, ejecutar el linter y actualizar el
    manifiesto.
 6. Conservar fuente, datos, salida y procedencia en `figure/manifest.json`.
@@ -287,11 +294,11 @@ Tratar logos, socios, módulos internacionales y ecosistemas institucionales com
 
 ## Cierre obligatorio
 
-1. Ejecutar `node scripts/latex-linter.js <guia.tex> --template <activeTemplate>`.
+1. Ejecutar `node "<skill-root>/scripts/latex-linter.js" <guia.tex> --template <activeTemplate>`.
 2. Si existen figuras, verificar que cada una pasó
-   `node scripts/visual-pipeline.js`; ejecutar además
-   `node scripts/visual-linter.js <guia.tex>` como comprobación global.
-3. Compilar con `node scripts/latex-validator.js <guia.tex>` cuando el entorno lo permita.
+   `node "<skill-root>/scripts/visual-pipeline.js"`; ejecutar además
+   `node "<skill-root>/scripts/visual-linter.js" <guia.tex>` como comprobación global.
+3. Compilar con `node "<skill-root>/scripts/latex-validator.js" <guia.tex>` cuando el entorno lo permita.
 4. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
 5. Ejecutar `references/checklist.md` punto por punto.
 6. Informar archivos creados, validaciones ejecutadas y limitaciones reales.

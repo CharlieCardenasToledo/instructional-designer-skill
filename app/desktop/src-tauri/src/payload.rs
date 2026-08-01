@@ -15,6 +15,7 @@ use zip::write::SimpleFileOptions;
 const SKILL_MD: &[u8] = include_bytes!("../../../../skill/SKILL.md");
 const LICENSE: &[u8] = include_bytes!("../../../../LICENSE");
 const REQUIREMENTS: &[u8] = include_bytes!("../../../../skill/requirements.txt");
+const SKILL_PACKAGE_JSON: &[u8] = include_bytes!("../../../../skill/package.json");
 pub const SKILL_VERSION: &str = "10.8.0";
 const OPENAI_PLUGIN_MANIFEST: &[u8] =
     include_bytes!("../../../../openai-plugin/.codex-plugin/plugin.json");
@@ -22,6 +23,7 @@ const OPENAI_PLUGIN_MCP: &[u8] = include_bytes!("../../../../openai-plugin/.mcp.
 const OPENAI_PLUGIN_README: &[u8] = include_bytes!("../../../../openai-plugin/README.md");
 static REFERENCES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/references");
 static SCRIPTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/scripts");
+static RUNTIME: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/runtime");
 static TEMPLATES: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/templates");
 static CONFIG: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/config");
 static AGENTS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/../../../skill/agents");
@@ -60,9 +62,11 @@ fn materialize_payload(target: &Path, installed: Option<&Path>) -> Result<(), St
     atomic_write(&target.join("SKILL.md"), SKILL_MD)?;
     atomic_write(&target.join("LICENSE"), LICENSE)?;
     atomic_write(&target.join("requirements.txt"), REQUIREMENTS)?;
+    atomic_write(&target.join("package.json"), SKILL_PACKAGE_JSON)?;
     atomic_write(&target.join("VERSION"), SKILL_VERSION.as_bytes())?;
     write_embedded_dir(&REFERENCES, &target.join("references"))?;
     write_embedded_dir(&SCRIPTS, &target.join("scripts"))?;
+    write_embedded_dir(&RUNTIME, &target.join("runtime"))?;
     write_embedded_dir(&TEMPLATES, &target.join("templates"))?;
     write_embedded_dir(&CONFIG, &target.join("config"))?;
     write_embedded_dir(&AGENTS, &target.join("agents"))?;
@@ -109,11 +113,13 @@ fn installed_payload_matches(target: &Path) -> bool {
     fs::read(target.join("SKILL.md")).ok().as_deref() == Some(SKILL_MD)
         && fs::read(target.join("LICENSE")).ok().as_deref() == Some(LICENSE)
         && fs::read(target.join("requirements.txt")).ok().as_deref() == Some(REQUIREMENTS)
+        && fs::read(target.join("package.json")).ok().as_deref() == Some(SKILL_PACKAGE_JSON)
         && fs::read_to_string(target.join("VERSION"))
             .ok()
             .is_some_and(|version| version.trim() == SKILL_VERSION)
         && embedded_dir_matches(&REFERENCES, &target.join("references"), target, false)
         && embedded_dir_matches(&SCRIPTS, &target.join("scripts"), target, false)
+        && embedded_dir_matches(&RUNTIME, &target.join("runtime"), target, false)
         && embedded_dir_matches(&TEMPLATES, &target.join("templates"), target, false)
         && embedded_dir_matches(&CONFIG, &target.join("config"), target, true)
         && embedded_dir_matches(&AGENTS, &target.join("agents"), target, false)
@@ -242,7 +248,7 @@ pub fn install_openai_plugin() -> ActionResult {
         ));
     }
     let result = ActionResult::ok(format!(
-        "Jintia {SKILL_VERSION} quedó preparado para ChatGPT desktop y Codex.\nReinicia ChatGPT y actívalo desde Plugins.\n{}",
+        "Jintia {SKILL_VERSION} quedó preparado para ChatGPT desktop y Codex.\nReinicia el cliente que usarás y activa Jintia desde Plugins.\n{}",
         path_text(&target)
     ))
     .with_path(path_text(&target));
@@ -473,9 +479,11 @@ pub fn export_skill_zip(destination_dir: String) -> ActionResult {
         add_bytes(&mut zip, "SKILL.md", SKILL_MD)?;
         add_bytes(&mut zip, "LICENSE", LICENSE)?;
         add_bytes(&mut zip, "requirements.txt", REQUIREMENTS)?;
+        add_bytes(&mut zip, "package.json", SKILL_PACKAGE_JSON)?;
         add_bytes(&mut zip, "VERSION", SKILL_VERSION.as_bytes())?;
         add_dir_to_zip(&mut zip, &REFERENCES, "references")?;
         add_dir_to_zip(&mut zip, &SCRIPTS, "scripts")?;
+        add_dir_to_zip(&mut zip, &RUNTIME, "runtime")?;
         add_dir_to_zip(&mut zip, &TEMPLATES, "templates")?;
         add_dir_to_zip(&mut zip, &CONFIG, "config")?;
         add_dir_to_zip(&mut zip, &AGENTS, "agents")?;
@@ -577,11 +585,17 @@ pub fn export_openai_plugin_zip(destination_dir: String) -> ActionResult {
         )?;
         add_bytes(
             &mut zip,
+            &format!("{prefix}/package.json"),
+            SKILL_PACKAGE_JSON,
+        )?;
+        add_bytes(
+            &mut zip,
             &format!("{prefix}/VERSION"),
             SKILL_VERSION.as_bytes(),
         )?;
         add_dir_to_zip(&mut zip, &REFERENCES, &format!("{prefix}/references"))?;
         add_dir_to_zip(&mut zip, &SCRIPTS, &format!("{prefix}/scripts"))?;
+        add_dir_to_zip(&mut zip, &RUNTIME, &format!("{prefix}/runtime"))?;
         add_dir_to_zip(&mut zip, &TEMPLATES, &format!("{prefix}/templates"))?;
         add_dir_to_zip(&mut zip, &CONFIG, &format!("{prefix}/config"))?;
         add_dir_to_zip(&mut zip, &AGENTS, &format!("{prefix}/agents"))?;

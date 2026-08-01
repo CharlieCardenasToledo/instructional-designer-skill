@@ -564,6 +564,7 @@ pub fn create_course_structure(
     course_name: String,
     weeks: u32,
     initialize_readme: bool,
+    include_graded_activities: bool,
 ) -> ActionResult {
     if !(1..=52).contains(&weeks) {
         return ActionResult::error("El número de semanas debe estar entre 1 y 52.");
@@ -606,6 +607,12 @@ pub fn create_course_structure(
         }
     }
 
+    if let Err(error) = write_course_settings(&course, include_graded_activities) {
+        return ActionResult::error(format!(
+            "Las carpetas se crearon, pero no se pudo guardar la configuración de la asignatura: {error}"
+        ));
+    }
+
     if initialize_readme {
         let readme = course.join("README.md");
         if !readme.exists() {
@@ -634,6 +641,45 @@ pub fn create_course_structure(
         path_text(&course)
     ))
     .with_path(path_text(&course))
+}
+
+fn write_course_settings(course: &Path, include_graded_activities: bool) -> Result<(), String> {
+    let settings_dir = course.join(".jintia");
+    std::fs::create_dir_all(&settings_dir)
+        .map_err(|error| format!("no se pudo crear {}: {error}", settings_dir.display()))?;
+    let settings = serde_json::json!({
+        "schemaVersion": 1,
+        "includeGradedActivities": include_graded_activities,
+    });
+    let bytes = serde_json::to_vec_pretty(&settings)
+        .map_err(|error| format!("no se pudo serializar la configuración: {error}"))?;
+    atomic_write(&settings_dir.join("course.json"), &bytes)
+}
+
+pub fn save_course_settings(
+    course_path: String,
+    course_code: String,
+    course_name: String,
+    include_graded_activities: bool,
+) -> ActionResult {
+    let root = match canonical_directory(&course_path) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+    let course = match course_directory(&root, &course_code, &course_name) {
+        Ok(path) => path,
+        Err(error) => return ActionResult::error(error),
+    };
+    if !course.exists() {
+        return ActionResult::error(format!(
+            "Carpeta de la asignatura no encontrada: {}",
+            course.display()
+        ));
+    }
+    match write_course_settings(&course, include_graded_activities) {
+        Ok(()) => ActionResult::ok("Configuración de la asignatura guardada."),
+        Err(error) => ActionResult::error(error),
+    }
 }
 
 fn bullets(text: &str) -> Vec<String> {

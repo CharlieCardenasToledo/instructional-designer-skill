@@ -38,13 +38,20 @@ Campos principales:
   },
   "activeTemplate": "elegantbook-clasico",
   "options": {
-    "evidenceMode": "notebooklm-preferred",
-    "includeGradedActivities": false
+    "evidenceMode": "notebooklm-preferred"
   }
 }
 ```
 
 Convertir `branding.primaryColor` hexadecimal a RGB cuando se genere LaTeX. Si no existe logo, omitir `\logo{}`. No inventar integraciones.
+
+## Configuración de la asignatura
+
+Si existe `.jintia/course.json` dentro de la carpeta del curso, leerlo antes de
+redactar. Su campo `includeGradedActivities` controla únicamente esa
+asignatura y tiene prioridad sobre cualquier valor heredado de configuraciones
+anteriores. Si no existe el archivo, puede usarse `options.includeGradedActivities`
+de `institution.json` como compatibilidad con proyectos antiguos.
 
 ## Registro de notebooks
 

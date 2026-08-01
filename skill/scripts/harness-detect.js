@@ -3,7 +3,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const { detectInstallationStates } = require("../../packages/core");
+const { detectInstallationStates } = require("../runtime/core");
 const args = process.argv.slice(2);
 const projectRoot = args.find(arg => !arg.startsWith("--")) || process.cwd();
 const explicit = args.filter(arg => arg.startsWith("--providers=")).flatMap(arg => arg.slice("--providers=".length).split(","));

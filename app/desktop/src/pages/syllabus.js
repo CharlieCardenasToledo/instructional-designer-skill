@@ -13,8 +13,8 @@ const REQUIRED_FIELDS = [
   ["topics", "Contenido / Temas"],
   ["outcomes", "Resultados de aprendizaje"],
   ["bibliography", "Bibliografía / Recursos"],
-  ["graded_activity", "Actividad calificada"],
 ];
+const GRADED_ACTIVITY_FIELD = ["graded_activity", "Actividades calificadas"];
 
 const AUTOSAVE_DELAY = 700;
 let _activeWeek = 0;
@@ -42,12 +42,19 @@ function weekCountFor(course) {
   return Math.min(52, Math.max(1, Number(course?.weeks) || 16));
 }
 
+function includeGradedActivitiesFor(course = currentCourse()) {
+  return course?.include_graded_activities === true;
+}
+
 function clampWeek(value, count) {
   return Math.min(Math.max(0, Number(value) || 0), Math.max(0, count - 1));
 }
 
 function missingRequired(week) {
-  return REQUIRED_FIELDS.filter(([key]) => !String(week?.[key] || "").trim());
+  const fields = includeGradedActivitiesFor()
+    ? [...REQUIRED_FIELDS, GRADED_ACTIVITY_FIELD]
+    : REQUIRED_FIELDS;
+  return fields.filter(([key]) => !String(week?.[key] || "").trim());
 }
 
 function weekStatus(week) {
@@ -292,7 +299,7 @@ function renderWeekForm(weekData, weekIndex) {
         <p class="mt-3 text-xs text-app-muted">Total semanal: <strong id="wf-hours-total" class="text-app-text">${totalHours} horas</strong></p>
       </fieldset>
 
-      ${fieldMarkup({ id: "wf-activity", label: "Actividad calificada", value: week.graded_activity, placeholder: "AC-01 — Taller de aplicación — 10 puntos", hint: "Incluye código, tipo de actividad y ponderación." })}
+      ${fieldMarkup({ id: "wf-activity", label: "Actividades calificadas", value: week.graded_activity, placeholder: "AC-01 — Taller de aplicación — 10 puntos\nAC-02 — Informe breve — 15 puntos", hint: "Una actividad por línea. Puedes registrar n actividades para esta semana.", textarea: true, rows: 3, required: includeGradedActivitiesFor() })}
     </div>`;
 }
 
@@ -505,7 +512,7 @@ async function generateReadme() {
       academicPeriod: course.period || "",
       semester: course.semester || "",
       description: course.description || "",
-      weeksData: course.weeks_data || [],
+      weeksData: (course.weeks_data || []).map(week => includeGradedActivitiesFor(course) ? week : { ...week, graded_activity: null }),
     });
     if (result.success && course.project_root !== coursePath) {
       course.project_root = coursePath;

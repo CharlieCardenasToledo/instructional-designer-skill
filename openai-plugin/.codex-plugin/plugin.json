@@ -14,7 +14,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Jintia",
-    "shortDescription": "Diseño instruccional universitario con evidencia",
+    "shortDescription": "Diseño académico verificable",
     "longDescription": "Convierte sílabos y fuentes del curso en guías didácticas, actividades, rúbricas y evaluaciones verificables con salida LaTeX.",
     "developerName": "Charlie Cárdenas Toledo",
     "category": "Education",

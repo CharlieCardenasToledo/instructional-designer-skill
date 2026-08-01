@@ -137,6 +137,7 @@ pub struct WeekData {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct NotebookEntry {
     pub course_code: String,
     pub course_name: String,

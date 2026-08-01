@@ -1,0 +1,4 @@
+interface:
+  display_name: "Jintia"
+  short_description: "Diseño instruccional universitario verificable"
+  default_prompt: "Usa $jintia-skill para diseñar o revisar un material universitario con evidencia verificable."

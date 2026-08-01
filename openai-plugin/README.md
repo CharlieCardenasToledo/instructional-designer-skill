@@ -9,7 +9,7 @@ La instalación local:
 1. prepara el plugin en `~/.codex/plugins/jintia`;
 2. registra Jintia en `~/.agents/plugins/marketplace.json`;
 3. conserva y sincroniza la configuración institucional y los notebooks;
-4. requiere reiniciar ChatGPT y activar Jintia desde Plugins.
+4. requiere reiniciar ChatGPT o Codex y activar Jintia desde Plugins.
 
 La exportación produce `jintia-openai-plugin-<versión>.zip`.
 

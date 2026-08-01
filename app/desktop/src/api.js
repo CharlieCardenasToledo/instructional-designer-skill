@@ -132,8 +132,12 @@ export async function listAccountNotebooksMcp() {
 }
 
 // ── Estructura de carpetas y sílabo ──────────────────────────────────────
-export async function createCourseStructure({ rootPath, courseCode, courseName, weeks, initializeReadme = true }) {
-  return invoke("create_course_structure", { rootPath, courseCode, courseName, weeks, initializeReadme });
+export async function createCourseStructure({ rootPath, courseCode, courseName, weeks, initializeReadme = true, includeGradedActivities = false }) {
+  return invoke("create_course_structure", { rootPath, courseCode, courseName, weeks, initializeReadme, includeGradedActivities });
+}
+
+export async function saveCourseSettings({ coursePath, courseCode, courseName, includeGradedActivities = false }) {
+  return invoke("save_course_settings", { coursePath, courseCode, courseName, includeGradedActivities });
 }
 
 export async function getDefaultCourseRoot() {

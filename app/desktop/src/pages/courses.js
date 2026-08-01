@@ -1,4 +1,4 @@
-import { checkDependencies, checkNotebookLMAuth, checkWeekGuideExists, createCourseStructure, getDefaultCourseRoot, getCourseState, getSetupStatus, listAccountNotebooksMcp, listNotebooksMcp, openExternal, pickDirectory, runNotebookLMAuth, saveNotebooksConfig } from "../api.js";
+import { checkDependencies, checkNotebookLMAuth, checkWeekGuideExists, createCourseStructure, getDefaultCourseRoot, getCourseState, getSetupStatus, listAccountNotebooksMcp, listNotebooksMcp, openExternal, pickDirectory, runNotebookLMAuth, saveCourseSettings, saveNotebooksConfig } from "../api.js";
 import { escapeHtml, safeIndex } from "../dom.js";
 import { state, saveCourses } from "../state.js";
 import { toast } from "../toast.js";
@@ -30,6 +30,9 @@ let _deleteOpener = null;
 let _notebookConnectIndex = -1;
 let _notebookConnectDraft = {};
 let _notebookConnectOpener = null;
+let _courseSettingsIndex = -1;
+let _courseSettingsDraft = false;
+let _courseSettingsOpener = null;
 // Caché de sesión: la biblioteca de NotebookLM es la misma para todos los
 // cursos, así que se consulta una vez y se reutiliza hasta que el usuario
 // pide "Refrescar" (evita relanzar el proceso MCP en cada render).
@@ -52,7 +55,13 @@ const WEEK_AI_OPERATIONS = [
   { id: "state", label: "Registrar estado editorial", command: "/jintia state" },
 ];
 
-const REQUIRED_WEEK_FIELDS = ["title", "unit", "topics", "outcomes", "bibliography", "graded_activity"];
+const REQUIRED_WEEK_FIELDS = ["title", "unit", "topics", "outcomes", "bibliography"];
+
+function requiredWeekFields(course) {
+  return course?.include_graded_activities === true
+    ? [...REQUIRED_WEEK_FIELDS, "graded_activity"]
+    : REQUIRED_WEEK_FIELDS;
+}
 // Project color palette: hex values are stored in the database for persistence,
 // but CSS custom properties (styles.css) define the actual rendered colors,
 // allowing theme changes without modifying stored data.
@@ -116,7 +125,7 @@ function courseProgress(course) {
   const weeks = Array.isArray(course.weeks_data) ? course.weeks_data : [];
   const complete = Array.from({ length: total }, (_, index) => {
     const week = weeks[index];
-    return week?.status === "complete" && REQUIRED_WEEK_FIELDS.every(key => String(week?.[key] || "").trim());
+    return week?.status === "complete" && requiredWeekFields(course).every(key => String(week?.[key] || "").trim());
   }).filter(Boolean).length;
   const started = weeks.some(week => week && Object.values(week).some(value => value !== null && value !== "" && value !== undefined));
   const status = complete === total ? "complete" : started ? "progress" : "pending";
@@ -250,6 +259,10 @@ export function renderCourses() {
     <div class="fixed inset-0 z-[5150] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="notebook-connect-modal">
       <div class="w-full max-w-[480px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl" id="notebook-connect-box"
         role="dialog" aria-modal="true" aria-labelledby="notebook-connect-title"></div>
+    </div>
+    <div class="fixed inset-0 z-[5150] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="course-settings-modal">
+      <div class="w-full max-w-[520px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl" id="course-settings-box"
+        role="dialog" aria-modal="true" aria-labelledby="course-settings-title"></div>
     </div>
     <div class="fixed inset-0 z-[5200] hidden items-center justify-center bg-slate-900/45 p-3 sm:p-6" id="ai-task-modal">
       <div class="w-full max-w-[480px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl" id="ai-task-box"
@@ -420,6 +433,10 @@ function renderMoreMenu(index, course) {
           ${ic("book-open", 17)}
           ${course.notebook_id ? "Cambiar NotebookLM" : "Conectar NotebookLM"}
         </button>
+        <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg border-transparent bg-transparent px-3 text-left text-xs font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand" data-course-action="settings" data-index="${index}">
+          ${ic("settings", 17)}
+          Configuración de la asignatura
+        </button>
         <div class="my-1 border-t border-slate-100"></div>
         <button type="button" class="flex min-h-11 w-full items-center gap-2 rounded-lg border-transparent bg-transparent px-3 text-left text-xs font-semibold text-red-700 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600" data-course-action="delete" data-index="${index}">
           ${ic("trash-2", 17)}
@@ -503,6 +520,17 @@ function bindPageEvents() {
   });
   notebookOverlay?.addEventListener("keydown", handleNotebookConnectKeydown);
 
+  const courseSettingsOverlay = document.getElementById("course-settings-modal");
+  courseSettingsOverlay?.addEventListener("mousedown", event => {
+    if (event.target === courseSettingsOverlay) closeCourseSettingsModal();
+  });
+  courseSettingsOverlay?.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeCourseSettingsModal();
+    }
+  });
+
   const aiTaskOverlay = document.getElementById("ai-task-modal");
   aiTaskOverlay?.addEventListener("mousedown", event => {
     if (event.target === aiTaskOverlay) closeAiTaskModal();
@@ -535,6 +563,7 @@ function bindResultEvents() {
       if (button.dataset.courseAction === "folders") generateFolders(index, button);
       if (button.dataset.courseAction === "appearance") openAppearanceModal(index, button);
       if (button.dataset.courseAction === "notebook") openNotebookConnectModal(index, button);
+      if (button.dataset.courseAction === "settings") openCourseSettingsModal(index, button);
       if (button.dataset.courseAction === "ai") openCourseWithAi(index, button.dataset.aiProvider, button);
       if (button.dataset.courseAction === "delete") openDeleteModal(index, button);
     });
@@ -1035,6 +1064,110 @@ function editCourse(index) {
   navigate("syllabus");
 }
 
+function openCourseSettingsModal(index, opener) {
+  const course = state.courses[index];
+  if (!course) return;
+  _courseSettingsIndex = index;
+  _courseSettingsDraft = course.include_graded_activities === true;
+  _courseSettingsOpener = opener || document.activeElement;
+  const overlay = document.getElementById("course-settings-modal");
+  overlay?.classList.remove("hidden");
+  overlay?.classList.add("flex");
+  renderCourseSettingsModal();
+  queueMicrotask(() => document.getElementById("course-settings-graded")?.focus());
+}
+
+function closeCourseSettingsModal() {
+  const overlay = document.getElementById("course-settings-modal");
+  overlay?.classList.add("hidden");
+  overlay?.classList.remove("flex");
+  _courseSettingsOpener?.focus?.();
+  _courseSettingsIndex = -1;
+  _courseSettingsOpener = null;
+}
+
+function renderCourseSettingsModal() {
+  const course = state.courses[_courseSettingsIndex];
+  const box = document.getElementById("course-settings-box");
+  if (!course || !box) return;
+  box.innerHTML = `
+    <div class="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+      <div>
+        <h2 id="course-settings-title" class="text-base font-bold text-app-text">Configuración de la asignatura</h2>
+        <p class="mt-1 text-xs text-app-muted">${escapeHtml(course.code)} · ${escapeHtml(course.name)}</p>
+      </div>
+      <button type="button" class="${cx(ui.button.base, ui.button.ghost, 'h-11 w-11 p-0')}" id="course-settings-close" aria-label="Cerrar configuración">${ic("x", 20)}</button>
+    </div>
+    <div class="p-5">
+      <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <input type="checkbox" id="course-settings-graded" class="mt-1 h-4 w-4 shrink-0" ${_courseSettingsDraft ? "checked" : ""}>
+        <span>
+          <strong class="block text-sm text-app-text">¿Tiene actividades calificadas?</strong>
+          <span class="mt-1 block text-xs leading-5 text-app-muted">Esta opción aplica solo a ${escapeHtml(course.name)}. Al activarla, el editor exigirá actividades calificadas para completar cada semana y la skill podrá incluirlas en sus guías.</span>
+        </span>
+      </label>
+      <p class="mt-3 text-xs leading-5 text-app-muted">Puedes registrar varias actividades en una semana escribiéndolas en líneas separadas.</p>
+      <div id="course-settings-error" class="mt-4 hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert"></div>
+    </div>
+    <div class="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 sm:flex-row sm:justify-end">
+      <button type="button" class="${cx(ui.button.base, ui.button.ghost, 'min-h-11')}" id="course-settings-cancel">Cancelar</button>
+      <button type="button" class="${cx(ui.button.base, ui.button.primary, 'min-h-11')}" id="course-settings-save">${ic("save", 17)}Guardar configuración</button>
+    </div>`;
+  refreshIcons();
+  box.querySelector("#course-settings-close")?.addEventListener("click", closeCourseSettingsModal);
+  box.querySelector("#course-settings-cancel")?.addEventListener("click", closeCourseSettingsModal);
+  box.querySelector("#course-settings-graded")?.addEventListener("change", event => {
+    _courseSettingsDraft = event.target.checked;
+  });
+  box.querySelector("#course-settings-save")?.addEventListener("click", saveCourseSettingsFromModal);
+}
+
+async function saveCourseSettingsFromModal(event) {
+  const index = _courseSettingsIndex;
+  const course = state.courses[index];
+  const button = event.currentTarget;
+  if (!course || button.disabled) return;
+  const previous = course.include_graded_activities === true;
+  const next = _courseSettingsDraft === true;
+  course.include_graded_activities = next;
+  if (!persistCourseList([...state.courses])) {
+    course.include_graded_activities = previous;
+    return;
+  }
+  button.disabled = true;
+  button.setAttribute("aria-busy", "true");
+  button.innerHTML = `<span class="animate-spin">${ic("loader-2", 17)}</span>Guardando…`;
+  refreshIcons();
+  const rootPath = course.project_root || parentDirectory(course.project_path);
+  if (rootPath) {
+    try {
+      const result = await saveCourseSettings({
+        coursePath: rootPath,
+        courseCode: course.code,
+        courseName: course.name,
+        includeGradedActivities: next,
+      });
+      if (!result?.success) throw new Error(result?.message || "No se pudo guardar la configuración del proyecto.");
+    } catch (error) {
+      course.include_graded_activities = previous;
+      persistCourseList([...state.courses]);
+      const errorEl = document.getElementById("course-settings-error");
+      if (errorEl) {
+        errorEl.textContent = String(error);
+        errorEl.classList.remove("hidden");
+      }
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+      button.innerHTML = `${ic("save", 17)}Guardar configuración`;
+      refreshIcons();
+      return;
+    }
+  }
+  closeCourseSettingsModal();
+  renderCourses();
+  toast(`Configuración de ${course.code} guardada`, "success", 3500);
+}
+
 async function generateFolders(index, button) {
   if (_folderBusy.has(index)) return;
   const course = state.courses[index];
@@ -1060,6 +1193,7 @@ async function generateFolders(index, button) {
       courseName: course.name,
       weeks: Math.trunc(Number(course.weeks)),
       initializeReadme: true,
+      includeGradedActivities: course.include_graded_activities === true,
     });
     if (!result.success) throw new Error(result.message);
     const next = state.courses.map((item, courseIndex) => courseIndex === index
@@ -1243,8 +1377,10 @@ async function syncNotebooksFromCourses() {
     }));
   try {
     await saveNotebooksConfig(entries);
-  } catch {
-    // Sincronización best-effort: un fallo aquí no debe interrumpir el guardado del curso.
+  } catch (error) {
+    // El curso sí puede guardarse aunque falle la sincronización, pero el
+    // usuario debe enterarse para no creer que notebooks.json quedó actualizado.
+    toast(`La asignatura se guardó, pero notebooks.json no pudo actualizarse. (${error})`, "error", 7000);
   }
 }
 
@@ -1258,6 +1394,7 @@ function openModal(opener) {
     rootPath: "", rootPathLoading: true, rootPathCustomized: false,
     projectColor: PROJECT_COLORS[0].value, projectIcon: PROJECT_ICONS[0].value,
     notebook_id: "", notebook_name: "", notebook_url: "",
+    includeGradedActivities: false,
   };
   const overlay = document.getElementById("course-modal");
   overlay?.classList.remove("hidden");
@@ -1326,6 +1463,13 @@ function renderCourseDetailsStep() {
           <label for="m-desc">Descripción <span class="font-normal text-app-muted">(opcional)</span></label>
           <textarea id="m-desc" rows="3" placeholder="Breve descripción del curso">${escapeHtml(_modalData.description)}</textarea>
         </div>
+        <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+          <input type="checkbox" id="m-include-graded-activities" class="mt-1 h-4 w-4 shrink-0" ${_modalData.includeGradedActivities ? "checked" : ""}>
+          <span>
+            <strong class="block text-sm text-app-text">¿Esta asignatura tiene actividades calificadas?</strong>
+            <span class="mt-1 block text-xs leading-5 text-app-muted">Si lo activas, cada semana podrá registrar una o varias actividades calificadas y se conservarán al generar el sílabo y las guías.</span>
+          </span>
+        </label>
       </div>
     </form>
     ${modalFooter(`<button type="button" class="${cx(ui.button.base, ui.button.ghost, 'min-h-11')}" id="m-cancel">Cancelar</button>`,
@@ -1495,6 +1639,7 @@ function captureAndValidateStepOne() {
     credits: Math.trunc(credits),
     weeks: Math.trunc(weeks),
     description: read("m-desc"),
+    includeGradedActivities: document.getElementById("m-include-graded-activities")?.checked === true,
   };
   return true;
 }
@@ -1550,6 +1695,7 @@ async function createCourse(button) {
     credits: _modalData.credits,
     weeks: _modalData.weeks,
     description: _modalData.description,
+    include_graded_activities: _modalData.includeGradedActivities === true,
     weeks_data: [],
     project_status: "preparing",
     project_color: _modalData.projectColor,
@@ -1572,6 +1718,7 @@ async function createCourse(button) {
       courseName: course.name,
       weeks: course.weeks,
       initializeReadme: _modalData.initializeReadme,
+      includeGradedActivities: course.include_graded_activities,
     });
     if (!result.success) throw new Error(result.message);
     const next = state.courses.map((item, courseIndex) => courseIndex === index

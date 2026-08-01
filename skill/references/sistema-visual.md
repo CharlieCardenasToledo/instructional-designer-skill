@@ -14,7 +14,7 @@ interfaces, imágenes anotadas o notación disciplinar.
    reproducibilidad.
 5. Crear `figure/specs/fig-id.json` conforme a
    `schemas/visual-spec.schema.json`.
-6. Ejecutar `node scripts/visual-renderer.js --spec <spec> --template
+6. Ejecutar `node "<skill-root>/scripts/visual-renderer.js" --spec <spec> --template
    <activeTemplate>`.
 7. Comprobar el archivo renderizado y `figure/manifest.json`.
 
@@ -103,7 +103,7 @@ Mantener resultados, instrucciones y criterios en el flujo principal.
 Definir `model.stages` con identificador, etiqueta y `nodeIds`. Ejecutar:
 
 ```text
-node scripts/visual-progressive.js --spec figure/specs/fig-id.json --render
+node "<skill-root>/scripts/visual-progressive.js" --spec figure/specs/fig-id.json --render
 ```
 
 Cada etapa acumula los nodos y relaciones anteriores, recibe un identificador

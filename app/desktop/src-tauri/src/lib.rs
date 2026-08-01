@@ -176,6 +176,7 @@ async fn create_course_structure(
     course_name: String,
     weeks: u32,
     initialize_readme: Option<bool>,
+    include_graded_activities: Option<bool>,
 ) -> ActionResult {
     course::create_course_structure(
         root_path,
@@ -183,6 +184,22 @@ async fn create_course_structure(
         course_name,
         weeks,
         initialize_readme.unwrap_or(true),
+        include_graded_activities.unwrap_or(false),
+    )
+}
+
+#[tauri::command]
+async fn save_course_settings(
+    course_path: String,
+    course_code: String,
+    course_name: String,
+    include_graded_activities: Option<bool>,
+) -> ActionResult {
+    course::save_course_settings(
+        course_path,
+        course_code,
+        course_name,
+        include_graded_activities.unwrap_or(false),
     )
 }
 
@@ -390,6 +407,7 @@ pub fn run() {
             open_generated_pdf,
             reveal_generated_pdf,
             create_course_structure,
+            save_course_settings,
             generate_syllabus,
             compile_syllabus_pdf,
             list_templates,

@@ -4,7 +4,7 @@ Gestiona el sílabo canónico. La primera operación disponible valida el contra
 antes de generar materiales:
 
 ```bash
-npx jintia syllabus validate ./curso/README.md
+node "<skill-root>/bin/jintia.js" syllabus validate ./curso/README.md
 ```
 
 La validación comprueba los campos que la skill usa para resolver semanas,

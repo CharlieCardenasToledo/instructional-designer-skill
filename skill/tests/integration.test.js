@@ -160,3 +160,40 @@ test("Codex recibe subagentes reales en .codex/agents/, Claude conserva agents/*
   assert.equal(fs.existsSync(codexAgentToml), false, "desinstalar Codex retira el TOML del subagente");
   assert.ok(fs.existsSync(claudeAgentsInSkill), "desinstalar Codex no afecta la instalación de Claude");
 });
+
+test("la instalación global de Codex usa la ruta personal oficial .agents/skills", () => {
+  const { providerById } = require("../../packages/core");
+  const home = path.join(os.tmpdir(), "jintia-home");
+  const target = installPath(
+    providerById("codex"),
+    "global",
+    path.join(os.tmpdir(), "jintia-project"),
+    home,
+    { CODEX_HOME: path.join(home, "custom-codex-home") },
+    "win32"
+  );
+  assert.equal(target, path.join(home, ".agents", "skills", "jintia-skill"));
+});
+
+test("la copia instalada en Codex conserva un runtime autocontenido y ejecutable", () => {
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-codex-runtime-"));
+  const course = copyFixture("minimal-course");
+  const installed = mutate("install", {
+    projectRoot: project,
+    sourcePath: root,
+    providers: ["codex"],
+    scope: "project",
+    version: "10.8.0",
+    confirm: true,
+  }).results[0].target;
+
+  assert.ok(fs.existsSync(path.join(installed, "runtime", "core", "index.js")));
+  assert.ok(fs.existsSync(path.join(installed, "agents", "openai.yaml")));
+  const result = spawnSync(
+    process.execPath,
+    [path.join(installed, "bin", "jintia.js"), "context", "init", course, "--json"],
+    { encoding: "utf8" }
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(JSON.parse(result.stdout).data.created, true);
+});
