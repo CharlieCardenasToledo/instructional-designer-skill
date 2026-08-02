@@ -28,7 +28,7 @@ const required = [
   "skill/templates/elegantbook-clasico/meta.json",
 ];
 
-if (packageJson.name !== "jintia") failures.push(`nombre npm inesperado: ${packageJson.name}`);
+if (packageJson.name !== "@charlie.act7/jintia") failures.push(`nombre npm inesperado: ${packageJson.name}`);
 if (packageJson.version !== skillPackage.version) failures.push("la versión npm no coincide con la skill");
 if (packageJson.bin?.jintia !== "skill/bin/jintia.js") failures.push("falta el ejecutable jintia");
 if (artifact?.name !== packageJson.name || artifact?.version !== packageJson.version) failures.push("npm pack devolvió identidad inconsistente");

@@ -6,8 +6,8 @@
 4. Ejecuta el cierre técnico:
 
 ```bash
-npx jintia validate semanas/semana-03/latex/guia-semana-03.tex
-npx jintia compile semanas/semana-03/latex/guia-semana-03.tex
+npx @charlie.act7/jintia validate semanas/semana-03/latex/guia-semana-03.tex
+npx @charlie.act7/jintia compile semanas/semana-03/latex/guia-semana-03.tex
 ```
 
 5. Revisa el PDF, la bibliografía y las figuras antes de compartirlo.

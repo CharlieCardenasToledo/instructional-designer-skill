@@ -2,8 +2,9 @@
 
 Usar `jintia detect` para una inspección rápida y `jintia harness status` para
 conocer la versión y el estado de la skill en alcance de proyecto y global.
-Desde npm, preferir los alias equivalentes `npx jintia install`, `npx jintia
-update`, `npx jintia status`, `npx jintia repair` y `npx jintia uninstall`.
+Desde npm, preferir los alias equivalentes `npx @charlie.act7/jintia install`,
+`npx @charlie.act7/jintia update`, `npx @charlie.act7/jintia status`,
+`npx @charlie.act7/jintia repair` y `npx @charlie.act7/jintia uninstall`.
 En automatización, declarar `--providers`, `--scope` y `--yes`; en una terminal
 interactiva, permitir que el instalador solicite esos valores.
 

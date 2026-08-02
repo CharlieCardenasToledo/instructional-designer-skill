@@ -28,18 +28,18 @@ Requiere Node.js 18 o posterior. Desde la raíz del proyecto donde utilizarás
 Jintia, ejecuta:
 
 ```bash
-npx jintia install
+npx @charlie.act7/jintia install
 ```
 
 El instalador detecta los harnesses disponibles, solicita el alcance y confirma
 antes de escribir. Para automatización sin preguntas:
 
 ```bash
-npx jintia install --providers=claude,codex --scope=project --yes
+npx @charlie.act7/jintia install --providers=claude,codex --scope=project --yes
 ```
 
-Usa `npx jintia update` para actualizar una instalación gestionada y reinicia
-Claude Code o Codex para que descubra la skill.
+Usa `npx @charlie.act7/jintia update` para actualizar una instalación gestionada
+y reinicia Claude Code o Codex para que descubra la skill.
 
 ### Con Jintia Desktop
 

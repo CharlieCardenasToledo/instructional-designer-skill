@@ -3,9 +3,9 @@
 Desde la CLI:
 
 ```bash
-npx jintia init ./mi-curso --code IFT200 --name "Fundamentos de datos"
-npx jintia context init ./mi-curso
-npx jintia syllabus validate ./mi-curso/README.md
+npx @charlie.act7/jintia init ./mi-curso --code IFT200 --name "Fundamentos de datos"
+npx @charlie.act7/jintia context init ./mi-curso
+npx @charlie.act7/jintia syllabus validate ./mi-curso/README.md
 ```
 
 Después completa en `README.md` las semanas, resultados, horas, herramientas y

@@ -16,9 +16,9 @@ Categorías actuales:
 Uso:
 
 ```bash
-npx jintia audit README.md
-npx jintia audit guia.tex --json
-npx jintia audit guia.tex --strict
+npx @charlie.act7/jintia audit README.md
+npx @charlie.act7/jintia audit guia.tex --json
+npx @charlie.act7/jintia audit guia.tex --strict
 ```
 
 `--strict` convierte también las advertencias en fallo de proceso. Las reglas

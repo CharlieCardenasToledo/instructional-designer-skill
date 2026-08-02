@@ -5,12 +5,22 @@ y versionado semántico.
 
 ## Sin publicar
 
+## 10.10.1 — 2026-08-02
+
+### Corregido
+
+- Cambiado el paquete npm al scope oficial `@charlie.act7/jintia`, evitando las
+  restricciones de similitud de nombres de npm para paquetes sin scope.
+- Actualizados los comandos públicos a `npx @charlie.act7/jintia`.
+- Preparada `jintia-skill` 10.10.1 con el contrato de publicación corregido.
+
 ## 10.10.0 — 2026-08-02
 
 ### Añadido
 
-- Preparado el paquete público `jintia` para instalar `jintia-skill` 10.10.0
-  mediante `npx jintia install` en Claude Code, Codex y otros harnesses
+- Preparado el paquete público `@charlie.act7/jintia` para instalar
+  `jintia-skill` 10.10.0 mediante `npx @charlie.act7/jintia install` en Claude
+  Code, Codex y otros harnesses
   compatibles.
 - Añadidos comandos directos `install`, `update`, `status`, `repair` y
   `uninstall`, con selección interactiva y opciones reproducibles para CI.

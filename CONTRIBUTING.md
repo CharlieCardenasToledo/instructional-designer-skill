@@ -32,12 +32,12 @@ conducta modificada.
 
 ## Publicación npm
 
-El paquete público es `jintia`; no publicar `skill/` ni los paquetes internos
-`@jintia/*` por separado. La primera publicación que reserva el nombre requiere
+El paquete público es `@charlie.act7/jintia`; no publicar `skill/` ni los
+paquetes internos `@jintia/*` por separado. La primera publicación que reserva el nombre requiere
 una sesión npm con 2FA:
 
 ```bash
-npm publish
+npm publish --access public
 ```
 
 Después de esa primera publicación, configurar en npm el trusted publisher de

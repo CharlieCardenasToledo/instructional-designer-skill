@@ -4,7 +4,7 @@ description: Diseña, redacta, edita y valida cursos, guías semanales LaTeX, m�
 allowed-tools:
   - Bash(node scripts/*)
   - Bash(node bin/jintia.js *)
-  - Bash(npx jintia *)
+  - Bash(npx @charlie.act7/jintia *)
   - Bash(pdflatex *)
   - Bash(biber *)
 ---
