@@ -166,7 +166,13 @@ function selectTargets(options) {
   if (!selected.length) throw new Error("Debes indicar al menos un proveedor con --providers=claude,codex,cursor.");
   const scope = options.scope || "project";
   if (!["project", "global"].includes(scope)) throw new Error("El alcance debe ser project o global.");
-  return selected.map(provider => ({ provider, scope, target: installPath(provider, scope, options.projectRoot, options.homeDir, options.env, options.platform) }));
+  return selected.map(provider => ({
+    id: provider.id,
+    name: provider.name,
+    provider,
+    scope,
+    target: installPath(provider, scope, options.projectRoot, options.homeDir, options.env, options.platform),
+  }));
 }
 
 function mutate(operation, options) {

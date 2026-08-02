@@ -17,8 +17,19 @@ function run(args) {
 test("la CLI expone ayuda y operaciones principales", () => {
   const result = run(["--help"]);
   assert.equal(result.status, 0);
+  assert.match(result.stdout, /jintia install/);
   assert.match(result.stdout, /jintia doctor/);
   assert.match(result.stdout, /jintia visual render/);
+});
+
+test("install de primer nivel instala la skill para npx sin pasar por harness", () => {
+  const project = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-npx-install-"));
+  const result = run(["install", "--providers=codex", "--scope=project", `--project=${project}`, "--yes"]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /codex: project · installed/);
+  const installed = path.join(project, ".agents", "skills", "jintia-skill");
+  assert.ok(fs.existsSync(path.join(installed, "SKILL.md")));
+  assert.equal(fs.readFileSync(path.join(installed, "VERSION"), "utf8").trim(), require("../package.json").version);
 });
 
 test("init crea una estructura idempotente sin sobrescribir README", () => {

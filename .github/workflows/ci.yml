@@ -26,3 +26,4 @@ jobs:
       - run: npm run docs:check
       - run: npm run skill:check
       - run: npm run release:check
+      - run: npm run package:check

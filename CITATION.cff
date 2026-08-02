@@ -2,8 +2,8 @@ cff-version: 1.2.0
 message: "Si utilizas Jintia en investigación, docencia o una publicación, cita este software."
 title: "Jintia Skill"
 type: software
-version: 10.9.2
-date-released: 2026-08-01
+version: 10.10.0
+date-released: 2026-08-02
 authors:
   - family-names: "Cárdenas Toledo"
     given-names: "Charlie"

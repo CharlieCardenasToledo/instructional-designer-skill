@@ -5,6 +5,23 @@ y versionado semántico.
 
 ## Sin publicar
 
+## 10.10.0 — 2026-08-02
+
+### Añadido
+
+- Preparado el paquete público `jintia` para instalar `jintia-skill` 10.10.0
+  mediante `npx jintia install` en Claude Code, Codex y otros harnesses
+  compatibles.
+- Añadidos comandos directos `install`, `update`, `status`, `repair` y
+  `uninstall`, con selección interactiva y opciones reproducibles para CI.
+- Añadidas validación del contenido npm, prueba de instalación y publicación
+  mediante trusted publishing de npm con OIDC.
+
+### Corregido
+
+- Corregidos los enlaces de privacidad y términos del plugin para usar la rama
+  canónica `master`.
+
 ## 10.9.2 — 2026-08-01
 
 ### Cambiado

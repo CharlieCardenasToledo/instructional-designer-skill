@@ -1,0 +1,41 @@
+name: Publish Jintia to npm
+
+on:
+  workflow_dispatch:
+    inputs:
+      dist_tag:
+        description: npm distribution tag
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - next
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-npm-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run docs:check
+      - run: npm run skill:check
+      - run: npm run release:check
+      - run: npm run package:check
+      - name: Publish with npm trusted publishing
+        run: npm publish --tag "${{ inputs.dist_tag }}"

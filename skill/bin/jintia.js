@@ -13,6 +13,10 @@ function usage() {
   console.log(`Jintia Toolchain
 
 Uso:
+  jintia install [--providers=claude,codex] [--scope=project|global] [--project RUTA] [--yes]
+  jintia update [--providers=claude,codex] [--scope=project|global] [--project RUTA] [--yes]
+  jintia status [--providers=claude,codex] [--project RUTA] [--json]
+  jintia repair|uninstall [--providers=claude,codex] [--scope=project|global] [--project RUTA] [--yes]
   jintia init <curso> [--code CODIGO] [--name NOMBRE]
   jintia syllabus validate <README.md>
   jintia doctor [--json]
@@ -129,6 +133,9 @@ function doctor(asJson) {
 function main(argv) {
   const [command, subcommand, ...rest] = argv;
   if (!command || command === "help" || command === "--help") return usage();
+  if (["install", "update", "repair", "uninstall", "status"].includes(command)) {
+    return runScript("harness-manager.js", [command, subcommand, ...rest].filter(Boolean), command);
+  }
   if (command === "init") return initCourse(subcommand, rest);
   if (command === "doctor") return doctor(argv.includes("--json"));
   if (command === "context") return runScript("context-manager.js", [subcommand, ...rest], `context ${subcommand}`);

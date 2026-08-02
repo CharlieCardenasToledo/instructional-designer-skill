@@ -25,6 +25,10 @@ for (const [label, version] of [
 ]) {
   if (version !== expected) failures.push(`${label}: ${version}; esperado ${expected}`);
 }
+if (rootPackage.name !== "jintia") failures.push(`paquete npm raíz inesperado: ${rootPackage.name}`);
+if (rootPackage.private) failures.push("el paquete npm raíz continúa marcado como privado");
+if (rootPackage.bin?.jintia !== "skill/bin/jintia.js") failures.push("el paquete npm no expone el binario jintia");
+if (rootPackage.publishConfig?.access !== "public") failures.push("el paquete npm no declara publicación pública");
 
 if (brand.brandName !== "Jintia" || brand.linguisticForm !== "Jíntia" || brand.meaning !== "camino" || !brand.disclaimer) {
   failures.push("La identidad y atribución canónicas de Jintia están incompletas.");

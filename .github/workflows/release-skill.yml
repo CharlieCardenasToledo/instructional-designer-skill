@@ -30,6 +30,7 @@ jobs:
           python-version: "3.12"
       - run: npm ci
       - run: npm run skill:check
+      - run: npm run package:check
       - name: Build release artifacts
         run: npm run release:skill
       - run: npm run release:skill:check

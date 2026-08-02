@@ -19,7 +19,26 @@ artifacts.
 
 ## Installation
 
-The easiest route is an installer from
+### With npx (recommended)
+
+Requires Node.js 18 or newer. From the project root where Jintia will be used,
+run:
+
+```bash
+npx jintia install
+```
+
+The installer detects available harnesses, asks for the scope, and confirms
+before writing. For non-interactive automation:
+
+```bash
+npx jintia install --providers=claude,codex --scope=project --yes
+```
+
+Run `npx jintia update` to refresh a managed installation, then restart Claude
+Code or Codex so it discovers the skill.
+
+Alternatively, download the desktop installer from
 [Jintia Desktop releases](https://github.com/CharlieCardenasToledo/jintia-desktop/releases).
 
 For manual installation, each

@@ -1,6 +1,6 @@
 {
   "name": "jintia-skill",
-  "version": "10.9.2",
+  "version": "10.10.0",
   "description": "Jintia Skill for evidence-based self-paced instructional design with LaTeX and NotebookLM",
   "license": "MIT",
   "bin": {

@@ -1,6 +1,6 @@
 {
   "name": "jintia",
-  "version": "10.9.2",
+  "version": "10.10.0",
   "description": "Diseña sílabos, guías semanales, actividades y evaluaciones universitarias con evidencia verificable y plantillas LaTeX.",
   "author": {
     "name": "Charlie Cárdenas Toledo",
@@ -20,8 +20,8 @@
     "category": "Education",
     "capabilities": ["Read", "Write"],
     "websiteURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
-    "privacyPolicyURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/main/PRIVACY.md",
-    "termsOfServiceURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/main/TERMS.md",
+    "privacyPolicyURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/master/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/master/TERMS.md",
     "defaultPrompt": [
       "Usa Jintia para crear la guía didáctica de esta semana.",
       "Usa Jintia para revisar la alineación entre resultados, actividades y evaluación."
