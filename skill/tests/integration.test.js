@@ -130,7 +130,7 @@ test("Codex recibe subagentes reales en .codex/agents/, Claude conserva agents/*
   fs.mkdirSync(path.join(source, "agents"), { recursive: true });
   fs.writeFileSync(
     path.join(source, "SKILL.md"),
-    "---\nname: jintia-skill\ndescription: prueba\nallowed-tools:\n  - Bash(node scripts/*)\n  - Bash(pdflatex *)\n---\n\n# Cuerpo\n"
+    "---\nname: jintia-skill\ndescription: prueba\nallowed-tools:\n  - Bash(node scripts/*)\n  - Bash(vivliostyle *)\n---\n\n# Cuerpo\n"
   );
   fs.writeFileSync(
     path.join(source, "agents", "jintia-researcher.md"),

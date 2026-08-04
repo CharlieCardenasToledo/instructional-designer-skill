@@ -49,7 +49,7 @@
       }
     },
     "activeTemplate": {
-      "enum": ["elegantbook-clasico", "kaohandt-marginal"]
+      "enum": ["jintia-clasico", "jintia-tecnico", "jintia-cuaderno"]
     },
     "options": {
       "type": "object",
