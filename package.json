@@ -35,7 +35,7 @@
     "skill/runtime/",
     "skill/schemas/",
     "skill/scripts/",
-    "skill/templates/",
+    "skill/themes/",
     "skill/package.json",
     "skill/requirements.txt",
     "skill/SKILL.md"

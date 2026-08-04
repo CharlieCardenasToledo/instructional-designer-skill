@@ -25,7 +25,7 @@ const required = [
   "skill/agents/openai.yaml",
   "skill/bin/jintia.js",
   "skill/runtime/core/harness-manager.js",
-  "skill/templates/elegantbook-clasico/meta.json",
+  "skill/themes/jintia-clasico/meta.json",
 ];
 
 if (packageJson.name !== "@charlie.act7/jintia") failures.push(`nombre npm inesperado: ${packageJson.name}`);
