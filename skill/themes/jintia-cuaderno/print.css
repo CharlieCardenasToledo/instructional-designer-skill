@@ -1,0 +1,77 @@
+/**
+ * Jintia Cuaderno — CSS Paged Media (A5)
+ * Sobreescribe @page de jintia-clasico para formato A5,
+ * márgenes para encuadernación izquierda y líneas de escritura.
+ */
+
+@import "../jintia-clasico/print.css";
+
+/* ─── @page A5 ──────────────────────────────────────────────────────────────── */
+
+@page {
+  size: A5;
+  /* margen izquierdo más amplio para encuadernado */
+  margin: 15mm 14mm 18mm 18mm;
+
+  @top-center {
+    content: string(section-title);
+    font-size: 8pt;
+    color: #9ca3af;
+  }
+
+  @bottom-center {
+    content: counter(page);
+    font-size: 8.5pt;
+    color: #6b7280;
+  }
+}
+
+/* ─── Áreas de escritura manual ─────────────────────────────────────────────── */
+
+/**
+ * .jintia-writelines — genera N líneas punteadas para respuestas manuscritas.
+ * Uso en guide.json: agregar a un nodo practice o assessment con:
+ *   { "type": "practice", "writelines": 5, ... }
+ * El renderer emite:
+ *   <div class="jintia-writelines" style="--lines: 5"></div>
+ */
+.jintia-writelines {
+  --lines: 4;
+  width: 100%;
+  margin-top: var(--jintia-space-sm);
+  break-inside: avoid;
+
+  /* Fondo de líneas punteadas */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(var(--jintia-writeline-height) - 1px),
+    var(--jintia-writeline-color) calc(var(--jintia-writeline-height) - 1px),
+    var(--jintia-writeline-color) var(--jintia-writeline-height)
+  );
+  background-size: 100% var(--jintia-writeline-height);
+
+  /* Altura = N líneas */
+  height: calc(var(--lines) * var(--jintia-writeline-height));
+  display: block;
+}
+
+/* ─── Bloque de respuesta (espacio en blanco recuadrado) ───────────────────── */
+
+.jintia-answer-box {
+  min-height: 60pt;
+  border: 1px dashed var(--jintia-border);
+  border-radius: var(--jintia-radius);
+  margin: var(--jintia-space-sm) 0;
+  break-inside: avoid;
+  padding: var(--jintia-space-sm);
+  background: #fafafa;
+}
+
+.jintia-answer-box::before {
+  content: "Respuesta:";
+  display: block;
+  font-size: var(--jintia-size-small);
+  color: var(--jintia-muted);
+  margin-bottom: var(--jintia-space-xs);
+}

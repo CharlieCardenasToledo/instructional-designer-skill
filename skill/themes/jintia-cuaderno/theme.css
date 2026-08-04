@@ -1,0 +1,12 @@
+/**
+ * Jintia Cuaderno — Punto de entrada del tema
+ */
+
+/* 1. Tokens A5 (incluye @import de tokens clasico) */
+@import "./tokens.css";
+
+/* 2. Componentes pedagógicos (reutilizar clasico) */
+@import "../jintia-clasico/components.css";
+
+/* 3. Paginación A5 + writelines (sobreescribe @page de clasico) */
+@import "./print.css";
