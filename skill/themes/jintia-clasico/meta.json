@@ -1,0 +1,46 @@
+{
+  "id": "jintia-clasico",
+  "name": "Jintia Clásico",
+  "description": "Guía académica de una columna con bloques de color por tipo pedagógico. Ideal para materias con alto contenido conceptual y teórico.",
+  "version": "1.0.0",
+  "tags": ["académico", "una-columna", "bloques-color"],
+  "featured": true,
+  "page": {
+    "size": "A4",
+    "layout": "single-column",
+    "margins": {
+      "top": "18mm",
+      "right": "18mm",
+      "bottom": "22mm",
+      "left": "18mm"
+    }
+  },
+  "capabilities": {
+    "marginNotes": false,
+    "wideFigures": true,
+    "footnotes": true,
+    "splittableBlocks": true,
+    "code": false,
+    "answerSpace": false
+  },
+  "components": {
+    "orientation":    "OrientationBlock",
+    "theory":         "TheoryBlock",
+    "concept":        "ConceptBlock",
+    "practice":       "PracticeBlock",
+    "warning":        "WarningBlock",
+    "critical-error": "CriticalErrorBlock",
+    "figure":         "FigureBlock",
+    "table":          "TableBlock",
+    "scenario":       "ScenarioBlock",
+    "assessment":     "AssessmentBlock",
+    "margin-note":    "MarginNoteBlock",
+    "bibliography":   "BibliographyBlock",
+    "citation":       "InlineCitation"
+  },
+  "nodeVersion": ">=22.12.0",
+  "engineDefaults": {
+    "vivliostyle": true,
+    "pagedjs": true
+  }
+}

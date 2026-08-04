@@ -9,6 +9,27 @@ const { createReport, parseJsonOutput, printReport } = require("../scripts/repor
 const ROOT = path.resolve(__dirname, "..");
 const SCRIPTS = path.join(ROOT, "scripts");
 
+// ─── Helpers para doctor HTML ────────────────────────────────────────────────
+
+function checkVivliostyleVersion() {
+  for (const cmd of ["vivliostyle", "viv"]) {
+    const probe = spawnSync(cmd, ["--version"], { encoding: "utf8", stdio: "pipe", shell: false });
+    if (probe.status === 0) return { ok: true, version: (probe.stdout || "").trim(), command: cmd };
+  }
+  return { ok: false };
+}
+
+function semverGte(version, min) {
+  try {
+    const parse = v => v.replace(/^v/, "").split(".").map(Number);
+    const [ma, mi, pa] = parse(version);
+    const [mamin, mimin, pamin] = parse(min);
+    if (ma !== mamin) return ma > mamin;
+    if (mi !== mimin) return mi > mimin;
+    return pa >= pamin;
+  } catch { return false; }
+}
+
 function usage() {
   console.log(`Jintia Toolchain
 
@@ -24,13 +45,19 @@ Uso:
   jintia agents plan <operación> [--json]
   jintia detect [proyecto] [--providers=claude,codex] [--json]
   jintia harness <status|install|update|repair|uninstall> [--providers=claude,codex] [--scope=project|global] [--project RUTA] [--yes] [--json]
-  jintia audit <README.md|guia.tex> [--json] [--strict]
+  jintia audit <README.md> [--json] [--strict]
   jintia state update <curso> <semana> <estado> [archivo-fuente]
   jintia hook post-edit --changed <archivos...>
-  jintia hook pre-compile <guia.tex>
-  jintia validate <guia.tex> [--template ID]
-  jintia compile <guia.tex>
-  jintia visual render <spec.json> --template ID [--guide guia.tex]
+
+  — Motor editorial HTML —
+  jintia validate  <guide.json> [--strict] [--json]
+  jintia render    <guide.json> [--theme ID] [--output guide.html]
+  jintia compile   <guide.json> [--engine vivliostyle|pagedjs] [--output guide.pdf]
+  jintia preview   <guide.json>
+  jintia preflight <guide.pdf>
+
+  — Visual —
+  jintia visual render  <spec.json> --template ID
   jintia visual inspect <manifest.json>
   jintia migrate <semanas/semana-XX>
 
@@ -108,25 +135,59 @@ function initCourse(coursePath, args) {
 }
 
 function doctor(asJson) {
+  const viv     = checkVivliostyleVersion();
+  const nodeOk  = semverGte(process.version, "22.12.0");
+
   const checks = [
-    { id: "node", label: "Node.js", command: process.execPath, required: true, ok: true, detail: process.version },
-    { id: "python", label: "Python", command: "python", required: false },
-    { id: "pdflatex", label: "pdflatex", command: "pdflatex", required: true },
-    { id: "biber", label: "biber", command: "biber", required: true },
-    { id: "institution", label: "config/institution.json", required: false, ok: fs.existsSync(path.join(ROOT, "config", "institution.json")) },
-    { id: "templates", label: "Plantillas LaTeX", required: true, ok: ["elegantbook-clasico", "kaohandt-marginal"].every(id => fs.existsSync(path.join(ROOT, "templates", id, "meta.json"))) }
+    {
+      id: "node", label: "Node.js", required: true,
+      ok: true, detail: `${process.version}${!nodeOk ? " ⚠ (PDF requiere >=22.12.0)" : ""}`
+    },
+    {
+      id: "node-22", label: "Node.js >=22.12.0 (PDF)", required: false,
+      ok: nodeOk, detail: nodeOk ? process.version : `actual: ${process.version}`
+    },
+    {
+      id: "vivliostyle", label: "Vivliostyle CLI", required: false,
+      ok: viv.ok, detail: viv.ok ? `${viv.version} (${viv.command})` : "no encontrado — npm install --global @vivliostyle/cli"
+    },
+    {
+      id: "python", label: "Python", command: "python", required: false
+    },
+    {
+      id: "institution", label: "config/institution.json", required: false,
+      ok: fs.existsSync(path.join(ROOT, "config", "institution.json"))
+    },
+    {
+      id: "theme-clasico", label: "Tema jintia-clasico", required: true,
+      ok: fs.existsSync(path.join(ROOT, "themes", "jintia-clasico", "meta.json"))
+    },
   ];
+
   for (const check of checks) {
     if (check.ok === undefined) check.ok = commandExists(check.command);
     if (!check.detail && check.command && check.ok) check.detail = check.command;
   }
-  const result = { tool: "jintia doctor", version: require(path.join(ROOT, "package.json")).version, checks, ok: checks.every(check => !check.required || check.ok) };
-  if (asJson) printReport(createReport({ command: "doctor", exitCode: result.ok ? 0 : 1, checks, data: result }));
-  else {
+
+  const result = {
+    tool: "jintia doctor",
+    version: require(path.join(ROOT, "package.json")).version,
+    checks,
+    ok: checks.every(check => !check.required || check.ok)
+  };
+
+  if (asJson) {
+    printReport(createReport({ command: "doctor", exitCode: result.ok ? 0 : 1, checks, data: result }));
+  } else {
     console.log(`Jintia Doctor · ${result.version}`);
-    for (const check of checks) console.log(`${check.ok ? "✓" : "✗"} ${check.label}${check.detail ? ` — ${check.detail}` : ""}`);
-    console.log(result.ok ? "\nEstado: listo para la toolchain requerida." : "\nEstado: faltan dependencias requeridas.");
+    for (const check of checks) {
+      console.log(`${check.ok ? "✓" : "✗"} ${check.label}${check.detail ? ` — ${check.detail}` : ""}`);
+    }
+    console.log(result.ok
+      ? "\nEstado: listo para el motor editorial HTML."
+      : "\nEstado: faltan dependencias requeridas.");
   }
+
   if (!result.ok) process.exitCode = 1;
 }
 
@@ -146,12 +207,14 @@ function main(argv) {
   if (command === "state" && subcommand === "update") return runScript("state-manager.js", rest.length ? [subcommand, ...rest] : argv.slice(1), "state update");
   if (command === "hook" && subcommand === "install") return runScript("hook-install.js", rest, "hook install");
   if (command === "hook") return runScript("hook-runner.js", [subcommand, ...rest], `hook ${subcommand}`);
-  if (command === "validate") return runScript("latex-linter.js", argv.slice(1), "validate");
-  if (command === "compile") {
-    const hookStatus = runHook("pre-compile", argv.slice(1));
-    if (hookStatus !== 0) { process.exitCode = hookStatus; return; }
-    return runScript("latex-validator.js", argv.slice(1), "compile");
-  }
+
+  // ─── Motor editorial HTML ───────────────────────────────────────────────────
+  if (command === "validate") return runScript("content-linter.js", argv.slice(1), "validate");
+  if (command === "render")   return runScript("guide-renderer.js", argv.slice(1), "render");
+  if (command === "compile")  return runScript("vivliostyle-adapter.js", argv.slice(1), "compile");
+  if (command === "preview")  return runScript("vivliostyle-adapter.js", ["preview", ...argv.slice(1)], "preview");
+  if (command === "preflight") return runScript("pdf-preflight.js", argv.slice(1), "preflight");
+
   if (command === "migrate") return runScript("legacy-manager.js", argv.slice(1), "migrate");
   if (command === "syllabus" && subcommand === "validate") return runScript("syllabus-validator.js", rest, "syllabus validate");
   if (command === "visual" && subcommand === "render") return runScript("visual-pipeline.js", rest, "visual render");

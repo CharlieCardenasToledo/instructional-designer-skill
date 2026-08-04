@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Normalización y Dependencias Funcionales</title>
+  <meta name="description" content="Aplicar las formas normales (1FN, 2FN, 3FN) para diseñar esquemas relacionales libres de anomalías." />
+  <meta name="author" content="Dr. Carlos Pérez" />
+  <link rel="stylesheet" href="./themes/jintia-clasico/theme.css" />
+</head>
+<body>
+
+
+<header class="jintia-cover" data-pagination="page-contained" role="banner">
+  <p class="jintia-cover__course">Bases de Datos</p>
+  <p class="jintia-cover__week">Semana 3</p>
+  <h1 class="jintia-cover__title">Normalización y Dependencias Funcionales</h1>
+  <p class="jintia-cover__outcome">Aplicar las formas normales (1FN, 2FN, 3FN) para diseñar esquemas relacionales libres de anomalías.</p>
+  <p class="jintia-cover__authors">Dr. Carlos Pérez</p>
+  <p class="jintia-cover__period">2024-II</p>
+</header>
+
+<main class="jintia-content" role="main">
+
+<aside class="jintia-block jintia-orientation"
+       data-pagination="atomic"
+       role="note" id="orientacion-semana-3">
+  <span class="jintia-block__label" aria-hidden="true">Orientación</span>
+  <h2 class="jintia-block__title">¿Qué vamos a aprender esta semana?</h2>
+  <div class="jintia-block__content">
+<p>Esta semana trabajaremos la normalización de bases de datos. Partiremos de un esquema con redundancias y aplicaremos paso a paso las tres primeras formas normales para eliminarlo.</p>
+<p>Al finalizar podrás identificar dependencias funcionales y decidir cuándo un esquema está correctamente normalizado.</p>
+  </div>
+</aside>
+
+
+<aside class="jintia-block jintia-theory"
+       data-pagination="splittable"
+       role="note" id="teoria-dependencias">
+  <span class="jintia-block__label" aria-hidden="true">Teoría</span>
+  <h2 class="jintia-block__title">Dependencias funcionales</h2>
+  <div class="jintia-block__content">
+<p>Una dependencia funcional X → Y significa que el valor de X determina de forma única el valor de Y. Por ejemplo, si conocemos el código de estudiante, conocemos su nombre.</p>
+<p>Esta relación es la base de la normalización: cada forma normal elimina un tipo de dependencia problemática.</p>
+  </div>
+</aside>
+
+
+<aside class="jintia-block jintia-concept"
+       data-pagination="atomic"
+       role="note" id="concepto-1fn">
+  <span class="jintia-block__label" aria-hidden="true">Concepto</span>
+  <h2 class="jintia-block__title">Primera Forma Normal (1FN)</h2>
+  <div class="jintia-block__content">
+<p>Un esquema está en 1FN si todos sus atributos contienen valores atómicos (indivisibles) y no hay grupos repetidos.</p>
+<p>Ejemplo de violación: una columna &#039;Teléfonos&#039; con valores &#039;555-1234, 555-5678&#039; viola la 1FN.</p>
+  </div>
+</aside>
+
+
+<figure class="jintia-figure" data-pagination="atomic" id="fig-normalizacion">
+  <img src="figuras/normalizacion-proceso.png" alt="Diagrama que muestra la progresión de un esquema sin normalizar a 1FN, 2FN y 3FN, con flechas entre cada estado." loading="lazy" />
+  <figcaption class="jintia-caption">Proceso de normalización: de esquema sin normalizar hasta 3FN.</figcaption>
+</figure>
+
+
+<aside class="jintia-block jintia-practice"
+       data-pagination="page-contained"
+       role="note" id="practica-normalizar">
+  <span class="jintia-block__label" aria-hidden="true">Práctica guiada</span>
+  <h2 class="jintia-block__title">Práctica guiada: normalizar una tabla de pedidos</h2>
+  <div class="jintia-block__content">
+<p>Dada la siguiente tabla sin normalizar, aplica 1FN, 2FN y 3FN:</p>
+<p>Pedido(NúmeroPedido, FechaPedido, CódigoCliente, NombreCliente, CódigoProducto, NombreProducto, Cantidad, Precio)</p>
+<p>Paso 1: Identifica los grupos repetidos.
+Paso 2: Determina la clave primaria.
+Paso 3: Encuentra las dependencias funcionales.</p>
+  </div>
+</aside>
+
+
+<section class="jintia-block jintia-assessment" data-pagination="page-contained" id="evaluacion-semana-3">
+  <span class="jintia-block__label" aria-hidden="true">Actividad evaluativa</span>
+  <h2 class="jintia-block__title">Actividad evaluativa</h2>
+  <div class="jintia-block__content">
+    <ol class="jintia-assessment__list"><li class="jintia-assessment__item"><p>Explica con tus propias palabras qué es una dependencia funcional parcial y por qué viola la 2FN.</p></li>
+<li class="jintia-assessment__item"><p>Diseña un esquema en 3FN para un sistema de biblioteca que registre préstamos, libros y socios.</p></li>
+<li class="jintia-assessment__item"><p>¿Cuándo NO conviene normalizar completamente un esquema? Menciona un caso práctico.</p></li></ol>
+  </div>
+</section>
+</main>
+
+</body>
+</html>

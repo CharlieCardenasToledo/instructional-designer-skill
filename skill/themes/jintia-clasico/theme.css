@@ -1,0 +1,19 @@
+/**
+ * Jintia Clásico — Punto de entrada del tema
+ * Importa todos los módulos en el orden correcto.
+ *
+ * Para uso con Vivliostyle CLI:
+ *   vivliostyle build guide.html --theme ./themes/jintia-clasico/theme.css
+ *
+ * Para uso standalone (vista previa en navegador):
+ *   <link rel="stylesheet" href="themes/jintia-clasico/theme.css">
+ */
+
+/* 1. Tokens de diseño (variables CSS) */
+@import "./tokens.css";
+
+/* 2. Componentes pedagógicos */
+@import "./components.css";
+
+/* 3. CSS Paged Media y control de paginación */
+@import "./print.css";
