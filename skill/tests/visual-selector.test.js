@@ -270,7 +270,7 @@ test("la plantilla rechaza placements que no soporta", () => {
   }));
   const renderer = path.resolve(__dirname, "..", "scripts", "visual-renderer.js");
   const result = spawnSync(process.execPath, [
-    renderer, "--spec", specPath, "--template", "elegantbook-clasico", "--dry-run"
+    renderer, "--spec", specPath, "--template", "jintia-clasico", "--dry-run"
   ], { encoding: "utf8" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /no admite figuras marginales/);
@@ -406,7 +406,7 @@ test("el modo dry-run crea fuente y manifiesto sin fingir renderizado", () => {
 test("el pipeline completo funciona con ambas plantillas", {
   skip: !detectCapabilities().tools.graphviz.available
 }, () => {
-  for (const template of ["elegantbook-clasico", "kaohandt-marginal"]) {
+  for (const template of ["jintia-clasico", "jintia-cuaderno"]) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), `jintia-pipeline-${template}-`));
     const specs = path.join(root, "figure", "specs");
     fs.mkdirSync(specs, { recursive: true });

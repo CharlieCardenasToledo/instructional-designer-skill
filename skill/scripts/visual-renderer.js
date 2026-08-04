@@ -97,7 +97,7 @@ function validateSpec(spec) {
 }
 
 function resolveTemplate(templateId, spec) {
-  const templatePath = path.resolve(__dirname, "..", "templates", templateId, "meta.json");
+  const templatePath = path.resolve(__dirname, "..", "themes", templateId, "meta.json");
   if (!fs.existsSync(templatePath)) fail(`plantilla visual desconocida: ${templateId}`);
   const meta = JSON.parse(fs.readFileSync(templatePath, "utf8"));
   const allowed = meta.capabilities?.visualPlacements || ["auto", "main"];
