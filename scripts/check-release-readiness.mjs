@@ -47,8 +47,9 @@ for (const file of [
   "skill/config/visual-install-profiles.json",
   "skill/schemas/visual-spec.schema.json",
   "skill/schemas/visual-manifest.schema.json",
-  "skill/templates/elegantbook-clasico/meta.json",
-  "skill/templates/kaohandt-marginal/meta.json",
+  "skill/themes/jintia-clasico/meta.json",
+  "skill/themes/jintia-tecnico/meta.json",
+  "skill/themes/jintia-cuaderno/meta.json",
 ]) {
   try { await json(file); } catch (error) { failures.push(`${file}: JSON inválido (${error.message})`); }
 }
