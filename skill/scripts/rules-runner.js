@@ -19,7 +19,6 @@ function runRules(file) {
   const source = fs.readFileSync(absolute, "utf8");
   const issues = [];
   const isSyllabus = path.basename(absolute).toLowerCase() === "readme.md";
-  const isLatex = path.extname(absolute).toLowerCase() === ".tex";
   const rules = Object.fromEntries(catalog.rules.map(rule => [rule.id, rule]));
 
   if (isSyllabus) {
