@@ -19,7 +19,18 @@ Jintia ingiere sílabos, configuraciones institucionales y fuentes verificables 
 - **Control de Calidad (Linter y Preflight)**: Validación estricta del esquema semántico y verificación estructural del DOM para evitar errores de impresión.
 - **Flujo Multi-Agente**: Contratos especializados para delegación de tareas de investigación, renderizado de figuras y revisión académica.
 
-## Arquitectura y Flujo de Trabajo (Pipeline Editorial)
+## Uso y Flujo del Usuario
+
+El usuario final interactúa con Jintia a través de su agente de IA de preferencia (Claude, ChatGPT, etc.) siguiendo este flujo normal:
+
+1. **Preparación del Entorno**: El usuario debe tener en su espacio de trabajo un archivo `README.md` que actúe como el sílabo canónico del curso (con resultados de aprendizaje definidos), y opcionalmente un archivo de configuración (`config/institution.json`).
+2. **Conexión de Evidencia**: El usuario provee el contexto al agente, ya sea conectando sus cuadernos de investigación a través de la integración de NotebookLM MCP o proporcionando archivos bibliográficos locales.
+3. **Petición (Prompt)**: El usuario solicita al agente la creación de una guía. Por ejemplo: *"Jintia, genera la guía instruccional para la semana 3 basada en el sílabo"*.
+4. **Delegación Agéntica**: Jintia asume el control. Lee el sílabo, extrae los resultados, busca evidencia en las fuentes conectadas y estructura el contenido usando la pedagogía de *Backward Design*.
+5. **Generación del AST**: El agente redacta la guía escribiéndola estrictamente en el formato neutro `guide.json`. Si requiere diagramas, delega la creación de los mismos.
+6. **Compilación y Entrega**: El agente (o el propio usuario, si lo desea) invoca los comandos de la *skill* (`jintia render` y `jintia compile`) para convertir automáticamente el `guide.json` en un PDF maquetado profesionalmente, listo para su distribución.
+
+## Arquitectura (Pipeline Editorial)
 
 La *skill* opera mediante un flujo secuencial automatizado (el *Pipeline* Editorial) que garantiza calidad técnica y pedagógica:
 
