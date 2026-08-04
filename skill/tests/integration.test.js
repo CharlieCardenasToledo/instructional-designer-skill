@@ -73,7 +73,7 @@ test("los paquetes internos exponen límites consumibles sin duplicar implementa
   const skill = require("../../packages/skill");
   assert.match(cliPackage.bin, /skill[\\/]bin[\\/]jintia\.js$/);
   assert.ok(Array.isArray(rules.catalog.rules));
-  assert.ok(templates.list().some(template => template.id === "elegantbook-clasico"));
+  assert.ok(templates.list().some(template => template.id === "jintia-clasico"));
   assert.match(skill.skillFile, /skill[\\/]SKILL\.md$/);
 });
 

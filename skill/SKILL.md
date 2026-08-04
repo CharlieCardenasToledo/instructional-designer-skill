@@ -1,12 +1,11 @@
 ---
 name: jintia-skill
-description: Diseña, redacta, edita y valida cursos, guías semanales LaTeX, módulos autoinstruccionales, rúbricas y evaluaciones de educación superior con UDL 3.0, Backward Design, Quality Matters y evidencia verificable mediante NotebookLM.
+description: Diseña, redacta, edita y valida cursos, guías semanales HTML, módulos autoinstruccionales, rúbricas y evaluaciones de educación superior con UDL 3.0, Backward Design, Quality Matters y evidencia verificable mediante NotebookLM. Motor editorial HTML nativo con soporte Vivliostyle para PDF.
 allowed-tools:
   - Bash(node scripts/*)
   - Bash(node bin/jintia.js *)
   - Bash(npx @charlie.act7/jintia *)
-  - Bash(pdflatex *)
-  - Bash(biber *)
+  - Bash(vivliostyle *)
 ---
 
 # Jintia Skill — diseño instruccional autoinstruccional basado en evidencia
@@ -26,8 +25,11 @@ operación en lenguaje natural; `/jintia` no es un comando nativo de Codex.
 | Generar o revisar una guía | `guide` | `commands/guide.md` |
 | Diseñar una evaluación | `assessment` | `commands/assessment.md` |
 | Gestionar figuras | `visual` | `commands/visual.md` |
-| Validar sin compilar | `validate` | `commands/validate.md` |
-| Compilar y revisar PDF | `compile` | `commands/compile.md` |
+| Validar guide.json | `validate` | `commands/validate.md` |
+| Generar HTML desde guide.json | `render` | `commands/compile.md` |
+| Compilar HTML a PDF (Vivliostyle) | `compile` | `commands/compile.md` |
+| Vista previa en navegador | `preview` | `commands/compile.md` |
+| Verificar paginación del PDF | `preflight` | `commands/compile.md` |
 | Auditar calidad global | `audit` | `commands/audit.md` |
 | Registrar estado editorial | `state` | `commands/state.md` |
 | Migrar estructuras antiguas | `migrate` | `commands/migrate.md` |
@@ -86,7 +88,7 @@ y proporcionarle únicamente el contrato Markdown correspondiente.
 
 ## Objetivo
 
-Producir materiales académicos autosuficientes, accesibles y alineados. Priorizar la trazabilidad entre sílabo, resultados, práctica, evaluación y fuentes. Generar guías LaTeX modulares cuando el entregable solicitado sea una guía semanal.
+Producir materiales académicos autosuficientes, accesibles y alineados. Priorizar la trazabilidad entre sílabo, resultados, práctica, evaluación y fuentes. Generar guías semanales modulares usando el motor editorial HTML.
 
 ## Cargar contexto bajo demanda
 
@@ -96,7 +98,7 @@ Leer únicamente las referencias necesarias para la tarea. Leer siempre `referen
 |---|---|
 | Configuración institucional, notebooks y plantilla activa | `references/configuracion.md` |
 | Contrato del `README.md` canónico del curso | `references/esquema-silabo.md` |
-| Preamble, macros, bloques y estructura LaTeX | `references/plantilla-latex.md` |
+| Formato AST, tipos de nodo, CLI y sistema de temas HTML | `references/sistema-html.md` |
 | Citas, `reference.bib` y NotebookLM MCP | `references/bibliografia.md` |
 | Figuras TikZ y notación Chen | `references/figuras-tikz.md` |
 | Mock-ups HTML y captura PNG | `references/figuras-html.md` |
@@ -183,28 +185,23 @@ Esperar confirmación cuando el plan implique crear una guía completa o reestru
 Usar:
 
 ```text
-semanas/semana-XX/latex/
-├── guia-semana-XX.tex
+semanas/semana-XX/
+├── guide.json
 ├── reference.bib
-├── figure/
-└── sections/
+└── figure/
 ```
 
 Si existe una semana compilada reciente del mismo curso, reutilizar sus convenciones compatibles. No sobrescribir contenido existente sin copia recuperable. Para una reestructuración completa, usar `scripts/legacy-manager.js`.
 
-La secuencia canónica es:
+La secuencia de nodos en `guide.json` sigue este orden canónico:
 
-```text
-01-introduccion.tex
-02-[tema-1].tex
-03-[tema-2].tex
-...
-NN-escenario.tex
-NN-aplicacion.tex
-NN-bibliografia.tex
-```
+1. `orientation` (obligatorio)
+2. `theory`, `concept`, `practice` (iterativos)
+3. `scenario` (aplicación)
+4. `assessment` (evaluación)
+5. `bibliography` (siempre al final)
 
-Mantener numeración secuencial. Colocar el escenario después de toda la teoría y la bibliografía al final.
+Mantener flujo secuencial. Colocar el escenario después de toda la teoría y la bibliografía al final.
 
 ### 6. Redactar con alineación
 
@@ -242,12 +239,9 @@ demostrar el resultado de aprendizaje:
 3. Elegir gráfico, mapa, tabla, diagrama, imagen o interfaz antes de elegir el
    motor.
 4. Crear una especificación en `figure/specs/`.
-5. Ejecutar `node "<skill-root>/scripts/visual-pipeline.js" --spec <spec>
-   --template <activeTemplate> --guide <guia.tex>`. El pipeline debe renderizar, crear la
-   previsualización, inspeccionar, ejecutar el linter y actualizar el
-   manifiesto.
+5. Ejecutar `node "<skill-root>/scripts/visual-pipeline.js" --spec <spec> --template <activeTemplate> --guide <guide.json>`. El pipeline debe renderizar, crear la previsualización, inspeccionar, ejecutar el linter y actualizar el manifiesto.
 6. Conservar fuente, datos, salida y procedencia en `figure/manifest.json`.
-7. Adaptar la colocación a las capacidades declaradas por la plantilla activa.
+7. Adaptar la colocación a las capacidades declaradas por la plantilla activa (ej. no colocar en `margin` si el tema no lo soporta).
 
 No inventar una imagen real cuando su apariencia sea evidencia disciplinar.
 No fingir un renderizado. Registrar el fallback cuando el motor preferido no
@@ -265,28 +259,21 @@ esté disponible.
 - Usar por defecto una representación principal por sección. Añadir otra solo
   cuando responda a una operación cognitiva distinta y la combinación sea
   necesaria para lograr el resultado.
-- Mencionar cada figura con `Figura~\ref{...}` en el párrafo previo.
-- Usar los macros y bloques de la plantilla activa; no sustituirlos por formato LaTeX genérico.
-- Encapsular todas las figuras en `guidefigure` y usar
-  `\guidefigurecaption{texto}{fig:clave}`. No usar `figure` ni `\caption`
-  directamente.
-- Encapsular todas las tablas numeradas en `guidetable` y usar
-  `\guidetablecaption{texto}{tab:clave}`. No usar `table` ni `\caption`
-  directamente.
+- Mencionar cada figura con el ID (ej. `[fig-ejemplo]`) en el párrafo previo.
+- Usar los bloques del esquema AST; no sustituirlos por HTML crudo genérico.
+- Insertar las figuras usando el fragmento HTML provisto por el pipeline visual.
+- Insertar tablas usando el nodo `table` del `guide.schema.json`.
 - Si la plantilla declara `marginNotes`, usar el margen solo para información
   complementaria. Mantener instrucciones, resultados y criterios esenciales
   en el flujo principal.
 
 ## Bibliografía
 
-Usar `biblatex` con `reference.bib` como única fuente bibliográfica:
+Usar `reference.bib` como única fuente bibliográfica local:
 
-- `\textcite{}` cuando el autor sea sujeto gramatical;
-- `\parencite{}` para respaldo parentético;
-- `\printbibliography` en la última sección;
-- una entrada BibLaTeX por cada clave citada.
-
-No mezclar `thebibliography` o `\bibitem` con `biblatex`.
+- Citas inline formato Markdown: `[@clave-bib]`.
+- En el HTML final se gestionarán automáticamente con Citation.js.
+- Proveer una entrada en el archivo `.bib` por cada clave citada.
 
 ## Integraciones opcionales
 
@@ -294,11 +281,12 @@ Tratar logos, socios, módulos internacionales y ecosistemas institucionales com
 
 ## Cierre obligatorio
 
-1. Ejecutar `node "<skill-root>/scripts/latex-linter.js" <guia.tex> --template <activeTemplate>`.
+1. Ejecutar `jintia validate <guide.json>`.
 2. Si existen figuras, verificar que cada una pasó
    `node "<skill-root>/scripts/visual-pipeline.js"`; ejecutar además
-   `node "<skill-root>/scripts/visual-linter.js" <guia.tex>` como comprobación global.
-3. Compilar con `node "<skill-root>/scripts/latex-validator.js" <guia.tex>` cuando el entorno lo permita.
+   `node "<skill-root>/scripts/visual-linter.js" <guide.json>` como comprobación global.
+3. Generar y revisar el HTML: `jintia render <guide.json>` y luego `node "<skill-root>/scripts/html-linter.js" <guide.html>`.
+4. Compilar a PDF con `jintia compile <guide.json>` y comprobar `jintia preflight <guide.html>`.
 4. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
 5. Ejecutar `references/checklist.md` punto por punto.
 6. Informar archivos creados, validaciones ejecutadas y limitaciones reales.

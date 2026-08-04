@@ -19,7 +19,6 @@ function runRules(file) {
   const source = fs.readFileSync(absolute, "utf8");
   const issues = [];
   const isSyllabus = path.basename(absolute).toLowerCase() === "readme.md";
-  const isLatex = path.extname(absolute).toLowerCase() === ".tex";
   const rules = Object.fromEntries(catalog.rules.map(rule => [rule.id, rule]));
 
   if (isSyllabus) {
@@ -36,32 +35,6 @@ function runRules(file) {
     }
   }
 
-  if (isLatex) {
-    if (!/\\documentclass(?:\[[^\]]*\])?\{(?:elegantbook|kaohandt)\}/.test(source)) {
-      issues.push(issue(rules["JIN-TMP-003"], "No se detectó documentclass elegantbook o kaohandt.", absolute));
-    }
-    const labels = [...source.matchAll(/\\label\{(fig:[^}]+)\}/g)].map(match => ({ key: match[1], index: match.index }));
-    for (const label of labels) {
-      const before = source.slice(0, label.index);
-      const escaped = label.key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      if (!new RegExp(`Figura(?:~|\\s+)\\\\ref\\\\{${escaped}\\\\}`).test(before)) {
-        issues.push(issue(rules["JIN-LTX-006"], `La figura ${label.key} no tiene una referencia previa visible.`, absolute, lineOf(source, label.index)));
-      }
-    }
-    if (/\\includegraphics(?:\[[^\]]*\])?\{/.test(source) && !/\\guidefigurecaption\{/.test(source)) {
-      issues.push(issue(rules["JIN-ACC-002"], "Se encontró una imagen sin guidefigurecaption.", absolute));
-    }
-    const bibPath = path.join(path.dirname(absolute), "reference.bib");
-    if (fs.existsSync(bibPath)) {
-      const bib = fs.readFileSync(bibPath, "utf8");
-      const cited = [...source.matchAll(/\\(?:textcite|parencite|cite)\{([^}]+)\}/g)].flatMap(match => match[1].split(",").map(key => key.trim()));
-      for (const key of cited) if (!new RegExp(`@[^\\n{]+\\{\\s*${key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,`, "i").test(bib)) {
-        issues.push(issue(rules["JIN-BIB-003"], `La clave bibliográfica ${key} no existe en reference.bib.`, absolute));
-      }
-    } else if (/\\(?:textcite|parencite|cite)\{/.test(source)) {
-      issues.push(issue(rules["JIN-TMP-004"], "La guía contiene citas, pero falta reference.bib.", absolute));
-    }
-  }
   return { tool: "jintia rules", catalogVersion: catalog.version, target: absolute, issues, summary: {
     errors: issues.filter(item => item.severity === "error").length,
     warnings: issues.filter(item => item.severity === "warning").length,

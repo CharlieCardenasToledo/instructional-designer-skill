@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "course": "Bases de Datos",
+    "code": "BD-301",
+    "week": 3,
+    "topic": "Normalización y Dependencias Funcionales",
+    "outcome": "Aplicar las formas normales (1FN, 2FN, 3FN) para diseñar esquemas relacionales libres de anomalías.",
+    "unit": "Unidad 2 — Diseño Relacional",
+    "period": "2024-II",
+    "hours": 3,
+    "theme": "jintia-clasico",
+    "engine": "vivliostyle",
+    "lang": "es",
+    "citationStyle": "apa",
+    "bibliography": "reference.bib",
+    "authors": ["Dr. Carlos Pérez"]
+  },
+  "sections": [
+    {
+      "type": "orientation",
+      "id": "orientacion-semana-3",
+      "title": "¿Qué vamos a aprender esta semana?",
+      "content": "Esta semana trabajaremos la normalización de bases de datos. Partiremos de un esquema con redundancias y aplicaremos paso a paso las tres primeras formas normales para eliminarlo.\n\nAl finalizar podrás identificar dependencias funcionales y decidir cuándo un esquema está correctamente normalizado.",
+      "pagination": "atomic"
+    },
+    {
+      "type": "theory",
+      "id": "teoria-dependencias",
+      "title": "Dependencias funcionales",
+      "content": "Una dependencia funcional X → Y significa que el valor de X determina de forma única el valor de Y. Por ejemplo, si conocemos el código de estudiante, conocemos su nombre.\n\nEsta relación es la base de la normalización: cada forma normal elimina un tipo de dependencia problemática.",
+      "pagination": "splittable"
+    },
+    {
+      "type": "concept",
+      "id": "concepto-1fn",
+      "title": "Primera Forma Normal (1FN)",
+      "content": "Un esquema está en 1FN si todos sus atributos contienen valores atómicos (indivisibles) y no hay grupos repetidos.\n\nEjemplo de violación: una columna 'Teléfonos' con valores '555-1234, 555-5678' viola la 1FN.",
+      "pagination": "atomic"
+    },
+    {
+      "type": "figure",
+      "id": "fig-normalizacion",
+      "src": "figuras/normalizacion-proceso.png",
+      "alt": "Diagrama que muestra la progresión de un esquema sin normalizar a 1FN, 2FN y 3FN, con flechas entre cada estado.",
+      "caption": "Proceso de normalización: de esquema sin normalizar hasta 3FN.",
+      "pagination": "atomic"
+    },
+    {
+      "type": "practice",
+      "id": "practica-normalizar",
+      "title": "Práctica guiada: normalizar una tabla de pedidos",
+      "content": "Dada la siguiente tabla sin normalizar, aplica 1FN, 2FN y 3FN:\n\nPedido(NúmeroPedido, FechaPedido, CódigoCliente, NombreCliente, CódigoProducto, NombreProducto, Cantidad, Precio)\n\nPaso 1: Identifica los grupos repetidos.\nPaso 2: Determina la clave primaria.\nPaso 3: Encuentra las dependencias funcionales.",
+      "pagination": "page-contained"
+    },
+    {
+      "type": "assessment",
+      "id": "evaluacion-semana-3",
+      "title": "Actividad evaluativa",
+      "pagination": "page-contained",
+      "items": [
+        "Explica con tus propias palabras qué es una dependencia funcional parcial y por qué viola la 2FN.",
+        "Diseña un esquema en 3FN para un sistema de biblioteca que registre préstamos, libros y socios.",
+        "¿Cuándo NO conviene normalizar completamente un esquema? Menciona un caso práctico."
+      ]
+    }
+  ]
+}

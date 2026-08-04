@@ -1,0 +1,278 @@
+#!/usr/bin/env node
+"use strict";
+
+/**
+ * content-linter.js — Validador pedagógico de guide.json
+ *
+ * Verifica que guide.json cumpla las reglas editoriales y pedagógicas
+ * de Jintia: estructura mínima, tipos de nodo, accesibilidad, alineación
+ * resultado-práctica-evidencia, e integridad bibliográfica.
+ *
+ * Reemplaza las reglas JIN-LTX-* y JIN-TMP-* del linter LaTeX.
+ * Las reglas JIN-SYL-* siguen viviendo en rules-runner.js.
+ *
+ * Uso:
+ *   node scripts/content-linter.js guide.json [--strict] [--json]
+ */
+
+const fs   = require("node:fs");
+const path = require("node:path");
+
+// ─── Catálogo de reglas HTML/JSON ────────────────────────────────────────────
+
+const RULES = {
+  "JIN-CNT-001": {
+    id: "JIN-CNT-001", category: "structure", severity: "error",
+    description: "guide.json debe contener al menos un nodo 'orientation'.",
+  },
+  "JIN-CNT-002": {
+    id: "JIN-CNT-002", category: "accessibility", severity: "error",
+    description: "Todo nodo 'figure' debe declarar 'alt' y 'caption' no vacíos.",
+  },
+  "JIN-CNT-003": {
+    id: "JIN-CNT-003", category: "pedagogy", severity: "warning",
+    description: "Todo nodo 'assessment' debería seguir a un nodo 'practice' o 'scenario'.",
+  },
+  "JIN-CNT-004": {
+    id: "JIN-CNT-004", category: "bibliography", severity: "warning",
+    description: "Toda clave citada en nodos 'citation' debe existir en reference.bib.",
+  },
+  "JIN-CNT-005": {
+    id: "JIN-CNT-005", category: "alignment", severity: "error",
+    description: "guide.json debe incluir el campo 'outcome' en metadata.",
+  },
+  "JIN-CNT-006": {
+    id: "JIN-CNT-006", category: "structure", severity: "error",
+    description: "No se permiten tipos de nodo desconocidos.",
+  },
+  "JIN-CNT-007": {
+    id: "JIN-CNT-007", category: "accessibility", severity: "warning",
+    description: "Todo nodo 'table' debe declarar 'caption' y 'headers'.",
+  },
+  "JIN-CNT-008": {
+    id: "JIN-CNT-008", category: "structure", severity: "warning",
+    description: "Los IDs de nodo deben ser únicos en el documento.",
+  },
+  "JIN-CNT-009": {
+    id: "JIN-CNT-009", category: "bibliography", severity: "warning",
+    description: "Si hay nodos 'citation', la metadata debe declarar 'bibliography'.",
+  },
+  "JIN-CNT-010": {
+    id: "JIN-CNT-010", category: "pagination", severity: "warning",
+    description: "Los valores de 'pagination' deben ser tipos válidos.",
+  },
+};
+
+const VALID_TYPES = new Set([
+  "orientation", "theory", "concept", "warning", "critical-error",
+  "practice", "figure", "table", "scenario", "assessment",
+  "margin-note", "bibliography", "citation",
+]);
+
+const VALID_PAGINATION = new Set([
+  "atomic", "splittable", "repeatable-header", "keep-with-next", "page-contained",
+]);
+
+// ─── Utilidad: extrae claves bib de un .bib mediante regex ───────────────────
+
+function extractBibKeys(bibPath) {
+  const absolute = path.resolve(bibPath);
+  if (!fs.existsSync(absolute)) return null;
+  const raw  = fs.readFileSync(absolute, "utf8");
+  const keys = new Set();
+  const re   = /@\w+\s*\{\s*([^,\s]+)/g;
+  let match;
+  while ((match = re.exec(raw)) !== null) keys.add(match[1]);
+  return keys;
+}
+
+// ─── Runner principal ─────────────────────────────────────────────────────────
+
+function lintGuide(guidePath) {
+  const absolute = path.resolve(guidePath);
+  const issues   = [];
+
+  function issue(ruleId, message, extra = {}) {
+    const rule = RULES[ruleId];
+    issues.push({ rule: ruleId, category: rule.category, severity: rule.severity, message, file: absolute, ...extra });
+  }
+
+  // ── Cargar guide.json ──
+  if (!fs.existsSync(absolute)) {
+    throw new Error(`No existe el archivo: ${absolute}`);
+  }
+
+  let guide;
+  try {
+    guide = JSON.parse(fs.readFileSync(absolute, "utf8"));
+  } catch (err) {
+    throw new Error(`Error de sintaxis JSON: ${err.message}`);
+  }
+
+  const metadata = guide.metadata || {};
+  const sections = guide.sections || [];
+
+  // ── JIN-CNT-005: outcome obligatorio ──
+  if (!metadata.outcome || metadata.outcome.trim() === "") {
+    issue("JIN-CNT-005", "El campo 'outcome' en metadata está ausente o vacío.");
+  }
+
+  // ── JIN-CNT-001: al menos un nodo orientation ──
+  const hasOrientation = sections.some(s => s.type === "orientation");
+  if (!hasOrientation) {
+    issue("JIN-CNT-001", "No se encontró ningún nodo de tipo 'orientation'.");
+  }
+
+  // ── JIN-CNT-009: citation sin bibliography declarado ──
+  const hasCitations = sections.some(s => s.type === "citation");
+  if (hasCitations && !metadata.bibliography) {
+    issue("JIN-CNT-009", "Hay nodos 'citation' pero metadata.bibliography no está declarado.");
+  }
+
+  // ── Cargar claves bib si está disponible ──
+  let bibKeys = null;
+  if (metadata.bibliography) {
+    const bibPath = path.resolve(path.dirname(absolute), metadata.bibliography);
+    bibKeys = extractBibKeys(bibPath);
+    if (bibKeys === null) {
+      issues.push({
+        rule: "JIN-CNT-004", category: "bibliography", severity: "warning",
+        message: `El archivo bibliography declarado no existe: ${bibPath}`,
+        file: absolute,
+      });
+    }
+  }
+
+  // ── Iterar secciones ──
+  const ids   = new Set();
+  let prevType = null;
+
+  for (let i = 0; i < sections.length; i++) {
+    const node   = sections[i];
+    const prefix = `Nodo ${i + 1}`;
+
+    // JIN-CNT-006: tipo válido
+    if (!VALID_TYPES.has(node.type)) {
+      issue("JIN-CNT-006", `${prefix}: tipo desconocido "${node.type}".`, { nodeIndex: i });
+    }
+
+    // JIN-CNT-010: pagination válido
+    if (node.pagination && !VALID_PAGINATION.has(node.pagination)) {
+      issue("JIN-CNT-010", `${prefix}: valor de pagination desconocido "${node.pagination}".`, { nodeIndex: i });
+    }
+
+    // JIN-CNT-008: IDs únicos
+    if (node.id) {
+      if (ids.has(node.id)) {
+        issue("JIN-CNT-008", `${prefix}: ID duplicado "${node.id}".`, { nodeIndex: i });
+      } else {
+        ids.add(node.id);
+      }
+    }
+
+    // JIN-CNT-002: figure requiere alt y caption
+    if (node.type === "figure") {
+      if (!node.alt || node.alt.trim() === "") {
+        issue("JIN-CNT-002", `${prefix} (figure): falta el campo 'alt'.`, { nodeIndex: i });
+      }
+      if (!node.caption || node.caption.trim() === "") {
+        issue("JIN-CNT-002", `${prefix} (figure): falta el campo 'caption'.`, { nodeIndex: i });
+      }
+    }
+
+    // JIN-CNT-007: table requiere caption y headers
+    if (node.type === "table") {
+      if (!node.caption || node.caption.trim() === "") {
+        issue("JIN-CNT-007", `${prefix} (table): falta el campo 'caption'.`, { nodeIndex: i });
+      }
+      if (!node.headers || node.headers.length === 0) {
+        issue("JIN-CNT-007", `${prefix} (table): falta el campo 'headers'.`, { nodeIndex: i });
+      }
+    }
+
+    // JIN-CNT-003: assessment debería seguir a practice o scenario
+    if (node.type === "assessment" && prevType !== "practice" && prevType !== "scenario") {
+      issue("JIN-CNT-003",
+        `${prefix} (assessment): no está precedido por un nodo 'practice' o 'scenario' (previo: "${prevType || "ninguno"}").`,
+        { nodeIndex: i }
+      );
+    }
+
+    // JIN-CNT-004: claves de citation existen en bib
+    if (node.type === "citation" && bibKeys && Array.isArray(node.keys)) {
+      for (const key of node.keys) {
+        if (!bibKeys.has(key)) {
+          issue("JIN-CNT-004",
+            `${prefix} (citation): la clave "${key}" no existe en ${metadata.bibliography}.`,
+            { nodeIndex: i }
+          );
+        }
+      }
+    }
+
+    prevType = node.type;
+  }
+
+  return {
+    tool: "jintia content-linter",
+    version: "1.0.0",
+    target: absolute,
+    issues,
+    summary: {
+      errors:   issues.filter(i => i.severity === "error").length,
+      warnings: issues.filter(i => i.severity === "warning").length,
+      passed:   issues.filter(i => i.severity === "error").length === 0,
+    },
+  };
+}
+
+// ─── Salida ───────────────────────────────────────────────────────────────────
+
+function printReport(report, asJson) {
+  if (asJson) {
+    console.log(JSON.stringify(report, null, 2));
+    return;
+  }
+
+  console.log(`Jintia Content Linter · ${report.target}`);
+
+  if (!report.issues.length) {
+    console.log("✓ No se encontraron incidencias.");
+  } else {
+    for (const item of report.issues) {
+      const prefix = item.severity === "error" ? "✗" : "⚠";
+      console.log(`${prefix} ${item.rule} · ${item.message}`);
+    }
+  }
+
+  console.log(`\nResultado: ${report.summary.errors} errores, ${report.summary.warnings} advertencias.`);
+}
+
+// ─── CLI ──────────────────────────────────────────────────────────────────────
+
+if (require.main === module) {
+  const args   = process.argv.slice(2);
+  const target = args.find(a => !a.startsWith("--"));
+  const asJson = args.includes("--json");
+  const strict = args.includes("--strict");
+
+  if (!target) {
+    console.error("Uso: node scripts/content-linter.js guide.json [--strict] [--json]");
+    process.exit(2);
+  }
+
+  try {
+    const report = lintGuide(target);
+    printReport(report, asJson);
+
+    const shouldFail = report.summary.errors > 0 ||
+      (strict && report.summary.warnings > 0);
+
+    if (shouldFail) process.exitCode = 1;
+  } catch (err) {
+    console.error(`content-linter: ${err.message}`);
+    process.exitCode = 1;
+  }
+}
+
+module.exports = { lintGuide, RULES };

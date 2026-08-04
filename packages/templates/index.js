@@ -2,7 +2,7 @@
 
 const fs = require("node:fs");
 const path = require("node:path");
-const ROOT = path.resolve(__dirname, "../../skill/templates");
+const ROOT = path.resolve(__dirname, "../../skill/themes");
 
 function list() {
   return fs.readdirSync(ROOT, { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => {

@@ -1,0 +1,127 @@
+/**
+ * Jintia Técnico — Tokens de diseño
+ * Extiende jintia-clasico con overrides para contenido técnico:
+ * código fuente, terminales, diagramas y alta densidad tipográfica.
+ */
+
+/* Importar base clásica */
+@import "../jintia-clasico/tokens.css";
+
+/* ─── Overrides Técnico ─────────────────────────────────────────────────────── */
+
+:root {
+  /* Fuentes IBM Plex (fallback elegante a sistema) */
+  --jintia-font-body:    "IBM Plex Sans", "Inter", system-ui, sans-serif;
+  --jintia-font-heading: "IBM Plex Sans", "Inter", system-ui, sans-serif;
+  --jintia-font-mono:    "IBM Plex Mono", "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+
+  /* Tamaños: ligeramente más compactos para alta densidad */
+  --jintia-size-body:    10.5pt;
+  --jintia-line-height:  1.55;
+
+  /* Paleta azul-técnica */
+  --jintia-brand:       #1d4ed8;
+  --jintia-brand-light: #dbeafe;
+  --jintia-accent:      #0ea5e9;
+
+  /* Superficies */
+  --jintia-bg:           #ffffff;
+  --jintia-surface:      #f0f4ff;
+  --jintia-surface-raised: #e8f0fe;
+
+  /* Bloques pedagógicos — paleta técnica */
+
+  /* Orientación: azul suave */
+  --jintia-orientation-bg:     #eff6ff;
+  --jintia-orientation-border: #2563eb;
+
+  /* Teoría: gris azulado */
+  --jintia-theory-bg:     #f1f5f9;
+  --jintia-theory-border: #475569;
+
+  /* Concepto: índigo */
+  --jintia-concept-bg:     #eef2ff;
+  --jintia-concept-border: #4338ca;
+
+  /* Práctica: teal-técnico */
+  --jintia-practice-bg:     #ecfeff;
+  --jintia-practice-border: #0891b2;
+
+  /* Warning: ámbar técnico */
+  --jintia-warning-bg:     #fffbeb;
+  --jintia-warning-border: #b45309;
+
+  /* Error crítico: rojo vivo */
+  --jintia-error-bg:     #fef2f2;
+  --jintia-error-border: #dc2626;
+
+  /* Escenario: violeta técnico */
+  --jintia-scenario-bg:     #faf5ff;
+  --jintia-scenario-border: #7c3aed;
+
+  /* Assessment: verde-técnico */
+  --jintia-assessment-bg:     #f0fdf4;
+  --jintia-assessment-border: #16a34a;
+
+  /* Código */
+  --jintia-code-bg:      #1e2937;
+  --jintia-code-text:    #e2e8f0;
+  --jintia-code-border:  #374151;
+}
+
+/* ─── Overrides de código: dark theme ─────────────────────────────────────── */
+
+pre {
+  background:    var(--jintia-code-bg);
+  color:         var(--jintia-code-text);
+  border-color:  var(--jintia-code-border);
+  border-radius: 6px;
+  padding:       var(--jintia-space-md);
+  font-size:     9pt;
+  line-height:   1.5;
+}
+
+pre code {
+  background:  transparent;
+  border:      none;
+  color:       inherit;
+  font-size:   inherit;
+}
+
+code {
+  background: var(--jintia-surface);
+  color:      var(--jintia-brand);
+  font-size:  9.5pt;
+}
+
+/* ─── Bloque de terminal ──────────────────────────────────────────────────── */
+
+.jintia-terminal {
+  background:   #0d1117;
+  color:        #58d68d;
+  font-family:  var(--jintia-font-mono);
+  font-size:    8.5pt;
+  padding:      var(--jintia-space-md);
+  border-radius: 6px;
+  border:       1px solid #30363d;
+  break-inside: avoid;
+  margin-bottom: var(--jintia-space-md);
+}
+
+.jintia-terminal::before {
+  content:     "$ ";
+  color:       #8b949e;
+}
+
+/* ─── Bloque de output/respuesta ─────────────────────────────────────────── */
+
+.jintia-output {
+  background:  #161b22;
+  color:       #c9d1d9;
+  font-family: var(--jintia-font-mono);
+  font-size:   8.5pt;
+  padding:     var(--jintia-space-sm) var(--jintia-space-md);
+  border-left: 3px solid var(--jintia-accent);
+  break-inside: avoid;
+  margin-bottom: var(--jintia-space-md);
+}

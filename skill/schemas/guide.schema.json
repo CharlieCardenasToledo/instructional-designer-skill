@@ -1,0 +1,233 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://jintia.dev/schemas/guide.schema.json",
+  "title": "Jintia Guide",
+  "description": "Fuente canónica neutra (AST) de una guía semanal Jintia. El renderer convierte este documento en HTML semántico y después en PDF.",
+  "type": "object",
+  "required": ["metadata", "sections"],
+  "additionalProperties": false,
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "description": "Metadatos editoriales y pedagógicos del documento.",
+      "required": ["course", "week", "topic", "outcome"],
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "description": "Nombre de la asignatura."
+        },
+        "code": {
+          "type": "string",
+          "description": "Código institucional de la asignatura."
+        },
+        "week": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Número de semana."
+        },
+        "topic": {
+          "type": "string",
+          "description": "Tema o título principal de la guía."
+        },
+        "outcome": {
+          "type": "string",
+          "description": "Resultado de aprendizaje canónico de la semana."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unidad a la que pertenece la semana."
+        },
+        "period": {
+          "type": "string",
+          "description": "Periodo académico ordinario (ej. '2024-II')."
+        },
+        "hours": {
+          "type": "number",
+          "description": "Horas estimadas de trabajo autónomo."
+        },
+        "theme": {
+          "type": "string",
+          "default": "jintia-clasico",
+          "description": "ID del tema HTML a usar para el renderizado.",
+          "enum": ["jintia-clasico", "jintia-tecnico", "jintia-cuaderno"]
+        },
+        "engine": {
+          "type": "string",
+          "default": "vivliostyle",
+          "description": "Motor PDF a usar para la compilación.",
+          "enum": ["vivliostyle", "pagedjs", "prince"]
+        },
+        "lang": {
+          "type": "string",
+          "default": "es",
+          "description": "Idioma del documento (código BCP 47)."
+        },
+        "citationStyle": {
+          "type": "string",
+          "default": "apa",
+          "description": "Estilo bibliográfico CSL (ej. 'apa', 'chicago-author-date')."
+        },
+        "bibliography": {
+          "type": "string",
+          "description": "Ruta relativa al archivo .bib de la guía (ej. 'reference.bib')."
+        },
+        "authors": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Nombres de los docentes autores."
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "description": "Secuencia ordenada de nodos pedagógicos del documento.",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/section" }
+    }
+  },
+  "definitions": {
+    "section": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Tipo de nodo pedagógico.",
+          "enum": [
+            "orientation",
+            "theory",
+            "concept",
+            "warning",
+            "critical-error",
+            "practice",
+            "figure",
+            "table",
+            "scenario",
+            "assessment",
+            "margin-note",
+            "bibliography",
+            "citation"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "description": "Identificador único del nodo (para referencias cruzadas).",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Título o encabezado del bloque."
+        },
+        "content": {
+          "description": "Contenido del nodo. Puede ser string HTML seguro, array de sub-nodos u objeto estructurado según el tipo."
+        },
+        "pagination": {
+          "type": "string",
+          "description": "Comportamiento de paginación del bloque.",
+          "enum": [
+            "atomic",
+            "splittable",
+            "repeatable-header",
+            "keep-with-next",
+            "page-contained"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "figure" } } },
+          "then": {
+            "required": ["alt", "caption"],
+            "properties": {
+              "src": {
+                "type": "string",
+                "description": "Ruta relativa a la imagen o spec visual."
+              },
+              "alt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Texto alternativo accesible. Obligatorio."
+              },
+              "caption": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Caption de la figura. Obligatorio."
+              },
+              "width": {
+                "type": "string",
+                "description": "Ancho CSS (ej. '100%', '80mm')."
+              },
+              "visualSpec": {
+                "type": "string",
+                "description": "Ruta a un visual-spec.json para generación dinámica."
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "table" } } },
+          "then": {
+            "required": ["caption"],
+            "properties": {
+              "caption": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Caption de la tabla. Obligatorio."
+              },
+              "headers": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Encabezados de columna."
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "description": "Filas de datos."
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "citation" } } },
+          "then": {
+            "required": ["keys"],
+            "properties": {
+              "keys": {
+                "type": "array",
+                "items": { "type": "string" },
+                "minItems": 1,
+                "description": "Claves bibliográficas (deben existir en reference.bib)."
+              },
+              "mode": {
+                "type": "string",
+                "default": "parenthetical",
+                "enum": ["narrative", "parenthetical"],
+                "description": "Modo de cita: narrative = 'Autor (año)'; parenthetical = '(Autor, año)'."
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "assessment" } } },
+          "then": {
+            "properties": {
+              "format": {
+                "type": "string",
+                "enum": ["multiple-choice", "open", "matching", "ordering", "case"],
+                "description": "Formato de la actividad evaluativa."
+              },
+              "items": {
+                "type": "array",
+                "description": "Ítems o preguntas de la actividad."
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

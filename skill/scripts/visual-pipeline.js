@@ -25,9 +25,9 @@ function run(command, args, options = {}) {
 function main() {
   const argv = process.argv.slice(2);
   const spec = value(argv, "--spec");
-  const template = value(argv, "--template") || "elegantbook-clasico";
+  const template = value(argv, "--template") || "jintia-tecnico";
   const guide = value(argv, "--guide");
-  if (!spec) throw new Error("Uso: visual-pipeline.js --spec figure/specs/fig-id.json --template <id> [--guide guia.tex]");
+  if (!spec) throw new Error("Uso: visual-pipeline.js --spec figure/specs/fig-id.json --template <id> [--guide guide.json]");
 
   const renderer = path.resolve(__dirname, "visual-renderer.js");
   const rendered = run(process.execPath, [renderer, "--spec", spec, "--template", template]);
@@ -41,7 +41,7 @@ function main() {
   const inspected = JSON.parse(fs.readFileSync(manifest, "utf8"));
   const entry = inspected.figures.find(item => item.id === result.entry.id);
   if (!entry?.inspection?.valid) throw new Error(`la inspección de ${result.entry.id} no produjo una salida válida`);
-  console.log(JSON.stringify({ entry, latex: result.latex, manifest }, null, 2));
+  console.log(JSON.stringify({ entry, html: result.html, manifest }, null, 2));
 }
 
 if (require.main === module) {

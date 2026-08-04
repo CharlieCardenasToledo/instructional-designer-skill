@@ -5,6 +5,16 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.0.0 — 2026-08-04
+
+### Cambiado
+
+- Motor de composición migrado de LaTeX a HTML puro con Vivliostyle.
+- Nuevas plantillas HTML: Técnico y Cuaderno.
+- Eliminadas las plantillas ElegantoBook y Kaohandt (LaTeX).
+- Agregado migrador de contenido legado (`guide-migrator.js`).
+- Validación de esquemas y preflight PDF integrados en el pipeline editorial.
+
 ## 10.10.1 — 2026-08-02
 
 ### Corregido

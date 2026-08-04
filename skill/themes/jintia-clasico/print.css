@@ -1,0 +1,219 @@
+/**
+ * Jintia Clásico — CSS Paged Media (print.css)
+ * Control de paginación, encabezados corridos, fragmentación y orphans/widows.
+ *
+ * Este archivo NO reemplaza a Tailwind ni a los componentes.
+ * Es una capa adicional específica para impresión y Vivliostyle.
+ *
+ * Importa módulos de @vivliostyle/theme-base cuando estén disponibles.
+ * Si no están instalados, las reglas propias sirven como fallback.
+ */
+
+/* ════════════════════════════════════════════════════════
+   Importaciones de @vivliostyle/theme-base (CC0-1.0)
+   ════════════════════════════════════════════════════════ */
+
+/* Intentar importar módulos de theme-base si está instalado.
+   Si no está disponible, Vivliostyle lo ignora sin error fatal.
+   Para activar: npm install @vivliostyle/theme-base dentro de skill/ */
+
+@import url("@vivliostyle/theme-base/css/partial/page.css") layer(theme-base);
+@import url("@vivliostyle/theme-base/css/partial/crossref.css") layer(theme-base);
+@import url("@vivliostyle/theme-base/css/partial/footnote.css") layer(theme-base);
+@import url("@vivliostyle/theme-base/css/partial/toc.css") layer(theme-base);
+
+/* ════════════════════════════════════════════════════════
+   @page: tamaño y márgenes
+   ════════════════════════════════════════════════════════ */
+
+@page {
+  size: A4;
+  margin: 18mm 18mm 22mm 18mm;
+
+  /* Encabezado corrido: título de sección */
+  @top-center {
+    content: string(section-title);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 8.5pt;
+    color: #6b7280;
+    vertical-align: bottom;
+    padding-bottom: 4pt;
+  }
+
+  /* Pie de página: número de página */
+  @bottom-center {
+    content: counter(page);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 9pt;
+    color: #6b7280;
+  }
+
+  /* Pie derecho: nombre del curso (declarado en metadata via JS) */
+  @bottom-right {
+    content: string(course-name);
+    font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+    font-size: 8pt;
+    color: #9ca3af;
+  }
+}
+
+/* Primera página: sin encabezado corrido */
+@page :first {
+  @top-center { content: none; }
+  @bottom-center { content: none; }
+  @bottom-right { content: none; }
+}
+
+/* ════════════════════════════════════════════════════════
+   String-set: encabezados corridos dinámicos
+   ════════════════════════════════════════════════════════ */
+
+/* Captura el título de sección para el encabezado corrido */
+h2 {
+  string-set: section-title content(text);
+}
+
+/* Captura el nombre del curso desde .jintia-cover__course */
+.jintia-cover__course {
+  string-set: course-name content(text);
+}
+
+/* ════════════════════════════════════════════════════════
+   Comportamientos de paginación por data-pagination
+   ════════════════════════════════════════════════════════ */
+
+/* atomic: no puede dividirse entre páginas */
+[data-pagination="atomic"] {
+  break-inside: avoid;
+}
+
+/* keep-with-next: el elemento va unido al siguiente */
+[data-pagination="keep-with-next"] {
+  break-after: avoid;
+}
+
+/* page-contained: ocupa exactamente una página */
+[data-pagination="page-contained"] {
+  break-before: page;
+  break-after: page;
+}
+
+/* splittable: puede dividirse; sin restricción adicional */
+[data-pagination="splittable"] {
+  /* sin restricción */
+}
+
+/* repeatable-header: tablas con encabezado que se repite */
+[data-pagination="repeatable-header"] thead {
+  display: table-header-group; /* nativo */
+}
+
+/* ════════════════════════════════════════════════════════
+   Reglas globales de fragmentación
+   ════════════════════════════════════════════════════════ */
+
+/* Headings nunca quedan solos al final de página */
+h1, h2, h3, h4 {
+  break-after: avoid;
+}
+
+/* Párrafos: control de líneas huérfanas y viudas */
+p {
+  orphans: 3;
+  widows: 3;
+}
+
+/* Bloques pedagógicos: por defecto no se dividen */
+.jintia-block {
+  break-inside: avoid;
+}
+
+/* Figuras: caption siempre con su imagen */
+.jintia-figure {
+  break-inside: avoid;
+}
+
+/* Tablas cortas (< 15 filas): sin división */
+.jintia-table {
+  break-inside: avoid;
+}
+
+/* Tablas largas marcadas explícitamente como splittable */
+.jintia-table[data-pagination="splittable"] {
+  break-inside: auto;
+}
+
+/* Separación de secciones principales */
+.jintia-section {
+  break-before: page;
+}
+
+/* ════════════════════════════════════════════════════════
+   Impresión: ajustes de color y visibilidad
+   ════════════════════════════════════════════════════════ */
+
+@media print {
+  /* Forzar colores de fondo en impresión */
+  .jintia-orientation,
+  .jintia-theory,
+  .jintia-concept,
+  .jintia-practice,
+  .jintia-warning,
+  .jintia-critical-error,
+  .jintia-scenario,
+  .jintia-assessment {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Eliminar sombras en impresión */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Links: mostrar URL en impresión si no son relativos */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #6b7280;
+  }
+
+  /* Ocultar elementos de solo web */
+  .web-only {
+    display: none !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   Notas al pie (CSS Paged Media nativo)
+   ════════════════════════════════════════════════════════ */
+
+.footnote {
+  float: footnote;
+  font-size: 8.5pt;
+  line-height: 1.4;
+  color: #4b5563;
+}
+
+/* ════════════════════════════════════════════════════════
+   Tabla de contenidos
+   ════════════════════════════════════════════════════════ */
+
+.jintia-toc {
+  break-after: page;
+}
+
+.jintia-toc a::after {
+  content: leader(".") " " target-counter(attr(href), page);
+  font-size: 9.5pt;
+  color: #6b7280;
+}
+
+/* ════════════════════════════════════════════════════════
+   Portada: siempre página sola
+   ════════════════════════════════════════════════════════ */
+
+.jintia-cover {
+  break-after: page;
+}

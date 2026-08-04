@@ -1,14 +1,20 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "rules": [
-    { "id": "JIN-SYL-001", "category": "syllabus", "severity": "error", "description": "El sílabo debe declarar un resultado de aprendizaje." },
-    { "id": "JIN-SYL-002", "category": "syllabus", "severity": "error", "description": "El sílabo debe contener al menos una semana canónica." },
-    { "id": "JIN-SYL-004", "category": "syllabus", "severity": "error", "description": "Cada sílabo debe declarar bibliografía y actividades calificadas." },
-    { "id": "JIN-ALN-002", "category": "alignment", "severity": "warning", "description": "Cada semana debería conectar resultado, práctica o actividad y evidencia." },
-    { "id": "JIN-BIB-003", "category": "bibliography", "severity": "warning", "description": "Toda clave citada en LaTeX debería existir en reference.bib." },
-    { "id": "JIN-LTX-006", "category": "latex", "severity": "warning", "description": "Toda figura debe tener una referencia previa en el texto." },
+    { "id": "JIN-SYL-001", "category": "syllabus", "severity": "error",  "description": "El sílabo debe declarar un resultado de aprendizaje." },
+    { "id": "JIN-SYL-002", "category": "syllabus", "severity": "error",  "description": "El sílabo debe contener al menos una semana canónica." },
+    { "id": "JIN-SYL-004", "category": "syllabus", "severity": "error",  "description": "Cada sílabo debe declarar bibliografía y actividades calificadas." },
+    { "id": "JIN-ALN-002", "category": "alignment", "severity": "warning","description": "Cada semana debería conectar resultado, práctica o actividad y evidencia." },
     { "id": "JIN-ACC-002", "category": "accessibility", "severity": "warning", "description": "Toda figura debe conservar caption y texto alternativo." },
-    { "id": "JIN-TMP-003", "category": "template", "severity": "error", "description": "La guía debe declarar una clase de documento compatible." },
-    { "id": "JIN-TMP-004", "category": "template", "severity": "warning", "description": "Una guía con citas debería conservar reference.bib junto al archivo principal." }
+    { "id": "JIN-CNT-001", "category": "structure",    "severity": "error",   "description": "guide.json debe contener al menos un nodo 'orientation'." },
+    { "id": "JIN-CNT-002", "category": "accessibility","severity": "error",   "description": "Todo nodo 'figure' debe declarar 'alt' y 'caption' no vacíos." },
+    { "id": "JIN-CNT-003", "category": "pedagogy",     "severity": "warning", "description": "Todo nodo 'assessment' debería seguir a un nodo 'practice' o 'scenario'." },
+    { "id": "JIN-CNT-004", "category": "bibliography", "severity": "warning", "description": "Toda clave citada en nodos 'citation' debe existir en reference.bib." },
+    { "id": "JIN-CNT-005", "category": "alignment",    "severity": "error",   "description": "guide.json debe incluir el campo 'outcome' en metadata." },
+    { "id": "JIN-CNT-006", "category": "structure",    "severity": "error",   "description": "No se permiten tipos de nodo desconocidos." },
+    { "id": "JIN-CNT-007", "category": "accessibility","severity": "warning", "description": "Todo nodo 'table' debe declarar 'caption' y 'headers'." },
+    { "id": "JIN-CNT-008", "category": "structure",    "severity": "warning", "description": "Los IDs de nodo deben ser únicos en el documento." },
+    { "id": "JIN-CNT-009", "category": "bibliography", "severity": "warning", "description": "Si hay nodos 'citation', la metadata debe declarar 'bibliography'." },
+    { "id": "JIN-CNT-010", "category": "pagination",   "severity": "warning", "description": "Los valores de 'pagination' deben ser tipos válidos." }
   ]
 }

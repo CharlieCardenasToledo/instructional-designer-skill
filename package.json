@@ -1,6 +1,6 @@
 {
   "name": "@charlie.act7/jintia",
-  "version": "10.10.1",
+  "version": "11.0.0",
   "description": "Instala y ejecuta Jintia, la skill de diseño instruccional universitario verificable.",
   "license": "MIT",
   "author": "Charlie Cárdenas Toledo <charlie.act7@gmail.com>",
@@ -35,7 +35,7 @@
     "skill/runtime/",
     "skill/schemas/",
     "skill/scripts/",
-    "skill/templates/",
+    "skill/themes/",
     "skill/package.json",
     "skill/requirements.txt",
     "skill/SKILL.md"
@@ -56,7 +56,7 @@
     "release:skill:check": "node scripts/check-skill-release.mjs",
     "package:check": "node scripts/check-npm-package.mjs",
     "prepublishOnly": "npm run docs:check && npm run skill:check && npm run release:check && npm run package:check",
-    "skill:check": "node --check skill/scripts/agent-plan.js && node --check skill/scripts/brand-validator.js && node skill/scripts/brand-validator.js && node --check skill/scripts/context-manager.js && node --check skill/scripts/harness-detect.js && node --check skill/scripts/harness-manager.js && node --check skill/scripts/hook-install.js && node --check skill/scripts/report.js && node --check skill/scripts/latex-linter.js && node --check skill/scripts/latex-validator.js && node --check skill/scripts/legacy-manager.js && node --check skill/scripts/schema-validator.js && node --check skill/scripts/png-compare.js && node --check skill/scripts/visual-quality.js && node --check skill/scripts/visual-selector.js && node --check skill/scripts/visual-source-generator.js && node --check skill/scripts/visual-progressive.js && node --check skill/scripts/visual-capabilities.js && node --check skill/scripts/visual-matrix-check.js && node --check skill/scripts/visual-renderer.js && node --check skill/scripts/visual-pipeline.js && node --check skill/scripts/test-runner.js && node --check skill/scripts/visual-linter.js && node --check skill/scripts/visual-inspector.js && node --check skill/scripts/visual-regression.js && node --check skill/runtime/core/index.js && node --check skill/runtime/core/harnesses.js && node --check skill/runtime/core/harness-manager.js && node --check packages/core/index.js && node --check packages/core/harnesses.js && node --check packages/core/harness-manager.js && node --check packages/cli/index.js && node --check packages/rules/index.js && node --check packages/templates/index.js && node --check packages/skill/index.js && npm --prefix skill test"
+    "skill:check": "node --check skill/scripts/agent-plan.js && node --check skill/scripts/brand-validator.js && node skill/scripts/brand-validator.js && node --check skill/scripts/context-manager.js && node --check skill/scripts/harness-detect.js && node --check skill/scripts/harness-manager.js && node --check skill/scripts/hook-install.js && node --check skill/scripts/report.js && node --check skill/scripts/html-linter.js && node --check skill/scripts/content-linter.js &&node --check skill/scripts/legacy-manager.js && node --check skill/scripts/schema-validator.js && node --check skill/scripts/png-compare.js && node --check skill/scripts/visual-quality.js && node --check skill/scripts/visual-selector.js && node --check skill/scripts/visual-source-generator.js && node --check skill/scripts/visual-progressive.js && node --check skill/scripts/visual-capabilities.js && node --check skill/scripts/visual-matrix-check.js && node --check skill/scripts/visual-renderer.js && node --check skill/scripts/visual-pipeline.js && node --check skill/scripts/test-runner.js && node --check skill/scripts/visual-linter.js && node --check skill/scripts/visual-inspector.js && node --check skill/scripts/visual-regression.js && node --check skill/runtime/core/index.js && node --check skill/runtime/core/harnesses.js && node --check skill/runtime/core/harness-manager.js && node --check packages/core/index.js && node --check packages/core/harnesses.js && node --check packages/core/harness-manager.js && node --check packages/cli/index.js && node --check packages/rules/index.js && node --check packages/templates/index.js && node --check packages/skill/index.js && npm --prefix skill test"
   },
   "devDependencies": {
     "yazl": "^3.3.1"

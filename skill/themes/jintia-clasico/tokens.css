@@ -1,0 +1,113 @@
+/**
+ * Jintia Clásico — Design Tokens
+ * Variables CSS para el sistema editorial HTML de Jintia.
+ * Derivado del sistema de diseño documentado en DESIGN.md.
+ *
+ * Uso: importado por theme.css; no usar directamente en templates HTML.
+ */
+
+:root {
+  /* ─── Marca ─────────────────────────────────────────────────── */
+  --jintia-brand:          #0f766e;
+  --jintia-brand-hover:    #115e59;
+  --jintia-brand-light:    #ccfbf1;
+
+  /* ─── Superficies y texto ───────────────────────────────────── */
+  --jintia-bg:             #eef2f4;
+  --jintia-surface:        #f8fafc;
+  --jintia-surface-raised: #ffffff;
+  --jintia-text:           #111827;
+  --jintia-muted:          #6b7280;
+  --jintia-border:         #e2e8f0;
+
+  /* ─── Bloques pedagógicos ────────────────────────────────────── */
+  --jintia-orientation-bg:     #e8f4f1;
+  --jintia-orientation-border: #0f766e;
+  --jintia-orientation-icon:   "→";
+
+  --jintia-theory-bg:          #f0f9ff;
+  --jintia-theory-border:      #0369a1;
+
+  --jintia-concept-bg:         #f0f4ff;
+  --jintia-concept-border:     #4338ca;
+
+  --jintia-practice-bg:        #e8f7f0;
+  --jintia-practice-border:    #059669;
+  --jintia-practice-icon:      "✎";
+
+  --jintia-warning-bg:         #fdf5e6;
+  --jintia-warning-border:     #d97706;
+  --jintia-warning-icon:       "⚠";
+
+  --jintia-error-bg:           #fdf0f0;
+  --jintia-error-border:       #dc2626;
+  --jintia-error-icon:         "✗";
+
+  --jintia-scenario-bg:        #faf5ff;
+  --jintia-scenario-border:    #7c3aed;
+
+  --jintia-assessment-bg:      #fff7ed;
+  --jintia-assessment-border:  #ea580c;
+
+  /* ─── Tipografía ─────────────────────────────────────────────── */
+  --jintia-font-body:    "Inter", "Segoe UI", system-ui, sans-serif;
+  --jintia-font-heading: "Inter", "Segoe UI", system-ui, sans-serif;
+  --jintia-font-mono:    "Cascadia Code", "Consolas", "Courier New", monospace;
+
+  --jintia-size-body:    11pt;
+  --jintia-size-h1:      18pt;
+  --jintia-size-h2:      14pt;
+  --jintia-size-h3:      12pt;
+  --jintia-size-h4:      11pt;
+  --jintia-size-small:   9pt;
+  --jintia-size-caption: 9.5pt;
+  --jintia-line-height:  1.55;
+
+  --jintia-weight-normal: 400;
+  --jintia-weight-medium: 500;
+  --jintia-weight-bold:   700;
+
+  /* ─── Espaciado ──────────────────────────────────────────────── */
+  --jintia-space-xs:  4pt;
+  --jintia-space-sm:  8pt;
+  --jintia-space-md:  14pt;
+  --jintia-space-lg:  20pt;
+  --jintia-space-xl:  28pt;
+
+  /* ─── Bordes ─────────────────────────────────────────────────── */
+  --jintia-radius:     6px;
+  --jintia-radius-sm:  4px;
+  --jintia-border-width: 3px;
+
+  /* ─── Figura y tabla ─────────────────────────────────────────── */
+  --jintia-figure-max-width: 100%;
+  --jintia-caption-color:    var(--jintia-muted);
+
+  /* ─── Encabezados corridos (via Vivliostyle string-set) ─────── */
+  --jintia-running-head-color: var(--jintia-muted);
+  --jintia-running-head-size:  9pt;
+}
+
+/* Tema oscuro (solo para vista previa web; no afecta impresión) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --jintia-bg:             #0f172a;
+    --jintia-surface:        #1e293b;
+    --jintia-surface-raised: #334155;
+    --jintia-text:           #f1f5f9;
+    --jintia-muted:          #94a3b8;
+    --jintia-border:         #334155;
+  }
+}
+
+/* Impresión: siempre tema claro */
+@media print {
+  :root {
+    --jintia-bg:             #ffffff;
+    --jintia-surface:        #f8fafc;
+    --jintia-surface-raised: #ffffff;
+    --jintia-text:           #111827;
+    --jintia-muted:          #4b5563;
+    --jintia-border:         #d1d5db;
+  }
+}

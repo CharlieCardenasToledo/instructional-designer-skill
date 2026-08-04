@@ -1,24 +1,75 @@
-# Jintia Skill
+# Jintia
 
-Skill abierta de diseño instruccional para producir guías académicas completas,
-verificables y compilables con Claude, ChatGPT y Codex.
+**Motor de Diseño Instruccional Editorial para Agentes de IA** (Claude, ChatGPT y Codex).
 
-La aplicación instaladora vive ahora en un repositorio independiente:
-[`jintia-desktop`](https://github.com/CharlieCardenasToledo/jintia-desktop).
-Este repositorio contiene únicamente la skill, sus plantillas, runtime, pruebas
-y artefactos de distribución.
+Jintia es una *skill* agéntica de código abierto diseñada para producir guías académicas modulares, estructuradas y listas para impresión o distribución digital, garantizando la trazabilidad entre el sílabo, los resultados de aprendizaje y la bibliografía verificable.
 
-## Qué hace
+> [!NOTE]
+> El cliente de escritorio y el instalador gráfico se mantienen en un repositorio independiente:
+> [`jintia-desktop`](https://github.com/CharlieCardenasToledo/jintia-desktop).
+> Este repositorio contiene únicamente la *skill* base, el motor de renderizado HTML, las pruebas y los artefactos de distribución.
 
-Jintia transforma el sílabo, la configuración institucional y fuentes
-verificables en guías semanales LaTeX. Incluye:
+## Capacidades Principales
 
-- planificación instruccional y trazabilidad de evidencia;
-- plantillas ElegantBook y Kaohandt;
-- validación de esquemas, LaTeX y calidad visual;
-- generación visual con fallbacks reproducibles;
-- integración opcional con NotebookLM;
-- contratos de agentes especializados para investigación, revisión y acabado.
+Jintia ingiere sílabos, configuraciones institucionales y fuentes verificables para generar automáticamente guías de estudio. Su arquitectura incorpora:
+
+- **Estructuración mediante AST (`guide.json`)**: Planificación instruccional y trazabilidad de evidencia con separación total entre contenido y diseño.
+- **Motor Editorial HTML**: Renderizado nativo web y compilación a PDF de alta resolución mediante Vivliostyle.
+- **Sistema Multitema**: Soporte para distintos perfiles visuales (ej. diseño técnico corporativo, libretas de ejercicios imprimibles).
+- **Control de Calidad (Linter y Preflight)**: Validación estricta del esquema semántico y verificación estructural del DOM para evitar errores de impresión.
+- **Flujo Multi-Agente**: Contratos especializados para delegación de tareas de investigación, renderizado de figuras y revisión académica.
+
+## Uso y Flujo del Usuario
+
+El usuario final interactúa con Jintia a través de su agente de IA de preferencia (Claude, ChatGPT, etc.) siguiendo este flujo normal:
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant IA as Agente de IA
+    participant J as Jintia Skill
+    participant E as Evidencia (NotebookLM/Local)
+
+    U->>U: 1. Prepara Sílabo (README.md)
+    U->>IA: 2. Conecta fuentes y contexto
+    U->>IA: 3. Prompt: "Genera guía semana X"
+    IA->>E: 4. Extrae resultados y busca evidencia
+    E-->>IA: Retorna información validada
+    IA->>J: 5. Genera AST (guide.json)
+    IA->>J: 6. Ejecuta jintia render & compile
+    J-->>U: Entrega PDF maquetado
+```
+
+1. **Preparación del Entorno**: El usuario debe tener en su espacio de trabajo un archivo `README.md` que actúe como el sílabo canónico del curso (con resultados de aprendizaje definidos), y opcionalmente un archivo de configuración (`config/institution.json`).
+2. **Conexión de Evidencia**: El usuario provee el contexto al agente, ya sea conectando sus cuadernos de investigación a través de la integración de NotebookLM MCP o proporcionando archivos bibliográficos locales.
+3. **Petición (Prompt)**: El usuario solicita al agente la creación de una guía. Por ejemplo: *"Jintia, genera la guía instruccional para la semana 3 basada en el sílabo"*.
+4. **Delegación Agéntica**: Jintia asume el control. Lee el sílabo, extrae los resultados, busca evidencia en las fuentes conectadas y estructura el contenido usando la pedagogía de *Backward Design*.
+5. **Generación del AST**: El agente redacta la guía escribiéndola estrictamente en el formato neutro `guide.json`. Si requiere diagramas, delega la creación de los mismos.
+6. **Compilación y Entrega**: El agente (o el propio usuario, si lo desea) invoca los comandos de la *skill* (`jintia render` y `jintia compile`) para convertir automáticamente el `guide.json` en un PDF maquetado profesionalmente, listo para su distribución.
+
+## Arquitectura (Pipeline Editorial)
+
+La *skill* opera mediante un flujo secuencial automatizado (el *Pipeline* Editorial) que garantiza calidad técnica y pedagógica:
+
+```mermaid
+graph TD
+    A[guide.json<br/>AST Semántico] -->|jintia validate| B(Schema Validator)
+    B -->|Éxito| C[guide-renderer.js]
+    C -->|jintia render| D[HTML5 Puro + Tema]
+    D --> E{html-linter.js}
+    E -->|Validación DOM| F[jintia preflight<br/>Playwright]
+    F -->|Paginación OK| G[Vivliostyle CLI<br/>jintia compile]
+    G --> H((PDF Final))
+    
+    I[Pipeline Visual<br/>TikZ, Mermaid] -.->|Inyección opcional| D
+```
+
+1. **Ingesta de Contenido (`jintia validate`)**: Lee el archivo semántico `guide.json` (el Árbol de Sintaxis Abstracta) y valida su estructura mediante un validador de esquemas (*Schema Validator*) propio.
+2. **Renderizado Semántico (`jintia render`)**: El motor `guide-renderer.js` toma el AST y construye un documento HTML5 puro, inyectando el tema visual seleccionado (ej. `jintia-tecnico` o `jintia-cuaderno`).
+3. **Control de Calidad de Contenido (`html-linter.js`)**: Analiza el DOM (Document Object Model) resultante buscando violaciones a reglas de accesibilidad (JIN-HTM-*) e instruccionales.
+4. **Pipeline Visual (Figuras Complejas)**: De forma opcional, si la guía incluye diagramas matemáticos o técnicos, se invocan herramientas externas (TikZ, PlantUML, Mermaid) y las imágenes resultantes se inyectan en el HTML final.
+5. **Preflight de Paginación (`jintia preflight`)**: Mediante Playwright, el motor simula el entorno de impresión para detectar errores como "viudas/huérfanas" (títulos aislados al final de una página) o tablas que se cortan incorrectamente.
+6. **Compilación PDF (`jintia compile`)**: Finalmente, delega la composición (typesetting) al motor de CSS Paged Media **Vivliostyle**, generando el PDF final de grado imprenta.
 
 ## Instalación
 

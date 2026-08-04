@@ -1,0 +1,43 @@
+/**
+ * Jintia Cuaderno — Tokens de diseño
+ * Tema para cuadernillos de ejercicios (A5), con espaciado amplio para
+ * escritura manual, tipografía más grande y márgenes generosos.
+ *
+ * Hereda la paleta de identidad de jintia-clasico pero ajusta el formato.
+ */
+
+/* Importar base clásica */
+@import "../jintia-clasico/tokens.css";
+
+/* ─── Overrides Cuaderno ────────────────────────────────────────────────────── */
+
+:root {
+  /* Fuentes amigables para lectura en A5 */
+  --jintia-font-body:    "Georgia", "Times New Roman", serif;
+  --jintia-font-heading: "Inter", "Segoe UI", system-ui, sans-serif;
+  --jintia-font-mono:    "Courier New", Courier, monospace;
+
+  /* Tamaños: ligeramente mayores para A5 a 100% de zoom */
+  --jintia-size-body:    11.5pt;
+  --jintia-size-h1:      20pt;
+  --jintia-size-h2:      15pt;
+  --jintia-size-h3:      12.5pt;
+  --jintia-size-h4:      11.5pt;
+  --jintia-size-small:   9pt;
+  --jintia-size-caption: 8.5pt;
+  --jintia-line-height:  1.75; /* más generoso para escritura manual */
+
+  /* Paleta: idéntica al clásico pero bloques con mayor contraste de borde */
+  --jintia-border-width: 5px;
+
+  /* Espacio adicional para ejercicios de escritura */
+  --jintia-space-xs: 5pt;
+  --jintia-space-sm: 12pt;
+  --jintia-space-md: 20pt;
+  --jintia-space-lg: 32pt;
+  --jintia-space-xl: 48pt;
+
+  /* Área de escritura: líneas con puntos */
+  --jintia-writeline-color: #d1d5db;
+  --jintia-writeline-height: 28pt;
+}

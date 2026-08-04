@@ -1,0 +1,24 @@
+{
+  "id":          "jintia-tecnico",
+  "version":     "1.0.0",
+  "displayName": "Jintia Técnico",
+  "description": "Tema para guías con alto contenido de código, terminales y diagramas. Mayor densidad tipográfica, fondo claro con acentos azul-grisáceo.",
+  "engine":      "vivliostyle",
+  "entrypoint":  "theme.css",
+  "pageSize":    "A4",
+  "author":      "Jintia Team",
+  "license":     "MIT",
+  "extends":     "../jintia-clasico/meta.json",
+  "overrides": {
+    "fonts": {
+      "body":    "\"IBM Plex Sans\", \"Inter\", system-ui, sans-serif",
+      "heading": "\"IBM Plex Sans\", \"Inter\", system-ui, sans-serif",
+      "mono":    "\"IBM Plex Mono\", \"JetBrains Mono\", Consolas, monospace"
+    },
+    "colors": {
+      "brand":   "#1d4ed8",
+      "surface": "#f0f4ff",
+      "accent":  "#0ea5e9"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id":          "jintia-cuaderno",
+  "version":     "1.0.0",
+  "displayName": "Jintia Cuaderno",
+  "description": "Cuadernillo de ejercicios A5 con espaciado para escritura manual, tipografía serif y líneas punteadas de respuesta.",
+  "engine":      "vivliostyle",
+  "entrypoint":  "theme.css",
+  "pageSize":    "A5",
+  "author":      "Jintia Team",
+  "license":     "MIT",
+  "extends":     "../jintia-clasico/meta.json",
+  "overrides": {
+    "fonts": {
+      "body":    "\"Georgia\", \"Times New Roman\", serif",
+      "heading": "\"Inter\", system-ui, sans-serif",
+      "mono":    "\"Courier New\", Courier, monospace"
+    },
+    "page": {
+      "size":   "A5",
+      "margin": "15mm 14mm 18mm 18mm"
+    }
+  },
+  "extraComponents": ["jintia-writelines", "jintia-answer-box"]
+}
