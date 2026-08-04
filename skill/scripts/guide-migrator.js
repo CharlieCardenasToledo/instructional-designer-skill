@@ -72,7 +72,7 @@ function stripLatex(text) {
     // Comandos de acento e idioma comunes
     .replace(/\\['`^"~c]\{([^}])\}/g, "$1")
     // Grupos vacíos y comandos desconocidos sin argumento
-    .replace(/\\[a-zA-Z]+\*/?\s*(?:\[[^\]]*\])?\{\}/g, "")
+    .replace(/\\[a-zA-Z]+\*?\s*(?:\[[^\]]*\])?\{\}/g, "")
     .replace(/\\[a-zA-Z]+\*?\s+/g, " ")
     // Llaves residuales
     .replace(/[{}]/g, "")
