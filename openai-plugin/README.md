@@ -1,18 +1,19 @@
-# Plugin universal de Jintia
+# Jintia Universal Plugin
 
-Este directorio contiene los archivos fuente del plugin para ChatGPT y Codex.
-La aplicación genera el paquete final incorporando `skill/` bajo
-`skills/jintia-skill/`.
+Este módulo contiene la envoltura (*wrapper*) y los manifiestos necesarios para distribuir Jintia como un Plugin Universal compatible con el ecosistema de **ChatGPT** y **Codex**. 
 
-La instalación local:
+Durante la compilación de distribución, la herramienta de construcción integra dinámicamente el núcleo de la *skill* (desde el directorio `/skill`) dentro de `skills/jintia-skill/` para generar un paquete unificado y autónomo.
 
-1. prepara el plugin en `~/.codex/plugins/jintia`;
-2. registra Jintia en `~/.agents/plugins/marketplace.json`;
-3. conserva y sincroniza la configuración institucional y los notebooks;
-4. requiere reiniciar ChatGPT o Codex y activar Jintia desde Plugins.
+## Instalación Local (Desarrollo)
 
-La exportación produce `jintia-openai-plugin-<versión>.zip`.
+La instalación local de este componente realiza las siguientes operaciones:
 
-La publicación en el directorio universal público no se realiza
-automáticamente. Requiere una cuenta elegible, revisión de los metadatos,
-pruebas en las superficies admitidas y envío a OpenAI.
+1. Despliega los archivos del plugin en el directorio de usuario (`~/.codex/plugins/jintia`).
+2. Registra a Jintia en el catálogo local (`~/.agents/plugins/marketplace.json`).
+3. Conserva y sincroniza la configuración institucional y los enlaces a *notebooks* locales.
+4. Requiere reiniciar el agente (ChatGPT o Codex) y activar explícitamente a Jintia desde el panel de Plugins.
+
+## Distribución y Publicación
+
+* **Empaquetado:** El script de exportación produce el archivo `jintia-openai-plugin-<versión>.zip` listo para su carga paralela (*sideloading*).
+* **Publicación Pública:** La subida al directorio público oficial de OpenAI no es automática. Requiere una cuenta de desarrollador elegible, auditoría de metadatos de seguridad, pruebas de integración exhaustivas en las superficies admitidas y un proceso de revisión manual por parte de OpenAI.

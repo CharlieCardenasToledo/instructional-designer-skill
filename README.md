@@ -1,24 +1,24 @@
-# Jintia Skill
+# Jintia
 
-Skill abierta de diseño instruccional para producir guías académicas completas,
-verificables y compilables con Claude, ChatGPT y Codex.
+**Motor de Diseño Instruccional Editorial para Agentes de IA** (Claude, ChatGPT y Codex).
 
-La aplicación instaladora vive ahora en un repositorio independiente:
-[`jintia-desktop`](https://github.com/CharlieCardenasToledo/jintia-desktop).
-Este repositorio contiene únicamente la skill, sus plantillas, runtime, pruebas
-y artefactos de distribución.
+Jintia es una *skill* agéntica de código abierto diseñada para producir guías académicas modulares, estructuradas y listas para impresión o distribución digital, garantizando la trazabilidad entre el sílabo, los resultados de aprendizaje y la bibliografía verificable.
 
-## Qué hace
+> [!NOTE]
+> El cliente de escritorio y el instalador gráfico se mantienen en un repositorio independiente:
+> [`jintia-desktop`](https://github.com/CharlieCardenasToledo/jintia-desktop).
+> Este repositorio contiene únicamente la *skill* base, el motor de renderizado HTML, las pruebas y los artefactos de distribución.
 
-Jintia transforma el sílabo, la configuración institucional y fuentes
-verificables en guías semanales LaTeX. Incluye:
+## Capacidades Principales
 
-- planificación instruccional y trazabilidad de evidencia;
-- plantillas ElegantBook y Kaohandt;
-- validación de esquemas, LaTeX y calidad visual;
-- generación visual con fallbacks reproducibles;
-- integración opcional con NotebookLM;
-- contratos de agentes especializados para investigación, revisión y acabado.
+Jintia ingiere sílabos, configuraciones institucionales y fuentes verificables para generar automáticamente guías de estudio. Su arquitectura incorpora:
+
+- **Estructuración mediante AST (`guide.json`)**: Planificación instruccional y trazabilidad de evidencia con separación total entre contenido y diseño.
+- **Motor Editorial HTML**: Renderizado nativo web y compilación a PDF de alta resolución mediante Vivliostyle.
+- **Sistema Multitema**: Soporte para distintos perfiles visuales (ej. diseño técnico corporativo, libretas de ejercicios imprimibles).
+- **Control de Calidad (Linter y Preflight)**: Validación estricta del esquema semántico y verificación estructural del DOM para evitar errores de impresión.
+- **Integración con NotebookLM (Opcional)**: Interrogación de fuentes institucionales directamente desde el agente.
+- **Flujo Multi-Agente**: Contratos especializados para delegación de tareas de investigación, renderizado de figuras y revisión académica.
 
 ## Instalación
 
