@@ -8,6 +8,7 @@ const { candidatesFor } = require("./visual-selector");
 const { detectCapabilities } = require("./visual-capabilities");
 const { validate } = require("./schema-validator");
 const { generateSource, canGenerateFromModel } = require("./visual-source-generator");
+const { htmlFigure } = require("./guide-renderer");
 const visualSpecSchema = JSON.parse(fs.readFileSync(path.resolve(__dirname, "..", "schemas", "visual-spec.schema.json"), "utf8"));
 
 const ENGINES = {
@@ -53,7 +54,7 @@ function readArgs(argv) {
   };
   return {
     spec: value("--spec"),
-    template: value("--template") || "elegantbook-clasico",
+    template: value("--template") || "jintia-clasico",
     dryRun: argv.includes("--dry-run")
   };
 }
@@ -145,6 +146,21 @@ function latexBlock(entry) {
     `\\guidefigurecaption{${entry.caption || entry.altText}}{fig:${entry.id.replace(/^fig-/, "")}}`,
     "\\end{guidefigure}"
   ].join("\n");
+}
+
+/**
+ * Genera el fragmento HTML para insertar la figura en un guide.json o guide.html.
+ * Usa htmlFigure() de guide-renderer que produce el elemento <figure> semántico.
+ */
+function htmlBlock(entry) {
+  return htmlFigure(
+    {
+      alt:     entry.altText  || "",
+      caption: entry.caption  || "",
+      width:   entry.templatePlacement === "wide" ? "100%" : "90%",
+    },
+    entry.rendered.replace(/\\/g, "/")
+  );
 }
 
 function prepareHtmlCapture(content, capture) {
@@ -309,9 +325,9 @@ function main() {
     toolVersion: choice.version
   };
   updateManifest(figureRoot, entry);
-  console.log(JSON.stringify({ entry, latex: latexBlock(entry), detected }, null, 2));
+  console.log(JSON.stringify({ entry, html: htmlBlock(entry), latex: latexBlock(entry), detected }, null, 2));
 }
 
 if (require.main === module) main();
 
-module.exports = { validateSpec, latexBlock, prepareHtmlCapture, resolveTemplate };
+module.exports = { validateSpec, latexBlock, htmlBlock, prepareHtmlCapture, resolveTemplate };

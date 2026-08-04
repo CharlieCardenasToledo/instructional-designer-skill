@@ -1,0 +1,14 @@
+/**
+ * Jintia Técnico — Punto de entrada del tema
+ * Reutiliza los componentes y print de jintia-clasico;
+ * solo sobreescribe los tokens.
+ */
+
+/* 1. Tokens técnicos (incluye @import tokens de clasico internamente) */
+@import "./tokens.css";
+
+/* 2. Componentes: reutilizar clasico directamente (mismas clases CSS) */
+@import "../jintia-clasico/components.css";
+
+/* 3. Paginación: idéntica al clásico */
+@import "../jintia-clasico/print.css";

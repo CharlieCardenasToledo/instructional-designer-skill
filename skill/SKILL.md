@@ -1,12 +1,11 @@
 ---
 name: jintia-skill
-description: Diseña, redacta, edita y valida cursos, guías semanales LaTeX, módulos autoinstruccionales, rúbricas y evaluaciones de educación superior con UDL 3.0, Backward Design, Quality Matters y evidencia verificable mediante NotebookLM.
+description: Diseña, redacta, edita y valida cursos, guías semanales HTML, módulos autoinstruccionales, rúbricas y evaluaciones de educación superior con UDL 3.0, Backward Design, Quality Matters y evidencia verificable mediante NotebookLM. Motor editorial HTML nativo con soporte Vivliostyle para PDF.
 allowed-tools:
   - Bash(node scripts/*)
   - Bash(node bin/jintia.js *)
   - Bash(npx @charlie.act7/jintia *)
-  - Bash(pdflatex *)
-  - Bash(biber *)
+  - Bash(vivliostyle *)
 ---
 
 # Jintia Skill — diseño instruccional autoinstruccional basado en evidencia
@@ -26,8 +25,11 @@ operación en lenguaje natural; `/jintia` no es un comando nativo de Codex.
 | Generar o revisar una guía | `guide` | `commands/guide.md` |
 | Diseñar una evaluación | `assessment` | `commands/assessment.md` |
 | Gestionar figuras | `visual` | `commands/visual.md` |
-| Validar sin compilar | `validate` | `commands/validate.md` |
-| Compilar y revisar PDF | `compile` | `commands/compile.md` |
+| Validar guide.json | `validate` | `commands/validate.md` |
+| Generar HTML desde guide.json | `render` | `commands/compile.md` |
+| Compilar HTML a PDF (Vivliostyle) | `compile` | `commands/compile.md` |
+| Vista previa en navegador | `preview` | `commands/compile.md` |
+| Verificar paginación del PDF | `preflight` | `commands/compile.md` |
 | Auditar calidad global | `audit` | `commands/audit.md` |
 | Registrar estado editorial | `state` | `commands/state.md` |
 | Migrar estructuras antiguas | `migrate` | `commands/migrate.md` |
