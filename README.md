@@ -17,8 +17,18 @@ Jintia ingiere sílabos, configuraciones institucionales y fuentes verificables 
 - **Motor Editorial HTML**: Renderizado nativo web y compilación a PDF de alta resolución mediante Vivliostyle.
 - **Sistema Multitema**: Soporte para distintos perfiles visuales (ej. diseño técnico corporativo, libretas de ejercicios imprimibles).
 - **Control de Calidad (Linter y Preflight)**: Validación estricta del esquema semántico y verificación estructural del DOM para evitar errores de impresión.
-- **Integración con NotebookLM (Opcional)**: Interrogación de fuentes institucionales directamente desde el agente.
 - **Flujo Multi-Agente**: Contratos especializados para delegación de tareas de investigación, renderizado de figuras y revisión académica.
+
+## Arquitectura y Flujo de Trabajo (Pipeline Editorial)
+
+La *skill* opera mediante un flujo secuencial automatizado (el *Pipeline* Editorial) que garantiza calidad técnica y pedagógica:
+
+1. **Ingesta de Contenido (`jintia validate`)**: Lee el archivo semántico `guide.json` (el Árbol de Sintaxis Abstracta) y valida su estructura mediante un validador de esquemas (*Schema Validator*) propio.
+2. **Renderizado Semántico (`jintia render`)**: El motor `guide-renderer.js` toma el AST y construye un documento HTML5 puro, inyectando el tema visual seleccionado (ej. `jintia-tecnico` o `jintia-cuaderno`).
+3. **Control de Calidad de Contenido (`html-linter.js`)**: Analiza el DOM (Document Object Model) resultante buscando violaciones a reglas de accesibilidad (JIN-HTM-*) e instruccionales.
+4. **Pipeline Visual (Figuras Complejas)**: De forma opcional, si la guía incluye diagramas matemáticos o técnicos, se invocan herramientas externas (TikZ, PlantUML, Mermaid) y las imágenes resultantes se inyectan en el HTML final.
+5. **Preflight de Paginación (`jintia preflight`)**: Mediante Playwright, el motor simula el entorno de impresión para detectar errores como "viudas/huérfanas" (títulos aislados al final de una página) o tablas que se cortan incorrectamente.
+6. **Compilación PDF (`jintia compile`)**: Finalmente, delega la composición (typesetting) al motor de CSS Paged Media **Vivliostyle**, generando el PDF final de grado imprenta.
 
 ## Instalación
 

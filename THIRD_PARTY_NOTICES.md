@@ -8,6 +8,7 @@ originales.
 
 | Componente | Uso en Jintia | Licencia |
 | --- | --- | --- |
+| **Node.js** | Entorno de ejecución principal de la *skill* | MIT / Múltiples |
 | **@vivliostyle/theme-base** | Módulos CSS base reutilizados en los temas `jintia-clasico` y derivados | CC0-1.0 (dominio público) |
 
 ### Nota sobre Vivliostyle CLI (AGPL-3.0)
@@ -21,6 +22,15 @@ equivalente al uso de cualquier herramienta del sistema (como `pdflatex` o
 El usuario que instale Vivliostyle CLI de forma independiente lo hace bajo
 sus propios términos. Jintia no lo empaqueta, redistribuye ni descarga
 silenciosamente.
+
+## Dependencias de Construcción (Desarrollo)
+
+Estos paquetes se utilizan exclusivamente durante la construcción y empaquetado de las *releases* (archivos ZIP) y no se distribuyen en el código final de la *skill* que ejecuta el usuario:
+
+| Componente | Uso | Licencia |
+| --- | --- | --- |
+| **yazl** | Empaquetado ZIP de las distribuciones (`scripts/build-skill-release.mjs`) | MIT |
+| **buffer-crc32** | Dependencia transitiva de empaquetado | MIT |
 
 ## Dependencias opcionales (no redistribuidas)
 
