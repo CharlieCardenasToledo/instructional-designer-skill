@@ -23,6 +23,23 @@ Jintia ingiere sílabos, configuraciones institucionales y fuentes verificables 
 
 El usuario final interactúa con Jintia a través de su agente de IA de preferencia (Claude, ChatGPT, etc.) siguiendo este flujo normal:
 
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant IA as Agente de IA
+    participant J as Jintia Skill
+    participant E as Evidencia (NotebookLM/Local)
+
+    U->>U: 1. Prepara Sílabo (README.md)
+    U->>IA: 2. Conecta fuentes y contexto
+    U->>IA: 3. Prompt: "Genera guía semana X"
+    IA->>E: 4. Extrae resultados y busca evidencia
+    E-->>IA: Retorna información validada
+    IA->>J: 5. Genera AST (guide.json)
+    IA->>J: 6. Ejecuta jintia render & compile
+    J-->>U: Entrega PDF maquetado
+```
+
 1. **Preparación del Entorno**: El usuario debe tener en su espacio de trabajo un archivo `README.md` que actúe como el sílabo canónico del curso (con resultados de aprendizaje definidos), y opcionalmente un archivo de configuración (`config/institution.json`).
 2. **Conexión de Evidencia**: El usuario provee el contexto al agente, ya sea conectando sus cuadernos de investigación a través de la integración de NotebookLM MCP o proporcionando archivos bibliográficos locales.
 3. **Petición (Prompt)**: El usuario solicita al agente la creación de una guía. Por ejemplo: *"Jintia, genera la guía instruccional para la semana 3 basada en el sílabo"*.
@@ -33,6 +50,19 @@ El usuario final interactúa con Jintia a través de su agente de IA de preferen
 ## Arquitectura (Pipeline Editorial)
 
 La *skill* opera mediante un flujo secuencial automatizado (el *Pipeline* Editorial) que garantiza calidad técnica y pedagógica:
+
+```mermaid
+graph TD
+    A[guide.json<br/>AST Semántico] -->|jintia validate| B(Schema Validator)
+    B -->|Éxito| C[guide-renderer.js]
+    C -->|jintia render| D[HTML5 Puro + Tema]
+    D --> E{html-linter.js}
+    E -->|Validación DOM| F[jintia preflight<br/>Playwright]
+    F -->|Paginación OK| G[Vivliostyle CLI<br/>jintia compile]
+    G --> H((PDF Final))
+    
+    I[Pipeline Visual<br/>TikZ, Mermaid] -.->|Inyección opcional| D
+```
 
 1. **Ingesta de Contenido (`jintia validate`)**: Lee el archivo semántico `guide.json` (el Árbol de Sintaxis Abstracta) y valida su estructura mediante un validador de esquemas (*Schema Validator*) propio.
 2. **Renderizado Semántico (`jintia render`)**: El motor `guide-renderer.js` toma el AST y construye un documento HTML5 puro, inyectando el tema visual seleccionado (ej. `jintia-tecnico` o `jintia-cuaderno`).
