@@ -7,9 +7,9 @@ export interface DocMeta {
 }
 
 export const DOC_META: DocMeta[] = [
-  { slug: "getting-started",       title: "Primeros pasos",               description: "Instalación y configuración inicial de Jíntia.",         section: "Inicio",         order: 1 },
-  { slug: "create-first-course",   title: "Tu primer curso",              description: "Crea un curso desde cero con sílabo y fuentes.",          section: "Inicio",         order: 2 },
-  { slug: "generate-weekly-guide", title: "Generar una guía semanal",     description: "Flujo completo desde el sílabo hasta el PDF.",            section: "Inicio",         order: 3 },
+  { slug: "getting-started",       title: "Primeros pasos",               description: "Instalación en Claude Code, ChatGPT y Cursor — terminal y GUI.",  section: "Inicio",         order: 1 },
+  { slug: "create-first-course",   title: "Tu primer curso",              description: "Crea un curso desde cero: carpetas, sílabo y configuración.",      section: "Inicio",         order: 2 },
+  { slug: "generate-weekly-guide", title: "Generar una guía semanal",     description: "Flujo completo desde sílabo hasta PDF en Claude, GPT o CLI.",      section: "Inicio",         order: 3 },
   { slug: "cli",                   title: "Referencia CLI",               description: "Todos los comandos de jintia: render, compile, doctor…",  section: "Referencia",     order: 4 },
   { slug: "architecture",          title: "Arquitectura",                 description: "Motor HTML, temas, guide.json y pipeline editorial.",      section: "Referencia",     order: 5 },
   { slug: "templates",             title: "Temas HTML",                   description: "Clásico, Técnico y Cuaderno: tokens, componentes, print.", section: "Referencia",     order: 6 },
