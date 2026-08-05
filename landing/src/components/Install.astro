@@ -1,0 +1,47 @@
+---
+const requirements = [
+  "Claude Code instalado",
+  "Node.js 22.12 o superior",
+  "Cuenta de Google (para NotebookLM)",
+];
+---
+
+<section id="instalar" class="py-20 px-6 bg-teal-900 text-white">
+  <div class="max-w-3xl mx-auto text-center">
+    <h2 class="text-3xl font-bold mb-4">Instalar Jíntia</h2>
+    <p class="text-teal-200 mb-10 leading-relaxed">
+      Un solo comando. Jíntia se instala directamente en Claude Code y queda lista para usarse.
+    </p>
+
+    <div class="bg-teal-950 rounded-xl p-6 font-mono text-left mb-8 shadow-inner">
+      <p class="text-teal-400 text-sm mb-1">Instalación</p>
+      <p class="text-white text-lg">
+        <span class="text-teal-400 select-none">$ </span>npx @charlie.act7/jintia install
+      </p>
+      <div class="border-t border-teal-800 mt-4 pt-4">
+        <p class="text-teal-400 text-sm mb-1">Actualización</p>
+        <p class="text-white text-lg">
+          <span class="text-teal-400 select-none">$ </span>npx @charlie.act7/jintia update
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-3 mb-10">
+      {requirements.map((req) => (
+        <span class="inline-flex items-center gap-2 bg-teal-800 text-teal-100 text-sm px-4 py-1.5 rounded-full">
+          <span class="text-teal-400">✓</span>
+          {req}
+        </span>
+      ))}
+    </div>
+
+    <a
+      href="https://github.com/CharlieCardenasToledo/instructional-designer-skill#readme"
+      target="_blank"
+      rel="noopener"
+      class="inline-flex items-center gap-2 border border-teal-600 text-teal-200 hover:bg-teal-800 px-6 py-3 rounded-lg font-medium transition-colors text-sm"
+    >
+      Leer la documentación completa →
+    </a>
+  </div>
+</section>

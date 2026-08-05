@@ -1,0 +1,45 @@
+---
+const steps = [
+  {
+    number: "01",
+    title: "Sube tu sílabo y fuentes",
+    description:
+      "Comparte el sílabo del curso y las lecturas clave. Jíntia los ingesta en NotebookLM para tener evidencia verificable antes de escribir una sola línea.",
+  },
+  {
+    number: "02",
+    title: "Jíntia diseña la guía",
+    description:
+      "Aplica Backward Design automáticamente: parte del resultado de aprendizaje, construye actividades alineadas y genera la evaluación coherente con el contenido.",
+  },
+  {
+    number: "03",
+    title: "Exporta el PDF listo para imprimir",
+    description:
+      "La guía se renderiza en HTML semántico y se convierte a PDF A4 con Vivliostyle. Control total de tipografía, paginación y bloques pedagógicos.",
+  },
+];
+---
+
+<section id="como-funciona" class="py-20 px-6 bg-white border-y border-slate-200">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-14">
+      <h2 class="text-3xl font-bold text-slate-900 mb-3">Cómo funciona</h2>
+      <p class="text-slate-500 max-w-xl mx-auto">
+        Tres pasos desde el sílabo hasta la guía imprimible, dentro de Claude Code.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-8">
+      {steps.map((step) => (
+        <div class="relative">
+          <span class="text-6xl font-bold text-teal-100 select-none leading-none">{step.number}</span>
+          <div class="-mt-4">
+            <h3 class="text-lg font-semibold text-slate-900 mb-2">{step.title}</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">{step.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

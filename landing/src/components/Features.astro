@@ -1,0 +1,61 @@
+---
+const features = [
+  {
+    icon: "📐",
+    title: "Backward Design automático",
+    description:
+      "Cada guía parte del resultado de aprendizaje. Las actividades y la evaluación se construyen hacia atrás, garantizando coherencia pedagógica.",
+  },
+  {
+    icon: "🔬",
+    title: "Evidencia verificable",
+    description:
+      "NotebookLM respalda cada afirmación con citas reales del material del curso. Sin inventar fuentes ni alucinaciones bibliográficas.",
+  },
+  {
+    icon: "♿",
+    title: "UDL 3.0 integrado",
+    description:
+      "Diseño universal para el aprendizaje aplicado por defecto: múltiples medios de representación, acción y motivación en cada guía.",
+  },
+  {
+    icon: "🎨",
+    title: "Tres temas HTML",
+    description:
+      "Jíntia Clásico, Técnico y Cuaderno. Cada tema es un sistema CSS completo con tokens, componentes y control de paginación para impresión.",
+  },
+  {
+    icon: "📄",
+    title: "PDF A4 de calidad editorial",
+    description:
+      "Vivliostyle convierte el HTML en PDF con CSS Paged Media: control de saltos de página, huérfanas, viudas y encabezados correctos.",
+  },
+  {
+    icon: "✅",
+    title: "Quality Matters 7ª ed.",
+    description:
+      "Las rúbricas de evaluación y los criterios de alineación siguen los estándares QM para cursos de educación superior en línea e híbridos.",
+  },
+];
+---
+
+<section id="caracteristicas" class="py-20 px-6">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-14">
+      <h2 class="text-3xl font-bold text-slate-900 mb-3">Qué incluye</h2>
+      <p class="text-slate-500 max-w-xl mx-auto">
+        Jíntia combina marcos pedagógicos probados con un motor de publicación HTML propio.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+      {features.map((f) => (
+        <div class="bg-white border border-slate-200 rounded-xl p-6 hover:border-teal-300 hover:shadow-sm transition-all">
+          <span class="text-2xl mb-4 block">{f.icon}</span>
+          <h3 class="font-semibold text-slate-900 mb-2">{f.title}</h3>
+          <p class="text-sm text-slate-500 leading-relaxed">{f.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
