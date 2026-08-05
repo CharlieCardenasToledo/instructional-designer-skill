@@ -220,4 +220,50 @@ const next = currentIdx < allDocs.length - 1 ? allDocs[currentIdx + 1] : undefin
 
     headings.forEach((h) => observer.observe(h));
   }
+
+  // Copy button on code blocks
+  document.querySelectorAll("#doc-content pre").forEach((pre) => {
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = "position:relative;";
+    pre.parentNode?.insertBefore(wrapper, pre);
+    wrapper.appendChild(pre);
+
+    const btn = document.createElement("button");
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>`;
+    btn.title = "Copiar";
+    btn.style.cssText = `
+      position:absolute; top:10px; right:10px;
+      display:flex; align-items:center; justify-content:center;
+      width:28px; height:28px; border-radius:6px;
+      background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12);
+      color:rgb(148,163,184); cursor:pointer;
+      opacity:0; transition:opacity 0.15s, background 0.15s, color 0.15s;
+    `;
+
+    wrapper.addEventListener("mouseenter", () => { btn.style.opacity = "1"; });
+    wrapper.addEventListener("mouseleave", () => { btn.style.opacity = "0"; });
+    btn.addEventListener("mouseenter", () => {
+      btn.style.background = "rgba(255,255,255,0.14)";
+      btn.style.color = "rgb(226,232,240)";
+    });
+    btn.addEventListener("mouseleave", () => {
+      btn.style.background = "rgba(255,255,255,0.07)";
+      btn.style.color = "rgb(148,163,184)";
+    });
+
+    btn.addEventListener("click", async () => {
+      const code = pre.querySelector("code")?.innerText ?? pre.innerText;
+      await navigator.clipboard.writeText(code);
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8l4 4 8-8" stroke="#34d399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      btn.style.color = "#34d399";
+      btn.style.borderColor = "rgba(52,211,153,0.4)";
+      setTimeout(() => {
+        btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>`;
+        btn.style.color = "rgb(148,163,184)";
+        btn.style.borderColor = "rgba(255,255,255,0.12)";
+      }, 1800);
+    });
+
+    wrapper.appendChild(btn);
+  });
 </script>
