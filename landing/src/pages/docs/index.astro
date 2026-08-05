@@ -1,0 +1,45 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Nav from "../../components/Nav.astro";
+import { DOC_META, SECTIONS } from "../../lib/docs-meta";
+---
+
+<Layout
+  title="Documentación — Jíntia"
+  description="Guías, referencia CLI, arquitectura e integraciones de Jíntia."
+>
+  <Nav />
+
+  <div class="max-w-5xl mx-auto px-6 pt-32 pb-20">
+    <div class="mb-14">
+      <h1 class="text-4xl font-bold text-slate-900 mb-3" style="font-family: 'DM Serif Display', serif;">
+        Documentación
+      </h1>
+      <p class="text-slate-500 text-lg max-w-2xl">
+        Todo lo que necesitas para instalar, configurar y sacar el máximo a Jíntia
+        en tus cursos universitarios.
+      </p>
+    </div>
+
+    <div class="space-y-14">
+      {SECTIONS.map((section) => (
+        <div>
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">{section}</h2>
+          <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-px bg-slate-200">
+            {DOC_META.filter((d) => d.section === section).map((doc) => (
+              <a
+                href={`/docs/${doc.slug}`}
+                class="bg-white p-6 hover:bg-slate-50 transition-colors group"
+              >
+                <h3 class="font-semibold text-slate-900 mb-1 group-hover:text-teal-700 transition-colors">
+                  {doc.title}
+                </h3>
+                <p class="text-sm text-slate-500 leading-relaxed">{doc.description}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</Layout>

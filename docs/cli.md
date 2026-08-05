@@ -1,39 +1,124 @@
-# CLI de Jintia
+# Referencia CLI
 
-La skill incluye una interfaz determinista para usar la toolchain sin depender
-de una conversación con un agente. Desde la carpeta de la skill:
+Todos los comandos se invocan con `npx @charlie.act7/jintia <comando>` o, si
+tienes la skill instalada localmente, con `node skill/bin/jintia.js <comando>`.
+
+## Comandos principales
+
+### `install`
+
+```bash
+npx @charlie.act7/jintia install
+```
+
+Instala la skill en `~/.claude/skills/jintia-skill` y configura los harnesses
+detectados (Claude Code, Codex, Cursor).
+
+Opciones:
+
+| Opción | Descripción |
+|---|---|
+| `--providers=claude,codex` | Limita la instalación a harnesses concretos |
+| `--scope=project` | Instala solo en el proyecto actual |
+| `--yes` | Confirma todas las preguntas sin interacción |
+
+### `update`
+
+```bash
+npx @charlie.act7/jintia update
+```
+
+Actualiza la skill conservando la configuración institucional y los cursos.
+
+### `doctor`
 
 ```bash
 npx @charlie.act7/jintia doctor
-npx @charlie.act7/jintia harness status --project ./mi-curso --providers=claude,codex,cursor
-npx @charlie.act7/jintia harness install --project ./mi-curso --scope=project --providers=claude,codex --yes
-npx @charlie.act7/jintia init ./mi-curso --code IFT200 --name "Mi curso"
-npx @charlie.act7/jintia syllabus validate ./mi-curso/README.md
-npx @charlie.act7/jintia audit ./mi-curso/README.md --json
-npx @charlie.act7/jintia validate semanas/semana-03/latex/guia-semana-03.tex
-npx @charlie.act7/jintia compile semanas/semana-03/latex/guia-semana-03.tex
+npx @charlie.act7/jintia doctor --json
 ```
 
-La CLI orquesta scripts existentes. Cada comando devuelve un código distinto
-de cero cuando encuentra errores que deben bloquear el flujo.
+Verifica Node.js ≥ 22.12, Vivliostyle CLI, temas instalados y configuración
+MCP. Con `--json` devuelve el resultado como objeto estructurado.
 
-## Operaciones visuales y estado
+### `validate`
 
 ```bash
-npx @charlie.act7/jintia visual render figure/specs/fig-id.json --template elegantbook-clasico
-npx @charlie.act7/jintia visual inspect figure/manifest.json
-npx @charlie.act7/jintia state update ./curso 03 compiled ./curso/semanas/semana-03/README.md
-npx @charlie.act7/jintia context init ./curso
-npx @charlie.act7/jintia context validate ./curso --json
-npx @charlie.act7/jintia agents plan guide --json
-npx @charlie.act7/jintia hook install ./curso
+npx @charlie.act7/jintia validate semanas/semana-03/guide.json
+npx @charlie.act7/jintia validate semanas/semana-03/guide.json --strict --json
 ```
 
-Los reportes de `audit` admiten `--json` para integraciones de Desktop, CI y
-editores. Todos los comandos de la CLI admiten ahora `--json` y devuelven el
-contrato `1.0.0` con `command`, `target`, `status`, `exitCode`, `checks`,
-`artifacts`, `warnings` y `errors`. Cuando el comando produce un reporte propio,
-se conserva dentro de `data`.
+Valida la estructura pedagógica del `guide.json` contra el esquema canónico y
+las reglas `JIN-CNT-*`. Con `--strict` convierte advertencias en errores.
 
-`JINTIA.md` es un contexto duradero opcional. Conserva decisiones de curso,
-pedagogía y estilo editorial sin reemplazar el `README.md` canónico.
+### `render`
+
+```bash
+npx @charlie.act7/jintia render semanas/semana-03/guide.json
+npx @charlie.act7/jintia render semanas/semana-03/guide.json --theme jintia-tecnico --output dist/
+```
+
+Convierte `guide.json` en HTML semántico listo para impresión.
+
+### `compile`
+
+```bash
+npx @charlie.act7/jintia compile semanas/semana-03/guide.json
+npx @charlie.act7/jintia compile semanas/semana-03/guide.json --engine pagedjs --output dist/
+```
+
+Renderiza el HTML y lo convierte a PDF A4 con Vivliostyle CLI (por defecto) o
+Paged.js. Requiere Vivliostyle CLI instalado globalmente para el motor por defecto.
+
+### `preflight`
+
+```bash
+npx @charlie.act7/jintia preflight semanas/semana-03/guide.pdf
+```
+
+Analiza el PDF con Playwright y detecta problemas de paginación: encabezados
+huérfanos, figuras separadas de su caption, tablas desbordadas.
+
+### `audit`
+
+```bash
+npx @charlie.act7/jintia audit README.md
+npx @charlie.act7/jintia audit README.md --json --strict
+```
+
+Valida el sílabo del curso contra las reglas `JIN-SYL-*` de Quality Matters.
+
+### `harness`
+
+```bash
+npx @charlie.act7/jintia harness status --project ./mi-curso
+npx @charlie.act7/jintia harness install --project ./mi-curso --providers=claude,codex
+```
+
+Gestiona la integración de Jíntia con los harnesses de IA disponibles en el
+proyecto.
+
+## Salida JSON
+
+Todos los comandos admiten `--json` y devuelven el contrato estándar:
+
+```json
+{
+  "command": "validate",
+  "target": "semanas/semana-03/guide.json",
+  "status": "ok",
+  "exitCode": 0,
+  "checks": [],
+  "artifacts": [],
+  "warnings": [],
+  "errors": []
+}
+```
+
+## Códigos de salida
+
+| Código | Significado |
+|---|---|
+| `0` | Éxito |
+| `1` | Error de validación o compilación |
+| `2` | Archivo no encontrado |
+| `3` | Dependencia faltante (Vivliostyle, Node.js) |

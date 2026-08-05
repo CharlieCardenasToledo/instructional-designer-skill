@@ -1,0 +1,65 @@
+---
+import Layout from "./Layout.astro";
+import Nav from "../components/Nav.astro";
+import { DOC_META, SECTIONS, type DocMeta } from "../lib/docs-meta";
+
+interface Props {
+  current: DocMeta;
+}
+
+const { current } = Astro.props;
+---
+
+<Layout title={`${current.title} — Documentación Jíntia`} description={current.description}>
+  <Nav />
+
+  <div class="max-w-6xl mx-auto px-6 pt-24 pb-20 flex gap-12">
+    <!-- Sidebar -->
+    <aside class="hidden lg:block w-56 shrink-0 pt-8">
+      <nav class="sticky top-24 space-y-6">
+        {SECTIONS.map((section) => (
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">{section}</p>
+            <ul class="space-y-1">
+              {DOC_META.filter((d) => d.section === section).map((doc) => (
+                <li>
+                  <a
+                    href={`/docs/${doc.slug}`}
+                    class={`block text-sm py-1 px-2 rounded transition-colors ${
+                      doc.slug === current.slug
+                        ? "bg-teal-50 text-teal-700 font-medium"
+                        : "text-slate-500 hover:text-slate-900"
+                    }`}
+                  >
+                    {doc.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </aside>
+
+    <!-- Content -->
+    <main class="min-w-0 flex-1 pt-8">
+      <div class="mb-8">
+        <p class="text-xs font-semibold text-teal-700 uppercase tracking-widest mb-2">{current.section}</p>
+        <h1 class="text-3xl font-bold text-slate-900 mb-2" style="font-family: 'DM Serif Display', serif;">{current.title}</h1>
+        <p class="text-slate-500">{current.description}</p>
+      </div>
+
+      <div class="prose prose-slate prose-sm max-w-none
+        prose-headings:font-semibold prose-headings:text-slate-900
+        prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
+        prose-a:text-teal-700 prose-a:no-underline hover:prose-a:underline
+        prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
+        prose-pre:bg-slate-900 prose-pre:text-slate-100
+        prose-blockquote:border-teal-500 prose-blockquote:text-slate-600
+        prose-strong:text-slate-900
+        prose-li:text-slate-600 prose-p:text-slate-600 prose-p:leading-relaxed">
+        <slot />
+      </div>
+    </main>
+  </div>
+</Layout>
