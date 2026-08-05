@@ -14,10 +14,7 @@ const sectionDocs = SECTIONS.map((s) => ({
   items: DOC_META.filter((d) => d.section === s),
 }));
 
-const allDocs = DOC_META;
-const currentIdx = allDocs.findIndex((d) => d.slug === current.slug);
-const prev = currentIdx > 0 ? allDocs[currentIdx - 1] : undefined;
-const next = currentIdx < allDocs.length - 1 ? allDocs[currentIdx + 1] : undefined;
+
 ---
 
 <Layout title={`${current.title} — Documentación Jíntia`} description={current.description}>
@@ -120,27 +117,7 @@ const next = currentIdx < allDocs.length - 1 ? allDocs[currentIdx + 1] : undefin
           <slot />
         </div>
 
-        <!-- Prev / Next -->
-        {(prev || next) && (
-          <div class="flex justify-between mt-16 pt-8 border-t border-slate-200">
-            <div>
-              {prev && (
-                <a href={`/docs/${prev.slug}`} class="group block text-sm">
-                  <span class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Anterior</span>
-                  <span class="text-slate-700 group-hover:text-teal-700 transition-colors font-medium">{prev.title}</span>
-                </a>
-              )}
-            </div>
-            <div class="text-right">
-              {next && (
-                <a href={`/docs/${next.slug}`} class="group block text-sm">
-                  <span class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Siguiente</span>
-                  <span class="text-slate-700 group-hover:text-teal-700 transition-colors font-medium">{next.title}</span>
-                </a>
-              )}
-            </div>
-          </div>
-        )}
+        <slot name="prevnext" />
       </div>
     </main>
 
