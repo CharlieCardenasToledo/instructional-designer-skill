@@ -3,8 +3,9 @@ const base = import.meta.env.BASE_URL;
 ---
 <header class="fixed top-0 inset-x-0 z-50 bg-slate-50/90 backdrop-blur border-b border-slate-200">
   <nav class="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-    <a href={base} aria-label="Jíntia">
-      <img src={`${base}logo.svg`} alt="Jíntia" height="28" class="h-7 w-auto" />
+    <a href={base} class="flex items-center gap-2.5" aria-label="Jíntia">
+      <img src={`${base}logo.svg`} alt="" height="28" class="h-7 w-auto" />
+      <span class="text-base font-semibold tracking-tight text-slate-900" style="font-family: 'DM Serif Display', serif;">Jíntia</span>
     </a>
     <div class="flex items-center gap-6 text-sm text-slate-600">
       <a href={`${base}#como-funciona`} class="hover:text-teal-700 transition-colors">Cómo funciona</a>
