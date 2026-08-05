@@ -6,7 +6,7 @@ const isProd = process.env.CI === 'true';
 
 export default defineConfig({
   site: 'https://CharlieCardenasToledo.github.io',
-  base: isProd ? '/instructional-designer-skill' : '/',
+  base: isProd ? '/instructional-designer-skill/' : '/',
   vite: {
     plugins: [tailwindcss()],
   },

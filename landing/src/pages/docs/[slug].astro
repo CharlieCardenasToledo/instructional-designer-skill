@@ -3,6 +3,8 @@ import { getCollection, render } from "astro:content";
 import DocsLayout from "../../layouts/DocsLayout.astro";
 import { getDocMeta, DOC_META } from "../../lib/docs-meta";
 
+const base = import.meta.env.BASE_URL;
+
 export async function getStaticPaths() {
   const entries = await getCollection("docs");
   return entries
@@ -27,7 +29,7 @@ const next = idx < all.length - 1 ? all[idx + 1] : undefined;
     <nav class="flex justify-between mt-16 pt-8 border-t border-slate-200 text-sm">
       <div>
         {prev && (
-          <a href={`/docs/${prev.slug}`} class="text-slate-500 hover:text-teal-700 transition-colors">
+          <a href={`${base}docs/${prev.slug}`} class="text-slate-500 hover:text-teal-700 transition-colors">
             <span class="block text-xs text-slate-400 mb-1">Anterior</span>
             {prev.title}
           </a>
@@ -35,7 +37,7 @@ const next = idx < all.length - 1 ? all[idx + 1] : undefined;
       </div>
       <div class="text-right">
         {next && (
-          <a href={`/docs/${next.slug}`} class="text-slate-500 hover:text-teal-700 transition-colors">
+          <a href={`${base}docs/${next.slug}`} class="text-slate-500 hover:text-teal-700 transition-colors">
             <span class="block text-xs text-slate-400 mb-1">Siguiente</span>
             {next.title}
           </a>

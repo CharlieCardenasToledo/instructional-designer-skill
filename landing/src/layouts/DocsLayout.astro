@@ -8,6 +8,7 @@ interface Props {
 }
 
 const { current } = Astro.props;
+const base = import.meta.env.BASE_URL;
 
 const sectionDocs = SECTIONS.map((s) => ({
   label: s,
@@ -38,7 +39,7 @@ const sectionDocs = SECTIONS.map((s) => ({
   <!-- Mobile sidebar drawer -->
   <aside id="sidebar-drawer" class="lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-white border-r border-slate-200 -translate-x-full transition-transform duration-200 ease-out overflow-y-auto pt-6 pb-12 px-4">
     <div class="flex items-center justify-between mb-6 px-2">
-      <a href="/" class="text-teal-700 font-semibold">Jíntia</a>
+      <a href={base} class="text-teal-700 font-semibold">Jíntia</a>
       <button id="sidebar-close" class="text-slate-400 hover:text-slate-700 transition-colors">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
           <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -52,7 +53,7 @@ const sectionDocs = SECTIONS.map((s) => ({
           {items.map((doc) => (
             <li>
               <a
-                href={`/docs/${doc.slug}`}
+                href={`${base}docs/${doc.slug}`}
                 class={`block text-sm px-2 py-1.5 rounded transition-colors ${
                   doc.slug === current.slug
                     ? "text-teal-700 bg-teal-50 font-medium"
@@ -78,7 +79,7 @@ const sectionDocs = SECTIONS.map((s) => ({
               {items.map((doc) => (
                 <li>
                   <a
-                    href={`/docs/${doc.slug}`}
+                    href={`${base}docs/${doc.slug}`}
                     class={`group flex items-center text-sm px-3 py-1.5 rounded-md transition-colors ${
                       doc.slug === current.slug
                         ? "text-teal-700 bg-teal-50 font-medium border-l-2 border-teal-600"

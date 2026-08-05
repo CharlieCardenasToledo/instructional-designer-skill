@@ -28,7 +28,7 @@ import { DOC_META, SECTIONS } from "../../lib/docs-meta";
           <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-px bg-slate-200">
             {DOC_META.filter((d) => d.section === section).map((doc) => (
               <a
-                href={`/docs/${doc.slug}`}
+                href={`${import.meta.env.BASE_URL}docs/${doc.slug}`}
                 class="bg-white p-6 hover:bg-slate-50 transition-colors group"
               >
                 <h3 class="font-semibold text-slate-900 mb-1 group-hover:text-teal-700 transition-colors">
