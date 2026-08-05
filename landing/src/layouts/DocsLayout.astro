@@ -8,58 +8,215 @@ interface Props {
 }
 
 const { current } = Astro.props;
+
+const sectionDocs = SECTIONS.map((s) => ({
+  label: s,
+  items: DOC_META.filter((d) => d.section === s),
+}));
+
+const allDocs = DOC_META;
+const currentIdx = allDocs.findIndex((d) => d.slug === current.slug);
+const prev = currentIdx > 0 ? allDocs[currentIdx - 1] : undefined;
+const next = currentIdx < allDocs.length - 1 ? allDocs[currentIdx + 1] : undefined;
 ---
 
 <Layout title={`${current.title} — Documentación Jíntia`} description={current.description}>
   <Nav />
 
-  <div class="max-w-6xl mx-auto px-6 pt-24 pb-20 flex gap-12">
-    <!-- Sidebar -->
-    <aside class="hidden lg:block w-56 shrink-0 pt-8">
-      <nav class="sticky top-24 space-y-6">
-        {SECTIONS.map((section) => (
-          <div>
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">{section}</p>
-            <ul class="space-y-1">
-              {DOC_META.filter((d) => d.section === section).map((doc) => (
+  <!-- Mobile top bar -->
+  <div class="lg:hidden fixed top-14 inset-x-0 z-30 bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-3">
+    <button id="sidebar-toggle" class="flex items-center gap-2 text-sm text-slate-600 hover:text-teal-700 transition-colors">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Menú
+    </button>
+    <span class="text-slate-300">/</span>
+    <span class="text-sm text-slate-500 truncate">{current.title}</span>
+  </div>
+
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebar-overlay" class="lg:hidden fixed inset-0 z-40 bg-slate-900/40 opacity-0 pointer-events-none transition-opacity duration-200"></div>
+
+  <!-- Mobile sidebar drawer -->
+  <aside id="sidebar-drawer" class="lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-white border-r border-slate-200 -translate-x-full transition-transform duration-200 ease-out overflow-y-auto pt-6 pb-12 px-4">
+    <div class="flex items-center justify-between mb-6 px-2">
+      <a href="/" class="text-teal-700 font-semibold">Jíntia</a>
+      <button id="sidebar-close" class="text-slate-400 hover:text-slate-700 transition-colors">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    {sectionDocs.map(({ label, items }) => (
+      <div class="mb-6">
+        <p class="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-2 mb-1">{label}</p>
+        <ul>
+          {items.map((doc) => (
+            <li>
+              <a
+                href={`/docs/${doc.slug}`}
+                class={`block text-sm px-2 py-1.5 rounded transition-colors ${
+                  doc.slug === current.slug
+                    ? "text-teal-700 bg-teal-50 font-medium"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                }`}
+              >{doc.title}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </aside>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex pt-14 lg:pt-0">
+
+    <!-- Desktop sidebar -->
+    <aside class="hidden lg:block w-60 shrink-0">
+      <div class="sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-10 pr-4">
+        {sectionDocs.map(({ label, items }) => (
+          <div class="mb-7">
+            <p class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-2 px-3">{label}</p>
+            <ul class="space-y-0.5">
+              {items.map((doc) => (
                 <li>
                   <a
                     href={`/docs/${doc.slug}`}
-                    class={`block text-sm py-1 px-2 rounded transition-colors ${
+                    class={`group flex items-center text-sm px-3 py-1.5 rounded-md transition-colors ${
                       doc.slug === current.slug
-                        ? "bg-teal-50 text-teal-700 font-medium"
-                        : "text-slate-500 hover:text-slate-900"
+                        ? "text-teal-700 bg-teal-50 font-medium border-l-2 border-teal-600"
+                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 border-l-2 border-transparent"
                     }`}
-                  >
-                    {doc.title}
-                  </a>
+                  >{doc.title}</a>
                 </li>
               ))}
             </ul>
           </div>
         ))}
-      </nav>
+      </div>
     </aside>
 
-    <!-- Content -->
-    <main class="min-w-0 flex-1 pt-8">
-      <div class="mb-8">
-        <p class="text-xs font-semibold text-teal-700 uppercase tracking-widest mb-2">{current.section}</p>
-        <h1 class="text-3xl font-bold text-slate-900 mb-2" style="font-family: 'DM Serif Display', serif;">{current.title}</h1>
-        <p class="text-slate-500">{current.description}</p>
-      </div>
+    <!-- Main content -->
+    <main class="min-w-0 flex-1 lg:px-12 py-10 mt-8 lg:mt-0">
+      <div class="max-w-2xl">
+        <p class="text-[11px] font-bold tracking-widest uppercase text-teal-600 mb-2">{current.section}</p>
+        <h1 class="text-3xl font-bold text-slate-900 mb-2 leading-tight" style="font-family: 'DM Serif Display', serif;">{current.title}</h1>
+        <p class="text-slate-500 text-base mb-10 pb-10 border-b border-slate-200">{current.description}</p>
 
-      <div class="prose prose-slate prose-sm max-w-none
-        prose-headings:font-semibold prose-headings:text-slate-900
-        prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
-        prose-a:text-teal-700 prose-a:no-underline hover:prose-a:underline
-        prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
-        prose-pre:bg-slate-900 prose-pre:text-slate-100
-        prose-blockquote:border-teal-500 prose-blockquote:text-slate-600
-        prose-strong:text-slate-900
-        prose-li:text-slate-600 prose-p:text-slate-600 prose-p:leading-relaxed">
-        <slot />
+        <div id="doc-content" class="prose prose-slate max-w-none
+          prose-headings:font-semibold prose-headings:text-slate-900 prose-headings:scroll-mt-20
+          prose-h1:text-2xl prose-h2:text-xl prose-h2:mt-10 prose-h2:mb-3
+          prose-h3:text-base prose-h3:mt-6 prose-h3:mb-2
+          prose-p:text-slate-600 prose-p:leading-relaxed prose-p:text-[15px]
+          prose-li:text-slate-600 prose-li:text-[15px]
+          prose-a:text-teal-700 prose-a:font-medium prose-a:no-underline hover:prose-a:underline
+          prose-code:bg-slate-100 prose-code:text-slate-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-[13px] prose-code:font-mono prose-code:before:content-none prose-code:after:content-none
+          prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:rounded-xl prose-pre:text-[13px]
+          prose-blockquote:border-teal-500 prose-blockquote:text-slate-600 prose-blockquote:not-italic
+          prose-strong:text-slate-900 prose-strong:font-semibold
+          prose-table:text-[14px] prose-th:bg-slate-50 prose-th:font-semibold
+          prose-hr:border-slate-200">
+          <slot />
+        </div>
+
+        <!-- Prev / Next -->
+        {(prev || next) && (
+          <div class="flex justify-between mt-16 pt-8 border-t border-slate-200">
+            <div>
+              {prev && (
+                <a href={`/docs/${prev.slug}`} class="group block text-sm">
+                  <span class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Anterior</span>
+                  <span class="text-slate-700 group-hover:text-teal-700 transition-colors font-medium">{prev.title}</span>
+                </a>
+              )}
+            </div>
+            <div class="text-right">
+              {next && (
+                <a href={`/docs/${next.slug}`} class="group block text-sm">
+                  <span class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Siguiente</span>
+                  <span class="text-slate-700 group-hover:text-teal-700 transition-colors font-medium">{next.title}</span>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </main>
+
+    <!-- Right TOC -->
+    <aside class="hidden xl:block w-52 shrink-0">
+      <div class="sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto py-10 pl-4">
+        <p class="text-[10px] font-bold tracking-widest uppercase text-slate-400 mb-3">En esta página</p>
+        <nav id="toc" class="space-y-1 text-sm"></nav>
+      </div>
+    </aside>
   </div>
 </Layout>
+
+<script>
+  // Mobile sidebar toggle
+  const toggle = document.getElementById("sidebar-toggle");
+  const close = document.getElementById("sidebar-close");
+  const drawer = document.getElementById("sidebar-drawer");
+  const overlay = document.getElementById("sidebar-overlay");
+
+  function openSidebar() {
+    drawer?.classList.remove("-translate-x-full");
+    overlay?.classList.remove("opacity-0", "pointer-events-none");
+  }
+  function closeSidebar() {
+    drawer?.classList.add("-translate-x-full");
+    overlay?.classList.add("opacity-0", "pointer-events-none");
+  }
+
+  toggle?.addEventListener("click", openSidebar);
+  close?.addEventListener("click", closeSidebar);
+  overlay?.addEventListener("click", closeSidebar);
+
+  // Build TOC from headings
+  const content = document.getElementById("doc-content");
+  const toc = document.getElementById("toc");
+
+  if (content && toc) {
+    const headings = content.querySelectorAll("h2, h3");
+
+    if (headings.length === 0) {
+      toc.closest("aside")?.classList.add("hidden");
+    }
+
+    headings.forEach((h) => {
+      if (!h.id) {
+        h.id = h.textContent?.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]/g, "") ?? "";
+      }
+      const a = document.createElement("a");
+      a.href = `#${h.id}`;
+      a.textContent = h.textContent ?? "";
+      a.className = `block py-1 transition-colors text-slate-500 hover:text-slate-900 ${
+        h.tagName === "H3" ? "pl-3 text-[13px]" : "text-[13px] font-medium"
+      }`;
+      a.dataset.heading = h.id;
+      toc.appendChild(a);
+    });
+
+    // Highlight active heading on scroll
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const link = toc.querySelector(`[data-heading="${entry.target.id}"]`);
+          if (!link) return;
+          if (entry.isIntersecting) {
+            toc.querySelectorAll("a").forEach((a) => {
+              a.classList.remove("text-teal-700", "font-semibold");
+              a.classList.add("text-slate-500");
+            });
+            link.classList.remove("text-slate-500");
+            link.classList.add("text-teal-700", "font-semibold");
+          }
+        });
+      },
+      { rootMargin: "-20% 0% -70% 0%" }
+    );
+
+    headings.forEach((h) => observer.observe(h));
+  }
+</script>
