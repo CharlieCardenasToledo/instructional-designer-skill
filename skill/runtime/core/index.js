@@ -103,4 +103,21 @@ function readCourse(course) {
   };
 }
 
-module.exports = { CORE_VERSION, CONTEXT_FILE, CONTEXT_SECTIONS, courseRoot, coursePaths, initContext, readContext, validateContext, normalizeWeek, hashFile, loadCourseState, saveCourseState, updateCourseState, readCourse, ...harnesses, ...harnessManager };
+const evidenceGate   = require("./evidence-gate");
+const planState      = require("./plan-state");
+const syllabusManager = require("./syllabus-manager");
+const citations      = require("./citations");
+
+module.exports = {
+  CORE_VERSION, CONTEXT_FILE, CONTEXT_SECTIONS,
+  courseRoot, coursePaths,
+  initContext, readContext, validateContext,
+  normalizeWeek, hashFile,
+  loadCourseState, saveCourseState, updateCourseState, readCourse,
+  ...harnesses, ...harnessManager,
+  // Módulos core P0/P1
+  evidenceGate,
+  planState,
+  syllabusManager,
+  citations,
+};

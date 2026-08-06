@@ -5,6 +5,38 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.3.0 — 2026-08-06
+
+### Añadido
+
+**Compuertas de seguridad (P0)**
+- `runtime/core/evidence-gate.js` — bloquea generación de guías sin evidencia verificable; códigos JIN-EVD-001 (sin fuentes), JIN-EVD-002 (conocimiento genérico), JIN-EVD-003 (NLM caído sin respaldo local).
+- `runtime/core/plan-state.js` — persistencia de planes semanales en `.jintia-plan.json`; máquina de estados `pending → blocked → approved → generated`.
+- `runtime/core/syllabus-manager.js` — editor atómico del README.md: parseo, deduplicación de semanas, validación, backup automático con timestamp.
+- `runtime/core/citations.js` — módulo unificado: `validateCitationKeys`, `renderInlineText`, `validateFigureAccessibility`; re-exporta utilidades de `citation-keys.js`.
+- CLI `jintia plan save|approve|check|status`, `jintia syllabus check|import`, `jintia evidence check`.
+- Playbooks expandidos: `commands/init.md`, `commands/syllabus.md`, `commands/plan.md`, `commands/guide.md` con precondiciones, listas NOT y flujo de recuperación NLM.
+- `tests/regression.test.js` — 18 tests (R01–R07) para los 7 escenarios de fallo detectados el 2026-08-06.
+
+**Pipeline y calidad (P1)**
+- `scripts/legacy-linter.js` reglas LGC-010..015 — detección de LaTeX activo en rutas de curso; rutas de referencia exentas.
+- `schemas/guide.schema.json` — nodo `citation` marcado como DEPRECADO; usar `{{cite:clave}}` inline.
+- `content-linter.js` — JIN-CNT-011 (bibliography debe ser el último nodo), JIN-CNT-012 (citation deprecado), JIN-CNT-013 (figure sin src/visualSpec).
+- `.github/workflows/ci.yml` — matriz Ubuntu / Windows / macOS con Node 22.13.0; job `e2e-pdf` (Ubuntu, push a master).
+- `tests/windows-paths.test.js` — 8 tests con rutas con espacios, `&`, `()`, guion largo, tildes y Unicode.
+
+**Operacional (P2)**
+- `scripts/transcript-export.js` + `commands/transcript.md` — exporta traza editorial (planes, guías, sílabo) en modos `editorial`, `technical`, `summary`; error JIN-TRN-001 para `verbatim` (responsabilidad del harness).
+- `scripts/migrate-runner.js` — escanea curso: detecta `latex/`, `.tex` y semanas duplicadas; crea `.jintia-backup/YYYYMMDD-HHMMSS/`; deduplica semanas automáticamente; informe estructurado `{ backedUp, fixed, requiresReview }`.
+- `jintia update --verify-contract` — ejecuta `legacy:check` antes y `doctor + legacy:check` después de cada actualización.
+- `jintia transcript export <curso>` disponible en CLI.
+
+### Cambiado
+- `runtime/core/index.js` exporta los cuatro módulos nuevos (`evidenceGate`, `planState`, `syllabusManager`, `citations`).
+- `SKILL.md` sección 4 documenta `plan save`/`plan check` y los estados del plan.
+- `references/bibliografia.md` reemplaza ejemplo `citation` por sintaxis inline canónica.
+- `jintia migrate <curso>` enruta a `migrate-runner.js` (antes `legacy-manager.js`).
+
 ## `jintia-skill` 11.2.0 — 2026-08-06
 
 ### Añadido

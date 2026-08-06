@@ -58,22 +58,24 @@ Pega la respuesta con sus fuentes para continuar.
 
 ## Citas en guide.json
 
-| Modo | Campo en nodo `citation` |
-|---|---|
-| El autor es sujeto gramatical | `"mode": "narrative"` → "Autor (año)…" |
-| La referencia respalda una afirmación | `"mode": "parenthetical"` → "(Autor, año)" |
+**Sintaxis canónica única** (en campos `content` de cualquier nodo):
 
-Ejemplo de nodo `citation` en `guide.json`:
-
-```json
-{
-  "type": "citation",
-  "keys": ["newman2021"],
-  "mode": "parenthetical"
-}
+```
+La normalización reduce anomalías {{cite:date2004}}.
+Según {{cite:date2004|narrative}}, el modelo relacional...
 ```
 
-No mezclar el campo `mode` con referencias manuales en `content`.
+| Sintaxis | Resultado |
+|---|---|
+| `{{cite:clave}}` | Cita parentética: *(Apellido, año)* |
+| `{{cite:clave|narrative}}` | Cita narrativa: *Apellido (año)* |
+
+El nodo `{ "type": "citation" }` está **DEPRECADO**. No crear nuevos nodos `citation`;
+usar exclusivamente la sintaxis inline. El validador JIN-CNT-012 reporta advertencia
+cuando encuentra nodos `citation`.
+
+El nodo `{ "type": "bibliography" }` al final de `sections` genera la lista de referencias.
+Debe ser siempre el último nodo (JIN-CNT-011).
 
 ## Fuente bibliográfica única
 

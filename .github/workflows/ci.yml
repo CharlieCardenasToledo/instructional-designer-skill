@@ -14,16 +14,82 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    name: Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
       - uses: actions/checkout@v5
+
       - uses: actions/setup-node@v6
         with:
           node-version: "22.13.0"
           cache: npm
-      - run: npm ci
-      - run: npm run docs:check
-      - run: npm run skill:check
-      - run: npm run release:check
-      - run: npm run package:check
+
+      - name: Instalar dependencias (raíz)
+        run: npm ci
+
+      - name: Instalar dependencias (skill)
+        working-directory: skill
+        run: npm ci
+
+      # ── Verificaciones de calidad de la skill ─────────────────────────────
+      - name: skill:check (sintaxis de scripts)
+        run: npm run skill:check
+
+      - name: docs:check (referencias internas)
+        run: npm run docs:check
+
+      - name: legacy:check (no LaTeX activo en rutas de skill)
+        working-directory: skill
+        run: node scripts/legacy-linter.js --json
+
+      # ── Suite de tests ─────────────────────────────────────────────────────
+      # test-runner.js recoge automáticamente todos los *.test.js en tests/
+      # Incluye: rules, linters, cli, regression (P0), windows-paths, e2e, etc.
+      - name: Tests
+        working-directory: skill
+        run: npm test
+
+      # ── Release y package (solo Ubuntu) ───────────────────────────────────
+      - name: release:check
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run release:check
+
+      - name: package:check
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run package:check
+
+  # ── E2E con PDF — Vivliostyle (solo Ubuntu tras CI base) ──────────────────
+  e2e-pdf:
+    name: E2E PDF (Vivliostyle)
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 30
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22.13.0"
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci && cd skill && npm ci
+
+      - name: Instalar Playwright Chromium
+        working-directory: skill
+        run: npx playwright install chromium --with-deps
+
+      - name: Instalar Vivliostyle CLI
+        run: npm install --global @vivliostyle/cli
+
+      - name: E2E completo con PDF
+        working-directory: skill
+        run: npm test

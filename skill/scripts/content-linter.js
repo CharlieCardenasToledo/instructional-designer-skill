@@ -70,6 +70,18 @@ const RULES = {
     id: "JIN-CNT-010", category: "pagination", severity: "warning",
     description: "Los valores de 'pagination' deben ser tipos válidos.",
   },
+  "JIN-CNT-011": {
+    id: "JIN-CNT-011", category: "structure", severity: "warning",
+    description: "El nodo 'bibliography' debe ser el último nodo de sections.",
+  },
+  "JIN-CNT-012": {
+    id: "JIN-CNT-012", category: "bibliography", severity: "warning",
+    description: "El nodo 'citation' está deprecado. Usar sintaxis inline {{cite:clave}} en campos content.",
+  },
+  "JIN-CNT-013": {
+    id: "JIN-CNT-013", category: "accessibility", severity: "error",
+    description: "Todo nodo 'figure' debe declarar 'src' o 'visualSpec' (no ambos, no ninguno).",
+  },
 };
 
 const VALID_TYPES = new Set([
@@ -237,7 +249,38 @@ function lintGuide(guidePath) {
       }
     }
 
+    // JIN-CNT-012: nodo citation deprecado
+    if (node.type === "citation") {
+      issue("JIN-CNT-012",
+        `${prefix}: el nodo 'citation' está deprecado. Usar {{cite:clave}} o {{cite:clave|narrative}} directamente en campos content.`,
+        { nodeIndex: i }
+      );
+    }
+
+    // JIN-CNT-013: figure requiere src XOR visualSpec
+    if (node.type === "figure") {
+      const hasSrc  = Boolean(node.src  && node.src.trim());
+      const hasSpec = Boolean(node.visualSpec && node.visualSpec.trim());
+      if (!hasSrc && !hasSpec) {
+        issue("JIN-CNT-013",
+          `${prefix} (figure): debe declarar 'src' o 'visualSpec' (ninguno encontrado).`,
+          { nodeIndex: i }
+        );
+      }
+    }
+
     prevType = node.type;
+  }
+
+  // ── JIN-CNT-011: bibliography debe ser el último nodo ──
+  const bibNodeIndices = sections.reduce((acc, s, i) => s.type === "bibliography" ? [...acc, i] : acc, []);
+  if (bibNodeIndices.length > 0) {
+    const lastBibIndex = bibNodeIndices[bibNodeIndices.length - 1];
+    if (lastBibIndex !== sections.length - 1) {
+      issue("JIN-CNT-011",
+        `El nodo 'bibliography' está en la posición ${lastBibIndex + 1} pero debe ser el último nodo (posición ${sections.length}).`
+      );
+    }
   }
 
   // ── JIN-CNT-004: claves inline {{cite:}} existen en bib ──

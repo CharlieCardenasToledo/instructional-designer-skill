@@ -177,7 +177,24 @@ Mostrar:
 - plantilla activa;
 - dependencias o datos faltantes.
 
-Esperar confirmación cuando el plan implique crear una guía completa o reestructurar una existente.
+Esperar confirmación explícita del usuario antes de crear cualquier archivo.
+
+Después de presentar el plan, persistirlo:
+
+```bash
+node "<skill-root>/bin/jintia.js" plan save <curso> <semana>
+```
+
+La operación `guide` verifica que el plan esté aprobado antes de crear archivos:
+
+```bash
+node "<skill-root>/bin/jintia.js" plan check <curso> <semana>
+```
+
+Si el resultado es `approved: false`, mostrar el estado y detener. No generar
+`guide.json` sin plan aprobado. Consultar `commands/plan.md` y `commands/guide.md`
+para los estados posibles (`pending`, `blocked`, `approved`, `generated`) y el
+flujo de recuperación ante NotebookLM no disponible.
 
 ### 5. Crear o reutilizar la estructura
 

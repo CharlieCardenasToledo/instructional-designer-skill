@@ -16,24 +16,64 @@ const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
 
-// Reglas LGC: { id, pattern (RegExp), description }
+// ─── Reglas de términos v10 heredados ────────────────────────────────────────
+// LGC-001..009: plantillas y scripts eliminados en la migración v10→v11
 const LEGACY_RULES = [
   { id: "LGC-001", pattern: /elegantbook-clasico/g,     description: "Nombre de plantilla LaTeX eliminada" },
   { id: "LGC-002", pattern: /kaohandt-marginal/g,       description: "Nombre de plantilla LaTeX eliminada" },
   { id: "LGC-003", pattern: /latex-linter\.js/g,        description: "Script LaTeX eliminado" },
   { id: "LGC-004", pattern: /latex-validator\.js/g,     description: "Script LaTeX eliminado" },
   { id: "LGC-005", pattern: /preamble\.tex/g,           description: "Archivo de preámbulo LaTeX eliminado" },
-  { id: "LGC-007", pattern: /\\textcite\{/g,            description: "Macro de cita LaTeX (usar citation node)" },
-  { id: "LGC-008", pattern: /\\parencite\{/g,           description: "Macro de cita LaTeX (usar citation node)" },
-  { id: "LGC-009", pattern: /\\printbibliography/g,     description: "Macro de bibliografía LaTeX (usar bibliography node)" },
+  { id: "LGC-007", pattern: /\\textcite\{/g,            description: "Macro de cita LaTeX (usar {{cite:clave}})" },
+  { id: "LGC-008", pattern: /\\parencite\{/g,           description: "Macro de cita LaTeX (usar {{cite:clave}})" },
+  { id: "LGC-009", pattern: /\\printbibliography/g,     description: "Macro de bibliografía LaTeX (usar nodo bibliography)" },
+];
+
+// ─── Reglas de LaTeX activo en rutas de curso/skill ──────────────────────────
+// LGC-010..019: términos que indican que el agente está generando LaTeX
+// en lugar de guide.json. Se aplican a todos los archivos EXCEPTO los de
+// rutas explícitamente exentas (ver ACTIVE_LATEX_EXEMPT_PATHS más abajo).
+const ACTIVE_LATEX_RULES = [
+  { id: "LGC-010", pattern: /\\documentclass\s*[\[{]/g,  description: "Documento LaTeX en ruta activa (crear guide.json en su lugar)" },
+  { id: "LGC-011", pattern: /\\begin\{document\}/g,      description: "Entorno LaTeX en ruta activa (usar guide.json)" },
+  { id: "LGC-012", pattern: /\bpdflatex\b/g,             description: "Compilador pdflatex en ruta activa (Vivliostyle reemplaza a pdflatex)" },
+  { id: "LGC-013", pattern: /\bxelatex\b/g,              description: "Compilador xelatex en ruta activa (usar Vivliostyle)" },
+  { id: "LGC-014", pattern: /\blualatex\b/g,             description: "Compilador lualatex en ruta activa (usar Vivliostyle)" },
+  { id: "LGC-015", pattern: /guia-semana-\d+\.tex/g,     description: "Archivo de guía LaTeX detectado (usar guide.json)" },
+];
+
+// Patrones de rutas exentas para reglas ACTIVE_LATEX (relativas a ROOT)
+// Nota: visual-renderer.js usa pdflatex solo para figuras TikZ — exento.
+// guide-migrator.js convierte .tex antiguos — exento.
+// sistema-html.md describe qué NO hace el sistema — exento.
+// audit.md muestra ejemplos de hallazgos históricos — exento.
+const ACTIVE_LATEX_EXEMPT_PATHS = [
+  "scripts/legacy-manager.js",
+  "scripts/visual-renderer.js",
+  "scripts/visual-pipeline.js",
+  "scripts/visual-source-generator.js",
+  "scripts/guide-migrator.js",
+  "commands/migrate.md",
+  "commands/audit.md",
+  "references/figuras-tikz.md",
+  "references/sistema-html.md",
+  "config/visual-tools.json",
+  "config/visual-install-profiles.json",
+];
+
+// Directorios exentos para reglas ACTIVE_LATEX
+const ACTIVE_LATEX_EXEMPT_DIRS = [
+  "tests/fixtures/legacy",
+  "docs/history",
+  ".jintia-backup",
 ];
 
 const SCAN_EXTS = new Set([".md", ".js", ".mjs", ".json", ".yaml", ".yml"]);
 
 const IGNORE_DIRS  = new Set(["node_modules", ".git", "dist", "dist2", "landing"]);
-// Archivos exentos: historial de cambios, licencias, scripts de migración,
-// playbook de migración, este script (contiene patrones como literales)
-// y el test del propio linter (necesita strings legacy para sus fixtures).
+// Archivos exentos de reglas heredadas v10: historial de cambios, licencias,
+// scripts de migración, playbook de migración, este script (contiene los
+// patrones como literales) y el test del propio linter.
 const IGNORE_FILES = new Set([
   "CHANGELOG.md",
   "THIRD_PARTY_NOTICES.md",
@@ -41,16 +81,32 @@ const IGNORE_FILES = new Set([
   "legacy-linter.js",
   "linters.test.js",
   "migrate.md",
+  "regression.test.js",
 ]);
 
-// ── Escáner ──────────────────────────────────────────────────────────────────
+// ── Helpers de exención ───────────────────────────────────────────────────────
+
+function isExemptFromActiveLatex(filePath) {
+  const rel = path.relative(ROOT, filePath).replace(/\\/g, "/");
+  if (ACTIVE_LATEX_EXEMPT_PATHS.some(p => rel.endsWith(p) || rel.includes(p))) return true;
+  if (ACTIVE_LATEX_EXEMPT_DIRS.some(d => rel.includes(d))) return true;
+  return false;
+}
+
+// ── Escáner ───────────────────────────────────────────────────────────────────
 
 function checkFile(filePath) {
   const content = fs.readFileSync(filePath, "utf8");
   const lines   = content.split("\n");
   const issues  = [];
 
-  for (const rule of LEGACY_RULES) {
+  const activeLatexExempt = isExemptFromActiveLatex(filePath);
+
+  const rules = activeLatexExempt
+    ? LEGACY_RULES
+    : [...LEGACY_RULES, ...ACTIVE_LATEX_RULES];
+
+  for (const rule of rules) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       rule.pattern.lastIndex = 0;
@@ -111,12 +167,21 @@ function run(options = {}) {
     }
   }
 
+  const activeIssues = allIssues.filter(i => i.rule.startsWith("LGC-01"));
+  const legacyIssues = allIssues.filter(i => !i.rule.startsWith("LGC-01"));
+
   return {
     tool:    "jintia legacy-linter",
-    version: "1.0.0",
+    version: "1.1.0",
     scanned: files.length,
     issues:  allIssues,
-    summary: { scanned: files.length, issues: allIssues.length, ok: allIssues.length === 0 },
+    summary: {
+      scanned:       files.length,
+      issues:        allIssues.length,
+      legacyIssues:  legacyIssues.length,
+      activeLatex:   activeIssues.length,
+      ok:            allIssues.length === 0,
+    },
   };
 }
 
@@ -137,13 +202,14 @@ if (require.main === module) {
     } else {
       for (const issue of report.issues) {
         const rel = path.relative(ROOT, issue.file);
-        console.log(`✗ ${rel}:${issue.line}:${issue.col} — ${issue.message}`);
+        const severity = issue.rule.startsWith("LGC-01") ? "✗ [LaTeX activo]" : "✗ [heredado]";
+        console.log(`${severity} ${rel}:${issue.line}:${issue.col} — ${issue.message}`);
       }
     }
-    console.log(`\nResultado: ${report.summary.issues} violaciones encontradas.`);
+    console.log(`\nResultado: ${report.summary.legacyIssues} heredados, ${report.summary.activeLatex} LaTeX activo.`);
   }
 
   if (report.summary.issues > 0) process.exitCode = 1;
 }
 
-module.exports = { run, checkFile, LEGACY_RULES };
+module.exports = { run, checkFile, LEGACY_RULES, ACTIVE_LATEX_RULES };

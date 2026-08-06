@@ -93,7 +93,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "Tipo de nodo pedagógico.",
+          "description": "Tipo de nodo pedagógico. NOTA: 'citation' está DEPRECADO — usar sintaxis inline {{cite:clave}} en campos content.",
           "enum": [
             "orientation",
             "theory",
