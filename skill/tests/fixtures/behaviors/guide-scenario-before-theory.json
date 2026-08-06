@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "course": "Bases de Datos",
+    "week": 3,
+    "topic": "Normalización",
+    "outcome": "Aplicar las formas normales para diseñar esquemas relacionales."
+  },
+  "sections": [
+    {
+      "type": "orientation",
+      "id": "orientacion",
+      "title": "Introducción",
+      "content": "Esta semana trabajaremos la normalización."
+    },
+    {
+      "type": "scenario",
+      "id": "escenario-prematuro",
+      "title": "Caso: Sistema de biblioteca",
+      "content": "Dado el siguiente esquema, aplica normalización."
+    },
+    {
+      "type": "theory",
+      "id": "teoria-1fn",
+      "title": "Primera Forma Normal",
+      "content": "Un esquema está en 1FN si todos sus atributos contienen valores atómicos."
+    },
+    {
+      "type": "practice",
+      "id": "practica",
+      "title": "Práctica guiada",
+      "content": "Normaliza la tabla Pedidos."
+    },
+    {
+      "type": "assessment",
+      "id": "evaluacion",
+      "title": "Evaluación",
+      "content": "Responde las preguntas sobre normalización."
+    }
+  ]
+}

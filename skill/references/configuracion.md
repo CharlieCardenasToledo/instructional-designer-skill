@@ -1,6 +1,6 @@
 # Configuración del usuario
 
-Leer esta referencia cuando una tarea dependa de identidad institucional, branding, ecosistema digital, notebooks o plantilla activa.
+Leer esta referencia cuando una tarea dependa de identidad institucional, branding, ecosistema digital, notebooks o tema HTML activo.
 
 ## Archivos
 
@@ -36,14 +36,14 @@ Campos principales:
     "partnerModule": "",
     "partnerLogoPath": ""
   },
-  "activeTemplate": "elegantbook-clasico",
+  "activeTemplate": "jintia-clasico",
   "options": {
     "evidenceMode": "notebooklm-preferred"
   }
 }
 ```
 
-Convertir `branding.primaryColor` hexadecimal a RGB cuando se genere LaTeX. Si no existe logo, omitir `\logo{}`. No inventar integraciones.
+`branding.primaryColor` se usa como variable CSS en los temas HTML (`--jintia-primary`). Si no existe logo, el tema omite el elemento de imagen de marca. No inventar integraciones.
 
 ## Configuración de la asignatura
 
@@ -72,12 +72,10 @@ de `institution.json` como compatibilidad con proyectos antiguos.
 
 Los ids pertenecen a la biblioteca del servidor `@charlie.act7/gemini-notebook-mcp@2.3.3`. Si un id deja de existir, buscar por nombre. Antes de registrar una URL con `add_notebook`, pedir confirmación.
 
-## Plantilla activa
+## Tema HTML activo
 
-Leer `templates/<activeTemplate>/meta.json`, `template.md` y `preamble.tex`. Si el id es inválido, usar `elegantbook-clasico` e informar la corrección.
+Leer `themes/<activeTemplate>/meta.json`. Si el id no corresponde a un tema instalado, usar `jintia-clasico` e informar la corrección.
 
-La plantilla define la gramática visual. Las reglas pedagógicas y de evidencia siguen siendo las de `SKILL.md`.
+El tema define la gramática visual y los archivos CSS. Las reglas pedagógicas y de evidencia siguen siendo las de `SKILL.md`.
 
-Validar los archivos declarados en `requiredFiles` y copiarlos junto al archivo
-principal. Las plantillas distribuidas son `elegantbook-clasico` y
-`kaohandt-marginal`.
+Verificar los archivos declarados en `requiredFiles` y comprobar que son accesibles desde la carpeta de la guía. Los temas distribuidos son `jintia-clasico`, `jintia-tecnico` y `jintia-cuaderno`.

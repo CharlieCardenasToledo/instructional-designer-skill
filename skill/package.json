@@ -34,6 +34,8 @@
     "archive":            "node scripts/legacy-manager.js",
     "jintia":             "node bin/jintia.js",
     "doctor":             "node bin/jintia.js doctor",
+    "behavior:check":     "node scripts/behavior-runner.js",
+    "behavior:eval":      "node scripts/behavior-eval.js",
     "brand:check":        "node scripts/brand-validator.js",
     "syllabus:validate":  "node bin/jintia.js syllabus validate",
     "audit":              "node bin/jintia.js audit",

@@ -56,28 +56,39 @@ Pregunta: [pregunta verificable y concreta]
 Pega la respuesta con sus fuentes para continuar.
 ```
 
-## Citas en LaTeX
+## Citas en guide.json
 
-| Situación | Comando |
+| Modo | Campo en nodo `citation` |
 |---|---|
-| El autor es sujeto gramatical | `\textcite{clave}` |
-| La referencia respalda una afirmación | `\parencite{clave}` |
+| El autor es sujeto gramatical | `"mode": "narrative"` → "Autor (año)…" |
+| La referencia respalda una afirmación | `"mode": "parenthetical"` → "(Autor, año)" |
 
-No usar `\cite{}` genérico. No mezclar `\textcite{}` y `\parencite{}` para la misma referencia en una oración.
+Ejemplo de nodo `citation` en `guide.json`:
+
+```json
+{
+  "type": "citation",
+  "keys": ["newman2021"],
+  "mode": "parenthetical"
+}
+```
+
+No mezclar el campo `mode` con referencias manuales en `content`.
 
 ## Fuente bibliográfica única
 
-Usar `biblatex` y `reference.bib`:
+Declarar en `metadata.bibliography` la ruta relativa al archivo `.bib`:
 
-```latex
-% En el preamble
-\addbibresource{reference.bib}
-
-% En la última sección
-\printbibliography[heading=bibintoc,title={Referencias bibliográficas}]
+```json
+{
+  "metadata": {
+    "bibliography": "reference.bib",
+    "citationStyle": "apa"
+  }
+}
 ```
 
-Ejemplo:
+Mantener una entrada BibLaTeX en `reference.bib` por cada clave citada:
 
 ```bibtex
 @book{newman2021,
@@ -89,7 +100,7 @@ Ejemplo:
 }
 ```
 
-No combinar `\printbibliography` con `thebibliography` o `\bibitem`.
+En el HTML final, las citas se procesan con Citation.js. El nodo `bibliography` al final de `sections` genera la lista formateada. No combinar nodos `citation` con HTML bibliográfico manual.
 
 ## Recortes
 

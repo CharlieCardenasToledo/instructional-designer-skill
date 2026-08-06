@@ -7,89 +7,78 @@ Referencia de `jintia-skill`. Ejecutar esta verificación completa antes de entr
 - [ ] La evidencia fue resuelta en el orden definido. NotebookLM se consultó cuando estaba disponible o se documentó la fuente local equivalente.
 - [ ] Los datos de la semana (temas, RA, bibliografía, actividades) se extrajeron del README, no se solicitaron al usuario.
 
-**Archivo principal (`guia-semana-XX.tex`)**
-- [ ] La clase, las opciones y los archivos requeridos corresponden al `meta.json` de la plantilla activa.
-- [ ] La paleta, los bloques y las macros proceden de la plantilla activa; no se redefinieron sin necesidad.
-- [ ] Los entornos usados (`softblock`, `accentblock`, `mintblock`, `sandblock`, `roseblock`) existen en el preámbulo.
-- [ ] Las macros usadas (`\iconidea`, `\iconcheck`, `\editorialtitle`, `\conceptline`, `\coursemeta`, `\guidesection`) existen en el preámbulo.
-- [ ] `\newcolumntype{Y}` definido.
-- [ ] `\frontmatter`, cabecera con `\fancyhead`, `\fancypagestyle{plain}`, `\mainmatter` presentes.
-- [ ] `\cover{}` comentado salvo que `latex/figure/cover.png` exista.
-- [ ] La secuencia `\input` refleja el orden: introducción → secciones de teoría → escenario → aplicación → bibliografía.
-
-**Estructura y secuencia**
-- [ ] El estudio de caso (`XX-escenario.tex`) aparece **después** de todas las secciones de teoría.
+**`guide.json` — estructura**
+- [ ] El archivo existe y es JSON sintácticamente válido.
+- [ ] `metadata` contiene `course`, `week`, `topic` y `outcome` no vacíos.
+- [ ] `metadata.theme` es uno de `jintia-clasico`, `jintia-tecnico` o `jintia-cuaderno`.
+- [ ] `sections` tiene al menos un elemento.
+- [ ] El primer nodo es de tipo `orientation`.
+- [ ] Todos los `id` de nodo son únicos y siguen el patrón `[a-z0-9-]+`.
+- [ ] No existen tipos de nodo fuera del esquema canónico.
+- [ ] El nodo `bibliography` es el último de la secuencia (si hay citas).
+- [ ] El nodo `assessment` está precedido por un nodo `practice` o `scenario`.
 - [ ] No existen secciones de relleno creadas para completar una numeración fija.
-- [ ] La activación del problema técnico ocurre inline (dentro de las secciones de teoría), no en un archivo de activación previo a la teoría.
-- [ ] La bibliografía es el último archivo y su número NN es el siguiente al de la última sección (numeración secuencial, sin saltos).
 
-**`01-introduccion.tex`**
-- [ ] Sigue el patrón canónico de 4 zonas: `\chapter` → `\guidesection` → `\editorialtitle` → `\conceptline` + `\coursemeta` + `softblock`.
-- [ ] El `softblock` cierra con tiempo estimado. La integración internacional aparece solo si está configurada.
-- [ ] No lista RA, códigos de RA (RA-X.X), ni enumera los temas de las secciones.
+**Secuencia y orden canónico**
+- [ ] La secuencia sigue: `orientation` → teoría (`theory`, `concept`) → aplicación (`scenario`) → evaluación (`assessment`) → `bibliography`.
+- [ ] El escenario aparece **después** de todas las secciones de teoría.
+- [ ] La activación del problema técnico ocurre dentro de las secciones de teoría, no antes.
+
+**Nodo `orientation`**
+- [ ] Explica el propósito de la semana sin listar el RA textualmente.
+- [ ] Cierra con el tiempo estimado de trabajo.
+- [ ] No enumera los títulos de las secciones subsiguientes.
 
 **Escritura y tono**
 - [ ] No hay muletillas de IA ni metáforas no técnicas.
 - [ ] Las transiciones entre secciones surgen de causalidad técnica.
 - [ ] El documento es autoinstruccional: se entiende sin la presencia del docente.
-- [ ] Las oraciones no superan ~20 palabras. Las que superan 35 palabras están partidas en dos proposiciones causales (R1).
-- [ ] El primer párrafo de cada sección (excepto la primera) conecta con la sección anterior — interleaving explícito (P4).
-- [ ] Cada término técnico central se usa con el mismo nombre canónico en toda la guía — sin sinónimos decorativos (R2).
+- [ ] Las oraciones no superan ~20 palabras. Las que superan 35 palabras están partidas en dos proposiciones causales.
+- [ ] El primer párrafo de cada sección (excepto la primera) conecta con la sección anterior — interleaving explícito.
+- [ ] Cada término técnico central usa el mismo nombre canónico en toda la guía — sin sinónimos decorativos.
+- [ ] El `field` `content` usa `<span class="jintia-keyterm">término</span>` únicamente en la primera aparición de cada término clave.
 
 **Control de redundancia**
 - [ ] Ningún concepto o distinción técnica se explica en más de una sección. Si aparece en dos, consolidar en la primera y referenciar desde la segunda.
-- [ ] El primer párrafo de una sección de teoría conecta con la anterior pero **no repite** su contenido — solo menciona el resultado que crea la necesidad de la nueva sección.
-- [ ] Los ejemplos en el estudio de caso no repiten los mismos ejemplos ya usados en las secciones de teoría.
+- [ ] El primer párrafo de una sección de teoría conecta con la anterior pero **no repite** su contenido.
+- [ ] Los ejemplos del escenario no repiten los mismos ejemplos usados en las secciones de teoría.
 - [ ] Los criterios de clasificación aparecen en una sola sección; el escenario los aplica sin redefinirlos.
 
-**Macros y bloques**
-- [ ] Todos los encabezados de sección usan `\guidesection{}` seguido de `\coursemeta{Conceptos clave: ...}`.
-- [ ] `\keyterm{término}` se usa exactamente una vez por término, en su primera ocurrencia (R2/Signaling Principle).
-- [ ] Los `accentblock` con principio o análisis institucional usan título interno con `\iconidea`.
-- [ ] El `sandblock` de cierre contiene un juicio técnico deducible del contenido precedente.
-- [ ] `roseblock` solo cuando hay una mala práctica o error con impacto operativo severo. Usa los cuatro campos: Supuesto incorrecto → Consecuencia operativa → Mecanismo causal → Respuesta de ingeniería.
-- [ ] `roseblock` con `[title={\textbf{Nombre}}]` cuando identifica una falacia o mala práctica nombrable.
-- [ ] Cuando una sección introduce tres o más conceptos, se evaluó si una pregunta de recuperación mejora el aprendizaje.
+**Nodos de bloque especiales**
+- [ ] Los nodos `warning` contienen únicamente advertencias con consecuencia operativa real.
+- [ ] Los nodos `critical-error` incluyen: supuesto incorrecto, consecuencia, mecanismo causal y respuesta.
+- [ ] Los nodos `margin-note` son complementarios; instrucciones, resultados y criterios esenciales están en el flujo principal.
+- [ ] Cuando una sección introduce tres o más conceptos, se evaluó si un nodo `practice` de recuperación mejora el aprendizaje.
 
-**Figuras y tablas**
-- [ ] Las figuras usan `guidefigure` y `\guidefigurecaption`; no usan `figure`, `\caption` ni `\label` directamente.
-- [ ] El párrafo previo a cada figura la menciona explícitamente con `Figura~\ref{fig:...}` (D2/Spatial Contiguity).
-- [ ] Los diagramas TikZ usan exclusivamente variables semánticas de la paleta.
-- [ ] Los estilos TikZ locales se definen dentro de `\tikzset{...}` al inicio del `tikzpicture`.
-- [ ] Las tablas comparativas usan `tabularx` + `booktabs`. PROHIBIDO `\hline`.
+**Nodos `figure`**
+- [ ] Todo nodo `figure` declara `alt` y `caption` no vacíos.
+- [ ] El párrafo previo en `content` menciona la figura por su `id` (ej. `[fig-ejemplo]`).
 - [ ] Cada sección usa como máximo una figura o una tabla, salvo justificación pedagógica explícita.
 - [ ] Toda figura tiene especificación, fuente editable, salida renderizada y entrada en `figure/manifest.json`.
-- [ ] Toda figura tiene texto alternativo; los gráficos cuantitativos incluyen tabla de datos.
 - [ ] La procedencia, licencia y cualquier fallback están registrados.
 - [ ] SVG y HTML no contienen recursos remotos, animaciones, texto menor de 10 px ni elementos recortables por falta de `viewBox`.
 - [ ] El contraste de texto declarado es al menos 4.5:1.
-- [ ] La regresión perceptual no produjo diferencias sin revisar en `figure/diffs/`.
+- [ ] Los gráficos cuantitativos incluyen tabla de datos accesible.
 
-**ElegantBook Clásico**
-- [ ] Las figuras permanecen en el flujo principal y su ancho no excede `\linewidth`.
-- [ ] Los bloques y comandos requeridos coinciden con `templates/elegantbook-clasico/meta.json`.
+**Nodos `table`**
+- [ ] Todo nodo `table` declara `caption` y `headers` no vacíos.
+- [ ] Las tablas no superan el ancho imprimible A4 (evitar más de 6 columnas sin justificación).
 
-**Kaohandt Marginal**
-- [ ] El contenido esencial permanece en la columna principal.
-- [ ] Las figuras `wide` restauran el layout marginal y las figuras marginales son complementarias.
-- [ ] Las notas marginales no exceden 60 palabras.
+**Nodos `citation` y `bibliography`**
+- [ ] No se inventaron referencias. Toda fuente pasó por el workflow de la Política de Evidencia (`bibliografia.md`).
+- [ ] El documento NO contiene etiquetas `[Pendiente de Verificación]`.
+- [ ] Cada clave en nodos `citation` existe en `reference.bib`.
+- [ ] `metadata.bibliography` apunta a `reference.bib` cuando existen nodos `citation`.
+- [ ] `reference.bib` existe y tiene una entrada BibLaTeX por cada clave citada.
+- [ ] Cuando la fuente original es un PDF local, existe un recorte trazable en `bibliografia/recortes_por_semana/semana-XX/`.
 
-**Figuras HTML (solo si la guía las incluye)**
-- [ ] Cada vista de interfaz es un archivo HTML separado en `latex/figure/`, con contenedor raíz `w-[390px]` y sin carcasa de teléfono.
-- [ ] Los colores usan el branding institucional configurado o una paleta justificada para el caso.
-- [ ] Los PNG fueron generados con `node screenshot.mjs` **antes** de compilar LaTeX.
-- [ ] El log de compilación confirma que todos los PNG fueron cargados.
+**Figuras de interfaz HTML (solo si la guía las incluye)**
+- [ ] Cada vista de interfaz es un archivo HTML separado en `figure/`, con contenedor raíz `w-[390px]` y sin carcasa de teléfono.
+- [ ] Los colores usan el branding institucional configurado o una paleta justificada.
+- [ ] Los PNG fueron generados con `node screenshot.mjs` **antes** de compilar el HTML final.
 
-**Citas y bibliografía**
-- [ ] `\textcite{}` solo cuando el autor es sujeto gramatical.
-- [ ] `\parencite{}` en todos los demás casos. PROHIBIDO `\cite{}`.
-- [ ] No se inventaron referencias. Toda fuente pasó por el workflow de la Política de Evidencia (`bibliografia.md`); el documento NO contiene etiquetas `[Pendiente de Verificación]`.
-- [ ] La bibliografía usa `\printbibliography` y no mezcla `thebibliography` o `\bibitem`.
-- [ ] El archivo `reference.bib` existe en `latex/` con una entrada BibLaTeX por cada clave citada.
-- [ ] Cuando la fuente original es un PDF local, existe un recorte trazable en `bibliografia/recortes_por_semana/semana-XX/`. Para fuentes no PDF se conservó una referencia verificable equivalente.
-
-**Validación automática y manual**
-- [ ] `latex-linter.js` terminó sin errores.
-- [ ] `visual-linter.js` terminó sin errores cuando la guía contiene figuras.
-- [ ] `latex-validator.js` compiló la guía, o se documentó por qué no pudo ejecutarse.
+**Validación automática**
+- [ ] `jintia validate guide.json` terminó sin errores (JIN-SCH-* y JIN-CNT-*).
+- [ ] `node "<skill-root>/scripts/html-linter.js" guide.html` terminó sin errores cuando la guía contiene figuras.
+- [ ] `jintia preflight guide.html` terminó sin errores críticos de paginación.
 - [ ] Las reglas editoriales, pedagógicas y de evidencia no cubiertas por los scripts se revisaron manualmente.

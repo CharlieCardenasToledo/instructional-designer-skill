@@ -1,49 +1,153 @@
 "use strict";
 
 function typeMatches(value, type) {
-  if (type === "null") return value === null;
-  if (type === "array") return Array.isArray(value);
-  if (type === "object") return value !== null && typeof value === "object" && !Array.isArray(value);
+  if (type === "null")    return value === null;
+  if (type === "array")   return Array.isArray(value);
   if (type === "integer") return Number.isInteger(value);
+  if (type === "object")  return value !== null && typeof value === "object" && !Array.isArray(value);
   return typeof value === type;
 }
 
-function validate(value, schema, location = "$") {
+function resolveRef(ref, root) {
+  if (typeof ref !== "string" || !ref.startsWith("#/")) return null;
+  const parts = ref.slice(2).split("/");
+  let node = root;
+  for (const part of parts) {
+    if (node == null || typeof node !== "object") return null;
+    node = node[decodeURIComponent(part.replace(/~1/g, "/").replace(/~0/g, "~"))];
+  }
+  return node != null ? node : null;
+}
+
+/**
+ * Valida `value` contra `schema`.
+ * @param {*}      value    - Valor a validar
+ * @param {object} schema   - Esquema JSON Schema (Draft-07 subset)
+ * @param {string} location - Ruta para mensajes de error (ej. "$.metadata")
+ * @param {object} [root]   - Esquema raíz para resolver $ref (se pasa automáticamente)
+ * @returns {string[]} Lista de mensajes de error (vacía = válido)
+ */
+function validate(value, schema, location, root) {
+  if (root === undefined) root = schema;
   const errors = [];
-  if (schema.const !== undefined && value !== schema.const) errors.push(`${location}: debe ser ${JSON.stringify(schema.const)}`);
-  if (schema.enum && !schema.enum.includes(value)) errors.push(`${location}: valor no permitido`);
+
+  // $ref — intra-schema
+  if (schema.$ref) {
+    const resolved = resolveRef(schema.$ref, root);
+    if (resolved) errors.push(...validate(value, resolved, location, root));
+    return errors;
+  }
+
+  if (schema.const !== undefined && value !== schema.const) {
+    errors.push(`${location}: debe ser ${JSON.stringify(schema.const)}`);
+  }
+  if (schema.enum && !schema.enum.includes(value)) {
+    errors.push(`${location}: valor no permitido (esperado uno de ${JSON.stringify(schema.enum)})`);
+  }
+
+  // type
   if (schema.type) {
     const types = Array.isArray(schema.type) ? schema.type : [schema.type];
-    if (!types.some(type => typeMatches(value, type))) {
+    if (!types.some(t => typeMatches(value, t))) {
       errors.push(`${location}: tipo esperado ${types.join("|")}`);
-      return errors;
+      return errors; // no continuar con subvalidaciones si el tipo no coincide
     }
   }
+
+  // string
   if (typeof value === "string") {
-    if (schema.minLength && value.length < schema.minLength) errors.push(`${location}: longitud mínima ${schema.minLength}`);
-    if (schema.pattern && !new RegExp(schema.pattern).test(value)) errors.push(`${location}: formato inválido`);
+    if (schema.minLength !== undefined && value.length < schema.minLength) {
+      errors.push(`${location}: longitud mínima ${schema.minLength}`);
+    }
+    if (schema.maxLength !== undefined && value.length > schema.maxLength) {
+      errors.push(`${location}: longitud máxima ${schema.maxLength}`);
+    }
+    if (schema.pattern && !new RegExp(schema.pattern).test(value)) {
+      errors.push(`${location}: no cumple el patrón ${schema.pattern}`);
+    }
   }
-  if (Array.isArray(value) && schema.items) {
-    value.forEach((item, index) => errors.push(...validate(item, schema.items, `${location}[${index}]`)));
+
+  // number / integer
+  if (typeof value === "number") {
+    if (schema.minimum !== undefined && value < schema.minimum) {
+      errors.push(`${location}: debe ser >= ${schema.minimum}`);
+    }
+    if (schema.maximum !== undefined && value > schema.maximum) {
+      errors.push(`${location}: debe ser <= ${schema.maximum}`);
+    }
+    if (schema.exclusiveMinimum !== undefined && value <= schema.exclusiveMinimum) {
+      errors.push(`${location}: debe ser > ${schema.exclusiveMinimum}`);
+    }
   }
+
+  // array
+  if (Array.isArray(value)) {
+    if (schema.minItems !== undefined && value.length < schema.minItems) {
+      errors.push(`${location}: mínimo ${schema.minItems} elemento(s) (tiene ${value.length})`);
+    }
+    if (schema.maxItems !== undefined && value.length > schema.maxItems) {
+      errors.push(`${location}: máximo ${schema.maxItems} elemento(s)`);
+    }
+    if (schema.items) {
+      value.forEach((item, i) => {
+        errors.push(...validate(item, schema.items, `${location}[${i}]`, root));
+      });
+    }
+  }
+
+  // object
   if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-    for (const required of schema.required || []) {
-      if (!(required in value)) errors.push(`${location}.${required}: campo obligatorio`);
+    for (const req of (schema.required || [])) {
+      if (!(req in value)) errors.push(`${location}.${req}: campo obligatorio`);
     }
     if (schema.additionalProperties === false && schema.properties) {
       for (const key of Object.keys(value)) {
-        if (!(key in schema.properties)) errors.push(`${location}.${key}: propiedad no permitida`);
+        if (!(key in schema.properties)) {
+          errors.push(`${location}.${key}: propiedad no permitida`);
+        }
       }
     }
     for (const [key, child] of Object.entries(schema.properties || {})) {
-      if (key in value) errors.push(...validate(value[key], child, `${location}.${key}`));
+      if (key in value) {
+        errors.push(...validate(value[key], child, `${location}.${key}`, root));
+      }
     }
   }
-  if (schema.oneOf) {
-    const matches = schema.oneOf.filter(option => validate(value, option, location).length === 0).length;
-    if (matches !== 1) errors.push(`${location}: debe cumplir exactamente una alternativa`);
+
+  // allOf
+  if (Array.isArray(schema.allOf)) {
+    for (const sub of schema.allOf) {
+      errors.push(...validate(value, sub, location, root));
+    }
   }
+
+  // oneOf
+  if (Array.isArray(schema.oneOf)) {
+    const passing = schema.oneOf.filter(sub => validate(value, sub, location, root).length === 0);
+    if (passing.length !== 1) {
+      errors.push(`${location}: debe cumplir exactamente una alternativa oneOf (cumple ${passing.length})`);
+    }
+  }
+
+  // anyOf
+  if (Array.isArray(schema.anyOf)) {
+    const passing = schema.anyOf.filter(sub => validate(value, sub, location, root).length === 0);
+    if (passing.length === 0) {
+      errors.push(`${location}: debe cumplir al menos una alternativa anyOf`);
+    }
+  }
+
+  // if / then / else
+  if (schema.if) {
+    const condErrors = validate(value, schema.if, location, root);
+    if (condErrors.length === 0 && schema.then) {
+      errors.push(...validate(value, schema.then, location, root));
+    } else if (condErrors.length > 0 && schema.else) {
+      errors.push(...validate(value, schema.else, location, root));
+    }
+  }
+
   return errors;
 }
 
-module.exports = { validate };
+module.exports = { validate, resolveRef };

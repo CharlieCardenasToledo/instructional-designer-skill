@@ -1,0 +1,34 @@
+{
+  "metadata": {
+    "course": "Bases de Datos",
+    "week": 6,
+    "topic": "Vistas",
+    "outcome": "Crear vistas que simplifiquen el acceso a datos complejos."
+  },
+  "sections": [
+    {
+      "type": "theory",
+      "id": "teoria-vistas",
+      "title": "¿Qué es una vista?",
+      "content": "Una vista es una consulta almacenada que actúa como tabla virtual."
+    },
+    {
+      "type": "orientation",
+      "id": "orientacion-tardia",
+      "title": "Introducción",
+      "content": "Esta semana trabajaremos con vistas."
+    },
+    {
+      "type": "practice",
+      "id": "practica",
+      "title": "Práctica",
+      "content": "Crea una vista para el reporte mensual."
+    },
+    {
+      "type": "assessment",
+      "id": "evaluacion",
+      "title": "Evaluación",
+      "content": "Diseña vistas para los casos propuestos."
+    }
+  ]
+}

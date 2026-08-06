@@ -11,8 +11,8 @@ artifacts.
 ## Capabilities
 
 - instructional planning and evidence traceability;
-- ElegantBook and Kaohandt templates;
-- schema, LaTeX, and visual-quality validation;
+- HTML themes (jintia-clasico, jintia-tecnico, jintia-cuaderno) with Vivliostyle PDF output;
+- schema, HTML, and visual-quality validation;
 - reproducible visual generation with fallbacks;
 - optional NotebookLM integration;
 - specialized agent contracts for research, review, and final production.

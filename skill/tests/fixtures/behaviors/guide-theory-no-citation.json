@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "course": "Bases de Datos",
+    "week": 7,
+    "topic": "Procedimientos almacenados",
+    "outcome": "Implementar procedimientos almacenados que encapsulen lógica de negocio reutilizable."
+  },
+  "sections": [
+    {
+      "type": "orientation",
+      "id": "orientacion",
+      "title": "Introducción",
+      "content": "Esta semana vemos procedimientos almacenados."
+    },
+    {
+      "type": "theory",
+      "id": "teoria-sp",
+      "title": "¿Qué es un procedimiento almacenado?",
+      "content": "Un procedimiento almacenado es un bloque de código SQL precompilado que se ejecuta en el servidor."
+    },
+    {
+      "type": "concept",
+      "id": "concepto-ventajas",
+      "title": "Ventajas de los procedimientos almacenados",
+      "content": "Reducen el tráfico de red, centralizan la lógica de negocio y mejoran el rendimiento."
+    },
+    {
+      "type": "practice",
+      "id": "practica",
+      "title": "Práctica guiada",
+      "content": "Escribe un procedimiento que calcule el total de pedidos de un cliente."
+    },
+    {
+      "type": "assessment",
+      "id": "evaluacion",
+      "title": "Evaluación",
+      "content": "Implementa los procedimientos para los casos propuestos."
+    }
+  ]
+}

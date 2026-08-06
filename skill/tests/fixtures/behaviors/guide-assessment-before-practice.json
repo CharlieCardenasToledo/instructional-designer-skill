@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "course": "Bases de Datos",
+    "week": 5,
+    "topic": "Índices",
+    "outcome": "Seleccionar el tipo de índice adecuado para cada patrón de consulta."
+  },
+  "sections": [
+    {
+      "type": "orientation",
+      "id": "orientacion",
+      "title": "Introducción",
+      "content": "Esta semana vemos índices en bases de datos."
+    },
+    {
+      "type": "theory",
+      "id": "teoria-indices",
+      "title": "Tipos de índices",
+      "content": "Los índices B-tree son adecuados para búsquedas de rango."
+    },
+    {
+      "type": "assessment",
+      "id": "evaluacion-prematura",
+      "title": "Evaluación",
+      "content": "Elige el índice correcto para cada caso."
+    }
+  ]
+}

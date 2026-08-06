@@ -4,6 +4,10 @@ Renderiza una guía a HTML y genera PDF usando Vivliostyle CLI.
 Vivliostyle se invoca como **proceso externo e independiente** (no importado),
 lo que preserva la licencia MIT de Jintia.
 
+Acepta tanto `guide.json` (flujo completo: render → PDF) como `guide.html` (solo
+compila a PDF). Con `guide.json` el CLI genera automáticamente `guide.html`
+antes de invocar el motor PDF.
+
 ## Requisitos
 
 - Node.js ≥22.12.0
@@ -12,21 +16,21 @@ lo que preserva la licencia MIT de Jintia.
 ## Ejemplos
 
 ```bash
-# Compilar con motor por defecto (Vivliostyle)
+# Compilar desde guide.json (genera guide.html y luego guide.pdf)
 node "<skill-root>/bin/jintia.js" compile semanas/semana-03/guide.json
 
-# Compilar con Paged.js (MIT, no requiere Vivliostyle)
-node "<skill-root>/bin/jintia.js" compile semanas/semana-03/guide.json --engine pagedjs
-
-# Especificar salida
+# Especificar PDF de salida
 node "<skill-root>/bin/jintia.js" compile semanas/semana-03/guide.json --output semanas/semana-03/guia-semana-03.pdf
+
+# Compilar directamente desde HTML (si ya existe)
+node "<skill-root>/bin/jintia.js" compile semanas/semana-03/guide.html
 ```
 
 ## Flujo completo recomendado
 
 ```bash
-jintia validate guide.json        # linter pedagógico
-jintia render   guide.json        # genera guide.html
-jintia compile  guide.json        # genera guide.pdf
-jintia preflight guide.pdf        # verifica paginación
+jintia validate  guide.json   # linter pedagógico + validación de esquema
+jintia render    guide.json   # genera guide.html
+jintia compile   guide.json   # genera guide.pdf (render implícito si se pasa .json)
+jintia preflight guide.html   # verifica paginación sobre el HTML renderizado
 ```

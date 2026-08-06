@@ -54,12 +54,15 @@ Uso:
   jintia render    <guide.json> [--theme ID] [--output guide.html]
   jintia compile   <guide.json> [--engine vivliostyle|pagedjs] [--output guide.pdf]
   jintia preview   <guide.json>
-  jintia preflight <guide.pdf>
+  jintia preflight <guide.html>
 
   — Visual —
   jintia visual render  <spec.json> --template ID
   jintia visual inspect <manifest.json>
   jintia migrate <semanas/semana-XX>
+  jintia behavior <guide.json> [--strict] [--json]
+  jintia behavior eval --output <guide.json|respuesta.txt> [--spec ID] [--json]
+  jintia behavior list [--json]
 
 Comandos de flujo para la skill: plan, guide, assessment y audit.
 Consulta skill/commands/ para sus playbooks.`);
@@ -211,11 +214,61 @@ function main(argv) {
   // ─── Motor editorial HTML ───────────────────────────────────────────────────
   if (command === "validate") return runScript("content-linter.js", argv.slice(1), "validate");
   if (command === "render")   return runScript("guide-renderer.js", argv.slice(1), "render");
-  if (command === "compile")  return runScript("vivliostyle-adapter.js", argv.slice(1), "compile");
-  if (command === "preview")  return runScript("vivliostyle-adapter.js", ["preview", ...argv.slice(1)], "preview");
+
+  if (command === "compile") {
+    const restArgs = argv.slice(1);
+    const inputFile = restArgs.find(a => !a.startsWith("-"));
+    if (inputFile && /\.json$/i.test(inputFile)) {
+      // guide.json → render a HTML → compilar a PDF
+      const htmlPath  = inputFile.replace(/\.json$/i, ".html");
+      const themeArg  = option(restArgs, "--theme", null);
+      const outputArg = option(restArgs, "--output", null);
+      const renderArgs = [inputFile, "--output", htmlPath];
+      if (themeArg) renderArgs.push("--theme", themeArg);
+      const renderResult = spawnSync(process.execPath, [path.join(SCRIPTS, "guide-renderer.js"), ...renderArgs], {
+        cwd: process.cwd(), encoding: "utf8", stdio: "inherit", shell: false,
+      });
+      if (renderResult.error) throw renderResult.error;
+      if (renderResult.status !== 0) { process.exitCode = renderResult.status; return; }
+      const compileArgs = [htmlPath];
+      if (outputArg) compileArgs.push("--output", outputArg);
+      return runScript("vivliostyle-adapter.js", compileArgs, "compile");
+    }
+    return runScript("vivliostyle-adapter.js", restArgs, "compile");
+  }
+
+  if (command === "preview") {
+    const restArgs = argv.slice(1);
+    const inputFile = restArgs.find(a => !a.startsWith("-"));
+    if (inputFile && /\.json$/i.test(inputFile)) {
+      // guide.json → render a HTML → vista previa
+      const htmlPath  = inputFile.replace(/\.json$/i, ".html");
+      const themeArg  = option(restArgs, "--theme", null);
+      const renderArgs = [inputFile, "--output", htmlPath];
+      if (themeArg) renderArgs.push("--theme", themeArg);
+      const renderResult = spawnSync(process.execPath, [path.join(SCRIPTS, "guide-renderer.js"), ...renderArgs], {
+        cwd: process.cwd(), encoding: "utf8", stdio: "inherit", shell: false,
+      });
+      if (renderResult.error) throw renderResult.error;
+      if (renderResult.status !== 0) { process.exitCode = renderResult.status; return; }
+      const previewArgs = ["preview", htmlPath];
+      const portArg = option(restArgs, "--port", null);
+      if (portArg) previewArgs.push("--port", portArg);
+      return runScript("vivliostyle-adapter.js", previewArgs, "preview");
+    }
+    return runScript("vivliostyle-adapter.js", ["preview", ...restArgs], "preview");
+  }
+
   if (command === "preflight") return runScript("pdf-preflight.js", argv.slice(1), "preflight");
 
   if (command === "migrate") return runScript("legacy-manager.js", argv.slice(1), "migrate");
+
+  if (command === "behavior") {
+    if (subcommand === "eval")  return runScript("behavior-eval.js",  rest, "behavior eval");
+    if (subcommand === "list")  return runScript("behavior-eval.js",  ["--list", ...rest], "behavior list");
+    // Sin subcommand: behavior-runner determinístico sobre guide.json
+    return runScript("behavior-runner.js", argv.slice(1), "behavior");
+  }
   if (command === "syllabus" && subcommand === "validate") return runScript("syllabus-validator.js", rest, "syllabus validate");
   if (command === "visual" && subcommand === "render") return runScript("visual-pipeline.js", rest, "visual render");
   if (command === "visual" && subcommand === "inspect") return runScript("visual-inspector.js", rest, "visual inspect");

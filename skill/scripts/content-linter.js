@@ -17,10 +17,18 @@
 
 const fs   = require("node:fs");
 const path = require("node:path");
+const { validate: validateSchema } = require("./schema-validator");
+
+const ROOT        = path.resolve(__dirname, "..");
+const SCHEMA_PATH = path.join(ROOT, "schemas", "guide.schema.json");
 
 // ─── Catálogo de reglas HTML/JSON ────────────────────────────────────────────
 
 const RULES = {
+  "JIN-SCH-001": {
+    id: "JIN-SCH-001", category: "schema", severity: "error",
+    description: "guide.json no cumple el esquema canónico (guide.schema.json).",
+  },
   "JIN-CNT-001": {
     id: "JIN-CNT-001", category: "structure", severity: "error",
     description: "guide.json debe contener al menos un nodo 'orientation'.",
@@ -107,6 +115,20 @@ function lintGuide(guidePath) {
     guide = JSON.parse(fs.readFileSync(absolute, "utf8"));
   } catch (err) {
     throw new Error(`Error de sintaxis JSON: ${err.message}`);
+  }
+
+  // ── Validación estructural contra guide.schema.json ──
+  try {
+    const schema = JSON.parse(fs.readFileSync(SCHEMA_PATH, "utf8"));
+    const schemaErrors = validateSchema(guide, schema, "$", schema);
+    for (const msg of schemaErrors) {
+      issues.push({
+        rule: "JIN-SCH-001", category: "schema", severity: "error",
+        message: msg, file: absolute,
+      });
+    }
+  } catch {
+    // Si el esquema no está disponible, continuar con las reglas manuales
   }
 
   const metadata = guide.metadata || {};

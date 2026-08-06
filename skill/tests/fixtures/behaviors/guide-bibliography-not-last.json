@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "course": "Bases de Datos",
+    "week": 4,
+    "topic": "Transacciones",
+    "outcome": "Distinguir los niveles de aislamiento de transacciones y sus implicaciones.",
+    "bibliography": "reference.bib"
+  },
+  "sections": [
+    {
+      "type": "orientation",
+      "id": "orientacion",
+      "title": "Introducción",
+      "content": "Esta semana estudiamos transacciones."
+    },
+    {
+      "type": "bibliography",
+      "id": "referencias",
+      "title": "Referencias"
+    },
+    {
+      "type": "theory",
+      "id": "teoria-acid",
+      "title": "Propiedades ACID",
+      "content": "Las propiedades ACID garantizan la integridad transaccional."
+    }
+  ]
+}

@@ -4,7 +4,6 @@ description: Diseña, redacta, edita y valida cursos, guías semanales HTML, mó
 allowed-tools:
   - Bash(node scripts/*)
   - Bash(node bin/jintia.js *)
-  - Bash(npx @charlie.act7/jintia *)
   - Bash(vivliostyle *)
 ---
 
@@ -26,6 +25,7 @@ operación en lenguaje natural; `/jintia` no es un comando nativo de Codex.
 | Diseñar una evaluación | `assessment` | `commands/assessment.md` |
 | Gestionar figuras | `visual` | `commands/visual.md` |
 | Validar guide.json | `validate` | `commands/validate.md` |
+| Verificar contratos de comportamiento | `behavior` | `commands/behavior.md` |
 | Generar HTML desde guide.json | `render` | `commands/compile.md` |
 | Compilar HTML a PDF (Vivliostyle) | `compile` | `commands/compile.md` |
 | Vista previa en navegador | `preview` | `commands/compile.md` |
@@ -104,7 +104,6 @@ Leer únicamente las referencias necesarias para la tarea. Leer siempre `referen
 | Mock-ups HTML y captura PNG | `references/figuras-html.md` |
 | Selección, especificación, renderizado y accesibilidad visual | `references/sistema-visual.md` |
 | Convenciones visuales por área académica | `references/perfiles-disciplinares.md` |
-| Compilación y scripts auxiliares | `references/compilacion.md` |
 | Validación final obligatoria | `references/checklist.md` |
 
 Si `config/institution.json` existe, leerlo antes de redactar. Si `.jintia/course.json` existe, leerlo también y usar su configuración específica para esta asignatura. Si `config/notebooks.json` existe, usarlo para resolver el notebook del curso. No editar archivos de `references/` para guardar datos del usuario.
@@ -121,9 +120,9 @@ y `Editorial` antes de planificar. Mantener el `README.md` como sílabo canónic
 3. Validar su estructura con `references/esquema-silabo.md`.
 4. Leer `config/institution.json` si está disponible.
 5. Leer `.jintia/course.json` si está disponible. Su configuración pertenece a esta asignatura y prevalece sobre la configuración institucional heredada.
-6. Resolver `activeTemplate`.
-7. Leer `meta.json`, `template.md` y `preamble.tex` de la plantilla activa.
-8. Validar `requiredFiles` y copiar esos archivos junto a la guía.
+6. Resolver el tema HTML activo (`activeTemplate`; por defecto `jintia-clasico`).
+7. Leer `themes/<activeTemplate>/meta.json` para conocer el CSS y los archivos requeridos.
+8. Verificar que los archivos declarados en `requiredFiles` existen.
 9. Pedir únicamente datos ausentes que cambien materialmente el resultado.
 
 No solicitar información que el sílabo o la configuración ya proporcionan.
@@ -158,7 +157,7 @@ Mapear los campos canónicos:
 | `**Asignatura:**` | Metadatos y apertura editorial |
 | `**Periodo académico ordinario:**` | Fecha del documento |
 | `### Semana XX — ...` | Semana y tema |
-| `**Unidad:**` | `\coursemeta` |
+| `**Unidad:**` | `metadata.unit` en guide.json |
 | `**Tema / contenido semanal:**` | Una sección teórica por viñeta principal |
 | `**Resultado de aprendizaje:**` | Orientación, práctica y alineación |
 | `**Herramienta de aprendizaje:**` | Fuentes y recursos |
@@ -254,7 +253,7 @@ esté disponible.
 - Evitar metáforas no técnicas y los incisos entre rayas.
 - Preferir oraciones de hasta 20 palabras. Dividir las que superen 35.
 - Usar un término técnico canónico de forma consistente.
-- Marcar solo su primera aparición con `\keyterm{}`.
+- Marcar solo su primera aparición con `<span class="jintia-keyterm">término</span>` en el campo `content`.
 - Conectar el primer párrafo de cada sección con la necesidad creada por la anterior.
 - Usar por defecto una representación principal por sección. Añadir otra solo
   cuando responda a una operación cognitiva distinta y la combinación sea
@@ -287,6 +286,6 @@ Tratar logos, socios, módulos internacionales y ecosistemas institucionales com
    `node "<skill-root>/scripts/visual-linter.js" <guide.json>` como comprobación global.
 3. Generar y revisar el HTML: `jintia render <guide.json>` y luego `node "<skill-root>/scripts/html-linter.js" <guide.html>`.
 4. Compilar a PDF con `jintia compile <guide.json>` y comprobar `jintia preflight <guide.html>`.
-4. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
-5. Ejecutar `references/checklist.md` punto por punto.
-6. Informar archivos creados, validaciones ejecutadas y limitaciones reales.
+5. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
+6. Ejecutar `references/checklist.md` punto por punto.
+7. Informar archivos creados, validaciones ejecutadas y limitaciones reales.

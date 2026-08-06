@@ -7,6 +7,7 @@ Ejecuta el linter de contenido (`content-linter.js`) contra el schema canónico.
 
 | Regla | Categoría | Severidad |
 |---|---|---|
+| JIN-SCH-001 | Esquema | Error — incumplimiento del contrato `guide.schema.json` |
 | JIN-CNT-001 | Estructura | Error — falta nodo `orientation` |
 | JIN-CNT-002 | Accesibilidad | Error — figura sin `alt` o `caption` |
 | JIN-CNT-003 | Pedagogía | Advertencia — `assessment` sin `practice` previo |
