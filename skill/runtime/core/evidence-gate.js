@@ -75,9 +75,10 @@ function checkLocalSources(courseRoot, weekNumber) {
   const readmePath = path.join(courseRoot, "README.md");
   if (fs.existsSync(readmePath)) {
     const content = fs.readFileSync(readmePath, "utf8");
-    // Requiere contenido real en la misma línea ([ \t]+ excluye saltos de línea)
-    const hasSources = /\*\*Herramienta de aprendizaje:\*\*[ \t]+\S/i.test(content);
-    if (hasSources) sources.push({ type: "syllabus_sources", path: readmePath });
+    // Acepta fuente en la misma línea o en bullet list inmediata (formato multi-línea)
+    const hasSameLine  = /\*\*Herramienta de aprendizaje:\*\*[ \t]+\S/i.test(content);
+    const hasMultiLine = /\*\*Herramienta de aprendizaje:\*\*[ \t]*\r?\n[ \t]*[-*•][ \t]+\S/i.test(content);
+    if (hasSameLine || hasMultiLine) sources.push({ type: "syllabus_sources", path: readmePath });
   }
 
   return sources;

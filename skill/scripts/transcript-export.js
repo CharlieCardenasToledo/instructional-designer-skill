@@ -51,7 +51,10 @@ function redactString(str, redactFields) {
     result = result.replace(/\/(?:home|Users)\/[^/\s]+(?:\/[^/\s]+)*/g, "[RUTA]");
   }
   if (redactFields.includes("token")) {
-    result = result.replace(/(?:api[_-]?key|token|secret)[=:\s]+[\w-]{10,}/gi, "$&".replace(/[\w-]{10,}$/, "[TOKEN]"));
+    result = result.replace(
+      /((?:api[_-]?key|token|secret)[=:\s]+)[\w-]{10,}/gi,
+      (_, prefix) => `${prefix}[TOKEN]`
+    );
   }
   return result;
 }

@@ -12,9 +12,16 @@ allowed-tools:
 ## Router de operaciones
 
 Jintia es una skill-orquestador: interpreta lenguaje natural y deriva cada
-petición al playbook mínimo. En Claude, el usuario puede invocar las operaciones
-con `/jintia <comando>`. En Codex, debe invocar `$jintia-skill` y expresar la
-operación en lenguaje natural; `/jintia` no es un comando nativo de Codex.
+petición al playbook mínimo.
+
+| Entorno | Superficie de invocación |
+|---|---|
+| Claude Code | `/jintia-skill <comando>` |
+| Codex / OpenAI | `$jintia-skill` + lenguaje natural |
+| CLI directa | `jintia <comando>` |
+
+`/jintia` no funciona en Claude Code; el nombre registrado del plugin es
+`jintia-skill`. En Codex, `/jintia-skill` tampoco es nativo — usar `$jintia-skill`.
 
 | Intención | Operación | Playbook |
 |---|---|---|

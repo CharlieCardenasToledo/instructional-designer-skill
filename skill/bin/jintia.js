@@ -50,11 +50,12 @@ Uso:
 
   — Sílabo —
   jintia syllabus validate <README.md>
-  jintia syllabus check    <curso> <semana>     [--json]
+  jintia syllabus check    <curso> [semana]     [--json]
+  jintia syllabus edit     <curso> <semana>     --field <campo> <valor>
   jintia syllabus import   <curso> <archivo>    [--json]
 
   — Plan semanal —
-  jintia plan save    <curso> <semana> [--file plan.json] [--json]
+  jintia plan save    <curso> <semana> --file plan.json [--json]
   jintia plan approve <curso> <semana> [--json]
   jintia plan check   <curso> <semana> [--json]
   jintia plan status  <curso> <semana> [--json]
@@ -326,24 +327,96 @@ function main(argv) {
     if (subcommand === "validate") return runScript("syllabus-validator.js", rest, "syllabus validate");
 
     if (subcommand === "check") {
-      const { validateSyllabus } = require("../runtime/core/syllabus-manager");
+      const { validateSyllabus, validateWeek } = require("../runtime/core/syllabus-manager");
       const courseDir = rest[0];
       const week      = rest[1];
       const asJson    = rest.includes("--json");
-      if (!courseDir) { console.error("Uso: jintia syllabus check <curso> <semana>"); process.exitCode = 2; return; }
+      if (!courseDir) { console.error("Uso: jintia syllabus check <curso> [semana]"); process.exitCode = 2; return; }
       const readmePath = path.resolve(courseDir, "README.md");
       if (!fs.existsSync(readmePath)) {
-        console.error(`No existe README.md en: ${courseDir}`);
+        const msg = `No existe README.md en: ${courseDir}`;
+        if (asJson) console.log(JSON.stringify({ status: "error", errors: [msg] }));
+        else console.error(msg);
         process.exitCode = 1; return;
       }
       const content = fs.readFileSync(readmePath, "utf8");
       const { valid, errors } = validateSyllabus(content);
+
+      // Si se proporcionó número de semana, validar esa semana específicamente
+      if (week) {
+        const weekResult = validateWeek(content, Number(week));
+        if (asJson) {
+          console.log(JSON.stringify({
+            status: weekResult.valid ? "success" : "error",
+            found:  weekResult.found,
+            week:   weekResult.week,
+            fields: weekResult.fields,
+            errors: weekResult.errors,
+            syllabusErrors: valid ? [] : errors,
+          }));
+          if (!weekResult.found || !weekResult.valid) process.exitCode = 1;
+        } else {
+          if (!weekResult.found) {
+            console.error(`✗ La semana ${week} no existe en el sílabo.`);
+            process.exitCode = 1; return;
+          }
+          if (weekResult.valid) {
+            console.log(`✓ Semana ${week} válida.`);
+          } else {
+            weekResult.errors.forEach(e => console.error(`✗ ${e}`));
+            process.exitCode = 1;
+          }
+          if (!valid) {
+            console.log("\nErrores en el sílabo completo:");
+            errors.forEach(e => console.error(`  ✗ ${e}`));
+          }
+        }
+        return;
+      }
+
+      // Sin semana: validar el documento completo
       if (asJson) {
         console.log(JSON.stringify({ status: valid ? "success" : "error", errors }));
       } else {
         if (valid) { console.log("✓ Sílabo válido."); }
         else { errors.forEach(e => console.error(`✗ ${e}`)); process.exitCode = 1; }
       }
+      return;
+    }
+
+    if (subcommand === "edit") {
+      const { safeUpdate } = require("../runtime/core/syllabus-manager");
+      const courseDir  = rest[0];
+      const weekArg    = rest[1];
+      const asJson     = rest.includes("--json");
+      if (!courseDir || !weekArg) {
+        console.error("Uso: jintia syllabus edit <curso> <semana> --field <campo> <valor>");
+        process.exitCode = 2; return;
+      }
+      const readmePath = path.resolve(courseDir, "README.md");
+      if (!fs.existsSync(readmePath)) {
+        console.error(`No existe README.md en: ${courseDir}`); process.exitCode = 1; return;
+      }
+      const fieldName  = option(rest.slice(2), "--field", null);
+      const fieldValue = fieldName ? rest[rest.indexOf("--field") + 2] || null : null;
+      if (!fieldName || !fieldValue) {
+        console.error("✗ Se requiere --field <nombre> <valor>");
+        console.error("  Ejemplo: jintia syllabus edit ./curso 01 --field topic 'Nuevas consultas SQL'");
+        process.exitCode = 2; return;
+      }
+      // Para ediciones de campos de semana, requiere conocer el bloque completo.
+      // En este flujo, mostrar el bloque actual y orientar al usuario.
+      const { parseSyllabus } = require("../runtime/core/syllabus-manager");
+      const content = fs.readFileSync(readmePath, "utf8");
+      const model   = parseSyllabus(content);
+      const week    = model.weeks.find(w => w.number === Number(weekArg));
+      if (!week) {
+        console.error(`✗ La semana ${weekArg} no existe en el sílabo.`); process.exitCode = 1; return;
+      }
+      console.log(`Semana ${weekArg} actual:\n`);
+      console.log(week.raw);
+      console.log(`\nPara editar el campo "${fieldName}", actualiza el bloque de semana con safeUpdate().`);
+      console.log(`O edita directamente el README.md y ejecuta: jintia syllabus check ${courseDir} ${weekArg}`);
       return;
     }
 
@@ -376,17 +449,42 @@ function main(argv) {
       const weekNumber = rest[1];
       const planFile   = option(rest, "--file", null);
       if (!courseDir || !weekNumber) {
-        console.error("Uso: jintia plan save <curso> <semana> [--file plan.json]");
+        console.error("Uso: jintia plan save <curso> <semana> --file plan.json");
         process.exitCode = 2; return;
       }
-      const planData = planFile && fs.existsSync(planFile)
-        ? JSON.parse(fs.readFileSync(planFile, "utf8"))
-        : { course: path.basename(path.resolve(courseDir)), missingEvidence: [] };
-      const saved = planState.savePlan(path.resolve(courseDir), weekNumber, planData);
+      if (!planFile) {
+        console.error("✗ Se requiere --file plan.json con topic, outcomes y evidence declarados.");
+        console.error(`  Consulta el playbook: ${path.join(ROOT, "commands", "plan.md")}`);
+        process.exitCode = 2; return;
+      }
+      if (!fs.existsSync(planFile)) {
+        console.error(`✗ No existe el archivo: ${planFile}`);
+        process.exitCode = 1; return;
+      }
+      let planData;
+      try {
+        planData = JSON.parse(fs.readFileSync(planFile, "utf8"));
+      } catch (e) {
+        console.error(`✗ El archivo no es JSON válido: ${e.message}`);
+        process.exitCode = 1; return;
+      }
+      let saved;
+      try {
+        saved = planState.savePlan(path.resolve(courseDir), weekNumber, planData);
+      } catch (e) {
+        if (asJson) console.log(JSON.stringify({ status: "error", message: e.message }));
+        else console.error(`✗ ${e.message}`);
+        process.exitCode = 1; return;
+      }
+      const record = planState.getPlan(path.resolve(courseDir), weekNumber);
       if (asJson) {
-        console.log(JSON.stringify({ status: "saved", path: saved, week: weekNumber }));
+        console.log(JSON.stringify({ status: "saved", state: record.status, path: saved, week: weekNumber }));
       } else {
-        console.log(`✓ Plan de semana ${weekNumber} guardado: ${saved}`);
+        const stateIcon = record.status === "blocked" ? "⚠" : "✓";
+        console.log(`${stateIcon} Plan de semana ${weekNumber} guardado (${record.status}): ${saved}`);
+        if (record.status === "blocked" && record.missingEvidence?.length) {
+          console.log(`  Evidencia faltante: ${record.missingEvidence.join(", ")}`);
+        }
       }
       return;
     }
@@ -496,9 +594,128 @@ function main(argv) {
   if (command === "visual" && subcommand === "inspect") return runScript("visual-inspector.js", rest, "visual inspect");
 
   if (command === "guide") {
+    const planState   = require("../runtime/core/plan-state");
+    const evidenceGate = require("../runtime/core/evidence-gate");
+
+    // guide create <curso> <semana> --input draft.json
+    if (subcommand === "create") {
+      const courseDir  = rest[0];
+      const weekNumber = rest[1];
+      const inputFile  = option(rest, "--input", null);
+      const asJson     = rest.includes("--json");
+
+      if (!courseDir || !weekNumber || !inputFile) {
+        console.error("Uso: jintia guide create <curso> <semana> --input draft.json");
+        process.exitCode = 2; return;
+      }
+
+      const courseRoot  = path.resolve(courseDir);
+      const resolvedInput = path.resolve(inputFile);
+
+      // 1. Plan debe estar aprobado
+      const planResult = planState.checkPlanApproved(courseRoot, weekNumber);
+      if (!planResult.approved) {
+        const msg = `El plan de la semana ${weekNumber} no está aprobado: ${planResult.message}`;
+        if (asJson) console.log(JSON.stringify({ status: "error", message: msg }));
+        else console.error(`✗ ${msg}`);
+        process.exitCode = 1; return;
+      }
+
+      // 2. Compuerta de evidencia
+      const evResult = evidenceGate.check({ courseRoot, weekNumber: Number(weekNumber) });
+      if (!evResult.allowed) {
+        const msg = `${evResult.code}: ${evResult.message}`;
+        if (asJson) console.log(JSON.stringify({ status: "error", code: evResult.code, message: evResult.message }));
+        else console.error(`✗ ${msg}`);
+        process.exitCode = 1; return;
+      }
+
+      // 3. El archivo de entrada debe existir
+      if (!fs.existsSync(resolvedInput)) {
+        const msg = `No existe el archivo de entrada: ${resolvedInput}`;
+        if (asJson) console.log(JSON.stringify({ status: "error", message: msg }));
+        else console.error(`✗ ${msg}`);
+        process.exitCode = 1; return;
+      }
+
+      // 4. Validar draft.json con content-linter
+      const validateResult = spawnSync(
+        process.execPath,
+        [path.join(SCRIPTS, "content-linter.js"), resolvedInput],
+        { cwd: process.cwd(), encoding: "utf8", stdio: "pipe", shell: false }
+      );
+      if (validateResult.error) throw validateResult.error;
+      if (validateResult.status !== 0) {
+        const msg = "El draft.json no pasa la validación. Corrige los errores antes de crear guide.json.";
+        if (asJson) console.log(JSON.stringify({ status: "error", message: msg, detail: validateResult.stdout || validateResult.stderr }));
+        else { console.error(`✗ ${msg}`); console.error(validateResult.stdout || validateResult.stderr); }
+        process.exitCode = 1; return;
+      }
+
+      // 5. Escribir guide.json en su ubicación canónica
+      const weekPad   = String(Number(weekNumber)).padStart(2, "0");
+      const guideDir  = path.join(courseRoot, "semanas", `semana-${weekPad}`);
+      const guidePath = path.join(guideDir, "guide.json");
+      fs.mkdirSync(guideDir, { recursive: true });
+      fs.copyFileSync(resolvedInput, guidePath);
+
+      if (asJson) console.log(JSON.stringify({ status: "ok", path: guidePath }));
+      else console.log(`✓ guide.json escrito: ${guidePath}`);
+      console.log(`  Siguiente paso: jintia guide finalize ${courseDir} ${weekNumber}`);
+      return;
+    }
+
+    // guide finalize <curso> <semana>
+    if (subcommand === "finalize") {
+      const courseDir  = rest[0];
+      const weekNumber = rest[1];
+      const asJson     = rest.includes("--json");
+
+      if (!courseDir || !weekNumber) {
+        console.error("Uso: jintia guide finalize <curso> <semana>");
+        process.exitCode = 2; return;
+      }
+
+      const courseRoot = path.resolve(courseDir);
+      const weekPad    = String(Number(weekNumber)).padStart(2, "0");
+      const guidePath  = path.join(courseRoot, "semanas", `semana-${weekPad}`, "guide.json");
+
+      if (!fs.existsSync(guidePath)) {
+        const msg = `No existe guide.json para la semana ${weekNumber} en: ${courseDir}`;
+        if (asJson) console.log(JSON.stringify({ status: "error", message: msg }));
+        else console.error(`✗ ${msg}`);
+        process.exitCode = 1; return;
+      }
+
+      // Validar guide.json
+      const validateResult = spawnSync(
+        process.execPath,
+        [path.join(SCRIPTS, "content-linter.js"), guidePath],
+        { cwd: process.cwd(), encoding: "utf8", stdio: "pipe", shell: false }
+      );
+      if (validateResult.error) throw validateResult.error;
+      if (validateResult.status !== 0) {
+        const msg = "guide.json no pasa la validación. Corrige los errores antes de finalizar.";
+        if (asJson) console.log(JSON.stringify({ status: "error", message: msg, detail: validateResult.stdout || validateResult.stderr }));
+        else { console.error(`✗ ${msg}`); console.error(validateResult.stdout || validateResult.stderr); }
+        process.exitCode = 1; return;
+      }
+
+      // Marcar como generated
+      planState.markGenerated(courseRoot, weekNumber);
+
+      if (asJson) console.log(JSON.stringify({ status: "ok", week: weekNumber, state: "generated" }));
+      else console.log(`✓ Semana ${weekNumber} marcada como generated. Pipeline listo: jintia render ${guidePath}`);
+      return;
+    }
+
+    // Sin subcomando: mostrar ayuda
     console.log(`La operación guide es un playbook de la skill.`);
     console.log(`Consulta: ${path.join(ROOT, "commands", "guide.md")}`);
-    console.log(`Antes de generar guide.json, verifica: jintia plan check <curso> <semana>`);
+    console.log(`Subcomandos: create, finalize`);
+    console.log(`  jintia guide create  <curso> <semana> --input draft.json`);
+    console.log(`  jintia guide finalize <curso> <semana>`);
+    console.log(`Antes de ejecutar: jintia plan check <curso> <semana>`);
     return;
   }
   if (command === "assessment") {

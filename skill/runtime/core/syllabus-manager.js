@@ -226,12 +226,15 @@ function validateSyllabus(markdown) {
   }
   if (dupes.length > 0) errors.push(`Semanas duplicadas: ${[...new Set(dupes)].join(", ")}.`);
 
-  // 5. Ninguna no puede coexistir con actividades reales en el mismo bloque
+  // 5. Ninguna no puede coexistir con actividades reales en el mismo bloque (misma línea o siguientes)
   const blocks = markdown.split(/^---\s*$/m);
   for (const block of blocks) {
-    if (/\*\*Actividades calificadas:\*\*\s*Ninguna/i.test(block)) {
-      const hasReal = /\*\*Actividades calificadas:\*\*[^\n]*\n(?:[^\n]+\n)*[^\n]*\[(P|F|E)\d/i.test(block);
-      if (hasReal) {
+    const ningunaLine = /\*\*Actividades calificadas:\*\*\s*Ninguna(.*)/i.exec(block);
+    if (ningunaLine) {
+      const restOfLine = ningunaLine[1] || "";
+      const hasSameLine  = /\[(P|F|E|T)\d/i.test(restOfLine);
+      const hasNextLines = /\*\*Actividades calificadas:\*\*[^\n]*\n(?:[^\n]+\n)*?[^\n]*\[(P|F|E|T)\d/i.test(block);
+      if (hasSameLine || hasNextLines) {
         errors.push("Una semana tiene 'Ninguna' como actividad calificada pero también lista actividades reales.");
       }
     }
@@ -293,6 +296,63 @@ function safeUpdate(readmePath, changes) {
   return { ok: true, backup, path: readmePath };
 }
 
+// ─── Validación por semana individual ────────────────────────────────────────
+
+const WEEK_FIELD_PATTERNS = {
+  unit:       /^\*\*Unidad:\*\*/im,
+  topic:      /^\*\*Tema\s*\/\s*contenido semanal:\*\*/im,
+  outcome:    /^\*\*Resultado de aprendizaje:\*\*/im,
+  sources:    /^\*\*Herramienta de aprendizaje:\*\*/im,
+  hours:      /^\*\*Horas:\*\*/im,
+  activities: /^\*\*Actividades calificadas:\*\*/im,
+};
+
+const WEEK_FIELD_NAMES = {
+  unit:       "Unidad",
+  topic:      "Tema / contenido semanal",
+  outcome:    "Resultado de aprendizaje",
+  sources:    "Herramienta de aprendizaje",
+  hours:      "Horas",
+  activities: "Actividades calificadas",
+};
+
+/**
+ * Valida que una semana específica existe en el sílabo y tiene todos sus campos.
+ *
+ * @param {string} markdown    Contenido completo del README.md
+ * @param {number} weekNumber  Número de semana a validar
+ * @returns {{ found: boolean, valid: boolean, week: number, fields: object, errors: string[] }}
+ */
+function validateWeek(markdown, weekNumber) {
+  const model  = parseSyllabus(markdown);
+  const n      = Number(weekNumber);
+  const padded = String(n).padStart(2, "0");
+  const week   = model.weeks.find(w => w.number === n);
+
+  if (!week) {
+    return {
+      found:  false,
+      valid:  false,
+      week:   n,
+      fields: {},
+      errors: [`La semana ${padded} no existe en el sílabo.`],
+    };
+  }
+
+  const raw    = week.raw;
+  const fields = {};
+  const errors = [];
+
+  for (const [key, pattern] of Object.entries(WEEK_FIELD_PATTERNS)) {
+    fields[key] = pattern.test(raw);
+    if (!fields[key]) {
+      errors.push(`Falta el campo "${WEEK_FIELD_NAMES[key]}" en semana ${padded}.`);
+    }
+  }
+
+  return { found: true, valid: errors.length === 0, week: n, fields, errors };
+}
+
 module.exports = {
   createBackup,
   restoreBackup,
@@ -301,6 +361,9 @@ module.exports = {
   replaceWeek,
   updateCourseMetadata,
   validateSyllabus,
+  validateWeek,
   safeUpdate,
   REQUIRED_FIELDS,
+  WEEK_FIELD_PATTERNS,
+  WEEK_FIELD_NAMES,
 };

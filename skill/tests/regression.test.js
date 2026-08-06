@@ -207,7 +207,7 @@ test("R03b — validateSyllabus detecta semanas duplicadas", () => {
   assert.ok(dupeError, `Debe reportar semanas duplicadas, errores: ${JSON.stringify(errors)}`);
 });
 
-test("R03c — validateSyllabus detecta Ninguna coexistiendo con actividades", () => {
+test("R03c — validateSyllabus detecta Ninguna coexistiendo con actividades en misma línea", () => {
   const CONFLICTED = `# Curso
 
 **Asignatura:** Test
@@ -223,17 +223,12 @@ test("R03c — validateSyllabus detecta Ninguna coexistiendo con actividades", (
 **Actividades calificadas:** Ninguna [P1] Foro (10%)
 `;
   const { valid, errors } = validateSyllabus(CONFLICTED);
-  // El campo raw contiene "Ninguna" + actividad en la misma línea — debe detectarlo
-  // o en la lógica de bloque
-  // Verificamos que se detecte la coexistencia
-  const ningunaConf = errors.find(e => /ninguna/i.test(e) || /coexist/i.test(e));
-  if (ningunaConf) {
-    assert.ok(true, "Se detectó la coexistencia de Ninguna con actividades");
-  } else {
-    // Si no se detecta en este fixture específico (formato en una línea), aceptar
-    // siempre que la validación siga siendo estricta para el caso de bloque separado
-    assert.ok(true, "Formato en una línea — omitido en este fixture");
-  }
+  assert.equal(valid, false,
+    `Un sílabo con Ninguna + actividad real en la misma línea debe ser inválido. Errores: ${errors.join("; ")}`);
+  assert.ok(
+    errors.some(e => /ninguna/i.test(e)),
+    `Debe reportar el conflicto de Ninguna. Errores encontrados: ${errors.join(", ")}`
+  );
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -374,11 +369,17 @@ test("R06b — plan en estado pending NO permite guide", () => {
   const dir = makeTempDir();
   makeCourse(dir, { readme: MINIMAL_README });
 
-  savePlan(dir, 1, { course: "TEST", topic: "Tema", missingEvidence: [] });
+  // Evidence verificada → plan queda en "pending", no "blocked"
+  savePlan(dir, 1, {
+    course: "TEST",
+    topic:  "Tema",
+    evidence: [{ source: "Beynon-Davies (2018)", status: "verified", location: "README.md" }],
+    missingEvidence: [],
+  });
 
   const check = checkPlanApproved(dir, 1);
   assert.equal(check.approved, false, "Un plan en pending no debe permitir guide");
-  assert.equal(check.status, "pending");
+  assert.equal(check.status, "pending", `Estado esperado: pending, obtenido: ${check.status}`);
 
   fs.rmSync(dir, { recursive: true, force: true });
 });
@@ -387,7 +388,13 @@ test("R06c — plan aprobado permite guide", () => {
   const dir = makeTempDir();
   makeCourse(dir, { readme: MINIMAL_README });
 
-  savePlan(dir, 1, { course: "TEST", topic: "Tema", missingEvidence: [] });
+  // Evidence verificada → pending; approvePlan re-verifica evidencia y semana
+  savePlan(dir, 1, {
+    course: "TEST",
+    topic:  "Tema",
+    evidence: [{ source: "Beynon-Davies (2018)", status: "verified", location: "README.md" }],
+    missingEvidence: [],
+  });
   const approval = approvePlan(dir, 1);
   assert.ok(approval.ok, `approvePlan debe tener éxito: ${approval.message}`);
 

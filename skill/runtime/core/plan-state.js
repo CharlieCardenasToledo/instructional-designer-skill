@@ -14,8 +14,13 @@
  *   generated  guide.json fue creado con éxito
  */
 
-const fs   = require("node:fs");
-const path = require("node:path");
+const fs     = require("node:fs");
+const path   = require("node:path");
+const crypto = require("node:crypto");
+
+function hashContent(str) {
+  return crypto.createHash("sha256").update(str, "utf8").digest("hex").slice(0, 16);
+}
 
 const PLAN_FILE = ".jintia-plan.json";
 
@@ -54,27 +59,49 @@ function savePlan(courseRoot, weekNumber, planData) {
   const file = planPath(courseRoot, weekNumber);
   fs.mkdirSync(path.dirname(file), { recursive: true });
 
-  const status = planData.missingEvidence && planData.missingEvidence.length > 0
+  // topic es obligatorio — no se puede planificar sin tema
+  const topic = (planData.topic || "").trim();
+  if (!topic) {
+    throw new TypeError(
+      "El plan debe incluir un campo 'topic' (tema de la semana). " +
+      "No se puede guardar un plan sin tema declarado."
+    );
+  }
+
+  const evidence       = Array.isArray(planData.evidence) ? planData.evidence : [];
+  const missingEvidence = planData.missingEvidence || [];
+  const verifiedSources = evidence.filter(e => e && e.status === "verified");
+
+  // Sin fuentes verificadas o con evidencia faltante → blocked
+  const status = (verifiedSources.length === 0 || missingEvidence.length > 0)
     ? "blocked"
     : "pending";
 
+  // Hash del sílabo en el momento de guardar el plan
+  let syllabusHash = null;
+  const readmePath = path.join(path.resolve(courseRoot), "README.md");
+  if (fs.existsSync(readmePath)) {
+    syllabusHash = hashContent(fs.readFileSync(readmePath, "utf8"));
+  }
+
   const record = {
-    schemaVersion: "1.0",
-    course:        planData.course || path.basename(path.resolve(courseRoot)),
-    week:          Number(weekNumber),
-    topic:         planData.topic || "",
-    outcomes:      planData.outcomes || {},
-    evidence:      planData.evidence || [],
-    missingEvidence: planData.missingEvidence || [],
-    plannedFiles:  planData.plannedFiles || [
+    schemaVersion:  "1.1",
+    course:         planData.course || path.basename(path.resolve(courseRoot)),
+    week:           Number(weekNumber),
+    topic,
+    outcomes:       planData.outcomes || {},
+    evidence,
+    missingEvidence,
+    syllabusHash,
+    plannedFiles:   planData.plannedFiles || [
       `semanas/semana-${weekPadded(weekNumber)}/guide.json`,
       `semanas/semana-${weekPadded(weekNumber)}/reference.bib`,
       `semanas/semana-${weekPadded(weekNumber)}/figure/`,
     ],
     status,
-    savedAt:       new Date().toISOString(),
-    approvedAt:    null,
-    generatedAt:   null,
+    savedAt:        new Date().toISOString(),
+    approvedAt:     null,
+    generatedAt:    null,
   };
 
   fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`);
@@ -104,7 +131,57 @@ function approvePlan(courseRoot, weekNumber) {
   if (record.status === "blocked") {
     return {
       ok:      false,
-      message: `El plan está bloqueado por evidencia faltante: ${record.missingEvidence.join(", ")}. Resuelve las fuentes primero.`,
+      message: `El plan está bloqueado por evidencia faltante: ${(record.missingEvidence || []).join(", ")}. Resuelve las fuentes primero.`,
+      path:    file,
+    };
+  }
+
+  const root = path.resolve(courseRoot);
+
+  // Verificar que el sílabo no cambió desde que se guardó el plan
+  if (record.syllabusHash) {
+    const readmePath = path.join(root, "README.md");
+    if (fs.existsSync(readmePath)) {
+      const currentHash = hashContent(fs.readFileSync(readmePath, "utf8"));
+      if (currentHash !== record.syllabusHash) {
+        return {
+          ok:      false,
+          message: `El sílabo cambió desde que se guardó el plan (semana ${weekNumber}). Ejecuta 'jintia plan save' de nuevo para actualizar.`,
+          path:    file,
+        };
+      }
+    }
+  }
+
+  // Verificar que la semana existe y tiene todos los campos requeridos
+  const readmePath = path.join(root, "README.md");
+  if (fs.existsSync(readmePath)) {
+    const { validateWeek } = require("./syllabus-manager");
+    const content    = fs.readFileSync(readmePath, "utf8");
+    const weekResult = validateWeek(content, weekNumber);
+    if (!weekResult.found) {
+      return {
+        ok:      false,
+        message: `La semana ${weekNumber} no existe en el sílabo. Edita el README.md antes de aprobar.`,
+        path:    file,
+      };
+    }
+    if (!weekResult.valid) {
+      return {
+        ok:      false,
+        message: `La semana ${weekNumber} tiene campos incompletos: ${weekResult.errors.join("; ")}`,
+        path:    file,
+      };
+    }
+  }
+
+  // Re-verificar compuerta de evidencia (fuentes locales, sin notebookLM por defecto)
+  const evidenceGate = require("./evidence-gate");
+  const evResult     = evidenceGate.check({ courseRoot: root, weekNumber: Number(weekNumber) });
+  if (!evResult.allowed) {
+    return {
+      ok:      false,
+      message: `La compuerta de evidencia bloqueó la aprobación: ${evResult.code} — ${evResult.message}`,
       path:    file,
     };
   }
