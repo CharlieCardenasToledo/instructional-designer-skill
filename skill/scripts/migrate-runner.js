@@ -21,7 +21,13 @@
  *   requiresReview — problemas que necesitan atención manual
  *
  * Uso:
- *   node scripts/migrate-runner.js <curso> [--dry-run] [--json]
+ *   node scripts/migrate-runner.js <curso> [--dry-run] [--quarantine] [--keep-first|--keep-last] [--json]
+ *
+ * Flags:
+ *   --quarantine   Mueve artefactos LaTeX al backup (copia + elimina originals). Requiere confirmación implícita.
+ *   --keep-first   Al deduplicar semanas, conservar la primera aparición.
+ *   --keep-last    Al deduplicar semanas, conservar la última aparición (antes comportamiento por defecto).
+ *                  Sin --keep-first ni --keep-last: duplicados se reportan en requiresReview sin auto-reparar.
  */
 
 const fs   = require("node:fs");
@@ -66,6 +72,15 @@ function copyDirSync(src, dst) {
   }
 }
 
+function removeDirSync(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) removeDirSync(full);
+    else fs.unlinkSync(full);
+  }
+  fs.rmdirSync(dir);
+}
+
 // ─── Detección ────────────────────────────────────────────────────────────────
 
 function detectLatexDirs(courseRoot) {
@@ -99,13 +114,17 @@ function detectDuplicateWeeks(readmePath) {
 
 // ─── Reparación ───────────────────────────────────────────────────────────────
 
-function deduplicateWeeks(readmePath, backupRoot, courseRoot) {
+function deduplicateWeeks(readmePath, backupRoot, courseRoot, strategy = "last") {
   const content = fs.readFileSync(readmePath, "utf8");
   const model   = parseSyllabus(content);
 
-  // Conservar la última aparición de cada número de semana
+  // Conservar primera o última aparición según strategy
   const seenMap = new Map();
-  for (const w of model.weeks) seenMap.set(w.number, w);
+  if (strategy === "first") {
+    for (const w of model.weeks) { if (!seenMap.has(w.number)) seenMap.set(w.number, w); }
+  } else {
+    for (const w of model.weeks) seenMap.set(w.number, w);
+  }
   const dedupedModel = {
     ...model,
     weeks: [...seenMap.values()].sort((a, b) => a.number - b.number),
@@ -129,9 +148,11 @@ function deduplicateWeeks(readmePath, backupRoot, courseRoot) {
 // ─── Runner principal ─────────────────────────────────────────────────────────
 
 function runMigrate(courseRoot, options = {}) {
-  const dryRun    = options.dryRun || false;
-  const ts        = tsNow();
-  const backupRoot = path.join(courseRoot, ".jintia-backup", ts);
+  const dryRun      = options.dryRun || false;
+  const quarantine  = options.quarantine || false;
+  const keepStrategy = options.keepFirst ? "first" : options.keepLast ? "last" : null;
+  const ts          = tsNow();
+  const backupRoot  = path.join(courseRoot, ".jintia-backup", ts);
 
   const backedUp       = [];
   const fixed          = [];
@@ -152,60 +173,78 @@ function runMigrate(courseRoot, options = {}) {
     fs.mkdirSync(backupRoot, { recursive: true });
   }
 
-  // Directorios latex/ — respaldar sin eliminar
+  // Directorios latex/ — respaldar; con --quarantine también eliminar originals
   for (const dir of latexDirs) {
     const rel = path.relative(courseRoot, dir);
     if (!dryRun) {
       const dst = path.join(backupRoot, rel);
       copyDirSync(dir, dst);
-      backedUp.push({
-        type:        "latex_dir",
-        path:        rel,
-        backedUpTo:  path.relative(courseRoot, dst),
-      });
+      const entry = {
+        type:       "latex_dir",
+        path:       rel,
+        backedUpTo: path.relative(courseRoot, dst),
+      };
+      if (quarantine) {
+        removeDirSync(dir);
+        entry.quarantined = true;
+      }
+      backedUp.push(entry);
     }
-    requiresReview.push({
-      type:   "latex_dir",
-      path:   rel,
-      action: "manual_deletion",
-      note:   dryRun
-        ? "Sería respaldado en .jintia-backup/. Eliminar manualmente si ya no se necesita."
-        : "Respaldado en .jintia-backup/. Eliminar manualmente si ya no se necesita.",
-    });
+    if (!quarantine || dryRun) {
+      requiresReview.push({
+        type:   "latex_dir",
+        path:   rel,
+        action: dryRun && quarantine ? "would_quarantine" : "manual_deletion",
+        note:   dryRun
+          ? (quarantine ? "Sería movido a .jintia-backup/ (--quarantine)." : "Sería respaldado en .jintia-backup/. Eliminar manualmente si ya no se necesita.")
+          : "Respaldado en .jintia-backup/. Eliminar manualmente si ya no se necesita.",
+      });
+    } else {
+      fixed.push({ type: "latex_dir", path: rel, action: "quarantined" });
+    }
   }
 
-  // Archivos .tex — respaldar sin eliminar
+  // Archivos .tex — respaldar; con --quarantine también eliminar originals
   for (const file of texFiles) {
     const rel = path.relative(courseRoot, file);
     if (!dryRun) {
       const dst = path.join(backupRoot, rel);
       fs.mkdirSync(path.dirname(dst), { recursive: true });
       fs.copyFileSync(file, dst);
-      backedUp.push({
+      const entry = {
         type:       "tex_file",
         path:       rel,
         backedUpTo: path.relative(courseRoot, dst),
-      });
+      };
+      if (quarantine) {
+        fs.unlinkSync(file);
+        entry.quarantined = true;
+      }
+      backedUp.push(entry);
     }
-    requiresReview.push({
-      type:   "tex_file",
-      path:   rel,
-      action: "manual_deletion",
-      note:   dryRun
-        ? "Sería respaldado en .jintia-backup/. Eliminar manualmente si ya no se necesita."
-        : "Respaldado en .jintia-backup/. Eliminar manualmente si ya no se necesita.",
-    });
+    if (!quarantine || dryRun) {
+      requiresReview.push({
+        type:   "tex_file",
+        path:   rel,
+        action: dryRun && quarantine ? "would_quarantine" : "manual_deletion",
+        note:   dryRun
+          ? (quarantine ? "Sería movido a .jintia-backup/ (--quarantine)." : "Sería respaldado en .jintia-backup/. Eliminar manualmente si ya no se necesita.")
+          : "Respaldado en .jintia-backup/. Eliminar manualmente si ya no se necesita.",
+      });
+    } else {
+      fixed.push({ type: "tex_file", path: rel, action: "quarantined" });
+    }
   }
 
-  // Semanas duplicadas — reparar automáticamente con backup
+  // Semanas duplicadas — auto-reparar solo si se especificó --keep-first o --keep-last
   if (dupWeeks.length) {
-    if (!dryRun) {
-      const result = deduplicateWeeks(readmePath, backupRoot, courseRoot);
+    if (!dryRun && keepStrategy) {
+      const result = deduplicateWeeks(readmePath, backupRoot, courseRoot, keepStrategy);
       if (result.ok) {
         fixed.push({
           type:       "duplicate_weeks",
           weeks:      dupWeeks,
-          action:     "deduplicated",
+          action:     `deduplicated (${keepStrategy})`,
           backupPath: path.relative(courseRoot, result.backupPath),
         });
       } else {
@@ -213,15 +252,17 @@ function runMigrate(courseRoot, options = {}) {
           type:   "duplicate_weeks",
           weeks:  dupWeeks,
           action: "manual_fix",
-          note:   `Deduplicación automática falló: ${result.errors?.join("; ")}`,
+          note:   `Deduplicación falló: ${result.errors?.join("; ")}`,
         });
       }
     } else {
       requiresReview.push({
         type:   "duplicate_weeks",
         weeks:  dupWeeks,
-        action: "dedup_needed",
-        note:   "Se corregirá automáticamente al ejecutar sin --dry-run.",
+        action: keepStrategy ? "dedup_needed" : "choose_strategy",
+        note:   dryRun && keepStrategy
+          ? `Se corregirá con estrategia '${keepStrategy}' al ejecutar sin --dry-run.`
+          : `Pasa --keep-first o --keep-last para auto-resolver. Las semanas duplicadas son: ${dupWeeks.join(", ")}.`,
       });
     }
   }
@@ -240,10 +281,13 @@ function runMigrate(courseRoot, options = {}) {
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 if (require.main === module) {
-  const args      = process.argv.slice(2);
-  const courseDir = args.find(a => !a.startsWith("--")) || ".";
-  const dryRun    = args.includes("--dry-run");
-  const asJson    = args.includes("--json");
+  const args        = process.argv.slice(2);
+  const courseDir   = args.find(a => !a.startsWith("--")) || ".";
+  const dryRun      = args.includes("--dry-run");
+  const quarantine  = args.includes("--quarantine");
+  const keepFirst   = args.includes("--keep-first");
+  const keepLast    = args.includes("--keep-last");
+  const asJson      = args.includes("--json");
 
   const courseRoot = path.resolve(courseDir);
 
@@ -255,7 +299,7 @@ if (require.main === module) {
     return;
   }
 
-  const result = runMigrate(courseRoot, { dryRun });
+  const result = runMigrate(courseRoot, { dryRun, quarantine, keepFirst, keepLast });
 
   if (asJson) {
     console.log(JSON.stringify({ status: "ok", ...result }, null, 2));

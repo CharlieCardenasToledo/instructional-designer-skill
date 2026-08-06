@@ -200,6 +200,13 @@ async function runPreflight(htmlPath) {
   const absolute = path.resolve(htmlPath);
   if (!fs.existsSync(absolute)) throw new Error(`Archivo HTML no encontrado: ${absolute}`);
 
+  if (!playwrightAvailable && process.env.JINTIA_REQUIRE_PLAYWRIGHT === "1") {
+    throw new Error(
+      "JIN-PLW-001: JINTIA_REQUIRE_PLAYWRIGHT=1 pero playwright no está instalado. " +
+      "Instala con: npm install -D playwright && npx playwright install chromium"
+    );
+  }
+
   const issues = playwrightAvailable
     ? await preflightWithPlaywright(htmlPath)
     : preflightStatic(htmlPath);

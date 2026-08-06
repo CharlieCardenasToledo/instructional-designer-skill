@@ -73,7 +73,7 @@ Uso:
   — Visual —
   jintia visual render  <spec.json> --template ID
   jintia visual inspect <manifest.json>
-  jintia migrate <curso> [--dry-run] [--json]
+  jintia migrate <curso> [--dry-run] [--quarantine] [--keep-first|--keep-last] [--json]
   jintia behavior <guide.json> [--strict] [--json]
   jintia behavior eval --output <guide.json|respuesta.txt> [--spec ID] [--json]
   jintia behavior list [--json]
@@ -83,7 +83,7 @@ Uso:
 
   — Calidad de documentación —
   jintia docs:check   [--json]
-  jintia legacy:check [--json]
+  jintia legacy:check [<curso>] [--json]
 
 Flujo canónico:
   init → syllabus validate → plan save → plan approve → guide.json → validate → render → compile`);
@@ -97,7 +97,7 @@ function option(args, name, fallback = null) {
 function runScript(script, args, command = script.replace(/\.js$/, "")) {
   const asJson = args.includes("--json");
   const forwardedArgs = args.filter(arg => arg !== "--json");
-  const childArgs = asJson && (script === "rules-runner.js" || script === "context-manager.js" || script === "agent-plan.js" || script === "harness-detect.js" || script === "harness-manager.js" || script === "migrate-runner.js")
+  const childArgs = asJson && (script === "rules-runner.js" || script === "context-manager.js" || script === "agent-plan.js" || script === "harness-detect.js" || script === "harness-manager.js" || script === "migrate-runner.js" || script === "legacy-linter.js")
     ? [...forwardedArgs, "--json"]
     : forwardedArgs;
   const result = spawnSync(process.execPath, [path.join(SCRIPTS, script), ...childArgs], {
@@ -421,17 +421,16 @@ function main(argv) {
     }
 
     if (subcommand === "import") {
-      const courseDir = rest[0];
-      const source    = rest[1];
-      if (!courseDir || !source) {
-        console.error("Uso: jintia syllabus import <curso> <archivo>");
-        process.exitCode = 2; return;
+      const asJsonImport = rest.includes("--json");
+      const msg    = "JIN-NYI-001: syllabus import no está implementado en esta versión.";
+      const detail = "Importa el sílabo manualmente al formato README.md canónico. Ver: references/esquema-silabo.md";
+      if (asJsonImport) {
+        console.log(JSON.stringify({ status: "error", code: "JIN-NYI-001", message: msg, detail }));
+      } else {
+        console.error(`✗ ${msg}`);
+        console.error(`  ${detail}`);
       }
-      console.log(`Importación de sílabo desde: ${source}`);
-      console.log("Esta operación convierte el archivo al contrato README.md canónico.");
-      console.log("Implementa la conversión específica del formato con scripts/syllabus-import.js.");
-      console.log(`Consulta skill/references/esquema-silabo.md para el contrato.`);
-      return;
+      process.exitCode = 1; return;
     }
 
     console.error(`Subcomando desconocido: jintia syllabus ${subcommand || "<vacío>"}`);

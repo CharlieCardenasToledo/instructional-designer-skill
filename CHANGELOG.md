@@ -5,6 +5,20 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.4.0 — 2026-08-06
+
+### Añadido
+
+- `legacy-linter.js` — modo `--course <ruta>`: escanea directorio de curso para detectar `latex/` (LGC-C01), `.tex` (LGC-C02), `\documentclass` (LGC-C03), `\begin{document}` (LGC-C04); exit code ≠ 0 cuando se encuentran.
+- `migrate-runner.js` — flag `--quarantine`: mueve artefactos LaTeX al backup en lugar de solo copiarlos (elimina originals tras backup).
+- `migrate-runner.js` — flags `--keep-first` / `--keep-last` para resolver semanas duplicadas explícitamente; sin ellos los duplicados quedan en `requiresReview` en lugar de auto-resolverse.
+- `pdf-preflight.js` — env var `JINTIA_REQUIRE_PLAYWRIGHT=1`: falla con JIN-PLW-001 si Playwright no está instalado (sin fallback silencioso a modo estático).
+
+### Corregido
+
+- `jintia syllabus import` — era un stub silencioso; ahora devuelve error JIN-NYI-001 con exit code 1 y mensaje claro.
+- `jintia legacy:check` — añadido `legacy-linter.js` al allowlist de `--json` forwarding en `runScript`.
+
 ## `jintia-skill` 11.3.0 — 2026-08-06
 
 ### Añadido

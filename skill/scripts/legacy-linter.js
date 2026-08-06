@@ -70,6 +70,86 @@ const ACTIVE_LATEX_EXEMPT_DIRS = [
 
 const SCAN_EXTS = new Set([".md", ".js", ".mjs", ".json", ".yaml", ".yml"]);
 
+// ─── Escaneo de directorio de curso ──────────────────────────────────────────
+
+const COURSE_SCAN_EXTS    = new Set([".md", ".tex", ".txt", ".json"]);
+const COURSE_IGNORE_DIRS  = new Set(["node_modules", ".git", ".jintia-backup", "legacy"]);
+
+// Reglas de contenido para archivos en un directorio de curso
+const COURSE_CONTENT_RULES = [
+  { id: "LGC-C03", pattern: /\\documentclass\s*[\[{]/g, description: "Documento LaTeX detectado (crear guide.json en su lugar)" },
+  { id: "LGC-C04", pattern: /\\begin\{document\}/g,     description: "Entorno LaTeX detectado (usar guide.json)" },
+];
+
+function walkCourseDir(dir, cb) {
+  let entries;
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); }
+  catch { return; }
+  for (const entry of entries) {
+    if (COURSE_IGNORE_DIRS.has(entry.name)) continue;
+    const fullPath = path.join(dir, entry.name);
+    cb(entry, fullPath);
+    if (entry.isDirectory()) walkCourseDir(fullPath, cb);
+  }
+}
+
+function scanCourse(courseRoot) {
+  const issues    = [];
+  const latexDirs = [];
+  const texFiles  = [];
+
+  walkCourseDir(courseRoot, (entry, fullPath) => {
+    if (entry.isDirectory() && entry.name === "latex") {
+      latexDirs.push(fullPath);
+      issues.push({
+        rule: "LGC-C01", file: fullPath, line: 0, col: 0, match: "latex/",
+        message: `LGC-C01: Directorio latex/ detectado — respaldar con 'jintia migrate' y eliminar manualmente`,
+      });
+    }
+    if (entry.isFile() && entry.name.endsWith(".tex")) {
+      texFiles.push(fullPath);
+      issues.push({
+        rule: "LGC-C02", file: fullPath, line: 0, col: 0, match: ".tex",
+        message: `LGC-C02: Archivo .tex detectado — usar guide.json en lugar de LaTeX`,
+      });
+    }
+    if (entry.isFile() && COURSE_SCAN_EXTS.has(path.extname(entry.name).toLowerCase())) {
+      let content;
+      try { content = fs.readFileSync(fullPath, "utf8"); } catch { return; }
+      const lines = content.split("\n");
+      for (const rule of COURSE_CONTENT_RULES) {
+        for (let i = 0; i < lines.length; i++) {
+          rule.pattern.lastIndex = 0;
+          let m;
+          while ((m = rule.pattern.exec(lines[i])) !== null) {
+            issues.push({
+              rule:    rule.id,
+              file:    fullPath,
+              line:    i + 1,
+              col:     m.index + 1,
+              match:   m[0],
+              message: `${rule.id}: ${rule.description} ("${m[0]}")`,
+            });
+          }
+        }
+      }
+    }
+  });
+
+  return {
+    tool:       "jintia legacy:check (course)",
+    version:    "1.1.0",
+    courseRoot,
+    issues,
+    summary: {
+      latexDirs: latexDirs.length,
+      texFiles:  texFiles.length,
+      issues:    issues.length,
+      ok:        issues.length === 0,
+    },
+  };
+}
+
 const IGNORE_DIRS  = new Set(["node_modules", ".git", "dist", "dist2", "landing"]);
 // Archivos exentos de reglas heredadas v10: historial de cambios, licencias,
 // scripts de migración, playbook de migración, este script (contiene los
@@ -188,28 +268,57 @@ function run(options = {}) {
 // ── CLI ───────────────────────────────────────────────────────────────────────
 
 if (require.main === module) {
-  const args   = process.argv.slice(2);
-  const asJson = args.includes("--json");
+  const args      = process.argv.slice(2);
+  const asJson    = args.includes("--json");
+  const strict    = args.includes("--strict");
+  const courseArg = args.find(a => !a.startsWith("--"));
 
-  const report = run();
-
-  if (asJson) {
-    console.log(JSON.stringify(report, null, 2));
-  } else {
-    console.log(`Jintia Legacy Linter — ${report.scanned} archivos escaneados`);
-    if (!report.issues.length) {
-      console.log("✓ No se encontraron términos heredados LaTeX/v10.");
+  if (courseArg) {
+    // Modo escaneo de curso
+    const courseRoot = path.resolve(courseArg);
+    if (!fs.existsSync(courseRoot)) {
+      const msg = `No existe el directorio de curso: ${courseRoot}`;
+      if (asJson) console.log(JSON.stringify({ status: "error", message: msg }));
+      else console.error(`✗ ${msg}`);
+      process.exitCode = 1;
     } else {
-      for (const issue of report.issues) {
-        const rel = path.relative(ROOT, issue.file);
-        const severity = issue.rule.startsWith("LGC-01") ? "✗ [LaTeX activo]" : "✗ [heredado]";
-        console.log(`${severity} ${rel}:${issue.line}:${issue.col} — ${issue.message}`);
+      const report = scanCourse(courseRoot);
+      if (asJson) {
+        console.log(JSON.stringify({ status: report.summary.ok ? "ok" : "error", ...report }, null, 2));
+      } else {
+        console.log(`Jintia Legacy Check (curso) — ${courseRoot}`);
+        if (!report.issues.length) {
+          console.log("✓ No se encontraron artefactos LaTeX en el directorio del curso.");
+        } else {
+          for (const issue of report.issues) {
+            const rel = path.relative(courseRoot, issue.file);
+            console.log(`✗ ${rel}${issue.line ? `:${issue.line}` : ""} — ${issue.message}`);
+          }
+        }
+        console.log(`\nResultado: ${report.summary.latexDirs} dirs latex/, ${report.summary.texFiles} archivos .tex, ${report.summary.issues} problemas en total.`);
       }
+      if (!report.summary.ok) process.exitCode = 1;
     }
-    console.log(`\nResultado: ${report.summary.legacyIssues} heredados, ${report.summary.activeLatex} LaTeX activo.`);
+  } else {
+    // Modo escaneo de skill (comportamiento original)
+    const report = run({ strict });
+    if (asJson) {
+      console.log(JSON.stringify(report, null, 2));
+    } else {
+      console.log(`Jintia Legacy Linter — ${report.scanned} archivos escaneados`);
+      if (!report.issues.length) {
+        console.log("✓ No se encontraron términos heredados LaTeX/v10.");
+      } else {
+        for (const issue of report.issues) {
+          const rel = path.relative(ROOT, issue.file);
+          const severity = issue.rule.startsWith("LGC-01") ? "✗ [LaTeX activo]" : "✗ [heredado]";
+          console.log(`${severity} ${rel}:${issue.line}:${issue.col} — ${issue.message}`);
+        }
+      }
+      console.log(`\nResultado: ${report.summary.legacyIssues} heredados, ${report.summary.activeLatex} LaTeX activo.`);
+    }
+    if (report.summary.issues > 0) process.exitCode = 1;
   }
-
-  if (report.summary.issues > 0) process.exitCode = 1;
 }
 
-module.exports = { run, checkFile, LEGACY_RULES, ACTIVE_LATEX_RULES };
+module.exports = { run, scanCourse, checkFile, LEGACY_RULES, ACTIVE_LATEX_RULES };
