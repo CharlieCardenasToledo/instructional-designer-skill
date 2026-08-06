@@ -5,7 +5,24 @@ y versionado semántico.
 
 ## Sin publicar
 
-## `jintia-skill` 11.1.0 — 2026-08-06
+## `jintia-skill` 11.1.0 — 2026-08-06 (RC2)
+
+### Añadido (RC2)
+- `citation-keys.js` — función compartida `collectCitationKeys(guide)` que recorre recursivamente `content`, `assessment.items` y nodos `citation` para extraer todas las claves citadas.
+- `visual-linter.js` reescrito para `guide.json`: valida nodos `figure` contra `figure/manifest.json`, exige `src`/`visualSpec`, `alt`, `caption`, y detección de figuras huérfanas en el manifiesto.
+- `visual-renderer.js` y `visual-pipeline.js` emiten campo `node` — objeto listo para insertar en `guide.json sections[]`.
+- Citation.js (`@citation-js/core`, `@citation-js/plugin-bibtex`, `@citation-js/plugin-csl`) declarado como `optionalDependencies` e instalado.
+- `reference.bib` de fixture para pruebas reales de citas.
+- Citas inline en `guide-sample.json` para cubrir BHV-D-007 con evidencia real.
+
+### Cambiado (RC2)
+- `guide.schema.json`: nodos `figure` ahora requieren `src` o `visualSpec` (antes solo `alt` y `caption`).
+- `guide-renderer.js`: usa `collectCitationKeys()` compartido en lugar de recolección manual ad-hoc.
+- `content-linter.js`: JIN-CNT-009 y JIN-CNT-004 ahora detectan citas inline `{{cite:}}` además de nodos `citation`; usa `collectCitationKeys()`.
+- `behavior-runner.js`: BHV-D-006 y BHV-D-007 usan `collectCitationKeys()` — exigen citas reales, no solo `metadata.bibliography`.
+- `bibliography-manager.js`: escapa HTML en author, year y `data-keys` de citas construidas manualmente (modo narrativo y degradado).
+- `vivliostyle-adapter.js`: usa `where.exe`/`which` para resolver la ruta absoluta del ejecutable; en Windows lanza `.cmd` vía `cmd.exe /C` en lugar de `shell: true`.
+- `SKILL.md`: unifica sintaxis de citas a `{{cite:clave}}` / `{{cite:clave|narrative}}`; depreca `[@clave-bib]` y el nodo `citation` independiente.
 
 ### Añadido
 - `doc-ref-checker.js` — detecta rutas internas rotas en Markdown de la skill.

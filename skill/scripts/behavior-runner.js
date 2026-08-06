@@ -14,6 +14,7 @@
 
 const fs   = require("node:fs");
 const path = require("node:path");
+const { collectCitationKeys } = require("./citation-keys");
 
 // ── Catálogo de comportamientos determinísticos ────────────────────────────────
 
@@ -128,14 +129,11 @@ const BEHAVIORS = [
   {
     id:          "BHV-D-006",
     name:        "no-orphan-citation-keys",
-    description: "Toda clave citada en nodos 'citation' existe en el archivo .bib declarado.",
+    description: "Toda clave citada (nodos 'citation' o sintaxis {{cite:}}) existe en el archivo .bib declarado.",
     rationale:   "Una clave sin entrada en .bib produce una referencia invisible; el agente no puede inventar fuentes.",
     check(guide, context = {}) {
-      const sections = guide.sections || [];
-      const allKeys  = sections
-        .filter(s => s.type === "citation" && Array.isArray(s.keys))
-        .flatMap(s => s.keys);
-      if (allKeys.length === 0) return { passed: true, note: "Sin nodos citation." };
+      const allKeys = collectCitationKeys(guide);
+      if (allKeys.length === 0) return { passed: true, note: "Sin citas (nodos ni inline)." };
 
       const bibPath = context.bibPath;
       if (!bibPath || !fs.existsSync(bibPath)) {
@@ -161,18 +159,17 @@ const BEHAVIORS = [
   {
     id:          "BHV-D-007",
     name:        "no-theory-without-any-citation",
-    description: "Una guía con nodos 'theory' o 'concept' debe declarar al menos una referencia o nodo citation.",
-    rationale:   "El agente no debe redactar teoría sin respaldo. Si hay contenido teórico pero ninguna cita, el agente probablemente inventó el contenido.",
+    description: "Una guía con nodos 'theory' o 'concept' debe contener al menos una cita real (inline o nodo citation).",
+    rationale:   "El agente no debe redactar teoría sin respaldo. Declarar un .bib vacío no es suficiente: debe existir al menos una cita efectiva.",
     check(guide) {
       const sections = guide.sections || [];
-      const hasTheory   = sections.some(s => s.type === "theory" || s.type === "concept");
-      const hasCitation = sections.some(s => s.type === "citation") ||
-                          !!(guide.metadata || {}).bibliography;
-      if (!hasTheory)    return { passed: true, note: "Sin nodos theory/concept." };
-      if (hasCitation)   return { passed: true };
+      const hasTheory = sections.some(s => s.type === "theory" || s.type === "concept");
+      if (!hasTheory) return { passed: true, note: "Sin nodos theory/concept." };
+      const keys = collectCitationKeys(guide);
+      if (keys.length > 0) return { passed: true };
       return {
         passed:  false,
-        message: "La guía contiene nodos teóricos pero no declara ninguna cita ni bibliography — posible contenido sin respaldo.",
+        message: "La guía contiene nodos teóricos pero no incluye ninguna cita real (ni inline {{cite:}} ni nodo citation) — posible contenido sin respaldo.",
       };
     },
   },

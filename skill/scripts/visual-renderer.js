@@ -149,7 +149,23 @@ function latexBlock(entry) {
 }
 
 /**
- * Genera el fragmento HTML para insertar la figura en un guide.json o guide.html.
+ * Genera el nodo guide.json listo para insertar en sections[].
+ * Esta es la forma canónica de incorporar una figura al documento.
+ */
+function guideNode(entry) {
+  const rendered = entry.rendered ? entry.rendered.replace(/\\/g, "/") : "";
+  return {
+    type:       "figure",
+    id:         entry.id,
+    src:        rendered ? `figure/${rendered}` : undefined,
+    alt:        entry.altText  || "",
+    caption:    entry.caption  || entry.altText || "",
+    pagination: entry.templatePlacement === "wide" ? "page-contained" : "atomic",
+  };
+}
+
+/**
+ * Genera el fragmento HTML para vista previa (no usar en guide.json).
  * Usa htmlFigure() de guide-renderer que produce el elemento <figure> semántico.
  */
 function htmlBlock(entry) {
@@ -325,9 +341,9 @@ function main() {
     toolVersion: choice.version
   };
   updateManifest(figureRoot, entry);
-  console.log(JSON.stringify({ entry, html: htmlBlock(entry), latex: latexBlock(entry), detected }, null, 2));
+  console.log(JSON.stringify({ entry, node: guideNode(entry), html: htmlBlock(entry), latex: latexBlock(entry), detected }, null, 2));
 }
 
 if (require.main === module) main();
 
-module.exports = { validateSpec, latexBlock, htmlBlock, prepareHtmlCapture, resolveTemplate };
+module.exports = { validateSpec, latexBlock, htmlBlock, guideNode, prepareHtmlCapture, resolveTemplate };

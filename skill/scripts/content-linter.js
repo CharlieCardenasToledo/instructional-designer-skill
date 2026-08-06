@@ -18,6 +18,7 @@
 const fs   = require("node:fs");
 const path = require("node:path");
 const { validate: validateSchema } = require("./schema-validator");
+const { collectCitationKeys } = require("./citation-keys");
 
 const ROOT        = path.resolve(__dirname, "..");
 const SCHEMA_PATH = path.join(ROOT, "schemas", "guide.schema.json");
@@ -149,10 +150,10 @@ function lintGuide(guidePath) {
     issue("JIN-CNT-001", "No se encontró ningún nodo de tipo 'orientation'.");
   }
 
-  // ── JIN-CNT-009: citation sin bibliography declarado ──
-  const hasCitations = sections.some(s => s.type === "citation");
-  if (hasCitations && !metadata.bibliography) {
-    issue("JIN-CNT-009", "Hay nodos 'citation' pero metadata.bibliography no está declarado.");
+  // ── JIN-CNT-009: citas (nodos o inline) sin bibliography declarado ──
+  const allCitedKeys = collectCitationKeys(guide);
+  if (allCitedKeys.length > 0 && !metadata.bibliography) {
+    issue("JIN-CNT-009", `Se encontraron ${allCitedKeys.length} cita(s) (nodos 'citation' o sintaxis {{cite:}}) pero metadata.bibliography no está declarado.`);
   }
 
   // ── Cargar claves bib si está disponible ──
@@ -224,7 +225,7 @@ function lintGuide(guidePath) {
       );
     }
 
-    // JIN-CNT-004: claves de citation existen en bib
+    // JIN-CNT-004: claves de nodo citation existen en bib (compat)
     if (node.type === "citation" && bibKeys && Array.isArray(node.keys)) {
       for (const key of node.keys) {
         if (!bibKeys.has(key)) {
@@ -237,6 +238,19 @@ function lintGuide(guidePath) {
     }
 
     prevType = node.type;
+  }
+
+  // ── JIN-CNT-004: claves inline {{cite:}} existen en bib ──
+  if (bibKeys && allCitedKeys.length > 0) {
+    for (const key of allCitedKeys) {
+      if (!bibKeys.has(key)) {
+        issues.push({
+          rule: "JIN-CNT-004", category: "bibliography", severity: "warning",
+          message: `Clave citada "${key}" (inline o nodo citation) no existe en ${metadata.bibliography}.`,
+          file: absolute,
+        });
+      }
+    }
   }
 
   return {

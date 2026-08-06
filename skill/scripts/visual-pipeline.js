@@ -41,7 +41,18 @@ function main() {
   const inspected = JSON.parse(fs.readFileSync(manifest, "utf8"));
   const entry = inspected.figures.find(item => item.id === result.entry.id);
   if (!entry?.inspection?.valid) throw new Error(`la inspección de ${result.entry.id} no produjo una salida válida`);
-  console.log(JSON.stringify({ entry, html: result.html, manifest }, null, 2));
+
+  // node: objeto listo para insertar en guide.json sections[]
+  const node = result.node || {
+    type:       "figure",
+    id:         entry.id,
+    src:        entry.rendered ? `figure/${entry.rendered.replace(/\\/g, "/")}` : undefined,
+    alt:        entry.altText  || "",
+    caption:    entry.caption  || entry.altText || "",
+    pagination: entry.templatePlacement === "wide" ? "page-contained" : "atomic",
+  };
+
+  console.log(JSON.stringify({ entry, node, html: result.html, manifest }, null, 2));
 }
 
 if (require.main === module) {

@@ -20,6 +20,11 @@
 const fs   = require("node:fs");
 const path = require("node:path");
 
+function escHtml(str) {
+  if (typeof str !== "string") return "";
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 // ─── Carga opcional de Citation.js ───────────────────────────────────────────
 
 let Cite       = null;
@@ -106,16 +111,18 @@ function keyExists(key, bib) {
 function renderCitation(keys, mode, bib, style = "apa") {
   if (!Array.isArray(keys) || keys.length === 0) return "";
 
+  const safeKeys = escHtml(keys.join(","));
+
   if (!citationJs || !bib.available) {
-    // Modo degradado
-    const formatted = keys.join("; ");
+    // Modo degradado — claves escapadas
+    const formatted = escHtml(keys.join("; "));
     return mode === "narrative"
-      ? `<cite class="jintia-citation" data-keys="${keys.join(",")}">${formatted}</cite>`
-      : `<cite class="jintia-citation" data-keys="${keys.join(",")}">(${formatted})</cite>`;
+      ? `<cite class="jintia-citation" data-keys="${safeKeys}">${formatted}</cite>`
+      : `<cite class="jintia-citation" data-keys="${safeKeys}">(${formatted})</cite>`;
   }
 
   try {
-    // Modo narrativo: "Apellido (año)" — el autor queda fuera de los paréntesis
+    // Modo narrativo: "Apellido (año)" — construido desde CSL-JSON, escapado
     if (mode === "narrative") {
       const entry = bib.entries.find(e => e.id === keys[0]);
       if (entry) {
@@ -125,22 +132,22 @@ function renderCitation(keys, mode, bib, style = "apa") {
         const year = entry.issued?.["date-parts"]?.[0]?.[0]
           ?? entry.issued?.literal
           ?? "";
-        const yearStr = year ? ` (${year})` : "";
-        return `<cite class="jintia-citation jintia-citation--narrative" data-keys="${keys.join(",")}">${author}${yearStr}</cite>`;
+        const yearStr = year ? ` (${escHtml(String(year))})` : "";
+        return `<cite class="jintia-citation jintia-citation--narrative" data-keys="${safeKeys}">${escHtml(String(author))}${yearStr}</cite>`;
       }
     }
 
-    // Modo parentético: "(Apellido, año)" — salida directa de Citation.js
+    // Modo parentético: Citation.js genera el HTML; su salida ya está sanitizada por CSL
     const subset = new Cite(bib.entries.filter(e => keys.includes(e.id)));
     const text = subset.format("citation", {
       format:   "html",
       template: style,
       lang:     "es-ES",
     });
-    return `<cite class="jintia-citation" data-keys="${keys.join(",")}">${text}</cite>`;
+    return `<cite class="jintia-citation" data-keys="${safeKeys}">${text}</cite>`;
   } catch (err) {
     console.warn(`[bibliography-manager] Error al formatear cita ${keys}: ${err.message}`);
-    return `<cite class="jintia-citation" data-keys="${keys.join(",")}">[${keys.join("; ")}]</cite>`;
+    return `<cite class="jintia-citation" data-keys="${safeKeys}">[${escHtml(keys.join("; "))}]</cite>`;
   }
 }
 

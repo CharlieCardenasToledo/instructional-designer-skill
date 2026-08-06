@@ -142,7 +142,8 @@
             "properties": {
               "src": {
                 "type": "string",
-                "description": "Ruta relativa a la imagen o spec visual."
+                "minLength": 1,
+                "description": "Ruta relativa a la imagen ya renderizada (ej. 'figure/rendered/fig-id.svg')."
               },
               "alt": {
                 "type": "string",
@@ -160,9 +161,14 @@
               },
               "visualSpec": {
                 "type": "string",
-                "description": "Ruta a un visual-spec.json para generación dinámica."
+                "minLength": 1,
+                "description": "Ruta a un visual-spec.json para generación dinámica (alternativa a src)."
               }
-            }
+            },
+            "anyOf": [
+              { "required": ["src"] },
+              { "required": ["visualSpec"] }
+            ]
           }
         },
         {

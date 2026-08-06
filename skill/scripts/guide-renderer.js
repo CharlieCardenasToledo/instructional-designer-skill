@@ -23,7 +23,8 @@
 
 const fs     = require("node:fs");
 const path   = require("node:path");
-const bibMgr = require("./bibliography-manager");
+const bibMgr  = require("./bibliography-manager");
+const { collectCitationKeys } = require("./citation-keys");
 
 const ROOT       = path.resolve(__dirname, "..");
 const THEMES_DIR = path.join(ROOT, "themes");
@@ -332,22 +333,8 @@ function buildHtml(guide, cssHref, bib) {
 
   const coverHtml = renderCover(metadata);
 
-  // Pre-recolectar claves citadas (nodos citation Y sintaxis {{cite:}} en content)
-  const usedKeys = [];
-  if (bib) {
-    for (const s of (sections || [])) {
-      if (s.type === "citation" && Array.isArray(s.keys)) {
-        usedKeys.push(...s.keys);
-      }
-      // Recolectar claves inline {{cite:key}} del content
-      const content = typeof s.content === "string" ? s.content : "";
-      const inline  = /\{\{cite:([^|}]+)/g;
-      let im;
-      while ((im = inline.exec(content)) !== null) {
-        usedKeys.push(im[1].trim());
-      }
-    }
-  }
+  // Pre-recolectar claves citadas recursivamente (nodos citation, content inline y assessment.items)
+  const usedKeys = bib ? collectCitationKeys(guide) : [];
 
   const sectionsHtml = (sections || []).map(s => renderSection(s, bib, usedKeys, style)).join("\n\n");
 

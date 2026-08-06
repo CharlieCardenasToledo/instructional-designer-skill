@@ -23,24 +23,66 @@ const path = require("node:path");
 // ─── Detección de Vivliostyle ─────────────────────────────────────────────────
 
 /**
- * Comprueba si Vivliostyle CLI está disponible en PATH.
- * @returns {{ ok: boolean, version?: string, command: string }}
+ * Resuelve un ejecutable en PATH y devuelve cómo invocarlo de forma segura.
+ *
+ * En Windows, los wrappers npm son archivos .cmd que requieren cmd.exe para
+ * ejecutarse. En lugar de usar shell: true (que expone metacaracteres), usamos
+ * where.exe para obtener la ruta absoluta y luego invocamos a través de
+ * `cmd.exe /C <path_absoluto>` con los args separados (Node los escapa correctamente).
+ *
+ * @param {string} name - Nombre base del ejecutable (sin extensión)
+ * @returns {{ exe: string, prefix: string[] }|null}
+ *   exe: ruta resuelta; prefix: argumentos de pre-cmd (vacío en Unix, ["/C", exe] en Windows)
  */
-function checkVivliostyle() {
-  // En Windows, shell:true es necesario para encontrar archivos .cmd en PATH.
-  // La detección de versión no ejecuta input del usuario, por lo que es seguro.
-  const useShell = process.platform === "win32";
-  for (const cmd of ["vivliostyle", "viv"]) {
-    const probe = spawnSync(cmd, ["--version"], {
-      encoding: "utf8",
-      stdio:    "pipe",
-      shell:    useShell,
-    });
+function resolveExecutable(name) {
+  if (process.platform !== "win32") {
+    const probe = spawnSync("which", [name], { encoding: "utf8", stdio: "pipe", shell: false });
     if (probe.status === 0) {
-      return { ok: true, version: (probe.stdout || "").trim(), command: cmd };
+      const resolved = probe.stdout.trim().split(/\n/)[0];
+      if (resolved) return { exe: resolved, prefix: [resolved] };
+    }
+    return null;
+  }
+
+  // Windows: where.exe busca por nombre base (incluye .cmd, .ps1, .exe según PATHEXT)
+  const probe = spawnSync("where.exe", [name], { encoding: "utf8", stdio: "pipe", shell: false });
+  if (probe.status === 0) {
+    const resolved = probe.stdout.trim().split(/\r?\n/)[0];
+    if (resolved) {
+      const isCmd = /\.(cmd|bat)$/i.test(resolved);
+      // Para .cmd: invocamos como cmd.exe /C "ruta_absoluta" [args...]
+      // Esto evita shell: true mientras aún lanza el batch script correctamente.
+      const prefix = isCmd ? ["cmd.exe", "/C", resolved] : [resolved];
+      return { exe: resolved, prefix };
     }
   }
-  return { ok: false, command: "vivliostyle" };
+  return null;
+}
+
+/**
+ * Comprueba si Vivliostyle CLI está disponible en PATH.
+ * @returns {{ ok: boolean, version?: string, command: string, invoker: string[], isCmd: boolean }}
+ */
+function checkVivliostyle() {
+  for (const name of ["vivliostyle", "viv"]) {
+    const resolved = resolveExecutable(name);
+    if (!resolved) continue;
+    const [bin, ...cmdArgs] = resolved.prefix;
+    const probe = spawnSync(bin, [...cmdArgs, "--version"], {
+      encoding: "utf8",
+      stdio:    "pipe",
+      shell:    false,
+    });
+    if (probe.status === 0) {
+      return {
+        ok:      true,
+        version: (probe.stdout || "").trim(),
+        command: resolved.exe,
+        invoker: resolved.prefix,
+      };
+    }
+  }
+  return { ok: false, command: "vivliostyle", invoker: ["vivliostyle"] };
 }
 
 // ─── Compilación PDF ──────────────────────────────────────────────────────────
@@ -91,13 +133,15 @@ function buildPdf(htmlPath, outputPath, options = {}) {
   if (options.verbose) args.push("--verbose");
 
   if (options.verbose) {
-    console.log(`[vivliostyle-adapter] ${vivliostyle.command} ${args.join(" ")}`);
+    console.log(`[vivliostyle-adapter] ${vivliostyle.invoker.join(" ")} ${args.join(" ")}`);
   }
 
-  const result = spawnSync(vivliostyle.command, args, {
+  // invoker = [exec, ...prefixArgs] — cmd.exe /C path.cmd en Windows, path directo en Unix
+  const [bin, ...invokerArgs] = vivliostyle.invoker;
+  const result = spawnSync(bin, [...invokerArgs, ...args], {
     encoding: "utf8",
     stdio:    "inherit",
-    shell:    process.platform === "win32",
+    shell:    false,
     timeout:  options.timeout || 60_000,
   });
 
@@ -138,11 +182,11 @@ function previewHtml(htmlPath, options = {}) {
   console.log(`[vivliostyle-adapter] Iniciando vista previa en http://localhost:${port}`);
   console.log("Presiona Ctrl+C para detener.");
 
-  // Para preview usamos spawn (no sync) para no bloquear el proceso
   const { spawn } = require("node:child_process");
-  const child = spawn(vivliostyle.command, args, {
+  const [bin, ...invokerArgs] = vivliostyle.invoker;
+  const child = spawn(bin, [...invokerArgs, ...args], {
     stdio: "inherit",
-    shell: process.platform === "win32",
+    shell: false,
   });
 
   child.on("error", err => {

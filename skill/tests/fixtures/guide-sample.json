@@ -27,7 +27,7 @@
       "type": "theory",
       "id": "teoria-dependencias",
       "title": "Dependencias funcionales",
-      "content": "Una dependencia funcional X → Y significa que el valor de X determina de forma única el valor de Y. Por ejemplo, si conocemos el código de estudiante, conocemos su nombre.\n\nEsta relación es la base de la normalización: cada forma normal elimina un tipo de dependencia problemática.",
+      "content": "Una dependencia funcional X → Y significa que el valor de X determina de forma única el valor de Y, según {{cite:codd1970}}. Por ejemplo, si conocemos el código de estudiante, conocemos su nombre.\n\nEsta relación es la base de la normalización: cada forma normal elimina un tipo de dependencia problemática {{cite:date2004}}.",
       "pagination": "splittable"
     },
     {

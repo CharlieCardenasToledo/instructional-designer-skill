@@ -268,11 +268,20 @@ esté disponible.
 
 ## Bibliografía
 
-Usar `reference.bib` como única fuente bibliográfica local:
+Usar `reference.bib` como única fuente bibliográfica local.
 
-- Citas inline formato Markdown: `[@clave-bib]`.
-- En el HTML final se gestionarán automáticamente con Citation.js.
-- Proveer una entrada en el archivo `.bib` por cada clave citada.
+**Sintaxis de citas inline** (única forma reconocida por el renderer):
+
+```
+La normalización reduce anomalías {{cite:date2004}}.
+Según {{cite:date2004|narrative}}, el modelo relacional...
+```
+
+- `{{cite:clave}}` → cita parentética: *(Apellido, año)*
+- `{{cite:clave|narrative}}` → cita narrativa: *Apellido (año)*
+- Proveer una entrada `.bib` por cada clave citada.
+- Usar un nodo `bibliography` al final de la guía para generar la lista de referencias.
+- El nodo independiente `citation` está deprecado; usar exclusivamente la sintaxis inline.
 
 ## Integraciones opcionales
 
@@ -281,9 +290,9 @@ Tratar logos, socios, módulos internacionales y ecosistemas institucionales com
 ## Cierre obligatorio
 
 1. Ejecutar `jintia validate <guide.json>`.
-2. Si existen figuras, verificar que cada una pasó
-   `node "<skill-root>/scripts/visual-pipeline.js"`; ejecutar además
-   `node "<skill-root>/scripts/visual-linter.js" <guide.json>` como comprobación global.
+2. Si existen figuras, verificar que cada una pasó el pipeline visual
+   (`node "<skill-root>/scripts/visual-pipeline.js" --spec figure/specs/fig-id.json --template jintia-clasico`);
+   ejecutar además `node "<skill-root>/scripts/visual-linter.js" <guide.json>` como comprobación global de accesibilidad y manifiesto.
 3. Generar y revisar el HTML: `jintia render <guide.json>` y luego `node "<skill-root>/scripts/html-linter.js" <guide.html>`.
 4. Compilar a PDF con `jintia compile <guide.json>` y comprobar `jintia preflight <guide.html>`.
 5. Verificar `reference.bib`, recortes, figuras y referencias cruzadas.
