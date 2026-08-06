@@ -110,12 +110,15 @@ const BEHAVIORS = [
           message: `outcome "${outcome}" tiene ${outcome.length} caracteres — mínimo 15 para ser sustantivo.`,
         };
       }
-      // Heurística: debe comenzar con un verbo en infinitivo (letra mayúscula + vocal/consonante)
-      const startsWithVerb = /^[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]{2,}/.test(outcome);
-      if (!startsWithVerb) {
+      // Verificar verbo en infinitivo en español: debe terminar en -ar, -er o -ir.
+      // Válido: "Aplicar", "Diseñar", "Construir", "Analizar", "Resolver".
+      // Inválido: "Conocimiento profundo...", "Comprensión de...", "Aprendizaje de..." (sustantivos).
+      const infinitivePattern = /^[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]*(ar|er|ir)\b/;
+      if (!infinitivePattern.test(outcome)) {
         return {
           passed:  false,
-          message: `outcome "${outcome}" no comienza con un verbo en infinitivo (ej. "Aplicar", "Diseñar", "Analizar").`,
+          message: `outcome "${outcome}" no comienza con un verbo en infinitivo (-ar, -er, -ir). ` +
+                   `Ej.: "Aplicar", "Diseñar", "Construir", "Analizar", "Resolver".`,
         };
       }
       return { passed: true };

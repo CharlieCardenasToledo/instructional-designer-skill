@@ -7,20 +7,24 @@
  * Convierte guide.json (AST neutral) en HTML semántico listo para
  * Vivliostyle o para vista previa en navegador.
  *
+ * Al escribir a un archivo, copia automáticamente el CSS del tema a
+ * `.jintia-assets/themes/<id>/` junto al HTML, garantizando que el
+ * stylesheet sea accesible sin importar desde dónde se sirva el HTML.
+ *
  * Uso CLI:
  *   node scripts/guide-renderer.js --spec guide.json [--theme jintia-clasico] [--output guide.html]
  *
  * Uso programático:
  *   const { renderGuide } = require("./guide-renderer");
- *   const html = await renderGuide("guide.json", { theme: "jintia-clasico" });
+ *   const html = renderGuide("guide.json", { outputPath: "semana-01/guide.html" });
  */
 
-const fs   = require("node:fs");
-const path = require("node:path");
+const fs     = require("node:fs");
+const path   = require("node:path");
+const bibMgr = require("./bibliography-manager");
 
-const ROOT        = path.resolve(__dirname, "..");
-const THEMES_DIR  = path.join(ROOT, "themes");
-const SCHEMA_PATH = path.join(ROOT, "schemas", "guide.schema.json");
+const ROOT       = path.resolve(__dirname, "..");
+const THEMES_DIR = path.join(ROOT, "themes");
 
 // ─── Utilidades ──────────────────────────────────────────────────────────────
 
@@ -34,13 +38,35 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
+/**
+ * Procesa marcado inline controlado dentro de un texto plano.
+ * Sintaxis soportada:
+ *   {{keyterm:término}}  →  <span class="jintia-keyterm">término</span>
+ *
+ * El resto del texto se escapa normalmente para prevenir XSS.
+ */
+function processInlineMarkup(text) {
+  if (typeof text !== "string") return "";
+  const parts   = [];
+  const pattern = /\{\{keyterm:([^}]+)\}\}/g;
+  let last = 0;
+  let m;
+  while ((m = pattern.exec(text)) !== null) {
+    parts.push(escapeHtml(text.slice(last, m.index)));
+    parts.push(`<span class="jintia-keyterm">${escapeHtml(m[1])}</span>`);
+    last = m.index + m[0].length;
+  }
+  parts.push(escapeHtml(text.slice(last)));
+  return parts.join("");
+}
+
 /** Convierte texto plano (con saltos de línea) en párrafos HTML. */
 function textToHtml(text) {
   if (typeof text !== "string") return "";
   return text
     .split(/\n{2,}/)
     .filter(Boolean)
-    .map(para => `<p>${escapeHtml(para.trim())}</p>`)
+    .map(para => `<p>${processInlineMarkup(para.trim())}</p>`)
     .join("\n");
 }
 
@@ -50,6 +76,35 @@ function renderContent(content) {
   if (typeof content === "string") return textToHtml(content);
   if (Array.isArray(content)) return content.map(renderContent).join("\n");
   return escapeHtml(String(content));
+}
+
+// ─── Copia de assets del tema ────────────────────────────────────────────────
+
+/**
+ * Copia los archivos CSS del tema al directorio `.jintia-assets/` junto al HTML.
+ * @param {string} themeId        - ID del tema (ej. "jintia-clasico")
+ * @param {string} outputHtmlPath - Ruta absoluta al HTML de salida
+ * @returns {string} href relativo del CSS principal desde el HTML (barras forward)
+ */
+function copyThemeAssets(themeId, outputHtmlPath) {
+  const themeDir = path.join(THEMES_DIR, themeId);
+  if (!fs.existsSync(themeDir)) {
+    console.warn(`[guide-renderer] Directorio de tema no encontrado: ${themeDir}`);
+    return `./themes/${themeId}/theme.css`;
+  }
+
+  const outputDir = path.dirname(path.resolve(outputHtmlPath));
+  const assetsDir = path.join(outputDir, ".jintia-assets", "themes", themeId);
+  fs.mkdirSync(assetsDir, { recursive: true });
+
+  for (const file of fs.readdirSync(themeDir)) {
+    if (file.endsWith(".css")) {
+      fs.copyFileSync(path.join(themeDir, file), path.join(assetsDir, file));
+    }
+  }
+
+  // Siempre usar barras forward (estándar HTML/CSS, funciona en Windows también)
+  return `.jintia-assets/themes/${themeId}/theme.css`;
 }
 
 // ─── Renders por tipo de nodo ────────────────────────────────────────────────
@@ -119,7 +174,7 @@ function renderFigure(node) {
 </figure>`;
 }
 
-/** htmlFigure: alias para el pipeline visual (reemplaza latexBlock). */
+/** htmlFigure: alias para el pipeline visual. */
 function htmlFigure(spec, outputPath) {
   return renderFigure({
     src:     outputPath,
@@ -184,10 +239,21 @@ function renderAssessment(node) {
 </section>`;
 }
 
-/** Bibliografía: recibe lista de entradas ya formateadas como HTML por bibliography-manager. */
-function renderBibliography(node) {
-  const entries = Array.isArray(node.entries) ? node.entries : [];
-  const idAttr  = node.id ? ` id="${escapeHtml(node.id)}"` : "";
+/**
+ * Bibliografía: genera la lista de referencias usando bibliography-manager
+ * cuando hay contexto bibliográfico disponible. Solo incluye las claves usadas
+ * en nodos citation de la guía (o todas si no hay ninguna citada).
+ */
+function renderBibliography(node, bib, usedKeys = []) {
+  const idAttr = node.id ? ` id="${escapeHtml(node.id)}"` : "";
+
+  let entries;
+  if (bib) {
+    const keys = usedKeys.length > 0 ? [...new Set(usedKeys)] : null;
+    entries    = bibMgr.renderBibliographyEntries(keys, bib);
+  } else {
+    entries = Array.isArray(node.entries) ? node.entries : [];
+  }
 
   const listHtml = entries.length
     ? `<ul class="jintia-bibliography__list" role="list">
@@ -204,51 +270,66 @@ function renderBibliography(node) {
 </section>`;
 }
 
-/** Cita inline: delegada a bibliography-manager; aquí solo envuelve el texto. */
-function renderCitation(node) {
-  const keys = (node.keys || []).join(", ");
-  return `<cite class="jintia-citation" data-keys="${escapeHtml(keys)}">[${escapeHtml(keys)}]</cite>`;
+/**
+ * Cita inline: resuelve a través de bibliography-manager cuando hay contexto.
+ * Sin contexto, muestra la clave entre corchetes como marcador.
+ */
+function renderCitation(node, bib) {
+  const keys = Array.isArray(node.keys) ? node.keys : [];
+  if (bib && keys.length > 0) {
+    const mode = node.mode || "parenthetical";
+    return bibMgr.renderCitation(keys, mode, bib, node.style || "apa");
+  }
+  const keyStr = keys.join(", ");
+  return `<cite class="jintia-citation" data-keys="${escapeHtml(keyStr)}">[${escapeHtml(keyStr)}]</cite>`;
 }
 
 // ─── Dispatcher de nodos ─────────────────────────────────────────────────────
 
 const RENDERERS = {
-  orientation:     renderOrientation,
-  theory:          renderTheory,
-  concept:         renderConcept,
-  practice:        renderPractice,
-  warning:         renderWarning,
+  orientation:      renderOrientation,
+  theory:           renderTheory,
+  concept:          renderConcept,
+  practice:         renderPractice,
+  warning:          renderWarning,
   "critical-error": renderCriticalError,
-  scenario:        renderScenario,
-  "margin-note":   renderMarginNote,
-  figure:          renderFigure,
-  table:           renderTable,
-  assessment:      renderAssessment,
-  bibliography:    renderBibliography,
-  citation:        renderCitation,
+  scenario:         renderScenario,
+  "margin-note":    renderMarginNote,
+  figure:           renderFigure,
+  table:            renderTable,
+  assessment:       renderAssessment,
+  bibliography:     renderBibliography,
+  citation:         renderCitation,
 };
 
-function renderSection(node) {
+function renderSection(node, bib = null, usedKeys = []) {
   const renderer = RENDERERS[node.type];
   if (!renderer) {
     console.warn(`[guide-renderer] Tipo de nodo desconocido: "${node.type}" — se omite.`);
     return `<!-- nodo desconocido: ${escapeHtml(node.type)} -->`;
   }
+  if (node.type === "bibliography") return renderer(node, bib, usedKeys);
+  if (node.type === "citation")     return renderer(node, bib);
   return renderer(node);
 }
 
 // ─── HTML completo del documento ─────────────────────────────────────────────
 
-function buildHtml(guide, themeRelativePath) {
+function buildHtml(guide, cssHref, bib) {
   const { metadata, sections } = guide;
-  const lang   = metadata.lang || "es";
-  const title  = metadata.topic || "Guía Semanal";
+  const lang  = metadata.lang  || "es";
+  const title = metadata.topic || "Guía Semanal";
 
-  // Ruta al CSS del tema relativa al HTML de salida
-  const cssHref = themeRelativePath || "./themes/jintia-clasico/theme.css";
+  const coverHtml = renderCover(metadata);
 
-  const coverHtml    = renderCover(metadata);
-  const sectionsHtml = (sections || []).map(renderSection).join("\n\n");
+  // Pre-recolectar claves citadas para que bibliography muestre solo las usadas
+  const usedKeys = bib
+    ? (sections || [])
+        .filter(s => s.type === "citation" && Array.isArray(s.keys))
+        .flatMap(s => s.keys)
+    : [];
+
+  const sectionsHtml = (sections || []).map(s => renderSection(s, bib, usedKeys)).join("\n\n");
 
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(lang)}">
@@ -276,10 +357,16 @@ ${sectionsHtml}
 
 /**
  * Renderiza un guide.json a string HTML.
+ *
+ * Cuando se especifica `options.outputPath`, copia automáticamente el CSS del
+ * tema a `.jintia-assets/themes/<id>/` junto al archivo de salida y genera un
+ * href relativo que siempre resuelve correctamente.
+ *
  * @param {string} guidePath - Ruta absoluta o relativa al guide.json
  * @param {object} [options]
- * @param {string} [options.theme]       - ID del tema (ej. "jintia-clasico")
- * @param {string} [options.themeCssHref] - Ruta CSS del tema en el HTML de salida
+ * @param {string} [options.theme]        - ID del tema (ej. "jintia-clasico")
+ * @param {string} [options.outputPath]   - Ruta del HTML de salida (activa copia de assets)
+ * @param {string} [options.themeCssHref] - Anula el href CSS calculado automáticamente
  * @returns {string} HTML completo del documento
  */
 function renderGuide(guidePath, options = {}) {
@@ -299,16 +386,31 @@ function renderGuide(guidePath, options = {}) {
     throw new Error("guide.json inválido: faltan los campos 'metadata' y/o 'sections'.");
   }
 
-  const themeId  = options.theme || guide.metadata.theme || "jintia-clasico";
-  const themeCss = options.themeCssHref || `./themes/${themeId}/theme.css`;
+  const themeId = options.theme || guide.metadata.theme || "jintia-clasico";
 
-  return buildHtml(guide, themeCss);
+  // Resolver href del CSS: copiar assets si se conoce el destino
+  let cssHref = options.themeCssHref;
+  if (!cssHref) {
+    cssHref = options.outputPath
+      ? copyThemeAssets(themeId, options.outputPath)
+      : `./themes/${themeId}/theme.css`;
+  }
+
+  // Cargar bibliografía si está declarada en metadata
+  let bib = null;
+  const bibDecl = guide.metadata.bibliography;
+  if (bibDecl) {
+    const bibPath = path.resolve(path.dirname(absolute), bibDecl);
+    bib = bibMgr.loadBibliography(bibPath);
+  }
+
+  return buildHtml(guide, cssHref, bib);
 }
 
 // ─── CLI ──────────────────────────────────────────────────────────────────────
 
 if (require.main === module) {
-  const args   = process.argv.slice(2);
+  const args      = process.argv.slice(2);
   const specArg   = args.find((a, i) => args[i - 1] === "--spec") || args.find(a => !a.startsWith("--"));
   const outputArg = args.find((a, i) => args[i - 1] === "--output");
   const themeArg  = args.find((a, i) => args[i - 1] === "--theme");
@@ -319,12 +421,12 @@ if (require.main === module) {
   }
 
   try {
-    const html = renderGuide(specArg, { theme: themeArg });
-    if (outputArg) {
-      const outPath = path.resolve(outputArg);
-      fs.mkdirSync(path.dirname(outPath), { recursive: true });
-      fs.writeFileSync(outPath, html, "utf8");
-      console.log(`✓ HTML generado: ${outPath}`);
+    const outputPath = outputArg ? path.resolve(outputArg) : null;
+    const html = renderGuide(specArg, { theme: themeArg, outputPath });
+    if (outputPath) {
+      fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+      fs.writeFileSync(outputPath, html, "utf8");
+      console.log(`✓ HTML generado: ${outputPath}`);
     } else {
       process.stdout.write(html);
     }
@@ -334,4 +436,12 @@ if (require.main === module) {
   }
 }
 
-module.exports = { renderGuide, renderSection, htmlFigure, escapeHtml, textToHtml };
+module.exports = {
+  renderGuide,
+  renderSection,
+  htmlFigure,
+  escapeHtml,
+  textToHtml,
+  copyThemeAssets,
+  processInlineMarkup,
+};

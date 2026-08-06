@@ -27,12 +27,14 @@ const path = require("node:path");
  * @returns {{ ok: boolean, version?: string, command: string }}
  */
 function checkVivliostyle() {
-  // Intentar tanto "vivliostyle" como "npx @vivliostyle/cli"
+  // En Windows, shell:true es necesario para encontrar archivos .cmd en PATH.
+  // La detección de versión no ejecuta input del usuario, por lo que es seguro.
+  const useShell = process.platform === "win32";
   for (const cmd of ["vivliostyle", "viv"]) {
     const probe = spawnSync(cmd, ["--version"], {
       encoding: "utf8",
       stdio:    "pipe",
-      shell:    false,
+      shell:    useShell,
     });
     if (probe.status === 0) {
       return { ok: true, version: (probe.stdout || "").trim(), command: cmd };
@@ -95,7 +97,7 @@ function buildPdf(htmlPath, outputPath, options = {}) {
   const result = spawnSync(vivliostyle.command, args, {
     encoding: "utf8",
     stdio:    "inherit",
-    shell:    false,
+    shell:    process.platform === "win32",
     timeout:  options.timeout || 60_000,
   });
 

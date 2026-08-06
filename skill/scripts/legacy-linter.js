@@ -93,6 +93,14 @@ function collectFiles(dir) {
 function run(options = {}) {
   const scanRoot  = options.dir || ROOT;
   const files     = collectFiles(scanRoot);
+
+  // También escanear openai-plugin/ (en el repo, fuera de skill/)
+  // para detectar manifiestos que todavía declaren capacidades LaTeX.
+  const pluginDir = path.resolve(ROOT, "..", "openai-plugin");
+  if (!options.dir && fs.existsSync(pluginDir)) {
+    files.push(...collectFiles(pluginDir));
+  }
+
   const allIssues = [];
 
   for (const file of files) {

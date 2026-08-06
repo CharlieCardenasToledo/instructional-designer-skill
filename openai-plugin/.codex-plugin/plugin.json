@@ -1,21 +1,21 @@
 {
   "name": "jintia",
   "version": "11.0.0",
-  "description": "Diseña sílabos, guías semanales, actividades y evaluaciones universitarias con evidencia verificable y plantillas LaTeX.",
+  "description": "Diseña sílabos, guías semanales, actividades y evaluaciones universitarias con motor editorial HTML y salida PDF mediante Vivliostyle.",
   "author": {
     "name": "Charlie Cárdenas Toledo",
     "url": "https://github.com/CharlieCardenasToledo/instructional-designer-skill"
   },
   "homepage": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
   "repository": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
-  "license": "MIT AND LPPL-1.3-or-later",
-  "keywords": ["educacion", "diseno-instruccional", "latex", "universidad"],
+  "license": "MIT",
+  "keywords": ["educacion", "diseno-instruccional", "html", "vivliostyle", "universidad"],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Jintia",
     "shortDescription": "Diseño académico verificable",
-    "longDescription": "Convierte sílabos y fuentes del curso en guías didácticas, actividades, rúbricas y evaluaciones verificables con salida LaTeX.",
+    "longDescription": "Convierte sílabos y fuentes del curso en guías didácticas, actividades, rúbricas y evaluaciones verificables mediante motor HTML nativo con Vivliostyle.",
     "developerName": "Charlie Cárdenas Toledo",
     "category": "Education",
     "capabilities": ["Read", "Write"],

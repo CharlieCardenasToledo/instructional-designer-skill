@@ -253,7 +253,7 @@ esté disponible.
 - Evitar metáforas no técnicas y los incisos entre rayas.
 - Preferir oraciones de hasta 20 palabras. Dividir las que superen 35.
 - Usar un término técnico canónico de forma consistente.
-- Marcar solo su primera aparición con `<span class="jintia-keyterm">término</span>` en el campo `content`.
+- Marcar solo su primera aparición con la sintaxis `{{keyterm:término}}` en el campo `content`. El renderer la convierte en `<span class="jintia-keyterm">término</span>` de forma segura.
 - Conectar el primer párrafo de cada sección con la necesidad creada por la anterior.
 - Usar por defecto una representación principal por sección. Añadir otra solo
   cuando responda a una operación cognitiva distinta y la combinación sea

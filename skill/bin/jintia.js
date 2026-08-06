@@ -52,7 +52,7 @@ Uso:
   — Motor editorial HTML —
   jintia validate  <guide.json> [--strict] [--json]
   jintia render    <guide.json> [--theme ID] [--output guide.html]
-  jintia compile   <guide.json> [--engine vivliostyle|pagedjs] [--output guide.pdf]
+  jintia compile   <guide.json> [--output guide.pdf]
   jintia preview   <guide.json>
   jintia preflight <guide.html>
 

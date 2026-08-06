@@ -5,6 +5,28 @@ y versionado semántico.
 
 ## Sin publicar
 
+### Añadido
+- `doc-ref-checker.js` — detecta rutas internas rotas en Markdown de la skill.
+- `legacy-linter.js` — detecta términos LaTeX/v10 prohibidos (LGC-001…LGC-009).
+- `behavior-runner.js` y `behavior-eval.js` — verificación determinística y semántica del agente.
+- Contratos semánticos `behaviors/semantic/` (BHV-SEM-001…005).
+- `compile-stub.test.js` — prueba E2E del pipeline compile con ejecutable falso de Vivliostyle.
+- `copyThemeAssets()` en `guide-renderer.js` — copia el CSS del tema a `.jintia-assets/` junto al HTML.
+- Sintaxis `{{keyterm:...}}` en campos `content` — el renderer la convierte en `<span class="jintia-keyterm">` de forma segura.
+
+### Cambiado
+- `guide-renderer.js` integra `bibliography-manager.js`: los nodos `citation` y `bibliography` usan Citation.js (o modo degradado) en lugar de marcadores planos.
+- `vivliostyle-adapter.js` usa `shell: true` en Windows para encontrar `.cmd` en PATH.
+- `behavior-runner.js` BHV-D-005: verifica verbo en infinitivo español (-ar/-er/-ir) en `outcome`.
+- `content-linter.js`: falla explícitamente si `guide.schema.json` está ausente o corrupto.
+- `skill/package.json`: `compile`, `preview` y `preflight` ahora enrutan por `bin/jintia.js`.
+- `SKILL.md`: documenta sintaxis `{{keyterm:...}}` en lugar del span HTML manual.
+- `openai-plugin/.codex-plugin/plugin.json`: eliminadas referencias a LaTeX; licencia corregida a MIT.
+
+### Corregido
+- `bin/jintia.js` usage: elimina `--engine vivliostyle|pagedjs` (pagedjs no implementado).
+- `legacy-linter.js` extiende su escaneo a `openai-plugin/` para detectar manifiestos con términos LaTeX.
+
 ## `jintia-skill` 11.0.0 — 2026-08-04
 
 ### Cambiado

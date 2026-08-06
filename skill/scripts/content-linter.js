@@ -118,17 +118,21 @@ function lintGuide(guidePath) {
   }
 
   // ── Validación estructural contra guide.schema.json ──
+  if (!fs.existsSync(SCHEMA_PATH)) {
+    throw new Error(`guide.schema.json no encontrado en: ${SCHEMA_PATH} — la distribución está incompleta.`);
+  }
+  let schema;
   try {
-    const schema = JSON.parse(fs.readFileSync(SCHEMA_PATH, "utf8"));
-    const schemaErrors = validateSchema(guide, schema, "$", schema);
-    for (const msg of schemaErrors) {
-      issues.push({
-        rule: "JIN-SCH-001", category: "schema", severity: "error",
-        message: msg, file: absolute,
-      });
-    }
-  } catch {
-    // Si el esquema no está disponible, continuar con las reglas manuales
+    schema = JSON.parse(fs.readFileSync(SCHEMA_PATH, "utf8"));
+  } catch (err) {
+    throw new Error(`Error al parsear guide.schema.json: ${err.message}`);
+  }
+  const schemaErrors = validateSchema(guide, schema, "$", schema);
+  for (const msg of schemaErrors) {
+    issues.push({
+      rule: "JIN-SCH-001", category: "schema", severity: "error",
+      message: msg, file: absolute,
+    });
   }
 
   const metadata = guide.metadata || {};
