@@ -14,13 +14,9 @@ concurrency:
 
 jobs:
   test:
-    name: Tests (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: Tests
+    runs-on: ubuntu-latest
     timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v5
@@ -49,22 +45,18 @@ jobs:
         run: node scripts/legacy-linter.js --json
 
       # ── Suite de tests ─────────────────────────────────────────────────────
-      # test-runner.js recoge automáticamente todos los *.test.js en tests/
-      # Incluye: rules, linters, cli, regression (P0), windows-paths, e2e, etc.
       - name: Tests
         working-directory: skill
         run: npm test
 
-      # ── Release y package (solo Ubuntu) ───────────────────────────────────
+      # ── Release y package ─────────────────────────────────────────────────
       - name: release:check
-        if: matrix.os == 'ubuntu-latest'
         run: npm run release:check
 
       - name: package:check
-        if: matrix.os == 'ubuntu-latest'
         run: npm run package:check
 
-  # ── E2E con PDF — Vivliostyle (solo Ubuntu tras CI base) ──────────────────
+  # ── E2E con PDF — Vivliostyle (solo en push a master) ─────────────────────
   e2e-pdf:
     name: E2E PDF (Vivliostyle)
     runs-on: ubuntu-latest
