@@ -64,6 +64,10 @@ Uso:
   jintia behavior eval --output <guide.json|respuesta.txt> [--spec ID] [--json]
   jintia behavior list [--json]
 
+  — Calidad de documentación —
+  jintia docs:check   [--json]
+  jintia legacy:check [--json]
+
 Comandos de flujo para la skill: plan, guide, assessment y audit.
 Consulta skill/commands/ para sus playbooks.`);
 }
@@ -261,7 +265,9 @@ function main(argv) {
 
   if (command === "preflight") return runScript("pdf-preflight.js", argv.slice(1), "preflight");
 
-  if (command === "migrate") return runScript("legacy-manager.js", argv.slice(1), "migrate");
+  if (command === "migrate")       return runScript("legacy-manager.js",   argv.slice(1), "migrate");
+  if (command === "docs:check")    return runScript("doc-ref-checker.js",  argv.slice(1), "docs:check");
+  if (command === "legacy:check")  return runScript("legacy-linter.js",    argv.slice(1), "legacy:check");
 
   if (command === "behavior") {
     if (subcommand === "eval")  return runScript("behavior-eval.js",  rest, "behavior eval");

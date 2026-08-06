@@ -37,6 +37,8 @@
     "behavior:check":     "node scripts/behavior-runner.js",
     "behavior:eval":      "node scripts/behavior-eval.js",
     "brand:check":        "node scripts/brand-validator.js",
+    "docs:check":         "node scripts/doc-ref-checker.js",
+    "legacy:check":       "node scripts/legacy-linter.js",
     "syllabus:validate":  "node bin/jintia.js syllabus validate",
     "audit":              "node bin/jintia.js audit",
     "state":              "node bin/jintia.js state update"
