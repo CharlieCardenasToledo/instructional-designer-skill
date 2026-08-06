@@ -5,6 +5,8 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.1.0 — 2026-08-06
+
 ### Añadido
 - `doc-ref-checker.js` — detecta rutas internas rotas en Markdown de la skill.
 - `legacy-linter.js` — detecta términos LaTeX/v10 prohibidos (LGC-001…LGC-009).
