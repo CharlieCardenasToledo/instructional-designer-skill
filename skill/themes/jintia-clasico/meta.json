@@ -40,7 +40,6 @@
   },
   "nodeVersion": ">=22.12.0",
   "engineDefaults": {
-    "vivliostyle": true,
-    "pagedjs": true
+    "vivliostyle": true
   }
 }

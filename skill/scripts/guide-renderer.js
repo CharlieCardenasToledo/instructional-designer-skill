@@ -7,12 +7,14 @@
  * Convierte guide.json (AST neutral) en HTML semántico listo para
  * Vivliostyle o para vista previa en navegador.
  *
- * Al escribir a un archivo, copia automáticamente el CSS del tema a
- * `.jintia-assets/themes/<id>/` junto al HTML, garantizando que el
- * stylesheet sea accesible sin importar desde dónde se sirva el HTML.
+ * Al escribir a un archivo, copia automáticamente el CSS del tema activo
+ * (y de los temas padre declarados en meta.json["extends"]) a
+ * `.jintia-assets/themes/` junto al HTML, garantizando que todos los
+ * `@import` resuelvan correctamente.
  *
  * Uso CLI:
- *   node scripts/guide-renderer.js --spec guide.json [--theme jintia-clasico] [--output guide.html]
+ *   node scripts/guide-renderer.js guide.json [--theme jintia-clasico] [--output guide.html]
+ *   (sin --output, genera guide.html al lado del guide.json)
  *
  * Uso programático:
  *   const { renderGuide } = require("./guide-renderer");
@@ -39,21 +41,33 @@ function escapeHtml(str) {
 }
 
 /**
- * Procesa marcado inline controlado dentro de un texto plano.
- * Sintaxis soportada:
- *   {{keyterm:término}}  →  <span class="jintia-keyterm">término</span>
+ * Procesa marcado inline controlado dentro de texto plano.
  *
- * El resto del texto se escapa normalmente para prevenir XSS.
+ * Sintaxis soportada:
+ *   {{keyterm:término}}          → <span class="jintia-keyterm">término</span>
+ *   {{cite:clave}}               → cita parentética  (Apellido, año)
+ *   {{cite:clave|narrative}}     → cita narrativa    Apellido (año)
+ *
+ * El resto del texto se escapa con escapeHtml() para prevenir XSS.
+ * Las citas requieren contexto bibliográfico (bib); sin él se muestran como [clave].
  */
-function processInlineMarkup(text) {
+function processInlineMarkup(text, bib = null, style = "apa") {
   if (typeof text !== "string") return "";
   const parts   = [];
-  const pattern = /\{\{keyterm:([^}]+)\}\}/g;
+  const pattern = /\{\{(keyterm|cite):([^|}]+)(?:\|([^}]+))?\}\}/g;
   let last = 0;
   let m;
   while ((m = pattern.exec(text)) !== null) {
     parts.push(escapeHtml(text.slice(last, m.index)));
-    parts.push(`<span class="jintia-keyterm">${escapeHtml(m[1])}</span>`);
+    const [, tag, value, modifier] = m;
+    if (tag === "keyterm") {
+      parts.push(`<span class="jintia-keyterm">${escapeHtml(value)}</span>`);
+    } else {
+      // cite: value=clave, modifier=mode (parenthetical|narrative)
+      const mode = modifier === "narrative" ? "narrative" : "parenthetical";
+      const ctx  = bib || { available: false };
+      parts.push(bibMgr.renderCitation([value.trim()], mode, ctx, style));
+    }
     last = m.index + m[0].length;
   }
   parts.push(escapeHtml(text.slice(last)));
@@ -61,49 +75,75 @@ function processInlineMarkup(text) {
 }
 
 /** Convierte texto plano (con saltos de línea) en párrafos HTML. */
-function textToHtml(text) {
+function textToHtml(text, bib = null, style = "apa") {
   if (typeof text !== "string") return "";
   return text
     .split(/\n{2,}/)
     .filter(Boolean)
-    .map(para => `<p>${processInlineMarkup(para.trim())}</p>`)
+    .map(para => `<p>${processInlineMarkup(para.trim(), bib, style)}</p>`)
     .join("\n");
 }
 
 /** Renderiza el campo `content` de un nodo: puede ser string, array o null. */
-function renderContent(content) {
+function renderContent(content, bib = null, style = "apa") {
   if (!content) return "";
-  if (typeof content === "string") return textToHtml(content);
-  if (Array.isArray(content)) return content.map(renderContent).join("\n");
+  if (typeof content === "string") return textToHtml(content, bib, style);
+  if (Array.isArray(content)) return content.map(c => renderContent(c, bib, style)).join("\n");
   return escapeHtml(String(content));
 }
 
-// ─── Copia de assets del tema ────────────────────────────────────────────────
+// ─── Herencia y copia de assets del tema ─────────────────────────────────────
 
 /**
- * Copia los archivos CSS del tema al directorio `.jintia-assets/` junto al HTML.
- * @param {string} themeId        - ID del tema (ej. "jintia-clasico")
+ * Resuelve la cadena de dependencias de un tema usando el campo `extends`
+ * de cada meta.json. Devuelve los IDs de tema en orden padre→hijo.
+ *
+ * Ejemplo: resolveThemeDeps("jintia-tecnico")
+ *   → ["jintia-clasico", "jintia-tecnico"]
+ */
+function resolveThemeDeps(themeId, visited = new Set()) {
+  if (visited.has(themeId)) return [];
+  visited.add(themeId);
+  const result   = [];
+  const metaPath = path.join(THEMES_DIR, themeId, "meta.json");
+  if (fs.existsSync(metaPath)) {
+    try {
+      const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+      if (meta.extends) {
+        const parentMeta = path.resolve(path.join(THEMES_DIR, themeId), meta.extends);
+        const parentId   = path.basename(path.dirname(parentMeta));
+        result.push(...resolveThemeDeps(parentId, visited));
+      }
+    } catch { /* meta.json malformado: continuar sin herencia */ }
+  }
+  result.push(themeId);
+  return result;
+}
+
+/**
+ * Copia los archivos CSS del tema activo y de todos sus temas padre a
+ * `.jintia-assets/themes/` junto al HTML de salida.
+ *
+ * @param {string} themeId        - ID del tema seleccionado
  * @param {string} outputHtmlPath - Ruta absoluta al HTML de salida
- * @returns {string} href relativo del CSS principal desde el HTML (barras forward)
+ * @returns {string} href relativo del CSS principal (barras forward)
  */
 function copyThemeAssets(themeId, outputHtmlPath) {
-  const themeDir = path.join(THEMES_DIR, themeId);
-  if (!fs.existsSync(themeDir)) {
-    console.warn(`[guide-renderer] Directorio de tema no encontrado: ${themeDir}`);
-    return `./themes/${themeId}/theme.css`;
-  }
-
+  const deps      = resolveThemeDeps(themeId);
   const outputDir = path.dirname(path.resolve(outputHtmlPath));
-  const assetsDir = path.join(outputDir, ".jintia-assets", "themes", themeId);
-  fs.mkdirSync(assetsDir, { recursive: true });
 
-  for (const file of fs.readdirSync(themeDir)) {
-    if (file.endsWith(".css")) {
-      fs.copyFileSync(path.join(themeDir, file), path.join(assetsDir, file));
+  for (const id of deps) {
+    const themeDir = path.join(THEMES_DIR, id);
+    if (!fs.existsSync(themeDir)) continue;
+    const assetsDir = path.join(outputDir, ".jintia-assets", "themes", id);
+    fs.mkdirSync(assetsDir, { recursive: true });
+    for (const file of fs.readdirSync(themeDir)) {
+      if (file.endsWith(".css")) {
+        fs.copyFileSync(path.join(themeDir, file), path.join(assetsDir, file));
+      }
     }
   }
 
-  // Siempre usar barras forward (estándar HTML/CSS, funciona en Windows también)
   return `.jintia-assets/themes/${themeId}/theme.css`;
 }
 
@@ -123,13 +163,12 @@ function renderCover(metadata) {
 </header>`;
 }
 
-function renderBlock(node, typeClass, label) {
+function renderBlock(node, typeClass, label, bib = null, style = "apa") {
   const pagination = node.pagination || "atomic";
   const titleHtml  = node.title
     ? `<h2 class="jintia-block__title">${escapeHtml(node.title)}</h2>`
     : "";
   const idAttr = node.id ? ` id="${escapeHtml(node.id)}"` : "";
-
   return `
 <aside class="jintia-block ${typeClass}"
        data-pagination="${escapeHtml(pagination)}"
@@ -137,24 +176,24 @@ function renderBlock(node, typeClass, label) {
   <span class="jintia-block__label" aria-hidden="true">${escapeHtml(label)}</span>
   ${titleHtml}
   <div class="jintia-block__content">
-${renderContent(node.content)}
+${renderContent(node.content, bib, style)}
   </div>
 </aside>`;
 }
 
-function renderOrientation(node)   { return renderBlock(node, "jintia-orientation",   "Orientación"); }
-function renderTheory(node)        { return renderBlock(node, "jintia-theory",         "Teoría"); }
-function renderConcept(node)       { return renderBlock(node, "jintia-concept",        "Concepto"); }
-function renderPractice(node)      { return renderBlock(node, "jintia-practice",       "Práctica guiada"); }
-function renderWarning(node)       { return renderBlock(node, "jintia-warning",        "Advertencia"); }
-function renderCriticalError(node) { return renderBlock(node, "jintia-critical-error", "Error crítico"); }
-function renderScenario(node)      { return renderBlock(node, "jintia-scenario",       "Escenario"); }
+function renderOrientation(node, bib, style)   { return renderBlock(node, "jintia-orientation",   "Orientación", bib, style); }
+function renderTheory(node, bib, style)         { return renderBlock(node, "jintia-theory",         "Teoría",       bib, style); }
+function renderConcept(node, bib, style)        { return renderBlock(node, "jintia-concept",        "Concepto",     bib, style); }
+function renderPractice(node, bib, style)       { return renderBlock(node, "jintia-practice",       "Práctica guiada", bib, style); }
+function renderWarning(node, bib, style)        { return renderBlock(node, "jintia-warning",        "Advertencia",  bib, style); }
+function renderCriticalError(node, bib, style)  { return renderBlock(node, "jintia-critical-error", "Error crítico", bib, style); }
+function renderScenario(node, bib, style)       { return renderBlock(node, "jintia-scenario",       "Escenario",    bib, style); }
 
-function renderMarginNote(node) {
+function renderMarginNote(node, bib, style) {
   const idAttr = node.id ? ` id="${escapeHtml(node.id)}"` : "";
   return `
 <aside class="jintia-margin-note"${idAttr} role="note">
-  ${renderContent(node.content)}
+  ${renderContent(node.content, bib, style)}
 </aside>`;
 }
 
@@ -163,49 +202,34 @@ function renderFigure(node) {
   const pagination = node.pagination || "atomic";
   const idAttr     = node.id ? ` id="${escapeHtml(node.id)}"` : "";
   const widthAttr  = node.width ? ` style="max-width:${escapeHtml(node.width)}"` : "";
-  const src        = node.src || "";
-  const alt        = escapeHtml(node.alt || "");
-  const caption    = escapeHtml(node.caption || "");
-
   return `
 <figure class="jintia-figure" data-pagination="${escapeHtml(pagination)}"${idAttr}>
-  <img src="${escapeHtml(src)}" alt="${alt}" loading="lazy"${widthAttr} />
-  <figcaption class="jintia-caption">${caption}</figcaption>
+  <img src="${escapeHtml(node.src || "")}" alt="${escapeHtml(node.alt || "")}" loading="lazy"${widthAttr} />
+  <figcaption class="jintia-caption">${escapeHtml(node.caption || "")}</figcaption>
 </figure>`;
 }
 
 /** htmlFigure: alias para el pipeline visual. */
 function htmlFigure(spec, outputPath) {
-  return renderFigure({
-    src:     outputPath,
-    alt:     spec.alt     || "",
-    caption: spec.caption || "",
-    width:   spec.width   || "100%",
-  });
+  return renderFigure({ src: outputPath, alt: spec.alt || "", caption: spec.caption || "", width: spec.width || "100%" });
 }
 
 /** Tabla estructurada desde guide.json. */
 function renderTable(node) {
   const pagination = node.pagination || "splittable";
   const idAttr     = node.id ? ` id="${escapeHtml(node.id)}"` : "";
-  const caption    = escapeHtml(node.caption || "");
   const headers    = node.headers || [];
   const rows       = node.rows    || [];
-
-  const theadHtml = headers.length
+  const theadHtml  = headers.length
     ? `<thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead>`
     : "";
-
-  const tbodyHtml = rows.length
-    ? `<tbody>${rows.map(row =>
-        `<tr>${row.map(cell => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`
-      ).join("\n")}</tbody>`
+  const tbodyHtml  = rows.length
+    ? `<tbody>${rows.map(row => `<tr>${row.map(cell => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("\n")}</tbody>`
     : "";
-
   return `
 <div class="jintia-table" data-pagination="${escapeHtml(pagination)}"${idAttr}>
   <table>
-    ${caption ? `<caption>${caption}</caption>` : ""}
+    ${node.caption ? `<caption>${escapeHtml(node.caption)}</caption>` : ""}
     ${theadHtml}
     ${tbodyHtml}
   </table>
@@ -213,22 +237,16 @@ function renderTable(node) {
 }
 
 /** Assessment: lista numerada de preguntas/actividades. */
-function renderAssessment(node) {
+function renderAssessment(node, bib, style) {
   const pagination = node.pagination || "atomic";
   const idAttr     = node.id ? ` id="${escapeHtml(node.id)}"` : "";
   const titleHtml  = node.title
     ? `<h2 class="jintia-block__title">${escapeHtml(node.title)}</h2>`
     : "";
-
-  const items = Array.isArray(node.items) ? node.items : [];
-  const itemsHtml = items.length
-    ? `<ol class="jintia-assessment__list">${
-        items.map(item =>
-          `<li class="jintia-assessment__item">${renderContent(item)}</li>`
-        ).join("\n")
-      }</ol>`
-    : renderContent(node.content);
-
+  const items      = Array.isArray(node.items) ? node.items : [];
+  const itemsHtml  = items.length
+    ? `<ol class="jintia-assessment__list">${items.map(item => `<li class="jintia-assessment__item">${renderContent(item, bib, style)}</li>`).join("\n")}</ol>`
+    : renderContent(node.content, bib, style);
   return `
 <section class="jintia-block jintia-assessment" data-pagination="${escapeHtml(pagination)}"${idAttr}>
   <span class="jintia-block__label" aria-hidden="true">Actividad evaluativa</span>
@@ -240,29 +258,21 @@ function renderAssessment(node) {
 }
 
 /**
- * Bibliografía: genera la lista de referencias usando bibliography-manager
- * cuando hay contexto bibliográfico disponible. Solo incluye las claves usadas
- * en nodos citation de la guía (o todas si no hay ninguna citada).
+ * Bibliografía: genera la lista de referencias usando bibliography-manager.
+ * Solo incluye las claves citadas en nodos citation de la guía.
  */
-function renderBibliography(node, bib, usedKeys = []) {
+function renderBibliography(node, bib, usedKeys = [], style = "apa") {
   const idAttr = node.id ? ` id="${escapeHtml(node.id)}"` : "";
-
   let entries;
   if (bib) {
     const keys = usedKeys.length > 0 ? [...new Set(usedKeys)] : null;
-    entries    = bibMgr.renderBibliographyEntries(keys, bib);
+    entries    = bibMgr.renderBibliographyEntries(keys, bib, style);
   } else {
     entries = Array.isArray(node.entries) ? node.entries : [];
   }
-
   const listHtml = entries.length
-    ? `<ul class="jintia-bibliography__list" role="list">
-        ${entries.map(entry =>
-          `<li class="jintia-bibliography__item">${entry}</li>`
-        ).join("\n")}
-      </ul>`
+    ? `<ul class="jintia-bibliography__list" role="list">\n        ${entries.map(e => `<li class="jintia-bibliography__item">${e}</li>`).join("\n        ")}\n      </ul>`
     : `<p class="jintia-muted">No se encontraron entradas bibliográficas.</p>`;
-
   return `
 <section class="jintia-bibliography" data-pagination="splittable"${idAttr}>
   <h2>Referencias</h2>
@@ -271,14 +281,13 @@ function renderBibliography(node, bib, usedKeys = []) {
 }
 
 /**
- * Cita inline: resuelve a través de bibliography-manager cuando hay contexto.
- * Sin contexto, muestra la clave entre corchetes como marcador.
+ * Cita inline como nodo de sección (para citas al final de un bloque).
+ * Para citas dentro de texto usar la sintaxis {{cite:clave}} en el content.
  */
-function renderCitation(node, bib) {
+function renderCitation(node, bib, style = "apa") {
   const keys = Array.isArray(node.keys) ? node.keys : [];
   if (bib && keys.length > 0) {
-    const mode = node.mode || "parenthetical";
-    return bibMgr.renderCitation(keys, mode, bib, node.style || "apa");
+    return bibMgr.renderCitation(keys, node.mode || "parenthetical", bib, style);
   }
   const keyStr = keys.join(", ");
   return `<cite class="jintia-citation" data-keys="${escapeHtml(keyStr)}">[${escapeHtml(keyStr)}]</cite>`;
@@ -302,34 +311,45 @@ const RENDERERS = {
   citation:         renderCitation,
 };
 
-function renderSection(node, bib = null, usedKeys = []) {
+function renderSection(node, bib = null, usedKeys = [], style = "apa") {
   const renderer = RENDERERS[node.type];
   if (!renderer) {
     console.warn(`[guide-renderer] Tipo de nodo desconocido: "${node.type}" — se omite.`);
     return `<!-- nodo desconocido: ${escapeHtml(node.type)} -->`;
   }
-  if (node.type === "bibliography") return renderer(node, bib, usedKeys);
-  if (node.type === "citation")     return renderer(node, bib);
-  return renderer(node);
+  if (node.type === "bibliography") return renderer(node, bib, usedKeys, style);
+  if (node.type === "figure" || node.type === "table") return renderer(node);
+  return renderer(node, bib, style);
 }
 
 // ─── HTML completo del documento ─────────────────────────────────────────────
 
 function buildHtml(guide, cssHref, bib) {
   const { metadata, sections } = guide;
-  const lang  = metadata.lang  || "es";
-  const title = metadata.topic || "Guía Semanal";
+  const lang  = metadata.lang          || "es";
+  const title = metadata.topic         || "Guía Semanal";
+  const style = metadata.citationStyle || "apa";
 
   const coverHtml = renderCover(metadata);
 
-  // Pre-recolectar claves citadas para que bibliography muestre solo las usadas
-  const usedKeys = bib
-    ? (sections || [])
-        .filter(s => s.type === "citation" && Array.isArray(s.keys))
-        .flatMap(s => s.keys)
-    : [];
+  // Pre-recolectar claves citadas (nodos citation Y sintaxis {{cite:}} en content)
+  const usedKeys = [];
+  if (bib) {
+    for (const s of (sections || [])) {
+      if (s.type === "citation" && Array.isArray(s.keys)) {
+        usedKeys.push(...s.keys);
+      }
+      // Recolectar claves inline {{cite:key}} del content
+      const content = typeof s.content === "string" ? s.content : "";
+      const inline  = /\{\{cite:([^|}]+)/g;
+      let im;
+      while ((im = inline.exec(content)) !== null) {
+        usedKeys.push(im[1].trim());
+      }
+    }
+  }
 
-  const sectionsHtml = (sections || []).map(s => renderSection(s, bib, usedKeys)).join("\n\n");
+  const sectionsHtml = (sections || []).map(s => renderSection(s, bib, usedKeys, style)).join("\n\n");
 
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(lang)}">
@@ -359,8 +379,8 @@ ${sectionsHtml}
  * Renderiza un guide.json a string HTML.
  *
  * Cuando se especifica `options.outputPath`, copia automáticamente el CSS del
- * tema a `.jintia-assets/themes/<id>/` junto al archivo de salida y genera un
- * href relativo que siempre resuelve correctamente.
+ * tema (y de sus temas padre) a `.jintia-assets/themes/` junto al archivo de
+ * salida, para que todos los `@import` resuelvan sin importar el servidor.
  *
  * @param {string} guidePath - Ruta absoluta o relativa al guide.json
  * @param {object} [options]
@@ -374,21 +394,18 @@ function renderGuide(guidePath, options = {}) {
   if (!fs.existsSync(absolute)) {
     throw new Error(`guide.json no encontrado: ${absolute}`);
   }
-
   let guide;
   try {
     guide = JSON.parse(fs.readFileSync(absolute, "utf8"));
   } catch (err) {
     throw new Error(`Error al parsear guide.json: ${err.message}`);
   }
-
   if (!guide.metadata || !guide.sections) {
     throw new Error("guide.json inválido: faltan los campos 'metadata' y/o 'sections'.");
   }
 
   const themeId = options.theme || guide.metadata.theme || "jintia-clasico";
 
-  // Resolver href del CSS: copiar assets si se conoce el destino
   let cssHref = options.themeCssHref;
   if (!cssHref) {
     cssHref = options.outputPath
@@ -396,7 +413,6 @@ function renderGuide(guidePath, options = {}) {
       : `./themes/${themeId}/theme.css`;
   }
 
-  // Cargar bibliografía si está declarada en metadata
   let bib = null;
   const bibDecl = guide.metadata.bibliography;
   if (bibDecl) {
@@ -416,13 +432,20 @@ if (require.main === module) {
   const themeArg  = args.find((a, i) => args[i - 1] === "--theme");
 
   if (!specArg) {
-    console.error("Uso: node scripts/guide-renderer.js --spec guide.json [--theme jintia-clasico] [--output guide.html]");
+    console.error("Uso: node scripts/guide-renderer.js guide.json [--theme jintia-clasico] [--output guide.html]");
     process.exit(2);
   }
 
   try {
-    const outputPath = outputArg ? path.resolve(outputArg) : null;
+    // Sin --output: generar guide.html al lado del guide.json
+    const outputPath = outputArg
+      ? path.resolve(outputArg)
+      : /\.json$/i.test(specArg)
+        ? path.resolve(specArg.replace(/\.json$/i, ".html"))
+        : null;
+
     const html = renderGuide(specArg, { theme: themeArg, outputPath });
+
     if (outputPath) {
       fs.mkdirSync(path.dirname(outputPath), { recursive: true });
       fs.writeFileSync(outputPath, html, "utf8");
@@ -443,5 +466,6 @@ module.exports = {
   escapeHtml,
   textToHtml,
   copyThemeAssets,
+  resolveThemeDeps,
   processInlineMarkup,
 };

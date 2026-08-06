@@ -142,7 +142,7 @@ function previewHtml(htmlPath, options = {}) {
   const { spawn } = require("node:child_process");
   const child = spawn(vivliostyle.command, args, {
     stdio: "inherit",
-    shell: false,
+    shell: process.platform === "win32",
   });
 
   child.on("error", err => {

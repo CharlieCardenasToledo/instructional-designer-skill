@@ -115,9 +115,23 @@ function renderCitation(keys, mode, bib, style = "apa") {
   }
 
   try {
-    const subset = new Cite(
-      bib.entries.filter(e => keys.includes(e.id)),
-    );
+    // Modo narrativo: "Apellido (año)" — el autor queda fuera de los paréntesis
+    if (mode === "narrative") {
+      const entry = bib.entries.find(e => e.id === keys[0]);
+      if (entry) {
+        const author = entry.author?.[0]?.family
+          || entry.author?.[0]?.literal
+          || keys[0];
+        const year = entry.issued?.["date-parts"]?.[0]?.[0]
+          ?? entry.issued?.literal
+          ?? "";
+        const yearStr = year ? ` (${year})` : "";
+        return `<cite class="jintia-citation jintia-citation--narrative" data-keys="${keys.join(",")}">${author}${yearStr}</cite>`;
+      }
+    }
+
+    // Modo parentético: "(Apellido, año)" — salida directa de Citation.js
+    const subset = new Cite(bib.entries.filter(e => keys.includes(e.id)));
     const text = subset.format("citation", {
       format:   "html",
       template: style,

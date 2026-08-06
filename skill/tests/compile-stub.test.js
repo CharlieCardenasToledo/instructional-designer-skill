@@ -126,6 +126,74 @@ test("compile-stub: render copia los assets del tema junto al HTML", () => {
   }
 });
 
+test("compile-stub: jintia-tecnico copia también los CSS de jintia-clasico (herencia)", () => {
+  const { renderGuide } = require("../scripts/guide-renderer");
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-tecnico-"));
+
+  try {
+    const guide = {
+      metadata: { course: "Test", topic: "Técnico", outcome: "Aplicar", theme: "jintia-tecnico" },
+      sections: [{ type: "orientation", content: "Contenido de prueba." }],
+    };
+    const guidePath = path.join(tmpDir, "guide.json");
+    const htmlPath  = path.join(tmpDir, "guide.html");
+    fs.writeFileSync(guidePath, JSON.stringify(guide));
+
+    renderGuide(guidePath, { outputPath: htmlPath });
+
+    assert.ok(
+      fs.existsSync(path.join(tmpDir, ".jintia-assets", "themes", "jintia-tecnico", "theme.css")),
+      "El CSS del tema jintia-tecnico debe copiarse",
+    );
+    assert.ok(
+      fs.existsSync(path.join(tmpDir, ".jintia-assets", "themes", "jintia-clasico", "components.css")),
+      "El CSS de jintia-clasico debe copiarse por herencia (jintia-tecnico usa @import)",
+    );
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test("compile-stub: jintia-cuaderno copia también los CSS de jintia-clasico (herencia)", () => {
+  const { renderGuide } = require("../scripts/guide-renderer");
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-cuaderno-"));
+
+  try {
+    const guide = {
+      metadata: { course: "Test", topic: "Cuaderno", outcome: "Aplicar", theme: "jintia-cuaderno" },
+      sections: [{ type: "orientation", content: "Contenido de prueba." }],
+    };
+    const guidePath = path.join(tmpDir, "guide.json");
+    const htmlPath  = path.join(tmpDir, "guide.html");
+    fs.writeFileSync(guidePath, JSON.stringify(guide));
+
+    renderGuide(guidePath, { outputPath: htmlPath });
+
+    assert.ok(
+      fs.existsSync(path.join(tmpDir, ".jintia-assets", "themes", "jintia-cuaderno", "theme.css")),
+      "El CSS del tema jintia-cuaderno debe copiarse",
+    );
+    assert.ok(
+      fs.existsSync(path.join(tmpDir, ".jintia-assets", "themes", "jintia-clasico", "components.css")),
+      "El CSS de jintia-clasico debe copiarse por herencia (jintia-cuaderno usa @import)",
+    );
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test("compile-stub: resolveThemeDeps devuelve cadena padre→hijo correcta", () => {
+  const { resolveThemeDeps } = require("../scripts/guide-renderer");
+
+  const clásico  = resolveThemeDeps("jintia-clasico");
+  const técnico  = resolveThemeDeps("jintia-tecnico");
+  const cuaderno = resolveThemeDeps("jintia-cuaderno");
+
+  assert.deepEqual(clásico,  ["jintia-clasico"],                       "clásico no tiene padre");
+  assert.deepEqual(técnico,  ["jintia-clasico", "jintia-tecnico"],     "técnico hereda clásico");
+  assert.deepEqual(cuaderno, ["jintia-clasico", "jintia-cuaderno"],    "cuaderno hereda clásico");
+});
+
 test("compile-stub: keyterm syntax se renderiza como span, no como texto escapado", () => {
   const { renderGuide } = require("../scripts/guide-renderer");
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-keyterm-"));

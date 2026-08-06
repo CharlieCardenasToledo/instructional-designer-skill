@@ -217,7 +217,16 @@ function main(argv) {
 
   // ─── Motor editorial HTML ───────────────────────────────────────────────────
   if (command === "validate") return runScript("content-linter.js", argv.slice(1), "validate");
-  if (command === "render")   return runScript("guide-renderer.js", argv.slice(1), "render");
+  if (command === "render") {
+    const renderArgs = argv.slice(1);
+    const inputFile  = renderArgs.find(a => !a.startsWith("-"));
+    // Si la entrada es .json y no se pasó --output, generar guide.html al lado del JSON
+    if (inputFile && /\.json$/i.test(inputFile) && !renderArgs.includes("--output")) {
+      const htmlPath = inputFile.replace(/\.json$/i, ".html");
+      return runScript("guide-renderer.js", [...renderArgs, "--output", htmlPath], "render");
+    }
+    return runScript("guide-renderer.js", renderArgs, "render");
+  }
 
   if (command === "compile") {
     const restArgs = argv.slice(1);

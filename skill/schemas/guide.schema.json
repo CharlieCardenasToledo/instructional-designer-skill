@@ -56,7 +56,7 @@
           "type": "string",
           "default": "vivliostyle",
           "description": "Motor PDF a usar para la compilación.",
-          "enum": ["vivliostyle", "pagedjs", "prince"]
+          "enum": ["vivliostyle"]
         },
         "lang": {
           "type": "string",
