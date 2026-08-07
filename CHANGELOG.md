@@ -5,6 +5,13 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.5.1 — 2026-08-07
+
+### Añadido
+
+- `jintia capabilities profiles --json` — nuevo endpoint que expone el mapa disciplina → perfil visual.
+- `visual-install-profiles.json` v2 — LaTeX removido de todos los perfiles; Vivliostyle como base requerida.
+
 ## `jintia-skill` 11.5.0 — 2026-08-07
 
 ### Añadido
