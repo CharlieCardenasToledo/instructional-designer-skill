@@ -1,41 +1,35 @@
 {
-  "version": 1,
+  "version": 2,
   "profiles": [
     {
       "id": "minimum",
       "name": "Mínimo",
-      "description": "LaTeX y figuras HTML; usa fallbacks o detiene notación formal no disponible.",
+      "description": "Vivliostyle genera PDF desde HTML; sin herramientas de diagramas adicionales.",
       "tools": [
-        { "id": "latex", "desktopName": "Compilador LaTeX", "version": "MiKTeX/TeX Live vigente" },
-        { "id": "chrome", "desktopName": "Google Chrome", "version": "estable vigente" }
+        { "id": "vivliostyle", "desktopName": "Vivliostyle CLI", "version": "≥ 9.x", "required": true }
       ]
     },
     {
       "id": "core",
-      "name": "Visual general",
-      "description": "Añade redes, flujos y gráficos cuantitativos reproducibles.",
+      "name": "Visual técnico",
+      "description": "Añade Graphviz y Mermaid para disciplinas de ingeniería y ciencias.",
       "tools": [
-        { "id": "latex", "desktopName": "Compilador LaTeX", "version": "MiKTeX/TeX Live vigente" },
-        { "id": "chrome", "desktopName": "Google Chrome", "version": "estable vigente" },
+        { "id": "vivliostyle", "desktopName": "Vivliostyle CLI", "version": "≥ 9.x", "required": true },
         { "id": "graphviz", "desktopName": "Graphviz", "version": "12.2.x" },
-        { "id": "mermaid", "desktopName": "Mermaid CLI", "version": "11.12.x" },
-        { "id": "vegaLite", "desktopName": "Vega-Lite CLI", "version": "6.x" }
+        { "id": "mermaid", "desktopName": "Mermaid CLI", "version": "11.12.x" }
       ]
     },
     {
       "id": "full",
       "name": "Completo",
-      "description": "Habilita además UML, D2, señales y conversión vectorial.",
+      "description": "Habilita además PlantUML, D2 y otros motores para diseño y arquitectura.",
       "tools": [
-        { "id": "latex", "desktopName": "Compilador LaTeX", "version": "MiKTeX/TeX Live vigente" },
-        { "id": "chrome", "desktopName": "Google Chrome", "version": "estable vigente" },
+        { "id": "vivliostyle", "desktopName": "Vivliostyle CLI", "version": "≥ 9.x", "required": true },
         { "id": "graphviz", "desktopName": "Graphviz", "version": "12.2.x" },
         { "id": "mermaid", "desktopName": "Mermaid CLI", "version": "11.12.x" },
         { "id": "plantuml", "desktopName": "PlantUML", "version": "1.2026.x" },
         { "id": "d2", "desktopName": "D2", "version": "0.7.x" },
-        { "id": "vegaLite", "desktopName": "Vega-Lite CLI", "version": "6.x" },
-        { "id": "wavedrom", "desktopName": "WaveDrom", "version": "3.5.x" },
-        { "id": "inkscape", "desktopName": "Inkscape", "version": "1.4.x" }
+        { "id": "vegaLite", "desktopName": "Vega-Lite CLI", "version": "6.x" }
       ]
     }
   ]
