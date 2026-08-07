@@ -260,6 +260,7 @@ function main(argv) {
         migrate: true,
         doctor: true,
         contract: true,
+        capabilitiesProfiles: true,
         projectStatus: true,
         weekStatus: true,
       },
@@ -277,6 +278,45 @@ function main(argv) {
     };
     if (asJson) console.log(JSON.stringify(contract, null, 2));
     else Object.entries(contract).forEach(([k, v]) => console.log(`${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`));
+    return;
+  }
+  if (command === "capabilities" && subcommand === "profiles") {
+    const asJson = rest.includes("--json");
+    const result = {
+      profiles: {
+        minimum: {
+          description: "Funcionalidades básicas para cualquier disciplina",
+          packages: [],
+          tools: [],
+        },
+        core: {
+          description: "Incluye diagramas técnicos (Graphviz) para ingeniería y ciencias",
+          packages: ["graphviz"],
+          tools: [],
+        },
+        full: {
+          description: "Conjunto completo incluyendo Mermaid para diseño y arquitectura",
+          packages: ["graphviz", "mermaid"],
+          tools: [],
+        },
+      },
+      disciplines: {
+        "software-engineering": "core",
+        "electronics": "core",
+        "math-statistics": "minimum",
+        "natural-sciences": "minimum",
+        "social-sciences": "minimum",
+        "health": "minimum",
+        "business": "minimum",
+        "design": "full",
+        "general": "minimum",
+      },
+    };
+    if (asJson) console.log(JSON.stringify(result, null, 2));
+    else {
+      console.log("Perfiles disponibles:");
+      Object.entries(result.profiles).forEach(([id, p]) => console.log(`  ${id}: ${p.description}`));
+    }
     return;
   }
   if (command === "project" && subcommand === "status") {
