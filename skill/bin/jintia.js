@@ -34,6 +34,9 @@ function usage() {
   console.log(`Jintia Toolchain
 
 Uso:
+  jintia contract [--json]
+  jintia project status <curso> [--json]
+  jintia week status <curso> <semana> [--json]
   jintia install [--providers=claude,codex] [--scope=project|global] [--project RUTA] [--yes]
   jintia update [--providers=claude,codex] [--scope=project|global] [--project RUTA] [--yes] [--verify-contract]
   jintia status [--providers=claude,codex] [--project RUTA] [--json]
@@ -243,6 +246,95 @@ function main(argv) {
     return runScript("harness-manager.js", [command, subcommand, ...rest].filter(Boolean), command);
   }
   if (command === "init") return initCourse(subcommand, rest);
+  if (command === "contract") {
+    const asJson = argv.includes("--json");
+    const contract = {
+      schemaVersion: "2.0",
+      skillVersion: require("../package.json").version,
+      engine: "html-vivliostyle",
+      commands: {
+        init: true,
+        syllabusValidate: true,
+        detect: true,
+        harness: true,
+        migrate: true,
+        doctor: true,
+        contract: true,
+        projectStatus: true,
+        weekStatus: true,
+      },
+      artifacts: {
+        syllabus: "README.md",
+        guide: "semanas/semana-{NN}/guide.json",
+        html: "semanas/semana-{NN}/guide.html",
+        pdf: "semanas/semana-{NN}/guide.pdf",
+      },
+      runtime: {
+        node: ">=22.12.0",
+        vivliostyle: true,
+        latex: false,
+      },
+    };
+    if (asJson) console.log(JSON.stringify(contract, null, 2));
+    else Object.entries(contract).forEach(([k, v]) => console.log(`${k}: ${typeof v === "object" ? JSON.stringify(v) : v}`));
+    return;
+  }
+  if (command === "project" && subcommand === "status") {
+    const courseDir = rest[0];
+    const asJson = rest.includes("--json");
+    if (!courseDir) {
+      console.error("Uso: jintia project status <curso> [--json]");
+      process.exitCode = 2;
+      return;
+    }
+    const readmePath = path.resolve(courseDir, "README.md");
+    const status = {
+      valid: fs.existsSync(readmePath),
+      syllabus: fs.existsSync(readmePath) ? "present" : "absent",
+      weeks: 0,
+    };
+    if (fs.existsSync(readmePath)) {
+      const { parseSyllabus } = require("../runtime/core/syllabus-manager");
+      const content = fs.readFileSync(readmePath, "utf8");
+      try {
+        const model = parseSyllabus(content);
+        status.weeks = model.weeks?.length || 0;
+      } catch { }
+    }
+    if (asJson) console.log(JSON.stringify(status));
+    else console.log(`Project: ${status.valid ? "✓" : "✗"}\nSyllabus: ${status.syllabus}\nWeeks: ${status.weeks}`);
+    return;
+  }
+  if (command === "week" && subcommand === "status") {
+    const courseDir = rest[0];
+    const weekNum = rest[1];
+    const asJson = rest.includes("--json");
+    if (!courseDir || !weekNum) {
+      console.error("Uso: jintia week status <curso> <semana> [--json]");
+      process.exitCode = 2;
+      return;
+    }
+    const readmePath = path.resolve(courseDir, "README.md");
+    const guideJsonPath = path.resolve(courseDir, "semanas", `semana-${String(weekNum).padStart(2, "0")}`, "guide.json");
+    const guideHtmlPath = guideJsonPath.replace(/\.json$/, ".html");
+    const guidePdfPath = guideJsonPath.replace(/\.json$/, ".pdf");
+    const status = {
+      number: parseInt(weekNum, 10),
+      syllabus: fs.existsSync(readmePath) ? "valid" : "absent",
+      evidence: "unknown",
+      plan: "unknown",
+      guide: fs.existsSync(guideJsonPath) ? "present" : "absent",
+      html: fs.existsSync(guideHtmlPath) ? "present" : "absent",
+      preflight: "not_run",
+      pdf: fs.existsSync(guidePdfPath) ? "present" : "absent",
+    };
+    if (asJson) console.log(JSON.stringify(status));
+    else {
+      console.log(`Week ${weekNum}:`);
+      Object.entries(status).slice(1).forEach(([k, v]) => console.log(`  ${k}: ${v}`));
+    }
+    return;
+  }
   if (command === "doctor") return doctor(argv.includes("--json"));
   if (command === "context") return runScript("context-manager.js", [subcommand, ...rest], `context ${subcommand}`);
   if (command === "agents" && subcommand === "plan") return runScript("agent-plan.js", rest, "agents plan");
