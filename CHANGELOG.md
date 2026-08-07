@@ -5,6 +5,13 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.5.0 — 2026-08-07
+
+### Añadido
+
+- `jintia contract` — endpoint para consultar contratos pedagógicos y requerimientos de cursos.
+- `jintia status` — endpoint para verificar estado de procesos y recursos disponibles.
+
 ## `jintia-skill` 11.4.0 — 2026-08-06
 
 ### Añadido
