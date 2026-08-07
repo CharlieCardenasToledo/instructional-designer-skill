@@ -5,6 +5,12 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.6.1 — 2026-08-07
+
+### Corregido
+
+- Versión npm 11.6.0 publicada sin los cambios de `self-test` y contrato expandido; 11.6.1 los incluye correctamente.
+
 ## `jintia-skill` 11.6.0 — 2026-08-07
 
 ### Añadido
