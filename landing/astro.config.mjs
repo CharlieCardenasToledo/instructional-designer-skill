@@ -3,10 +3,9 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  // GitHub Pages deployment configuration
-  site: 'https://CharlieCardenasToledo.github.io',
-  base: '/instructional-designer-skill/', // Required for GitHub Pages subdirectory deployment
-  // Assets are correctly referenced with the base path in all generated HTML
+  // Custom domain deployment (penke.charliecardenastoledo.com)
+  site: 'http://penke.charliecardenastoledo.com',
+  base: '/', // Assets served from root domain, not subdirectory
   vite: {
     plugins: [tailwindcss()],
   },
