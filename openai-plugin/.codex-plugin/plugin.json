@@ -1,6 +1,6 @@
 {
   "name": "jintia",
-  "version": "11.4.0",
+  "version": "11.5.0",
   "description": "Diseña sílabos, guías semanales, actividades y evaluaciones universitarias con motor editorial HTML y salida PDF mediante Vivliostyle.",
   "author": {
     "name": "Charlie Cárdenas Toledo",
@@ -9,7 +9,13 @@
   "homepage": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
   "repository": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
   "license": "MIT",
-  "keywords": ["educacion", "diseno-instruccional", "html", "vivliostyle", "universidad"],
+  "keywords": [
+    "educacion",
+    "diseno-instruccional",
+    "html",
+    "vivliostyle",
+    "universidad"
+  ],
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
@@ -18,7 +24,10 @@
     "longDescription": "Convierte sílabos y fuentes del curso en guías didácticas, actividades, rúbricas y evaluaciones verificables mediante motor HTML nativo con Vivliostyle.",
     "developerName": "Charlie Cárdenas Toledo",
     "category": "Education",
-    "capabilities": ["Read", "Write"],
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
     "websiteURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill",
     "privacyPolicyURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/master/PRIVACY.md",
     "termsOfServiceURL": "https://github.com/CharlieCardenasToledo/instructional-designer-skill/blob/master/TERMS.md",
