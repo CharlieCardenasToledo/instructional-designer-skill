@@ -5,6 +5,14 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.6.0 — 2026-08-07
+
+### Añadido
+
+- `jintia self-test --json` — comando de autocomprobación completo: valida fixture mínimo, renderiza HTML y compila PDF vía Vivliostyle; devuelve `{ ok, skillVersion, checks: { validate, render, vivliostyle, pdf } }`.
+- `contract.commands.selfTest: true` — declarado en el contrato público.
+- `capabilities profiles` — contrato expandido: cada perfil ahora expone `python.packages`, `node.packages` y `binaries` en lugar de la lista plana `packages`. Perfil `core` incluye `networkx` y `matplotlib`; `node` incluye `@mermaid-js/mermaid-cli`.
+
 ## `jintia-skill` 11.5.1 — 2026-08-07
 
 ### Añadido

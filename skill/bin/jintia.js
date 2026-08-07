@@ -42,7 +42,8 @@ Uso:
   jintia status [--providers=claude,codex] [--project RUTA] [--json]
   jintia repair|uninstall [--providers=claude,codex] [--scope=project|global] [--project RUTA] [--yes]
   jintia init <curso> [--code CODIGO] [--name NOMBRE]
-  jintia doctor [--json]
+  jintia doctor    [--json]
+  jintia self-test [--json]
   jintia context <init|read|validate> <curso> [--json]
   jintia agents plan <operación> [--json]
   jintia detect [proyecto] [--providers=claude,codex] [--json]
@@ -259,6 +260,7 @@ function main(argv) {
         harness: true,
         migrate: true,
         doctor: true,
+        selfTest: true,
         contract: true,
         capabilitiesProfiles: true,
         projectStatus: true,
@@ -286,18 +288,24 @@ function main(argv) {
       profiles: {
         minimum: {
           description: "Funcionalidades básicas para cualquier disciplina",
-          packages: [],
-          tools: [],
+          python: { packages: ["pymupdf>=1.24.0"] },
+          node: { packages: [] },
+          binaries: [],
         },
         core: {
-          description: "Incluye diagramas técnicos (Graphviz) para ingeniería y ciencias",
-          packages: ["graphviz"],
-          tools: [],
+          description: "Diagramas técnicos (Graphviz + Mermaid) para ingeniería y ciencias",
+          python: { packages: ["pymupdf>=1.24.0", "networkx", "matplotlib"] },
+          node: { packages: ["@mermaid-js/mermaid-cli"] },
+          binaries: [{ id: "graphviz", version: "12.2.x" }],
         },
         full: {
-          description: "Conjunto completo incluyendo Mermaid para diseño y arquitectura",
-          packages: ["graphviz", "mermaid"],
-          tools: [],
+          description: "Conjunto completo para diseño y arquitectura",
+          python: { packages: ["pymupdf>=1.24.0", "networkx", "matplotlib"] },
+          node: { packages: ["@mermaid-js/mermaid-cli"] },
+          binaries: [
+            { id: "graphviz", version: "12.2.x" },
+            { id: "plantuml", version: "1.2025.x" },
+          ],
         },
       },
       disciplines: {
@@ -376,6 +384,100 @@ function main(argv) {
     return;
   }
   if (command === "doctor") return doctor(argv.includes("--json"));
+
+  if (command === "self-test") {
+    const asJson = argv.includes("--json");
+    const os = require("node:os");
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "jintia-self-test-"));
+    const checks = {};
+    let ok = true;
+
+    try {
+      const guideDir = path.join(tmpDir, "semanas", "semana-01");
+      fs.mkdirSync(guideDir, { recursive: true });
+      const guideFile = path.join(guideDir, "guide.json");
+      const htmlFile  = path.join(guideDir, "guide.html");
+
+      fs.writeFileSync(guideFile, JSON.stringify({
+        metadata: {
+          course: "Prueba de Instalación Jintia",
+          week: 1,
+          topic: "Verificación del sistema",
+          outcome: "Confirmar que el entorno Jintia está instalado correctamente."
+        },
+        sections: [{
+          type: "orientation",
+          id: "verificacion",
+          title: "Verificación",
+          content: "Comprobación de entorno Jintia."
+        }]
+      }, null, 2));
+
+      // validate
+      const validateResult = spawnSync(
+        process.execPath,
+        [path.join(SCRIPTS, "content-linter.js"), guideFile],
+        { cwd: tmpDir, encoding: "utf8", stdio: "pipe", shell: false }
+      );
+      checks.validate = validateResult.status === 0 ? "passed" : "failed";
+      if (validateResult.status !== 0) ok = false;
+
+      // render: guide.json → guide.html (copia el CSS del tema junto al HTML)
+      const renderResult = spawnSync(
+        process.execPath,
+        [path.join(SCRIPTS, "guide-renderer.js"), guideFile, "--output", htmlFile],
+        { cwd: tmpDir, encoding: "utf8", stdio: "pipe", shell: false }
+      );
+      checks.render = renderResult.status === 0 ? "passed" : "failed";
+      if (renderResult.status !== 0) ok = false;
+
+      // compile: guide.html → guide.pdf vía Vivliostyle
+      if (checks.render === "passed") {
+        const compileResult = spawnSync(
+          process.execPath,
+          [path.join(SCRIPTS, "vivliostyle-adapter.js"), htmlFile],
+          { cwd: tmpDir, encoding: "utf8", stdio: "pipe", shell: false }
+        );
+        const errOut = (compileResult.stderr || "") + (compileResult.stdout || "");
+        if (compileResult.status !== 0 && errOut.includes("no encontrado")) {
+          checks.vivliostyle = "not_installed";
+        } else {
+          checks.vivliostyle = compileResult.status === 0 ? "passed" : "failed";
+        }
+        if (compileResult.status !== 0) ok = false;
+      } else {
+        checks.vivliostyle = "skipped";
+      }
+
+      const pdfFile = htmlFile.replace(/\.html$/i, ".pdf");
+      checks.pdf = fs.existsSync(pdfFile) ? "passed" : "failed";
+      if (checks.pdf !== "passed") ok = false;
+
+    } catch (err) {
+      ok = false;
+      checks.error = err.message;
+    } finally {
+      try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+    }
+
+    const skillVersion = require(path.join(ROOT, "package.json")).version;
+    const result = { ok, skillVersion, checks };
+
+    if (asJson) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(`Jintia Self-Test · ${skillVersion}`);
+      for (const [name, status] of Object.entries(checks)) {
+        if (name === "error") { console.log(`✗ error: ${status}`); continue; }
+        console.log(`${status === "passed" ? "✓" : "✗"} ${name}: ${status}`);
+      }
+      console.log(ok ? "\nEstado: listo." : "\nEstado: faltan componentes.");
+    }
+
+    if (!ok) process.exitCode = 1;
+    return;
+  }
+
   if (command === "context") return runScript("context-manager.js", [subcommand, ...rest], `context ${subcommand}`);
   if (command === "agents" && subcommand === "plan") return runScript("agent-plan.js", rest, "agents plan");
   if (command === "detect") return runScript("harness-detect.js", argv.slice(1), "detect");
