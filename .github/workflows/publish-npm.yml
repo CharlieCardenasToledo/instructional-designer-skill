@@ -12,6 +12,10 @@ on:
           - latest
           - next
 
+  push:
+    tags:
+      - "v*"
+
 permissions:
   contents: read
   id-token: write
@@ -22,7 +26,6 @@ concurrency:
 
 jobs:
   publish:
-    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -38,5 +41,18 @@ jobs:
       - run: npm run skill:check
       - run: npm run release:check
       - run: npm run package:check
-      - name: Publish with npm trusted publishing
+
+      - name: Ensure tag matches skill version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          test "${GITHUB_REF_NAME}" = \
+            "v$(node -p "require('./skill/package.json').version")"
+
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: npm publish --tag latest
+
+      - name: Publish manual release
+        if: github.event_name == 'workflow_dispatch'
         run: npm publish --tag "${{ inputs.dist_tag }}"
