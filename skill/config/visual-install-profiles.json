@@ -1,5 +1,16 @@
 {
-  "version": 2,
+  "version": 3,
+  "disciplines": {
+    "software-engineering": "core",
+    "electronics": "core",
+    "math-statistics": "minimum",
+    "natural-sciences": "minimum",
+    "social-sciences": "minimum",
+    "health": "minimum",
+    "business": "minimum",
+    "design": "full",
+    "general": "minimum"
+  },
   "profiles": [
     {
       "id": "minimum",
@@ -7,7 +18,16 @@
       "description": "Vivliostyle genera PDF desde HTML; sin herramientas de diagramas adicionales.",
       "tools": [
         { "id": "vivliostyle", "desktopName": "Vivliostyle CLI", "version": "≥ 9.x", "required": true }
-      ]
+      ],
+      "python": {
+        "packages": [
+          "pymupdf>=1.24.0"
+        ]
+      },
+      "node": {
+        "packages": []
+      },
+      "binaries": []
     },
     {
       "id": "core",
@@ -17,19 +37,57 @@
         { "id": "vivliostyle", "desktopName": "Vivliostyle CLI", "version": "≥ 9.x", "required": true },
         { "id": "graphviz", "desktopName": "Graphviz", "version": "12.2.x" },
         { "id": "mermaid", "desktopName": "Mermaid CLI", "version": "11.12.x" }
+      ],
+      "python": {
+        "packages": [
+          "pymupdf>=1.24.0",
+          "networkx",
+          "matplotlib"
+        ]
+      },
+      "node": {
+        "packages": [
+          "@mermaid-js/mermaid-cli@11.12.x"
+        ]
+      },
+      "binaries": [
+        {
+          "id": "graphviz",
+          "version": "12.2.x"
+        }
       ]
     },
     {
       "id": "full",
       "name": "Completo",
-      "description": "Habilita además PlantUML, D2 y otros motores para diseño y arquitectura.",
+      "description": "Habilita además PlantUML para diseño y arquitectura.",
       "tools": [
         { "id": "vivliostyle", "desktopName": "Vivliostyle CLI", "version": "≥ 9.x", "required": true },
         { "id": "graphviz", "desktopName": "Graphviz", "version": "12.2.x" },
         { "id": "mermaid", "desktopName": "Mermaid CLI", "version": "11.12.x" },
-        { "id": "plantuml", "desktopName": "PlantUML", "version": "1.2026.x" },
-        { "id": "d2", "desktopName": "D2", "version": "0.7.x" },
-        { "id": "vegaLite", "desktopName": "Vega-Lite CLI", "version": "6.x" }
+        { "id": "plantuml", "desktopName": "PlantUML", "version": "1.2025.x" }
+      ],
+      "python": {
+        "packages": [
+          "pymupdf>=1.24.0",
+          "networkx",
+          "matplotlib"
+        ]
+      },
+      "node": {
+        "packages": [
+          "@mermaid-js/mermaid-cli@11.12.x"
+        ]
+      },
+      "binaries": [
+        {
+          "id": "graphviz",
+          "version": "12.2.x"
+        },
+        {
+          "id": "plantuml",
+          "version": "1.2025.x"
+        }
       ]
     }
   ]

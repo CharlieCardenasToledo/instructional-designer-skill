@@ -136,6 +136,23 @@ function commandExists(command) {
   return probe.status === 0;
 }
 
+function loadCapabilityProfiles() {
+  const configPath = path.join(ROOT, "config", "visual-install-profiles.json");
+  const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  const profiles = Object.fromEntries(
+    (config.profiles ?? []).map(profile => [
+      profile.id,
+      {
+        description: profile.description,
+        python: profile.python ?? { packages: [] },
+        node: profile.node ?? { packages: [] },
+        binaries: profile.binaries ?? [],
+      },
+    ])
+  );
+  return { profiles, disciplines: config.disciplines ?? {} };
+}
+
 function initCourse(coursePath, args) {
   const asJson = args.includes("--json");
   const root = path.resolve(coursePath);
@@ -284,42 +301,7 @@ function main(argv) {
   }
   if (command === "capabilities" && subcommand === "profiles") {
     const asJson = rest.includes("--json");
-    const result = {
-      profiles: {
-        minimum: {
-          description: "Funcionalidades básicas para cualquier disciplina",
-          python: { packages: ["pymupdf>=1.24.0"] },
-          node: { packages: [] },
-          binaries: [],
-        },
-        core: {
-          description: "Diagramas técnicos (Graphviz + Mermaid) para ingeniería y ciencias",
-          python: { packages: ["pymupdf>=1.24.0", "networkx", "matplotlib"] },
-          node: { packages: ["@mermaid-js/mermaid-cli"] },
-          binaries: [{ id: "graphviz", version: "12.2.x" }],
-        },
-        full: {
-          description: "Conjunto completo para diseño y arquitectura",
-          python: { packages: ["pymupdf>=1.24.0", "networkx", "matplotlib"] },
-          node: { packages: ["@mermaid-js/mermaid-cli"] },
-          binaries: [
-            { id: "graphviz", version: "12.2.x" },
-            { id: "plantuml", version: "1.2025.x" },
-          ],
-        },
-      },
-      disciplines: {
-        "software-engineering": "core",
-        "electronics": "core",
-        "math-statistics": "minimum",
-        "natural-sciences": "minimum",
-        "social-sciences": "minimum",
-        "health": "minimum",
-        "business": "minimum",
-        "design": "full",
-        "general": "minimum",
-      },
-    };
+    const result = loadCapabilityProfiles();
     if (asJson) console.log(JSON.stringify(result, null, 2));
     else {
       console.log("Perfiles disponibles:");
