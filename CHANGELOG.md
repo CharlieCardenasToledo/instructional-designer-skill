@@ -5,6 +5,12 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.6.3 — 2026-08-08
+
+### Añadido
+
+- Publicación automática en npm al crear un tag `v*` vía GitHub Actions con Trusted Publishing (OIDC).
+
 ## `jintia-skill` 11.6.2 — 2026-08-08
 
 ### Corregido
