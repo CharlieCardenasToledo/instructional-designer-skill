@@ -5,6 +5,15 @@ y versionado semántico.
 
 ## Sin publicar
 
+## `jintia-skill` 11.6.2 — 2026-08-08
+
+### Corregido
+
+- Unificada la fuente de verdad de los perfiles `minimum`, `core` y `full` en `visual-install-profiles.json` v3.
+- `jintia capabilities profiles` ahora deriva sus requisitos Python, Node y binarios desde el contrato canónico.
+- Mermaid queda fijado en `11.12.x`; Graphviz en `12.2.x` y PlantUML en `1.2025.x`.
+- Eliminadas del perfil `full` las capacidades D2 y Vega-Lite que no estaban declaradas por el contrato semántico.
+
 ## `jintia-skill` 11.6.1 — 2026-08-07
 
 ### Corregido
